@@ -1,0 +1,20 @@
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "consumer"
+path = "src/consumer.rs"
+
+[dependencies]
+gloo.workspace = true
+nostro2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde-wasm-bindgen.workspace = true
+fuente.workspace = true
+wasm-bindgen.workspace = true
+web-sys.workspace = true
+yew.workspace = true
+yew-router.workspace = true

@@ -1,0 +1,7 @@
+[watch]
+# Paths to watch. The `build.target`'s parent folder is watched by default.
+watch = ["../fuente", "src", "index.html", "public"]
+
+[serve]
+port = 2101
+open = false

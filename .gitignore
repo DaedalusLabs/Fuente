@@ -1,0 +1,16 @@
+# Ignore target directories
+**/target/
+**/dist/
+**/node_modules/
+/test
+
+# Ignore output.css files
+**/output.css
+
+# Ignore .pem and .key files
+*.pem
+*.key
+
+# Ignore text scripts
+run_*.sh
+

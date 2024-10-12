@@ -1,0 +1,36 @@
+[workspace]
+members = [ "business","consumer", "driver", "invoicer", "fuente"]
+resolver = "2"
+
+[workspace.dependencies]
+fuente = { path = "fuente" }
+
+anyhow = "1.0.89"
+async-channel = "2.2.0"
+base64 = "0.22.1"
+chrono = "0.4.38"
+gloo = "0.11.0"
+gloo-events = "0.2.0"
+gloo-timers = "0.3.0"
+js-sys = "0.3.69"
+qrcode = "0.14.0"
+qrcodegen = "1.8.0"
+
+hex = "0.4.3"
+# nostro2 = { path = "../../praeparet/NostrO2" }
+nostro2 = "0.1.28"
+sha2 = "0.10.8"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_json = "1.0.125"
+serde-wasm-bindgen = "0.6.5"
+tokio = { version = "1.9.0", features = ["macros", "sync"] }
+wasm-bindgen = "0.2.93"
+wasm-bindgen-futures = "0.4.42"
+wasm-bindgen-test = "0.3.42"
+web-sys = { version = "0.3.70", features = ["HtmlInputElement", "HtmlFormElement", "SubtleCrypto", "CryptoKey", 
+"Window", "Crypto", "AesKeyGenParams", "AesGcmParams", "IdbFactory", "IdbOpenDbOptions", "HtmlSelectElement", "Clipboard",
+"IdbOpenDbRequest", "IdbTransaction", "IdbRequest", "IdbDatabase", "IdbObjectStore", "IdbRequestReadyState", "Navigator",
+"HtmlAudioElement", "HtmlMediaElement", "Geolocation", "Response", "ReadableStream", "PositionOptions",
+"IdbTransactionMode", "IdbObjectStoreParameters", "Navigator", "ServiceWorkerContainer", "FetchEvent", "CustomEvent"] }
+yew = { version = "0.21.0", features = ["csr"] }
+yew-router = "0.18.0"

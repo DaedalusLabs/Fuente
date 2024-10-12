@@ -1,0 +1,27 @@
+
+
+
+
+
+How will we register business or users? Open, whitelists, blacklists, etc.
+Ask about the drivers, external, internal, do we need to split payments with them?
+Ask about settlement flow, htlc can be settled at various points of flow 
+Settlement is final with LN txs so we need to have a refund procedure
+Data collection (by default most thing can be encrypted, but we need to know what data we are collecting)
+
+Language support
+Currency exchange rate
+
+Ideal System
+
+whitelisted businesses, open to users, but can be blacklisted
+internal drivers get notified of order
+settlement happens when driver completes delivery, because driver is trusted
+payments will be registered by default on the node
+server must see order to verify against menu and request invoice from business LNURL 
+server will always know payment status so can keep track of CANCELED, SETTLED ratios
+
+
+
+
+
