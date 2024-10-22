@@ -15,12 +15,15 @@ use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderHub {
-    has_loaded: (bool, bool),
     hub_keys: UserKeys,
     orders: Vec<OrderInvoiceState>,
 }
 
-impl OrderHub {}
+impl OrderHub {
+    pub fn get_orders(&self) -> Vec<OrderInvoiceState> {
+        self.orders.clone()
+    }
+}
 
 pub enum OrderHubAction {
     FinishedLoadingDb,
@@ -36,17 +39,14 @@ impl Reducible for OrderHub {
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
             OrderHubAction::LoadOrders(orders) => Rc::new(OrderHub {
-                has_loaded: self.has_loaded,
                 hub_keys: self.hub_keys.clone(),
                 orders,
             }),
             OrderHubAction::FinishedLoadingDb => Rc::new(OrderHub {
-                has_loaded: (true, self.has_loaded.1),
                 hub_keys: self.hub_keys.clone(),
                 orders: self.orders.clone(),
             }),
             OrderHubAction::FinishedLoadingRelays => Rc::new(OrderHub {
-                has_loaded: (self.has_loaded.0, true),
                 hub_keys: self.hub_keys.clone(),
                 orders: self.orders.clone(),
             }),
@@ -54,7 +54,6 @@ impl Reducible for OrderHub {
                 let mut orders = self.orders.clone();
                 orders.push(order);
                 Rc::new(OrderHub {
-                    has_loaded: self.has_loaded,
                     hub_keys: self.hub_keys.clone(),
                     orders,
                 })
@@ -63,7 +62,6 @@ impl Reducible for OrderHub {
                 let mut orders = self.orders.clone();
                 orders.retain(|o| o.id() != order);
                 Rc::new(OrderHub {
-                    has_loaded: self.has_loaded,
                     hub_keys: self.hub_keys.clone(),
                     orders,
                 })
@@ -82,7 +80,6 @@ pub struct OrderHubChildren {
 #[function_component(OrderHubProvider)]
 pub fn key_handler(props: &OrderHubChildren) -> Html {
     let ctx = use_reducer(|| OrderHub {
-        has_loaded: (false, false),
         hub_keys: UserKeys::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
         orders: vec![],
     });
@@ -126,7 +123,7 @@ pub fn commerce_data_sync() -> Html {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        gloo::console::log!("Received order state", format!("{:?}", order_status));
+                        ctx.dispatch(OrderHubAction::NewOrder(order_status));
                     }
                 }
             }

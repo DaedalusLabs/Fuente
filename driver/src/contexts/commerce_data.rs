@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use nostro2::relays::{NostrFilter, RelayEvents};
 use fuente::{
     contexts::relay_pool::NostrProps,
     models::{
@@ -9,6 +8,7 @@ use fuente::{
         products::ProductMenuIdb,
     },
 };
+use nostro2::relays::{NostrFilter, RelayEvents};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -27,6 +27,9 @@ impl CommerceData {
     }
     pub fn products_lists(&self) -> Vec<ProductMenuIdb> {
         self.products_lists.clone()
+    }
+    pub fn find_commerce(&self, id: &str) -> Option<CommerceProfileIdb> {
+        self.commerces.iter().find(|p| p.id() == id).cloned()
     }
 }
 
