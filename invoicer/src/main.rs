@@ -1,5 +1,6 @@
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
 use std::{collections::HashMap, sync::Arc};
+mod courier_bot;
 pub mod lnd;
 
 use anyhow::anyhow;
@@ -23,6 +24,9 @@ use tracing::{error, info, warn, Level};
 pub struct InvoicerBot {
     keys: UserKeys,
     relays: RelayPool,
+    commerce_whitelist: Arc<Mutex<Vec<String>>>,
+    courier_whitelist: Arc<Mutex<Vec<String>>>,
+    courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
     commerce_profiles: Arc<Mutex<HashMap<String, CommerceProfile>>>,
     menu_notes: Arc<Mutex<HashMap<String, ProductMenu>>>,
     server_wallet: LndClient,
@@ -30,17 +34,24 @@ pub struct InvoicerBot {
 }
 impl InvoicerBot {
     pub async fn new() -> anyhow::Result<Self> {
-        let server_wallet = LndClient::new("localhost:2100", "../test/lnddatadir/").await?;
+        let server_wallet = LndClient::dud_server().await?;
+        // let server_wallet = LndClient::new("localhost:2100", "../test/lnddatadir/").await?;
         // TODO
         // We wont need this second client cause we
         // will get commerce invoices from their LNURLs
-        let commerce_wallets =
-            LndClient::new("localhost:4201", "../test/commerce_lnd_test/").await?;
+        // let commerce_wallets =
+        //     LndClient::new("localhost:4201", "../test/commerce_lnd_test/").await?;
+        let commerce_wallets = LndClient::dud_server().await?;
         let urls = RELAY_URLS.iter().map(|s| s.to_string()).collect();
         let relays = RelayPool::new(urls).await?;
         Ok(Self {
             keys: UserKeys::new(TEST_PRIV_KEY).unwrap(),
             relays,
+            commerce_whitelist: Arc::new(Mutex::new(Vec::new())),
+            courier_whitelist: Arc::new(Mutex::new(vec![
+                "4d8b9d6f52bde35923dcd1eef872be8f5c94f8374f6bd46f3ad54b85112afe26".to_string(),
+            ])),
+            courier_profiles: Arc::new(Mutex::new(HashMap::new())),
             commerce_profiles: Arc::new(Mutex::new(HashMap::new())),
             menu_notes: Arc::new(Mutex::new(HashMap::new())),
             server_wallet,
@@ -203,7 +214,11 @@ impl InvoicerBot {
                     )
                     .await?;
                 let driver_note = order.sign_driver_update(&self.keys)?;
+                let user_note = order.sign_customer_update(&self.keys)?;
+                let commerce_note = order.sign_commerce_update(&self.keys)?;
                 self.relays.broadcast_note(driver_note).await?;
+                self.relays.broadcast_note(user_note).await?;
+                self.relays.broadcast_note(commerce_note).await?;
             }
             OrderStatus::Canceled => {
                 if let Some(invoice) = order.get_commerce_invoice() {
@@ -222,6 +237,53 @@ impl InvoicerBot {
                         OrderStatus::Canceled,
                     )
                     .await?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+    pub async fn note_processor(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        match signed_note.get_kind() {
+            NOSTR_KIND_SERVER_REQUEST => {
+                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = SignedNote::try_from(decrypted)?;
+                match inner_note.get_kind() {
+                    NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
+                        self.clone()
+                            .handle_order_request(inner_note.clone())
+                            .await?;
+                    }
+                    NOSTR_KIND_ORDER_STATE => {
+                        let mut order_state = OrderInvoiceState::try_from(inner_note.get_content())?;
+                        let commerce = order_state.get_order_request().commerce.clone();
+                        if signed_note.get_pubkey() == commerce {
+                            if let Err(e) = self
+                                .clone()
+                                .handle_commerce_updates(inner_note.clone(), signed_note.clone())
+                                .await
+                            {
+                                error!("{:?}", e);
+                            }
+                        }
+                        let couriers = self.courier_whitelist.lock().await;
+                        if couriers.contains(&signed_note.get_pubkey().to_string()) {
+                            // order_state.update_courier_status(order_state.clone());
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            NOSTR_KIND_COMMERCE_PROFILE => {
+                let profile = CommerceProfile::try_from(signed_note.clone())?;
+                let mut profiles = self.commerce_profiles.lock().await;
+                profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
+                info!("Added commerce profile");
+            }
+            NOSTR_KIND_COMMERCE_PRODUCTS => {
+                let menu = ProductMenu::try_from(signed_note.clone())?;
+                let mut menus = self.menu_notes.lock().await;
+                menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
+                info!("Added menu");
             }
             _ => {}
         }
@@ -250,53 +312,77 @@ impl InvoicerBot {
         //         }
         //     }
         // });
-        while let Ok(signed_note) = reader.recv().await {
-            match signed_note.get_kind() {
-                NOSTR_KIND_SERVER_REQUEST => {
-                    if let Ok(decrypted) = self.keys.decrypt_nip_04_content(&signed_note) {
-                        if let Ok(inner_note) = SignedNote::try_from(decrypted) {
-                            match inner_note.get_kind() {
-                                NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-                                    if let Err(e) =
-                                        self.clone().handle_order_request(inner_note.clone()).await
-                                    {
-                                        error!("{:?}", e);
-                                    }
-                                }
-                                NOSTR_KIND_ORDER_STATE => {
-                                    if let Err(e) = self
-                                        .clone()
-                                        .handle_commerce_updates(
-                                            inner_note.clone(),
-                                            signed_note.clone(),
-                                        )
-                                        .await
-                                    {
-                                        error!("{:?}", e);
-                                    }
-                                }
-                                _ => {}
-                            }
-                        }
-                    }
+        loop {
+            if reader.is_closed() {
+                break;
+            }
+            if let Ok(signed_note) = reader.recv().await {
+                if let Err(e) = self.clone().note_processor(signed_note).await {
+                    error!("{:?}", e);
                 }
-                NOSTR_KIND_COMMERCE_PROFILE => {
-                    if let Ok(profile) = CommerceProfile::try_from(signed_note.clone()) {
-                        let mut profiles = self.commerce_profiles.lock().await;
-                        profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
-                        info!("Added commerce profile");
-                    }
-                }
-                NOSTR_KIND_COMMERCE_PRODUCTS => {
-                    if let Ok(menu) = ProductMenu::try_from(signed_note.clone()) {
-                        let mut menus = self.menu_notes.lock().await;
-                        menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
-                        info!("Added menu");
-                    };
-                }
-                _ => {}
             }
         }
+        // while let Ok(signed_note) = reader.recv().await {
+        //     match signed_note.get_kind() {
+        //         NOSTR_KIND_SERVER_REQUEST => {
+        //             if let Ok(decrypted) = self.keys.decrypt_nip_04_content(&signed_note) {
+        //                 if let Ok(inner_note) = SignedNote::try_from(decrypted) {
+        //                     match inner_note.get_kind() {
+        //                         NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
+        //                             if let Err(e) =
+        //                                 self.clone().handle_order_request(inner_note.clone()).await
+        //                             {
+        //                                 error!("{:?}", e);
+        //                             }
+        //                         }
+        //                         NOSTR_KIND_ORDER_STATE => {
+        //                             if let Ok(order_state) =
+        //                                 OrderInvoiceState::try_from(inner_note.clone())
+        //                             {
+        //                                 let commerce =
+        //                                     order_state.get_order_request().commerce.clone();
+        //                                 if signed_note.get_pubkey() == commerce {
+        //                                     if let Err(e) = self
+        //                                         .clone()
+        //                                         .handle_commerce_updates(
+        //                                             inner_note.clone(),
+        //                                             signed_note.clone(),
+        //                                         )
+        //                                         .await
+        //                                     {
+        //                                         error!("{:?}", e);
+        //                                     }
+        //                                 }
+        //                                 let couriers = self.courier_whitelist.lock().await;
+        //                                 if couriers.contains(&signed_note.get_pubkey().to_string())
+        //                                 {
+        //                                     info!("Courier update");
+        //                                 }
+        //                             }
+        //                         }
+        //                         _ => {}
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         NOSTR_KIND_COMMERCE_PROFILE => {
+        //             if let Ok(profile) = CommerceProfile::try_from(signed_note.clone()) {
+        //                 let mut profiles = self.commerce_profiles.lock().await;
+        //                 profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
+        //                 info!("Added commerce profile");
+        //             }
+        //         }
+        //         NOSTR_KIND_COMMERCE_PRODUCTS => {
+        //             if let Ok(menu) = ProductMenu::try_from(signed_note.clone()) {
+        //                 let mut menus = self.menu_notes.lock().await;
+        //                 menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
+        //                 info!("Added menu");
+        //             };
+        //         }
+        //         _ => {}
+        //     }
+        // }
+        reader.close();
         Ok(())
     }
 }

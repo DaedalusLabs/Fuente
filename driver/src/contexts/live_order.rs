@@ -52,6 +52,7 @@ impl Reducible for OrderHub {
             }),
             OrderHubAction::NewOrder(order) => {
                 let mut orders = self.orders.clone();
+                orders.retain(|o| o.id() != order.id());
                 orders.push(order);
                 Rc::new(OrderHub {
                     hub_keys: self.hub_keys.clone(),
@@ -114,7 +115,6 @@ pub fn commerce_data_sync() -> Html {
             .subscribe();
         id_handle.set(filter.id());
         subscriber.emit(filter);
-        gloo::console::log!("Subscribed to order state");
         || {}
     });
 
@@ -123,6 +123,7 @@ pub fn commerce_data_sync() -> Html {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
+                        gloo::console::info!("New Order: ", format!("{:?}", order_status.id()));
                         ctx.dispatch(OrderHubAction::NewOrder(order_status));
                     }
                 }

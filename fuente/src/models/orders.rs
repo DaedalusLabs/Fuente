@@ -97,6 +97,7 @@ pub struct OrderInvoiceState {
     consumer_invoice: Option<LndHodlInvoice>,
     payment_status: OrderPaymentStatus,
     order_status: OrderStatus,
+    courier: Option<SignedNote>,
 }
 impl ToString for OrderInvoiceState {
     fn to_string(&self) -> String {
@@ -131,6 +132,7 @@ impl OrderInvoiceState {
             commerce_invoice,
             payment_status: OrderPaymentStatus::PaymentPending,
             order_status: OrderStatus::Pending,
+            courier: None,
         }
     }
     pub fn update_payment_status(&mut self, status: OrderPaymentStatus) {
@@ -138,6 +140,9 @@ impl OrderInvoiceState {
     }
     pub fn update_order_status(&mut self, status: OrderStatus) {
         self.order_status = status;
+    }
+    pub fn update_courier(&mut self, courier: SignedNote) {
+        self.courier = Some(courier);
     }
     pub fn sign_customer_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
         let content = self.to_string();

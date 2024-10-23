@@ -22,6 +22,14 @@ pub struct LndClient {
 }
 
 impl LndClient {
+    pub async fn dud_server() -> anyhow::Result<Self> {
+        let client = reqwest::Client::builder().danger_accept_invalid_certs(true).build()?;
+        Ok(Self {
+            url: "localhost:10009",
+            client,
+            data_dir: "",
+        })
+    }
     pub async fn new(url: &'static str, data_dir: &'static str) -> anyhow::Result<Self> {
         let mut default_header = HeaderMap::new();
         let macaroon = Self::macaroon(data_dir)?;
