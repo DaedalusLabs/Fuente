@@ -17,8 +17,8 @@ qrcode = "0.14.0"
 qrcodegen = "1.8.0"
 
 hex = "0.4.3"
-# nostro2 = { path = "../../praeparet/NostrO2" }
-nostro2 = "0.1.28"
+nostro2 = { path = "../../praeparet/NostrO2" }
+# nostro2 = "0.1.28"
 sha2 = "0.10.8"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_json = "1.0.125"

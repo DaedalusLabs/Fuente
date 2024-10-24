@@ -159,7 +159,7 @@ impl OrderInvoiceState {
         note.add_tag("d", &format!("{}{}", "business", self.order.get_id()));
         Ok(keys.sign_nip_04_encrypted(note, commerce)?)
     }
-    pub fn sign_driver_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_courier_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
         let content = self.to_string();
         let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
         note.add_tag("d", &format!("{}{}", "driver", self.order.get_id()));
@@ -191,6 +191,9 @@ impl OrderInvoiceState {
     }
     pub fn get_consumer_invoice(&self) -> Option<LndHodlInvoice> {
         self.consumer_invoice.clone()
+    }
+    pub fn get_courier(&self) -> Option<SignedNote> {
+        self.courier.clone()
     }
     pub fn get_order_request(&self) -> OrderRequest {
         let order: OrderRequest = self.order.clone().try_into().unwrap();

@@ -29,6 +29,7 @@ pub struct InvoicerBot {
     courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
     commerce_profiles: Arc<Mutex<HashMap<String, CommerceProfile>>>,
     menu_notes: Arc<Mutex<HashMap<String, ProductMenu>>>,
+    live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     server_wallet: LndClient,
     commerce_wallets: LndClient,
 }
@@ -54,6 +55,7 @@ impl InvoicerBot {
             courier_profiles: Arc::new(Mutex::new(HashMap::new())),
             commerce_profiles: Arc::new(Mutex::new(HashMap::new())),
             menu_notes: Arc::new(Mutex::new(HashMap::new())),
+            live_orders: Arc::new(Mutex::new(HashMap::new())),
             server_wallet,
             commerce_wallets,
         })
@@ -213,12 +215,13 @@ impl InvoicerBot {
                         OrderStatus::ReadyForDelivery,
                     )
                     .await?;
-                let driver_note = order.sign_driver_update(&self.keys)?;
+                let driver_note = order.sign_courier_update(&self.keys)?;
                 let user_note = order.sign_customer_update(&self.keys)?;
                 let commerce_note = order.sign_commerce_update(&self.keys)?;
                 self.relays.broadcast_note(driver_note).await?;
                 self.relays.broadcast_note(user_note).await?;
                 self.relays.broadcast_note(commerce_note).await?;
+                self.live_orders.lock().await.insert(order.id(), order);
             }
             OrderStatus::Canceled => {
                 if let Some(invoice) = order.get_commerce_invoice() {
@@ -254,7 +257,8 @@ impl InvoicerBot {
                             .await?;
                     }
                     NOSTR_KIND_ORDER_STATE => {
-                        let mut order_state = OrderInvoiceState::try_from(inner_note.get_content())?;
+                        info!("Order state received");
+                        let order_state = OrderInvoiceState::try_from(inner_note.get_content())?;
                         let commerce = order_state.get_order_request().commerce.clone();
                         if signed_note.get_pubkey() == commerce {
                             if let Err(e) = self
@@ -265,9 +269,36 @@ impl InvoicerBot {
                                 error!("{:?}", e);
                             }
                         }
-                        let couriers = self.courier_whitelist.lock().await;
-                        if couriers.contains(&signed_note.get_pubkey().to_string()) {
-                            // order_state.update_courier_status(order_state.clone());
+                        if self
+                            .courier_whitelist
+                            .lock()
+                            .await
+                            .contains(&signed_note.get_pubkey())
+                        {
+                            // TODO
+                            // Keep live orders in memeorytmake sure no ovewrites
+                            // let mut orders = self.live_orders.lock().await;
+                            // let order = orders
+                            //     .get_mut(&order_state.id())
+                            //     .ok_or(anyhow!("Order not found"))?;
+                            // if order.get_courier().is_some() {
+                            //     return Err(anyhow!("Order already assigned"));
+                            // }
+                            // let new_courier = order_state
+                            //     .get_courier()
+                            //     .ok_or(anyhow!("No courier found"))?;
+                            //  TODO 
+                            //  make sure the update is coming from the assigned courier
+                            // order.update_courier(new_courier);
+                            // TODO 
+                            // use the in memory note to update the state and only update the 
+                            // necessary fields
+                            let state_note = order_state.sign_courier_update(&self.keys)?;
+                            let user_note = order_state.sign_customer_update(&self.keys)?;
+                            let commerce_note = order_state.sign_commerce_update(&self.keys)?;
+                            self.relays.broadcast_note(state_note).await?;
+                            self.relays.broadcast_note(user_note).await?;
+                            self.relays.broadcast_note(commerce_note).await?;
                         }
                     }
                     _ => {}
@@ -322,66 +353,6 @@ impl InvoicerBot {
                 }
             }
         }
-        // while let Ok(signed_note) = reader.recv().await {
-        //     match signed_note.get_kind() {
-        //         NOSTR_KIND_SERVER_REQUEST => {
-        //             if let Ok(decrypted) = self.keys.decrypt_nip_04_content(&signed_note) {
-        //                 if let Ok(inner_note) = SignedNote::try_from(decrypted) {
-        //                     match inner_note.get_kind() {
-        //                         NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-        //                             if let Err(e) =
-        //                                 self.clone().handle_order_request(inner_note.clone()).await
-        //                             {
-        //                                 error!("{:?}", e);
-        //                             }
-        //                         }
-        //                         NOSTR_KIND_ORDER_STATE => {
-        //                             if let Ok(order_state) =
-        //                                 OrderInvoiceState::try_from(inner_note.clone())
-        //                             {
-        //                                 let commerce =
-        //                                     order_state.get_order_request().commerce.clone();
-        //                                 if signed_note.get_pubkey() == commerce {
-        //                                     if let Err(e) = self
-        //                                         .clone()
-        //                                         .handle_commerce_updates(
-        //                                             inner_note.clone(),
-        //                                             signed_note.clone(),
-        //                                         )
-        //                                         .await
-        //                                     {
-        //                                         error!("{:?}", e);
-        //                                     }
-        //                                 }
-        //                                 let couriers = self.courier_whitelist.lock().await;
-        //                                 if couriers.contains(&signed_note.get_pubkey().to_string())
-        //                                 {
-        //                                     info!("Courier update");
-        //                                 }
-        //                             }
-        //                         }
-        //                         _ => {}
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         NOSTR_KIND_COMMERCE_PROFILE => {
-        //             if let Ok(profile) = CommerceProfile::try_from(signed_note.clone()) {
-        //                 let mut profiles = self.commerce_profiles.lock().await;
-        //                 profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
-        //                 info!("Added commerce profile");
-        //             }
-        //         }
-        //         NOSTR_KIND_COMMERCE_PRODUCTS => {
-        //             if let Ok(menu) = ProductMenu::try_from(signed_note.clone()) {
-        //                 let mut menus = self.menu_notes.lock().await;
-        //                 menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
-        //                 info!("Added menu");
-        //             };
-        //         }
-        //         _ => {}
-        //     }
-        // }
         reader.close();
         Ok(())
     }
