@@ -2,6 +2,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::IdbObjectStoreParameters;
 
 pub mod address;
+pub mod admin_configs;
 pub mod commerce;
 pub mod consumer_id;
 pub mod consumer_profile;

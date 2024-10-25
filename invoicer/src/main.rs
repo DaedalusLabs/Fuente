@@ -1,15 +1,18 @@
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
 use std::{collections::HashMap, sync::Arc};
-mod courier_bot;
 pub mod lnd;
+mod tests;
 
 use anyhow::anyhow;
 use fuente::models::{
+    admin_configs::{AdminConfiguration, AdminConfigurationType},
     commerce::CommerceProfile,
+    driver::DriverProfile,
     lnd::{HodlState, InvoicePaymentState, LndHodlInvoice, LndInvoice, LndPaymentRequest},
     nostr_kinds::{
         NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
-        NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_REQUEST,
+        NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_ORDER_STATE,
+        NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
     },
     orders::{OrderInvoiceState, OrderPaymentStatus, OrderRequest, OrderStatus},
     products::{ProductMenu, ProductOrder},
@@ -24,8 +27,7 @@ use tracing::{error, info, warn, Level};
 pub struct InvoicerBot {
     keys: UserKeys,
     relays: RelayPool,
-    commerce_whitelist: Arc<Mutex<Vec<String>>>,
-    courier_whitelist: Arc<Mutex<Vec<String>>>,
+    admin_config: Arc<Mutex<AdminConfiguration>>,
     courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
     commerce_profiles: Arc<Mutex<HashMap<String, CommerceProfile>>>,
     menu_notes: Arc<Mutex<HashMap<String, ProductMenu>>>,
@@ -45,13 +47,13 @@ impl InvoicerBot {
         let commerce_wallets = LndClient::dud_server().await?;
         let urls = RELAY_URLS.iter().map(|s| s.to_string()).collect();
         let relays = RelayPool::new(urls).await?;
+        let server_keys = UserKeys::new(TEST_PRIV_KEY)?;
+        let mut admin_config = AdminConfiguration::default();
+        admin_config.set_admin_whitelist(vec![TEST_PUB_KEY.to_string()]);
         Ok(Self {
-            keys: UserKeys::new(TEST_PRIV_KEY).unwrap(),
+            keys: server_keys,
             relays,
-            commerce_whitelist: Arc::new(Mutex::new(Vec::new())),
-            courier_whitelist: Arc::new(Mutex::new(vec![
-                "4d8b9d6f52bde35923dcd1eef872be8f5c94f8374f6bd46f3ad54b85112afe26".to_string(),
-            ])),
+            admin_config: Arc::new(Mutex::new(admin_config)),
             courier_profiles: Arc::new(Mutex::new(HashMap::new())),
             commerce_profiles: Arc::new(Mutex::new(HashMap::new())),
             menu_notes: Arc::new(Mutex::new(HashMap::new())),
@@ -84,10 +86,7 @@ impl InvoicerBot {
     ) -> anyhow::Result<()> {
         state.update_payment_status(payment_status.clone());
         state.update_order_status(order_status.clone());
-        let state_note = state.sign_customer_update(&self.keys)?;
-        self.relays.broadcast_note(state_note).await?;
-        let commerce_state_note = state.sign_commerce_update(&self.keys)?;
-        self.relays.broadcast_note(commerce_state_note).await?;
+        self.broadcast_order_update(&state).await?;
         Ok(())
     }
     async fn order_payment_notifier(self, mut state: OrderInvoiceState) -> anyhow::Result<bool> {
@@ -190,6 +189,17 @@ impl InvoicerBot {
         }
         Ok(())
     }
+    async fn broadcast_order_update(&self, state: &OrderInvoiceState) -> anyhow::Result<()> {
+        let user_note = state.sign_customer_update(&self.keys)?;
+        let commerce_note = state.sign_commerce_update(&self.keys)?;
+        self.relays.broadcast_note(user_note).await?;
+        self.relays.broadcast_note(commerce_note).await?;
+        if state.get_courier().is_some() {
+            let courier_note = state.sign_courier_update(&self.keys)?;
+            self.relays.broadcast_note(courier_note).await?;
+        }
+        Ok(())
+    }
     async fn handle_commerce_updates(
         &self,
         inner_note: SignedNote,
@@ -215,12 +225,7 @@ impl InvoicerBot {
                         OrderStatus::ReadyForDelivery,
                     )
                     .await?;
-                let driver_note = order.sign_courier_update(&self.keys)?;
-                let user_note = order.sign_customer_update(&self.keys)?;
-                let commerce_note = order.sign_commerce_update(&self.keys)?;
-                self.relays.broadcast_note(driver_note).await?;
-                self.relays.broadcast_note(user_note).await?;
-                self.relays.broadcast_note(commerce_note).await?;
+                self.broadcast_order_update(&order).await?;
                 self.live_orders.lock().await.insert(order.id(), order);
             }
             OrderStatus::Canceled => {
@@ -245,6 +250,127 @@ impl InvoicerBot {
         }
         Ok(())
     }
+    async fn handle_courier_profile(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        let _ = DriverProfile::try_from(signed_note.clone())?;
+        let mut profiles = self.courier_profiles.lock().await;
+        profiles.insert(signed_note.get_pubkey().to_string(), signed_note);
+        info!("Added courier profile");
+        Ok(())
+    }
+    async fn handle_commerce_profile(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        let profile = CommerceProfile::try_from(signed_note.clone())?;
+        let mut profiles = self.commerce_profiles.lock().await;
+        profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
+        info!("Added commerce profile");
+        Ok(())
+    }
+    async fn handle_commerce_product_list(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        let menu = ProductMenu::try_from(signed_note.clone())?;
+        let mut menus = self.menu_notes.lock().await;
+        menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
+        info!("Added menu");
+        Ok(())
+    }
+    async fn handle_courier_updates(
+        &self,
+        inner_note: SignedNote,
+        outer_note: SignedNote,
+    ) -> anyhow::Result<()> {
+        let updated_order: OrderInvoiceState =
+            OrderInvoiceState::try_from(inner_note.get_content().to_string())?;
+        // Check if order is part of live orders
+        let mut orders = self.live_orders.lock().await;
+        let live_order = orders
+            .get_mut(&updated_order.id())
+            .ok_or(anyhow!("Order not found"))?;
+        // Check if the courier is already assigned
+        if live_order.get_courier().is_none() {
+            let new_courier = updated_order
+                .get_courier()
+                .ok_or(anyhow!("No courier found"))?;
+            live_order.update_courier(new_courier);
+            self.broadcast_order_update(live_order).await?;
+        }
+        // Check if the update s coing from asigned courier
+        if outer_note.get_pubkey() == live_order.get_courier().unwrap().get_pubkey() {
+            self.broadcast_order_update(&updated_order).await?;
+        }
+        Ok(())
+    }
+    async fn handle_order_state_update(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        let order_state = OrderInvoiceState::try_from(signed_note.get_content())?;
+        let commerce = order_state.get_order_request().commerce.clone();
+        if signed_note.get_pubkey() == commerce {
+            if let Err(e) = self
+                .clone()
+                .handle_commerce_updates(signed_note.clone(), signed_note.clone())
+                .await
+            {
+                error!("{:?}", e);
+            }
+        }
+        self.admin_config
+            .lock()
+            .await
+            .check_couriers_whitelist(&signed_note.get_pubkey())?;
+        self.handle_courier_updates(signed_note.clone(), signed_note.clone())
+            .await?;
+        Ok(())
+    }
+    async fn update_admin_config(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+        self.admin_config
+            .lock()
+            .await
+            .check_admin_whitelist(&signed_note.get_pubkey())?;
+        let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
+        let config_type: AdminConfigurationType = signed_note
+            .get_tags_by_id("d")
+            .ok_or(anyhow!("No config type found"))?[0]
+            .clone()
+            .try_into()?;
+        match config_type {
+            AdminConfigurationType::CommerceWhitelist => {
+                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
+                self.admin_config
+                    .lock()
+                    .await
+                    .set_commerce_whitelist(whitelist);
+            }
+            AdminConfigurationType::CourierWhitelist => {
+                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
+                self.admin_config
+                    .lock()
+                    .await
+                    .set_couriers_whitelist(whitelist);
+            }
+            AdminConfigurationType::ConsumerBlacklist => {
+                let blacklist: Vec<String> = serde_json::from_str(&decrypted)?;
+                self.admin_config
+                    .lock()
+                    .await
+                    .set_consumer_blacklist(blacklist);
+            }
+            AdminConfigurationType::UserRegistrations => {
+                let registrations: Vec<String> = serde_json::from_str(&decrypted)?;
+                self.admin_config
+                    .lock()
+                    .await
+                    .set_user_registrations(registrations);
+            }
+            AdminConfigurationType::ExchangeRate => {
+                let rate: f64 = serde_json::from_str(&decrypted)?;
+                self.admin_config.lock().await.set_exchange_rate(rate);
+            }
+            AdminConfigurationType::AdminWhitelist => {
+                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
+                self.admin_config
+                    .lock()
+                    .await
+                    .set_admin_whitelist(whitelist);
+            }
+        }
+        Ok(())
+    }
     pub async fn note_processor(&self, signed_note: SignedNote) -> anyhow::Result<()> {
         match signed_note.get_kind() {
             NOSTR_KIND_SERVER_REQUEST => {
@@ -252,81 +378,54 @@ impl InvoicerBot {
                 let inner_note = SignedNote::try_from(decrypted)?;
                 match inner_note.get_kind() {
                     NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-                        self.clone()
-                            .handle_order_request(inner_note.clone())
-                            .await?;
+                        self.clone().handle_order_request(inner_note).await?;
                     }
                     NOSTR_KIND_ORDER_STATE => {
-                        info!("Order state received");
-                        let order_state = OrderInvoiceState::try_from(inner_note.get_content())?;
-                        let commerce = order_state.get_order_request().commerce.clone();
-                        if signed_note.get_pubkey() == commerce {
-                            if let Err(e) = self
-                                .clone()
-                                .handle_commerce_updates(inner_note.clone(), signed_note.clone())
-                                .await
-                            {
-                                error!("{:?}", e);
-                            }
-                        }
-                        if self
-                            .courier_whitelist
-                            .lock()
-                            .await
-                            .contains(&signed_note.get_pubkey())
-                        {
-                            // TODO
-                            // Keep live orders in memeorytmake sure no ovewrites
-                            // let mut orders = self.live_orders.lock().await;
-                            // let order = orders
-                            //     .get_mut(&order_state.id())
-                            //     .ok_or(anyhow!("Order not found"))?;
-                            // if order.get_courier().is_some() {
-                            //     return Err(anyhow!("Order already assigned"));
-                            // }
-                            // let new_courier = order_state
-                            //     .get_courier()
-                            //     .ok_or(anyhow!("No courier found"))?;
-                            //  TODO 
-                            //  make sure the update is coming from the assigned courier
-                            // order.update_courier(new_courier);
-                            // TODO 
-                            // use the in memory note to update the state and only update the 
-                            // necessary fields
-                            let state_note = order_state.sign_courier_update(&self.keys)?;
-                            let user_note = order_state.sign_customer_update(&self.keys)?;
-                            let commerce_note = order_state.sign_commerce_update(&self.keys)?;
-                            self.relays.broadcast_note(state_note).await?;
-                            self.relays.broadcast_note(user_note).await?;
-                            self.relays.broadcast_note(commerce_note).await?;
-                        }
+                        self.handle_order_state_update(inner_note).await?;
                     }
-                    _ => {}
+                    _ => {
+                        return Err(anyhow!("Invalid inner note"));
+                    }
                 }
             }
+            NOSTR_KIND_SERVER_CONFIG => {
+                self.update_admin_config(signed_note).await?;
+            }
             NOSTR_KIND_COMMERCE_PROFILE => {
-                let profile = CommerceProfile::try_from(signed_note.clone())?;
-                let mut profiles = self.commerce_profiles.lock().await;
-                profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
-                info!("Added commerce profile");
+                self.admin_config
+                    .lock()
+                    .await
+                    .check_commerce_whitelist(&signed_note.get_pubkey())?;
+                self.handle_commerce_profile(signed_note).await?;
             }
             NOSTR_KIND_COMMERCE_PRODUCTS => {
-                let menu = ProductMenu::try_from(signed_note.clone())?;
-                let mut menus = self.menu_notes.lock().await;
-                menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
-                info!("Added menu");
+                self.admin_config
+                    .lock()
+                    .await
+                    .check_commerce_whitelist(&signed_note.get_pubkey())?;
+                self.handle_commerce_product_list(signed_note).await?;
             }
-            _ => {}
+            NOSTR_KIND_COURIER_PROFILE => {
+                self.admin_config
+                    .lock()
+                    .await
+                    .check_couriers_whitelist(&signed_note.get_pubkey())?;
+                self.handle_courier_profile(signed_note).await?;
+            }
+            _ => {
+                return Err(anyhow!("Invalid note kind"));
+            }
         }
         Ok(())
     }
     pub async fn read_relay_pool(self) -> anyhow::Result<()> {
         let filter = NostrFilter::default()
-            .new_kind(NOSTR_KIND_SERVER_REQUEST)
+            .new_kinds(vec![NOSTR_KIND_SERVER_REQUEST, NOSTR_KIND_SERVER_CONFIG])
             .new_tag("p", vec![TEST_PUB_KEY.to_string()]);
         let commerces_filter = NostrFilter::default().new_kinds(vec![
             NOSTR_KIND_COMMERCE_PROFILE,
             NOSTR_KIND_COMMERCE_PRODUCTS,
+            NOSTR_KIND_COURIER_PROFILE,
         ]);
         self.relays.subscribe(filter.subscribe()).await?;
         self.relays.subscribe(commerces_filter.subscribe()).await?;
