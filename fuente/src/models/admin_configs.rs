@@ -12,7 +12,10 @@ use nostro2::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::nostr_kinds::NOSTR_KIND_SERVER_CONFIG;
+use super::{
+    nostr_kinds::{NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_SERVER_CONFIG},
+    TEST_PUB_KEY,
+};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum AdminConfigurationType {
@@ -108,53 +111,79 @@ impl Default for AdminConfiguration {
     }
 }
 impl AdminConfiguration {
-    pub fn sign_admin_whitelist(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_admin_whitelist(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.admin_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::AdminWhitelist.into();
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
-    pub fn sign_commerce_whitelist(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_commerce_whitelist(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.commerce_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
-    pub fn sign_couriers_whitelist(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_couriers_whitelist(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.couriers_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
-    pub fn sign_consumer_blacklist(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_consumer_blacklist(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.consumer_blacklist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::ConsumerBlacklist.into();
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
-    pub fn sign_user_registrations(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_user_registrations(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.user_registrations)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::UserRegistrations.into();
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
-    pub fn sign_exchange_rate(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_exchange_rate(
+        &self,
+        priv_key: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.exchange_rate)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::ExchangeRate.into();
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, pubkey)
+        priv_key.sign_nip_04_encrypted(note, receiver)
     }
     pub fn set_admin_whitelist(&mut self, admin_whitelist: Vec<String>) {
         self.admin_whitelist = admin_whitelist;
@@ -185,14 +214,20 @@ impl AdminConfiguration {
         if self.couriers_whitelist.contains(&courier.to_string()) {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Courier not in whitelist"))
+            Err(anyhow::anyhow!(format!(
+                "Courier not in whitelist {}",
+                courier
+            )))
         }
     }
     pub fn check_commerce_whitelist(&self, commerce: &str) -> anyhow::Result<()> {
         if self.commerce_whitelist.contains(&commerce.to_string()) {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Commerce not in whitelist"))
+            Err(anyhow::anyhow!(format!(
+                "Commerce not in whitelist {}",
+                commerce
+            )))
         }
     }
     pub fn check_consumer_blacklist(&self, consumer: &str) -> anyhow::Result<()> {
@@ -211,5 +246,77 @@ impl AdminConfiguration {
     }
     pub fn get_exchange_rate(&self) -> f64 {
         self.exchange_rate
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct AdminServerRequest {
+    pub config_type: AdminConfigurationType,
+    pub config_str: String,
+}
+impl AdminServerRequest {
+    pub fn new(config_type: AdminConfigurationType, config_str: String) -> Self {
+        AdminServerRequest {
+            config_type,
+            config_str,
+        }
+    }
+    pub fn sign_data(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
+        let pubkey = priv_key.get_public_key();
+        let mut note = Note::new(&pubkey, NOSTR_KIND_ADMIN_REQUEST, &self.config_str);
+        let config_str: String = self.config_type.clone().into();
+        note.add_tag("d", &config_str);
+        let inner_note = priv_key.sign_nostr_event(note);
+        let giftwrap = Note::new(&pubkey, NOSTR_KIND_ADMIN_REQUEST, &inner_note.to_string());
+        priv_key.sign_nip_04_encrypted(giftwrap, TEST_PUB_KEY.to_string())
+    }
+}
+impl ToString for AdminServerRequest {
+    fn to_string(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+}
+impl TryFrom<&str> for AdminServerRequest {
+    type Error = anyhow::Error;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let req: AdminServerRequest = serde_json::from_str(value)?;
+        Ok(req)
+    }
+}
+impl TryFrom<String> for AdminServerRequest {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let req: AdminServerRequest = serde_json::from_str(&value)?;
+        Ok(req)
+    }
+}
+impl TryFrom<&SignedNote> for AdminServerRequest {
+    type Error = anyhow::Error;
+    fn try_from(value: &SignedNote) -> Result<Self, Self::Error> {
+        if value.get_kind() != NOSTR_KIND_ADMIN_REQUEST {
+            return Err(anyhow::anyhow!("Invalid kind"));
+        }
+        let config_str = value.get_content();
+        let config_type = value
+            .get_tags_by_id("d")
+            .ok_or(anyhow::anyhow!("No config type"))?[0]
+            .clone();
+        let config_type = AdminConfigurationType::try_from(config_type)?;
+        Ok(AdminServerRequest::new(config_type, config_str))
+    }
+}
+impl TryFrom<SignedNote> for AdminServerRequest {
+    type Error = anyhow::Error;
+    fn try_from(value: SignedNote) -> Result<Self, Self::Error> {
+        if value.get_kind() != NOSTR_KIND_ADMIN_REQUEST {
+            return Err(anyhow::anyhow!("Invalid kind"));
+        }
+        let config_str = value.get_content();
+        let config_type = value
+            .get_tags_by_id("d")
+            .ok_or(anyhow::anyhow!("No config type"))?[0]
+            .clone();
+        let config_type = AdminConfigurationType::try_from(config_type)?;
+        Ok(AdminServerRequest::new(config_type, config_str))
     }
 }

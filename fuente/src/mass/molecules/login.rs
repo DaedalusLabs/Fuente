@@ -52,7 +52,7 @@ pub fn popup_selector(props: &LoginProps) -> Html {
     html! {
         <div class="w-full h-1/3 shadow-xl rounded-b-3xl bg-neutral-50 flex flex-col justify-end relative">
             <div class="absolute inset-0 flex items-center justify-center select-none z-0">
-                <img src="/public/assets/logo.png" alt="Suriname Logo" class="w-32 h-32" />
+                <img src="/public/assets/img/logo.png" alt="Suriname Logo" class="w-32 h-32" />
             </div>
             <div class="flex flex-row gap-2 z-10 justify-between">
                 <button
@@ -149,7 +149,7 @@ pub fn import_user_form() -> Html {
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 p-8 items-center">
+        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center">
             <SimpleInput
                 id="password"
                 name="password"
@@ -159,8 +159,56 @@ pub fn import_user_form() -> Html {
                 required={true}
                 />
             <SimpleFormButton>
-                {"Importar"}
+                {"Log In"}
             </SimpleFormButton>
         </form>
     }
 }
+
+#[function_component(AdminLoginPage)]
+pub fn admin_login() -> Html {
+    html! {
+        <div class="flex flex-col h-full sm:max-w-sm md:max-w-md lg:max-w-lg items-center justify-center gap-4">
+            <div class="flex items-center justify-center select-none">
+                <img src="/public/assets/img/logo.png" alt="Fuente Logo" class="w-24 h-24" />
+            </div>
+            <AdminLoginForm />
+        </div>
+    }
+}
+#[function_component(AdminLoginForm)]
+pub fn import_user_form() -> Html {
+    let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
+    let onsubmit = Callback::from(move |e: SubmitEvent| {
+        e.prevent_default();
+        let form_element = HtmlForm::new(e).expect("Failed to get form element");
+        let user_keys_str = form_element
+            .input_value("password")
+            .expect("Failed to get password");
+        let user_keys =
+            UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
+        let user_ctx = user_ctx.clone();
+        spawn_local(async move {
+            let user_identity = UserIdentity::new(user_keys).await;
+            let keys = user_identity.get_user_keys().await.unwrap();
+            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+        });
+    });
+
+    html! {
+        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center">
+            <SimpleInput
+                id="password"
+                name="password"
+                label="Private Key"
+                value=""
+                input_type="password"
+                required={true}
+                />
+            <SimpleFormButton>
+                {"Log In"}
+            </SimpleFormButton>
+        </form>
+    }
+}
+

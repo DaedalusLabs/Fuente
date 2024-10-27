@@ -19,6 +19,11 @@ impl UserIdentity {
     pub fn id(&self) -> String {
         self.id.clone()
     }
+    pub async fn new(keys: UserKeys) -> Self {
+        let crypto_key: CryptoKey = user_keys_to_crypto(&keys).await.into();
+        let id = keys.get_public_key();
+        Self { id, crypto_key }
+    }
     pub async fn find_local_identity() -> Result<Self, JsValue>
     where
         Self: IdbStoreManager,

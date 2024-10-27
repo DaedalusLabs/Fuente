@@ -41,6 +41,12 @@ pub const STORE_NAME_USER_RELAYS: &str = "user_relays";
 pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 
+// a17bf270406aad26f8ab33ca7bddee38c4f1eb94e08847626902ecb491ac31ad
+// eae521c94eff7292a1068c9f6614b06f5453089d84304af983f849079d3da9e2
+pub const ADMIN_WHITELIST: [&str; 2] = [
+    "decfef1c4a027fe815eda8ea5748aa0d3e971c4c377423a49d94fa0fc3e25575",
+    "93effcf32813a65c82c6f97e3d514a77e48cbe14ef36e89453e20bd155809b33",
+];
 
 pub fn init_consumer_db() -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();

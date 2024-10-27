@@ -1,16 +1,15 @@
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
 use std::{collections::HashMap, sync::Arc};
 pub mod lnd;
-mod tests;
 
 use anyhow::anyhow;
 use fuente::models::{
-    admin_configs::{AdminConfiguration, AdminConfigurationType},
+    admin_configs::{AdminConfiguration, AdminConfigurationType, AdminServerRequest},
     commerce::CommerceProfile,
     driver::DriverProfile,
     lnd::{HodlState, InvoicePaymentState, LndHodlInvoice, LndInvoice, LndPaymentRequest},
     nostr_kinds::{
-        NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
+        NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_ORDER_STATE,
         NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
     },
@@ -325,7 +324,9 @@ impl InvoicerBot {
         let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
         let config_type: AdminConfigurationType = signed_note
             .get_tags_by_id("d")
-            .ok_or(anyhow!("No config type found"))?[0]
+            .ok_or(anyhow!("No config type found"))?
+            .get(2)
+            .ok_or(anyhow!("No config type found"))?
             .clone()
             .try_into()?;
         match config_type {
@@ -360,6 +361,7 @@ impl InvoicerBot {
             AdminConfigurationType::ExchangeRate => {
                 let rate: f64 = serde_json::from_str(&decrypted)?;
                 self.admin_config.lock().await.set_exchange_rate(rate);
+                info!("Exchange rate set to: {}", rate);
             }
             AdminConfigurationType::AdminWhitelist => {
                 let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
@@ -386,6 +388,25 @@ impl InvoicerBot {
                     _ => {
                         return Err(anyhow!("Invalid inner note"));
                     }
+                }
+            }
+            NOSTR_KIND_ADMIN_REQUEST => {
+                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = SignedNote::try_from(decrypted)?;
+                let admin_req = AdminServerRequest::try_from(&inner_note)?;
+                match admin_req.config_type {
+                    AdminConfigurationType::ExchangeRate => {
+                        let mut admin_confs = self.admin_config.lock().await;
+                        info!("{}", &admin_req.config_str);
+                        admin_confs.set_exchange_rate(admin_req.config_str.parse()?);
+                        let update = admin_confs
+                            .sign_exchange_rate(&self.keys, self.keys.get_public_key())?;
+                        self.relays.broadcast_note(update).await?;
+                        let admin_update =
+                            admin_confs.sign_exchange_rate(&self.keys, signed_note.get_pubkey())?;
+                        self.relays.broadcast_note(admin_update).await?;
+                    }
+                    _ => {}
                 }
             }
             NOSTR_KIND_SERVER_CONFIG => {
@@ -420,7 +441,11 @@ impl InvoicerBot {
     }
     pub async fn read_relay_pool(self) -> anyhow::Result<()> {
         let filter = NostrFilter::default()
-            .new_kinds(vec![NOSTR_KIND_SERVER_REQUEST, NOSTR_KIND_SERVER_CONFIG])
+            .new_kinds(vec![
+                NOSTR_KIND_SERVER_REQUEST,
+                NOSTR_KIND_SERVER_CONFIG,
+                NOSTR_KIND_ADMIN_REQUEST,
+            ])
             .new_tag("p", vec![TEST_PUB_KEY.to_string()]);
         let commerces_filter = NostrFilter::default().new_kinds(vec![
             NOSTR_KIND_COMMERCE_PROFILE,
