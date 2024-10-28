@@ -17,7 +17,7 @@ use fuente::models::{
     products::{ProductMenu, ProductOrder},
     TEST_PRIV_KEY, TEST_PUB_KEY,
 };
-use lnd::LndClient;
+use lnd::LightningClient;
 use nostro2::{notes::SignedNote, pool::RelayPool, relays::NostrFilter, userkeys::UserKeys};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn, Level};
@@ -31,19 +31,11 @@ pub struct InvoicerBot {
     commerce_profiles: Arc<Mutex<HashMap<String, CommerceProfile>>>,
     menu_notes: Arc<Mutex<HashMap<String, ProductMenu>>>,
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
-    server_wallet: LndClient,
-    commerce_wallets: LndClient,
+    lightning_wallet: LightningClient,
 }
 impl InvoicerBot {
     pub async fn new() -> anyhow::Result<Self> {
-        let server_wallet = LndClient::dud_server().await?;
-        // let server_wallet = LndClient::new("localhost:2100", "../test/lnddatadir/").await?;
-        // TODO
-        // We wont need this second client cause we
-        // will get commerce invoices from their LNURLs
-        // let commerce_wallets =
-        //     LndClient::new("localhost:4201", "../test/commerce_lnd_test/").await?;
-        let commerce_wallets = LndClient::dud_server().await?;
+        let lightning_wallet = LightningClient::dud_server().await?;
         let urls = RELAY_URLS.iter().map(|s| s.to_string()).collect();
         let relays = RelayPool::new(urls).await?;
         let server_keys = UserKeys::new(TEST_PRIV_KEY)?;
@@ -57,8 +49,7 @@ impl InvoicerBot {
             commerce_profiles: Arc::new(Mutex::new(HashMap::new())),
             menu_notes: Arc::new(Mutex::new(HashMap::new())),
             live_orders: Arc::new(Mutex::new(HashMap::new())),
-            server_wallet,
-            commerce_wallets,
+            lightning_wallet,
         })
     }
     async fn create_order_invoice(
@@ -66,13 +57,13 @@ impl InvoicerBot {
         order: ProductOrder,
     ) -> anyhow::Result<(LndInvoice, LndHodlInvoice)> {
         let invoice_amount = order.total() as u64 * 100;
-        let invoice = self.commerce_wallets.get_invoice(invoice_amount).await?;
+        let invoice = self.lightning_wallet.get_invoice(invoice_amount).await?;
         // We create a invoice for user to pay
         // Value i the amount of the order + 200 illuminodes fee + whatever profit Maya
         // wants to make
         let hodl_amount = invoice_amount + 200 + 1000;
         let hodl_invoice = self
-            .server_wallet
+            .lightning_wallet
             .get_hodl_invoice(invoice.r_hash(), hodl_amount)
             .await?;
         Ok((invoice, hodl_invoice))
@@ -93,13 +84,13 @@ impl InvoicerBot {
             .get_commerce_invoice()
             .ok_or(anyhow!("No commerce invoice found"))?;
         let subscriber = self
-            .server_wallet
-            .subscribe_to_invoice(invoice.clone())
+            .lightning_wallet
+            .subscribe_to_invoice(invoice.r_hash_url_safe())
             .await?;
         let mut success = false;
         loop {
             if subscriber.is_closed() {
-                self.server_wallet
+                self.lightning_wallet
                     .cancel_htlc(invoice.r_hash_url_safe())
                     .await?;
                 warn!("Canceled HTLC due to inactivity");
@@ -123,7 +114,7 @@ impl InvoicerBot {
                         info!("Payment received");
                     }
                     HodlState::CANCELED => {
-                        self.server_wallet
+                        self.lightning_wallet
                             .cancel_htlc(invoice.r_hash_url_safe())
                             .await?;
                         self.update_order_status(
@@ -175,12 +166,12 @@ impl InvoicerBot {
     async fn settle_htlc(&self, invoice: LndInvoice) -> anyhow::Result<()> {
         let payment_req =
             LndPaymentRequest::new(invoice.payment_request(), 120, 100.to_string(), false);
-        let (payment_rx, payment_tx) = self.server_wallet.invoice_channel().await?;
+        let (payment_rx, payment_tx) = self.lightning_wallet.invoice_channel().await?;
         payment_tx.send(payment_req).await?;
         while let Ok(payment_status) = payment_rx.recv().await {
             if payment_status.status() == InvoicePaymentState::Succeeded {
                 let _ = self
-                    .server_wallet
+                    .lightning_wallet
                     .settle_htlc(payment_status.preimage())
                     .await;
                 break;
@@ -230,7 +221,7 @@ impl InvoicerBot {
             OrderStatus::Canceled => {
                 if let Some(invoice) = order.get_commerce_invoice() {
                     if let Err(e) = self
-                        .server_wallet
+                        .lightning_wallet
                         .cancel_htlc(invoice.r_hash_url_safe())
                         .await
                     {
