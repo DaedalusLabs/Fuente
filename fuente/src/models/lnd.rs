@@ -119,9 +119,14 @@ impl LndHodlInvoice {
     pub fn payment_request(&self) -> String {
         self.payment_request.clone()
     }
-    pub fn r_hash_url_safe(&self) -> String {
-        let url_safe = BASE64_URL_SAFE.encode(self.payment_hash());
-        url_safe
+    pub fn r_hash_url_safe(&self) -> anyhow::Result<String> {
+        // let r_hash = self
+        //     .payment_request
+        //     .parse::<Bolt11Invoice>()
+        //     .map_err(|e| anyhow::anyhow!(e.to_string()))?
+        //     .p();
+        let url_safe = BASE64_URL_SAFE.encode(self.payment_addr.as_bytes());
+        Ok(url_safe)
     }
 }
 impl TryFrom<String> for LndHodlInvoice {
@@ -280,6 +285,33 @@ impl Display for LndPaymentResponse {
     }
 }
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LndErrorDetail {
+    code: i32,
+    message: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LndError {
+    error: LndErrorDetail,
+}
+impl TryFrom<&String> for LndError {
+    type Error = anyhow::Error;
+    fn try_from(value: &String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(value)?)
+    }
+}
+impl TryFrom<String> for LndError {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(&value)?)
+    }
+}
+impl Display for LndError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string_pretty(self).unwrap())
+    }
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LndResponse<T> {
     pub result: T,
