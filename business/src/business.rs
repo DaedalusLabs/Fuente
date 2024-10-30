@@ -22,6 +22,9 @@ use fuente::{
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
+// 80748881f453306f3129e3a040de263f3dd62726ba03273c248ac33cac59e0c5
+//
+
 fn main() {
     yew::Renderer::<App>::new().render();
 }

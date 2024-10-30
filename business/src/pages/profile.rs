@@ -168,6 +168,8 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
             form.input_value("web").expect("Failed to get web"),
             address.clone().expect("No address found"),
             coords.clone().expect("No coordinates found"),
+            form.input_value("ln_address")
+                .expect("Failed to get lightning address"),
         );
         let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
             .expect("Failed to create profile");
@@ -224,6 +226,14 @@ pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
                 name="web"
                 label="Web"
                 value={commerce_data.web().to_string()}
+                input_type="text"
+                required={true}
+            />
+            <SimpleInput
+                id="ln_address"
+                name="ln_address"
+                label="Lightning Address"
+                value={commerce_data.ln_address().to_string()}
                 input_type="text"
                 required={true}
             />

@@ -200,6 +200,7 @@ impl RelayProvider {
                     }
                 }
             }
+            relay_pool.close().await.unwrap();
         });
         (send_note_tx, filter_tx, unsubscribe_tx, close_tx)
     }

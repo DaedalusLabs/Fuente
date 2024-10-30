@@ -31,6 +31,12 @@ impl DriverData {
             None => None,
         }
     }
+    pub fn get_profile_note(&self) -> Option<SignedNote> {
+        match &self.profile {
+            Some(profile) => Some(profile.signed_note()),
+            None => None,
+        }
+    }
 }
 
 pub enum DriverDataAction {

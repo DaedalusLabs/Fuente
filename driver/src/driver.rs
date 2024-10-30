@@ -3,8 +3,7 @@ use driver::{
         commerce_data::CommerceDataProvider,
         driver_data::{DriverDataProvider, DriverDataStore},
         live_order::OrderHubProvider,
-    },
-    router::DriverPages,
+    }, pages::driver_profile::NewProfileForm, router::DriverPages
 };
 use fuente::{
     contexts::{
@@ -99,6 +98,13 @@ fn login_check(props: &ChildrenProps) -> Html {
     let user_ctx = user_ctx.unwrap();
     if !user_ctx.finished_loading() {
         return html! {<LoadingScreen />};
+    }
+    if user_ctx.get_profile().is_none() {
+        return html! {
+            <div class="flex justify-center items-center flex-1">
+                <NewProfileForm />
+            </div>
+        };
     }
     html! {
         {props.children.clone()}
