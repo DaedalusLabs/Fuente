@@ -1,7 +1,7 @@
 use lightning_invoice::Bolt11Invoice;
 use base64::prelude::*;
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LnAddressPaymentRequest {
     pub pr: String,
 }
@@ -10,16 +10,16 @@ impl LnAddressPaymentRequest {
         let r_hash_b = self
             .pr
             .parse::<Bolt11Invoice>()
-            .map_err(|e| anyhow::anyhow!(e.to_string()))?.signable_hash();
-        let r_hash = BASE64_STANDARD.encode(r_hash_b);
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        let r_hash = BASE64_STANDARD.encode(r_hash_b.payment_hash());
         Ok(r_hash)
     }
     pub fn r_hash_url_safe(&self) -> anyhow::Result<String> {
         let r_hash = self
             .pr
             .parse::<Bolt11Invoice>()
-            .map_err(|e| anyhow::anyhow!(e.to_string()))?.signable_hash();
-        let url_safe = BASE64_URL_SAFE.encode(r_hash);
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        let url_safe = BASE64_URL_SAFE.encode(r_hash.payment_hash());
         Ok(url_safe)
     }
 }

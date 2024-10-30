@@ -1,4 +1,5 @@
 use base64::prelude::*;
+use lightning_invoice::Bolt11Invoice;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -6,6 +7,12 @@ use std::fmt::Display;
 pub struct LndInfo {
     identity_pubkey: String,
     block_height: u32,
+}
+impl TryFrom<&String> for LndInfo {
+    type Error = anyhow::Error;
+    fn try_from(value: &String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(value)?)
+    }
 }
 impl TryFrom<String> for LndInfo {
     type Error = anyhow::Error;
@@ -322,6 +329,15 @@ where
 {
     pub fn inner(&self) -> T {
         self.result.clone()
+    }
+}
+impl<T> TryFrom<&String> for LndResponse<T>
+where
+    T: Serialize + DeserializeOwned + Clone + 'static,
+{
+    type Error = anyhow::Error;
+    fn try_from(value: &String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(value)?)
     }
 }
 impl<T> TryFrom<String> for LndResponse<T>

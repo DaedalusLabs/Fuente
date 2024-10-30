@@ -9,7 +9,7 @@ use wasm_bindgen::JsValue;
 use crate::browser::indexed_db::IdbStoreManager;
 
 use super::{
-    address::ConsumerAddress, consumer_profile::ConsumerProfile, lnd::{LndHodlInvoice, LndInvoice}, nostr_kinds::{
+    address::ConsumerAddress, consumer_profile::ConsumerProfile, ln_address::LnAddressPaymentRequest, lnd::LndHodlInvoice, nostr_kinds::{
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_REQUEST,
     }, products::ProductOrder, upgrade_shared_db, DB_NAME_SHARED, DB_VERSION_SHARED, DRIVER_HUB_PUB_KEY, STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY
 };
@@ -93,7 +93,7 @@ impl ToString for OrderPaymentStatus {
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct OrderInvoiceState {
     order: SignedNote,
-    commerce_invoice: Option<LndInvoice>,
+    commerce_invoice: Option<LnAddressPaymentRequest>,
     consumer_invoice: Option<LndHodlInvoice>,
     payment_status: OrderPaymentStatus,
     order_status: OrderStatus,
@@ -124,7 +124,7 @@ impl OrderInvoiceState {
     pub fn new(
         order: SignedNote,
         consumer_invoice: Option<LndHodlInvoice>,
-        commerce_invoice: Option<LndInvoice>,
+        commerce_invoice: Option<LnAddressPaymentRequest>,
     ) -> Self {
         Self {
             order,
@@ -186,7 +186,7 @@ impl OrderInvoiceState {
     pub fn get_order_status(&self) -> OrderStatus {
         self.order_status.clone()
     }
-    pub fn get_commerce_invoice(&self) -> Option<LndInvoice> {
+    pub fn get_commerce_invoice(&self) -> Option<LnAddressPaymentRequest> {
         self.commerce_invoice.clone()
     }
     pub fn get_consumer_invoice(&self) -> Option<LndHodlInvoice> {

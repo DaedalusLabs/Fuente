@@ -10,7 +10,7 @@ use fuente::models::{
         LndPaymentRequest, LndPaymentResponse, LndResponse,
     },
 };
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use httparse::{Header, Request};
 use nostro2::userkeys::UserKeys;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -155,6 +155,7 @@ impl LightningClient {
             .send()
             .await?;
         let _test = response.text().await?;
+        info!("{}", _test);
         Ok(())
     }
     pub async fn cancel_htlc(&self, payment_hash: String) -> anyhow::Result<()> {
@@ -244,19 +245,15 @@ where
         .await?;
         let (mut websocket_sender, websocket_reader) = ws.split();
         let (tx, receiver) = async_channel::unbounded::<R>();
-        let mut boxed_stream = websocket_reader.fuse();
+        let mut boxed_stream = websocket_reader.into_stream();
         tokio::spawn(async move {
             let mut pings = 0;
-            while let Ok(message) = boxed_stream.select_next_some().await {
-                match message {
-                    tokio_tungstenite::tungstenite::Message::Text(text) => {
-                        if let Ok(response) = LndError::try_from(&text) {
-                            error!("{}", response);
-                            break;
-                        }
-                        match LndResponse::try_from(text) {
+            loop {
+                match boxed_stream.next().await {
+                    Some(Ok(tokio_tungstenite::tungstenite::Message::Text(text))) => {
+                        match LndResponse::try_from(&text) {
                             Ok(response) => {
-                                if let Err(e) = tx.try_send(response.inner()) {
+                                if let Err(e) = tx.send(response.inner()).await {
                                     error!("{}", e);
                                 }
                             }
@@ -265,12 +262,20 @@ where
                                 break;
                             }
                         }
+                        if let Ok(response) = LndError::try_from(&text) {
+                            error!("{}", response);
+                            break;
+                        }
                     }
-                    tokio_tungstenite::tungstenite::Message::Ping(_) => {
+                    Some(Ok(tokio_tungstenite::tungstenite::Message::Ping(_))) => {
                         pings += 1;
                         if pings > timeout_pings {
                             break;
                         }
+                    }
+                    Some(Err(e)) => {
+                        error!("{}", e);
+                        break;
                     }
                     _ => {}
                 }
@@ -293,7 +298,13 @@ where
 #[cfg(test)]
 mod test {
 
-    use fuente::models::lnd::HodlState;
+    use std::sync::Arc;
+
+    use fuente::models::{
+        ln_address::LnAddressPaymentRequest,
+        lnd::{HodlState, InvoicePaymentState, LndPaymentRequest},
+    };
+    use tokio::sync::Mutex;
     use tracing::info;
     use tracing_test::traced_test;
 
@@ -315,6 +326,47 @@ mod test {
             .get_ln_url_invoice(100000, ln_address.to_string())
             .await?;
         info!("{}", pay_request.pr);
+        Ok(())
+    }
+    #[tokio::test]
+    #[traced_test]
+    async fn check_invoice_paid() -> anyhow::Result<()> {
+        let client = LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
+        let ln_address = "42pupusas@blink.sv";
+        let pay_request = client
+            .get_ln_url_invoice(100000, ln_address.to_string())
+            .await?;
+        info!("{}", pay_request.pr);
+        let (receiver, sender) = client.invoice_channel().await?;
+        let mut correct_state = false;
+        sender
+            .send(LndPaymentRequest::new(
+                pay_request.pr.clone(),
+                10,
+                200.to_string(),
+                false,
+            ))
+            .await?;
+        loop {
+            info!("Waiting for state");
+            match receiver.recv().await {
+                Ok(state) => {
+                    info!("{:?}", state.status());
+                    match state.status() {
+                        InvoicePaymentState::Succeeded => {
+                            correct_state = true;
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+                Err(e) => {
+                    info!("{}", e);
+                    break;
+                }
+            }
+        }
+        assert!(correct_state);
         Ok(())
     }
     #[tokio::test]
@@ -353,6 +405,76 @@ mod test {
             }
         }
         assert!(correct_state);
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[traced_test]
+    async fn settle_htlc() -> Result<(), anyhow::Error> {
+        let client = LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
+        let ln_address = "42pupusas@blink.sv";
+        let pay_request = client
+            .get_ln_url_invoice(100000, ln_address.to_string())
+            .await?;
+        let hodl_invoice = client.get_hodl_invoice(pay_request.r_hash()?, 100).await?;
+        info!("{:?}", hodl_invoice.payment_request());
+        let correct_state = Arc::new(Mutex::new(false));
+        let states = client
+            .subscribe_to_invoice(pay_request.r_hash_url_safe()?)
+            .await?;
+        let pr = LndPaymentRequest::new(pay_request.pr.clone(), 10, 200.to_string(), false);
+        let (pay_rx, pay_tx) = client.invoice_channel().await?;
+        let join_1 = tokio::spawn(async move {
+            info!("Sent payment request");
+            loop {
+                if pay_rx.is_closed() && pay_rx.is_empty() {
+                    break;
+                }
+                info!("Waiting for pr state");
+                match pay_rx.recv().await {
+                    Ok(state) => {
+                        info!("PR {:?}", state.status());
+                        match state.status() {
+                            InvoicePaymentState::Succeeded => {
+                                info!("Payment succeeded");
+                                client.settle_htlc(state.preimage()).await.unwrap();
+                                info!("Settled");
+                            }
+                            _ => {}
+                        }
+                    }
+                    Err(e) => {
+                        info!("{}", e);
+                    }
+                }
+            }
+        });
+        let correct_state_c = correct_state.clone();
+        loop {
+            info!("Waiting for state");
+            match states.recv().await {
+                Ok(state) => {
+                    info!("{:?}", state.state());
+                    match state.state() {
+                        HodlState::ACCEPTED => {
+                            pay_tx.send(pr.clone()).await.unwrap();
+                            info!("Sent payment");
+                        }
+                        HodlState::SETTLED => {
+                            info!("REALLY Settled");
+                            *correct_state_c.lock().await = true;
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+                Err(e) => {
+                    info!("{}", e);
+                    break;
+                }
+            }
+        }
+        assert!(*correct_state.lock().await);
         Ok(())
     }
 }

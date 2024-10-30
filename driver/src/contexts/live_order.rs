@@ -154,42 +154,48 @@ pub fn commerce_data_sync() -> Html {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        match order_status.get_order_status() {
-                            OrderStatus::Completed => {
-                                // TODO
-                                // add to local history
-                                gloo::console::info!(
-                                    "Order Completed: ",
-                                    format!("{:?}", order_status.get_order_status())
-                                );
-                            }
-                            OrderStatus::ReadyForDelivery => {
-                                if let Some(signed_note) = order_status.get_courier() {
-                                    if signed_note.get_pubkey()
-                                        == keys.expect("No keys").get_public_key()
-                                    {
+                        if let Some(signed_note) = order_status.get_courier() {
+                            if signed_note.get_pubkey() == keys.expect("No keys").get_public_key() {
+                                match order_status.get_order_status() {
+                                    OrderStatus::Canceled => {
+                                        // TODO
+                                        // add to local history
+                                        gloo::console::info!(
+                                            "Order Canceled: ",
+                                            format!("{:?}", order_status.get_order_status())
+                                        );
+                                        ctx.dispatch(OrderHubAction::DeleteOrder(
+                                            order_status.id(),
+                                        ));
+                                    }
+                                    OrderStatus::Completed => {
+                                        // TODO
+                                        // add to local history
+                                        gloo::console::info!(
+                                            "Order Completed: ",
+                                            format!("{:?}", order_status.get_order_status())
+                                        );
+                                        ctx.dispatch(OrderHubAction::OrderCompleted(
+                                            order_status.id(),
+                                        ));
+                                    }
+                                    _ => {
                                         // If my key matches assigned courier means im assigned
                                         gloo::console::info!(
                                             "New LIVE Order: ",
                                             format!("{:?}", order_status.get_order_status())
                                         );
-                                        ctx.dispatch(OrderHubAction::LiveOrder(order_status));
-                                    } else {
-                                        // if not assigned to me, remove from pool
-                                        ctx.dispatch(OrderHubAction::DeleteOrder(
-                                            order_status.id(),
+                                        ctx.dispatch(OrderHubAction::NewOrder(
+                                            order_status.clone(),
                                         ));
+                                        ctx.dispatch(OrderHubAction::LiveOrder(order_status));
                                     }
-                                } else {
-                                    // No courier assigned means we can add it to pool
-                                    gloo::console::info!(
-                                        "New Order: ",
-                                        format!("{:?}", order_status.id())
-                                    );
-                                    ctx.dispatch(OrderHubAction::NewOrder(order_status));
                                 }
                             }
-                            _ => {}
+                        } else {
+                            // No courier assigned means we can add it to pool
+                            gloo::console::info!("New Order: ", format!("{:?}", order_status.id()));
+                            ctx.dispatch(OrderHubAction::NewOrder(order_status));
                         }
                     }
                 }

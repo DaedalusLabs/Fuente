@@ -1,0 +1,6 @@
+192.168.1.23:2100 {
+    # Timeouts
+    reverse_proxy http://[::1]:7200
+    # Handle errors
+}
+

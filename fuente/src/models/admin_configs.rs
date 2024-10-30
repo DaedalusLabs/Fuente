@@ -120,6 +120,9 @@ impl AdminConfiguration {
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::AdminWhitelist.into();
+
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
         priv_key.sign_nip_04_encrypted(note, receiver)
     }
@@ -132,6 +135,8 @@ impl AdminConfiguration {
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
         priv_key.sign_nip_04_encrypted(note, receiver)
     }
@@ -143,7 +148,9 @@ impl AdminConfiguration {
         let serialized = serde_json::to_string(&self.couriers_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
-        let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
+        let config_str: String = AdminConfigurationType::CourierWhitelist.into();
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
         priv_key.sign_nip_04_encrypted(note, receiver)
     }
@@ -156,6 +163,8 @@ impl AdminConfiguration {
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::ConsumerBlacklist.into();
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
         priv_key.sign_nip_04_encrypted(note, receiver)
     }
@@ -168,6 +177,8 @@ impl AdminConfiguration {
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::UserRegistrations.into();
+        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
+        note.add_tag("d", &receiver);
         note.add_tag("d", &config_str);
         priv_key.sign_nip_04_encrypted(note, receiver)
     }
