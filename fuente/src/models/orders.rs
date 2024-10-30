@@ -9,7 +9,7 @@ use wasm_bindgen::JsValue;
 use crate::browser::indexed_db::IdbStoreManager;
 
 use super::{
-    address::ConsumerAddress, consumer_profile::ConsumerProfile, lnd::{LndHodlInvoice, LndInvoice}, nostr_kinds::{
+    address::ConsumerAddress, consumer_profile::ConsumerProfile, ln_address::LnAddressPaymentRequest, lnd::LndHodlInvoice, nostr_kinds::{
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_REQUEST,
     }, products::ProductOrder, upgrade_shared_db, DB_NAME_SHARED, DB_VERSION_SHARED, DRIVER_HUB_PUB_KEY, STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY
 };
@@ -93,10 +93,11 @@ impl ToString for OrderPaymentStatus {
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct OrderInvoiceState {
     order: SignedNote,
-    commerce_invoice: Option<LndInvoice>,
+    commerce_invoice: Option<LnAddressPaymentRequest>,
     consumer_invoice: Option<LndHodlInvoice>,
     payment_status: OrderPaymentStatus,
     order_status: OrderStatus,
+    courier: Option<SignedNote>,
 }
 impl ToString for OrderInvoiceState {
     fn to_string(&self) -> String {
@@ -123,7 +124,7 @@ impl OrderInvoiceState {
     pub fn new(
         order: SignedNote,
         consumer_invoice: Option<LndHodlInvoice>,
-        commerce_invoice: Option<LndInvoice>,
+        commerce_invoice: Option<LnAddressPaymentRequest>,
     ) -> Self {
         Self {
             order,
@@ -131,6 +132,7 @@ impl OrderInvoiceState {
             commerce_invoice,
             payment_status: OrderPaymentStatus::PaymentPending,
             order_status: OrderStatus::Pending,
+            courier: None,
         }
     }
     pub fn update_payment_status(&mut self, status: OrderPaymentStatus) {
@@ -138,6 +140,9 @@ impl OrderInvoiceState {
     }
     pub fn update_order_status(&mut self, status: OrderStatus) {
         self.order_status = status;
+    }
+    pub fn update_courier(&mut self, courier: SignedNote) {
+        self.courier = Some(courier);
     }
     pub fn sign_customer_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
         let content = self.to_string();
@@ -154,7 +159,7 @@ impl OrderInvoiceState {
         note.add_tag("d", &format!("{}{}", "business", self.order.get_id()));
         Ok(keys.sign_nip_04_encrypted(note, commerce)?)
     }
-    pub fn sign_driver_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_courier_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
         let content = self.to_string();
         let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
         note.add_tag("d", &format!("{}{}", "driver", self.order.get_id()));
@@ -181,11 +186,14 @@ impl OrderInvoiceState {
     pub fn get_order_status(&self) -> OrderStatus {
         self.order_status.clone()
     }
-    pub fn get_commerce_invoice(&self) -> Option<LndInvoice> {
+    pub fn get_commerce_invoice(&self) -> Option<LnAddressPaymentRequest> {
         self.commerce_invoice.clone()
     }
     pub fn get_consumer_invoice(&self) -> Option<LndHodlInvoice> {
         self.consumer_invoice.clone()
+    }
+    pub fn get_courier(&self) -> Option<SignedNote> {
+        self.courier.clone()
     }
     pub fn get_order_request(&self) -> OrderRequest {
         let order: OrderRequest = self.order.clone().try_into().unwrap();

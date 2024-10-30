@@ -3,12 +3,11 @@ use consumer::{
         cart::CartProvider,
         commerce_data::CommerceDataProvider,
         consumer_data::{ConsumerDataProvider, ConsumerDataStore},
-        live_order::LiveOrderProvider,
+        live_order::{LiveOrderProvider, LiveOrderStore},
     },
     pages::new_user::NewProfilePage,
     router::ConsumerPages,
 };
-use html::ChildrenProps;
 use fuente::{
     contexts::{
         key_manager::{NostrIdProvider, NostrIdStore},
@@ -18,8 +17,12 @@ use fuente::{
         atoms::layouts::{LoadingScreen, MainLayout},
         molecules::login::NewUserPage,
     },
-    models::relays::UserRelay,
+    models::{
+        orders::{OrderPaymentStatus, OrderStatus},
+        relays::UserRelay,
+    },
 };
+use html::ChildrenProps;
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
@@ -113,6 +116,115 @@ fn login_check(props: &ChildrenProps) -> Html {
         };
     }
     html! {
+        <>
         {props.children.clone()}
+        <LiveOrderCheck />
+        </>
+    }
+}
+
+#[function_component(LiveOrderCheck)]
+fn live_order_check() -> Html {
+    let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
+    if let Some(order) = &order_ctx.order {
+        match order.1.get_payment_status() {
+            OrderPaymentStatus::PaymentPending => {
+                return html! {
+                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
+                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
+                        <div class="bg-white p-8 rounded-lg">
+                            <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
+                        </div>
+                        <div class="flex flex-col gap-4 text-wrap max-w-md">
+                            <p>{"Order ID: "}{order.1.id()}</p>
+                            <p class="max-w-md text-wrap">{"Invoice: "}{order.1.get_consumer_invoice()}</p>
+                            <BitcoinQrCode 
+                                id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
+                                lightning={order.1.get_consumer_invoice().expect("").payment_request()} type_="svg" />
+                        </div>
+                        <button class="absolute top-4 right-4">
+                            {"Close"}
+                        </button>
+                        </div>
+                    </div>
+                };
+            }
+            OrderPaymentStatus::PaymentReceived => {
+                return html! {
+                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
+                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
+                        <div class="bg-white p-8 rounded-lg">
+                            <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+                        </div>
+                        <div class="flex flex-col gap-4 text-wrap max-w-md">
+                            <p>{"Order ID: "}{order.1.id()}</p>
+                            <p>{"Waiting for confirmation..."}</p>
+                        </div>
+                        <button class="absolute top-4 right-4">
+                            {"Close"}
+                        </button>
+                        </div>
+                    </div>
+                };
+            }
+            OrderPaymentStatus::PaymentSuccess => match order.1.get_order_status() {
+                OrderStatus::Completed => {}
+                OrderStatus::Canceled => {}
+                _ => {
+                    return html! {
+                        <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
+                            <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
+                            <div class="bg-white p-8 rounded-lg">
+                                <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+                            </div>
+                            <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                <p>{"Order ID: "}{order.1.id()}</p>
+                                <p>{"Order Status: "}{order.1.get_order_status()}</p>
+                                <p>{"Courier: "}{order.1.get_courier()}</p>
+                            </div>
+                            <button class="absolute top-4 right-4">
+                                {"Close"}
+                            </button>
+                            </div>
+                        </div>
+                    };
+                }
+            },
+            _ => {}
+        }
+    };
+    html! {<></>}
+}
+#[derive(Properties, Clone, PartialEq)]
+pub struct BitcoinQrCodeProps {
+    pub id: String,
+    pub width: String,
+    pub height: String,
+    pub lightning: String,
+    pub type_: String,
+}
+
+#[function_component(BitcoinQrCode)]
+pub fn bitcoin_qr(props: &BitcoinQrCodeProps) -> Html {
+    let BitcoinQrCodeProps {
+        id,
+        width,
+        height,
+        type_,
+        lightning,
+    } = props.clone();
+    html! {
+    <bitcoin-qr
+        {id}
+        {width}
+        {height}
+        {lightning}
+        type={type_}
+        corners-square-color="#b23c05"
+        corners-dot-color={"#e24a04"}
+        corners-square-type={"extra-rounded"}
+        dots-type={"classy-rounded"}
+        dots-color={"#ff5000"}
+    />
     }
 }

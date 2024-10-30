@@ -55,6 +55,8 @@ pub fn edit_profile_menu() -> Html {
             form.input_value("web").expect("Failed to get web"),
             address.clone().expect("No address found"),
             coords.clone().expect("No coordinates found"),
+            form.input_value("ln_address")
+                .expect("Failed to get lightning address"),
         );
         let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
             .expect("Failed to create profile");
@@ -106,6 +108,14 @@ pub fn profile_inputs() -> Html {
                 input_type="text"
                 required={true}
                 />
+            <SimpleInput
+                id="ln_address"
+                name="ln_address"
+                label="Lightning Address"
+                value=""
+                input_type="text"
+                required={true}
+                />
             <SimpleTextArea
                 id="description"
                 name="description"
@@ -127,7 +137,7 @@ pub fn start_new_address_picker_map(
 ) -> Result<(), JsValue> {
     let map = L::render_map("map", &location)?;
     map_handler.set(Some(map.clone()));
-    let marker = map.add_leaflet_marker(&location)?;
+    let marker = map.add_custom_marker(&location, "public/assets/img/marker.png")?;
     marker_handler.set(Some(marker.clone()));
     geo_handler.set(Some(location));
 

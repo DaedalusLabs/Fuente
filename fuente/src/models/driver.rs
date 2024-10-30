@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE},
+    nostr_kinds::{
+        NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE,
+    },
     upgrade_shared_db, DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_CONSUMER_PROFILES,
 };
 use crate::browser::{geolocation::GeolocationPosition, indexed_db::IdbStoreManager};
@@ -67,6 +69,24 @@ impl DriverProfile {
             &self.to_string(),
         );
         keys.sign_nostr_event(unsigned_note)
+    }
+    pub fn giftwrapped_data(
+        &self,
+        keys: &UserKeys,
+        receiver: String,
+    ) -> anyhow::Result<SignedNote> {
+        let unsigned_note = Note::new(
+            &keys.get_public_key(),
+            NOSTR_KIND_DRIVER_PROFILE,
+            &self.to_string(),
+        );
+        let signed_profile = keys.sign_nostr_event(unsigned_note);
+        let giftwrap = Note::new(
+            &keys.get_public_key(),
+            NOSTR_KIND_CONSUMER_GIFTWRAP,
+            &signed_profile.to_string(),
+        );
+        keys.sign_nip_04_encrypted(giftwrap, receiver)
     }
     pub fn nickname(&self) -> String {
         self.nickname.clone()

@@ -7,7 +7,7 @@ use fuente::{
         nostr_kinds::{
             NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_ORDER_STATE,
         },
-        orders::OrderInvoiceState,
+        orders::{OrderInvoiceState, OrderPaymentStatus, OrderStatus},
         products::ProductMenuIdb,
     },
 };
@@ -18,19 +18,40 @@ use nostro2::{
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LiveOrder {}
+pub struct LiveOrder {
+    pub order: Option<(SignedNote, OrderInvoiceState)>,
+}
 
 impl LiveOrder {}
 
-pub enum LiveOrderAction {}
+pub enum LiveOrderAction {
+    SetOrder(SignedNote, OrderInvoiceState),
+    ClearOrder,
+    CompleteOrder(String),
+}
 
 impl Reducible for LiveOrder {
     type Action = LiveOrderAction;
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-        // match action {
-        // }
-        self
+        match action {
+            LiveOrderAction::SetOrder(order, state) => Rc::new(LiveOrder {
+                order: Some((order, state)),
+            }),
+            LiveOrderAction::ClearOrder => Rc::new(LiveOrder { order: None }),
+            LiveOrderAction::CompleteOrder(order_id) => {
+                if let Some(order) = &self.order {
+                    if order.1.id() == order_id {
+                        Rc::new(LiveOrder { order: None })
+                    } else {
+                        self
+                    }
+                } else {
+                    self
+                }
+
+            }
+        }
     }
 }
 
@@ -43,7 +64,7 @@ pub struct LiveOrderChildren {
 
 #[function_component(LiveOrderProvider)]
 pub fn key_handler(props: &LiveOrderChildren) -> Html {
-    let ctx = use_reducer(|| LiveOrder {});
+    let ctx = use_reducer(|| LiveOrder { order: None });
 
     let ctx_clone = ctx.clone();
     use_effect_with((), move |_| {});
@@ -85,7 +106,19 @@ pub fn commerce_data_sync() -> Html {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        gloo::console::log!("Received order state", format!("{:?}", order_status));
+                        match (
+                            order_status.get_payment_status(),
+                            order_status.get_order_status(),
+                        ) {
+                            (OrderPaymentStatus::PaymentFailed, _) => {}
+                            (_, OrderStatus::Canceled) => {}
+                            (_, OrderStatus::Completed) => {
+                                ctx.dispatch(LiveOrderAction::CompleteOrder(order_status.id()));
+                            }
+                            _ => {
+                                ctx.dispatch(LiveOrderAction::SetOrder(note.clone(), order_status));
+                            }
+                        }
                     }
                 }
             }

@@ -21,6 +21,7 @@ pub struct CommerceProfile {
     web: String,
     lookup: NominatimLookup,
     geolocation: CoordinateStrings,
+    ln_address: String,
 }
 
 impl CommerceProfile {
@@ -31,6 +32,7 @@ impl CommerceProfile {
         web: String,
         lookup: NominatimLookup,
         geo: GeolocationCoordinates,
+        ln_address: String,
     ) -> Self {
         Self {
             name,
@@ -39,6 +41,7 @@ impl CommerceProfile {
             web,
             lookup,
             geolocation: geo.into(),
+            ln_address,
         }
     }
     pub fn signed_data(&self, user_keys: &UserKeys) -> SignedNote {
@@ -64,6 +67,9 @@ impl CommerceProfile {
     }
     pub fn geolocation(&self) -> GeolocationCoordinates {
         self.geolocation.clone().into()
+    }
+    pub fn ln_address(&self) -> &str {
+        &self.ln_address
     }
     pub fn lookup(&self) -> &NominatimLookup {
         &self.lookup

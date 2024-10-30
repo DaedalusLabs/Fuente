@@ -228,7 +228,7 @@ pub fn start_new_address_picker_map(
 ) -> Result<(), JsValue> {
     let map = L::render_map("map", &location)?;
     map_handler.set(Some(map.clone()));
-    let marker = map.add_leaflet_marker(&location)?;
+    let marker = map.add_custom_marker(&location, "public/assets/marker.png")?;
     marker_handler.set(Some(marker.clone()));
     geo_handler.set(Some(location));
 

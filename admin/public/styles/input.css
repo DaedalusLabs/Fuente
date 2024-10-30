@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-primary: 59 17 151;
+    }
+    body {
+        @apply font-product;
+    }
+}
+
+@font-face {
+  font-family: 'OpenSans';
+  src: url('/public/assets/fonts/ProductSans-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'MPlus';
+  src: url('/public/assets/fonts/MPLUSRounded1c-Black.ttf') format('truetype');
+}
+
+@layer utilities {
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+     /* Hide scrollbar for IE, Edge and Firefox */
+      .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+    }
+}
