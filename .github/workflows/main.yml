@@ -1,0 +1,49 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "mera", "dev" ]
+  pull_request:
+    branches: [ "mera", "dev" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v4.1.0
+
+    - name: Install tailwind
+      run: npm install -D tailwindcss
+
+    - name: Install tailwind deps (Forms)
+      run: npm install -D @tailwindcss/forms
+
+    - name: Install tailwind deps (Typography)
+      run: npm install -D @tailwindcss/typography  
+
+    - name: Run Tailwind
+      run: npx tailwindcss -i ./public/styles/input.css -o ./public/styles/output.css -c ./tailwind.config.cjs
+      
+    - name: Install cargo-binstall
+      uses: cargo-bins/cargo-binstall@v1.10.0
+
+    - name: Install Trunk Binary 
+      run: cargo binstall trunk --no-confirm
+      
+    - name: Install WASM toolchain
+      run: rustup target add wasm32-unknown-unknown
+    
+    - name: Build Project
+      run: trunk build
+
+            
+
+          
