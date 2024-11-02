@@ -29,6 +29,9 @@ jobs:
     - name: Install tailwind deps (Typography)
       run: npm install -D @tailwindcss/typography  
 
+    - name: Create temp output.css
+      run: touch ./public/styles/output.css
+      
     - name: Run Tailwind
       run: npx tailwindcss -i ./public/styles/input.css -o ./public/styles/output.css -c ./tailwind.config.cjs
       
