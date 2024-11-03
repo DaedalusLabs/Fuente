@@ -1,12 +1,11 @@
 use std::rc::Rc;
 
 use fuente::{
-    contexts::relay_pool::NostrProps,
-    models::{
+    browser_api::IdbStoreManager, contexts::relay_pool::NostrProps, models::{
         commerce::CommerceProfileIdb,
         nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
         products::ProductMenuIdb,
-    },
+    }
 };
 use nostro2::relays::{NostrFilter, RelayEvents};
 use yew::{platform::spawn_local, prelude::*};
@@ -52,7 +51,7 @@ impl Reducible for CommerceData {
                 commerces.retain(|p| p.id() != profile.id());
                 commerces.push(profile.clone());
                 spawn_local(async move {
-                    profile.save().await.expect("Failed to save");
+                    profile.save_to_store().await.expect("Failed to save");
                 });
                 Rc::new(CommerceData {
                     has_loaded: self.has_loaded,
@@ -65,7 +64,7 @@ impl Reducible for CommerceData {
                 products_lists.retain(|p| p.id() != list.id());
                 products_lists.push(list.clone());
                 spawn_local(async move {
-                    list.save().await.expect("Failed to save");
+                    list.save_to_store().await.expect("Failed to save");
                 });
                 Rc::new(CommerceData {
                     has_loaded: self.has_loaded,
@@ -115,13 +114,13 @@ pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with((), move |_| {
         spawn_local(async move {
-            match CommerceProfileIdb::find_all().await {
+            match CommerceProfileIdb::retrieve_all_from_store().await {
                 Ok(vec) => {
                     ctx_clone.dispatch(CommerceDataAction::LoadCommerceData(vec));
                 }
                 Err(e) => gloo::console::error!(format!("{:?}", e)),
             };
-            match ProductMenuIdb::find_all().await {
+            match ProductMenuIdb::retrieve_all_from_store().await {
                 Ok(vec) => {
                     ctx_clone.dispatch(CommerceDataAction::LoadProductData(vec));
                 }

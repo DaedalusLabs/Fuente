@@ -1,5 +1,4 @@
 use base64::prelude::*;
-use lightning_invoice::Bolt11Invoice;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Display;
 

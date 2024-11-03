@@ -2,7 +2,7 @@ use gloo::utils::format::JsValueSerdeExt;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{JsCast, JsValue};
 
-use crate::browser::{geolocation::GeolocationCoordinates, web_utils::get_object_key};
+use crate::browser_api::{get_object_key, GeolocationCoordinates};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LeafletCoordinates {

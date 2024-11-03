@@ -6,11 +6,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use wasm_bindgen::JsValue;
 
-use crate::browser::indexed_db::IdbStoreManager;
+use crate::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
-    upgrade_shared_db, DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_CONSUMER_PROFILES,
+    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP}, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -107,26 +106,20 @@ impl ConsumerProfile {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConsumerProfileIdb {
-    id: String,
+    pubkey: String,
     note: SignedNote,
     profile: ConsumerProfile,
 }
 
 impl ConsumerProfileIdb {
     pub fn new(profile: ConsumerProfile, keys: &UserKeys) -> Self {
-        let id = keys.get_public_key().to_string();
+        let pubkey = keys.get_public_key().to_string();
         let note = profile.signed_data(keys);
-        Self { id, note, profile }
-    }
-    pub async fn save(self) -> Result<(), JsValue> {
-        self.save_to_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn delete(&self) -> Result<(), JsValue> {
-        self.delete_from_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
+        Self {
+            pubkey,
+            note,
+            profile,
+        }
     }
     pub fn signed_note(&self) -> SignedNote {
         self.note.clone()
@@ -134,25 +127,14 @@ impl ConsumerProfileIdb {
     pub fn profile(&self) -> ConsumerProfile {
         self.profile.clone()
     }
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-    pub async fn find_profile(id: &str) -> Result<Self, JsValue> {
-        Ok(Self::retrieve::<Self>(id)?
-            .await
-            .map_err(|e| format!("{:?}", e))?)
-    }
-    pub async fn find_all_profiles() -> Result<Vec<Self>, JsValue> {
-        Self::retrieve_all_from_store::<Self>()?
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+    pub fn pubkey(&self) -> String {
+        self.pubkey.clone()
     }
 }
 
-impl TryInto<JsValue> for ConsumerProfileIdb {
-    type Error = JsValue;
-    fn try_into(self) -> Result<JsValue, Self::Error> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
+impl Into<JsValue> for ConsumerProfileIdb {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
 
@@ -169,30 +151,30 @@ impl TryFrom<SignedNote> for ConsumerProfileIdb {
         if note.get_kind() != NOSTR_KIND_CONSUMER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let id = note.get_pubkey().to_string();
+        let pubkey = note.get_pubkey().to_string();
         let profile: ConsumerProfile = note.clone().try_into()?;
-        Ok(Self { id, note, profile })
+        Ok(Self {
+            pubkey,
+            note,
+            profile,
+        })
     }
 }
 
 impl IdbStoreManager for ConsumerProfileIdb {
-    fn db_name() -> &'static str {
-        DB_NAME_SHARED
+    fn config() -> crate::browser_api::IdbStoreConfig {
+        crate::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_FUENTE,
+            db_version: DB_VERSION_FUENTE,
+            store_name: STORE_NAME_CONSUMER_PROFILES,
+            document_key: "pubkey",
+        }
     }
-
-    fn db_version() -> u32 {
-        DB_VERSION_SHARED
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.pubkey)
     }
-
-    fn store_name() -> &'static str {
-        STORE_NAME_CONSUMER_PROFILES
-    }
-
-    fn document_key(&self) -> JsValue {
-        JsValue::from_str(&self.id)
-    }
-
-    fn upgrade_db(event: web_sys::Event) -> Result<(), JsValue> {
-        upgrade_shared_db(event)
+    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
+        upgrade_fuente_db(db)?;
+        Ok(())
     }
 }

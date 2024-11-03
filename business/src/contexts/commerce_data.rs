@@ -1,6 +1,5 @@
-use nostro2::relays::{NostrFilter, RelayEvents};
-use std::rc::Rc;
 use fuente::{
+    browser_api::IdbStoreManager,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     models::{
         commerce::{CommerceProfile, CommerceProfileIdb},
@@ -8,6 +7,9 @@ use fuente::{
         products::{ProductMenu, ProductMenuIdb},
     },
 };
+use nostro2::relays::{NostrFilter, RelayEvents};
+use std::rc::Rc;
+use wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,7 +60,7 @@ impl Reducible for CommerceData {
             CommerceDataAction::UpdateCommerceProfile(profile) => {
                 let db_entry = profile.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save");
+                    db_entry.save_to_store().await.expect("Failed to save");
                 });
                 Rc::new(CommerceData {
                     checked_db: self.checked_db,
@@ -70,7 +72,7 @@ impl Reducible for CommerceData {
             CommerceDataAction::UpdateProductList(list) => {
                 let db_entry = list.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save");
+                    db_entry.save_to_store().await.expect("Failed to save");
                 });
                 Rc::new(CommerceData {
                     checked_db: self.checked_db,
@@ -126,13 +128,17 @@ pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(key) = key_ctx.get_key() {
+        if let Some(key) = key_ctx.get_nostr_key() {
             let pubkey = key.get_public_key().to_string();
             spawn_local(async move {
-                if let Ok(profile) = CommerceProfileIdb::find(&pubkey).await {
+                if let Ok(profile) =
+                    CommerceProfileIdb::retrieve_from_store(&JsValue::from_str(&pubkey)).await
+                {
                     ctx_clone.dispatch(CommerceDataAction::LoadCommerceData(profile));
                 }
-                if let Ok(products) = ProductMenuIdb::find(&pubkey).await {
+                if let Ok(products) =
+                    ProductMenuIdb::retrieve_from_store(&JsValue::from_str(&pubkey)).await
+                {
                     ctx_clone.dispatch(CommerceDataAction::LoadProductData(products));
                 }
                 ctx_clone.dispatch(CommerceDataAction::CheckedDb);
@@ -162,7 +168,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(key) = key_ctx.get_key() {
+        if let Some(key) = key_ctx.get_nostr_key() {
             let filter = NostrFilter::default()
                 .new_kinds(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,

@@ -8,13 +8,12 @@ use driver::{
 use fuente::{
     contexts::{
         key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::RelayProvider,
+        relay_pool::{RelayProvider, UserRelay},
     },
     mass::{
         atoms::layouts::{LoadingScreen, MainLayout},
         molecules::login::NewUserPage,
     },
-    models::relays::UserRelay,
 };
 use html::ChildrenProps;
 use yew::prelude::*;
@@ -88,7 +87,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !key_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
-    if key_ctx.get_key().is_none() {
+    if key_ctx.get_nostr_key().is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <NewUserPage />

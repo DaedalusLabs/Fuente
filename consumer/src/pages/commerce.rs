@@ -6,7 +6,7 @@ use crate::contexts::{
 
 use super::PageHeader;
 use fuente::{
-    browser::html::HtmlForm,
+    browser_api::HtmlForm,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     mass::{atoms::layouts::CardComponent, molecules::products::ProductCard},
     models::products::{ProductItem, ProductOrder},
@@ -39,7 +39,7 @@ pub fn history_page(props: &CommercePageProps) -> Html {
     let address = user_ctx.get_default_address();
     let send_order_request = Callback::from(move |e: MouseEvent| {
         e.prevent_default();
-        let keys = key_ctx.get_key();
+        let keys = key_ctx.get_nostr_key();
         let note = cart_ctx.sign_request(
             &keys.unwrap(),
             id.clone(),

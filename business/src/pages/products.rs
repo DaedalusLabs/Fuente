@@ -1,6 +1,6 @@
 use crate::contexts::commerce_data::{CommerceDataAction, CommerceDataStore};
 use fuente::{
-    browser::html::HtmlForm,
+    browser_api::HtmlForm,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     mass::{
         atoms::{
@@ -65,7 +65,7 @@ pub fn product_list_section(props: &EditMenuProps) -> Html {
 
     let new_menu = menu_state.clone();
     let handle = commerce_ctx.clone();
-    let keys = key_ctx.get_key();
+    let keys = key_ctx.get_nostr_key();
     let sender = relay_ctx.send_note.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();

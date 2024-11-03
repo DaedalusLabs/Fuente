@@ -1,14 +1,10 @@
 use crate::contexts::commerce_data::{CommerceDataAction, CommerceDataStore};
 
-use super::PageHeader;
 use fuente::{
-    browser::{
-        geolocation::{GeolocationCoordinates, GeolocationPosition},
-        html::HtmlForm,
-        nominatim::NominatimLookup,
+    browser_api::{
+        HtmlForm, {GeolocationCoordinates, GeolocationPosition},
     },
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    js::leaflet::{LatLng, LeafletMap, Marker, L},
     mass::{
         atoms::{
             forms::{SimpleInput, SimpleTextArea},
@@ -22,10 +18,8 @@ use fuente::{
             },
         },
     },
-    models::{
-        commerce::{CommerceProfile, CommerceProfileIdb},
-        gps::LeafletCoordinates,
-    },
+    models::commerce::{CommerceProfile, CommerceProfileIdb},
+    widgets::leaflet::{LatLng, LeafletMap, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};
@@ -139,7 +133,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_key().expect("No user keys found");
+    let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = handle.clone();
 
@@ -265,7 +259,7 @@ pub struct CommerceAddressProps {
 
 #[function_component(NewAddressPicker)]
 pub fn new_address_menu(props: &CommerceAddressProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
+    // let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let map_state = use_state(|| None);
     let marker_state = use_state(|| None);
     let props = props!(CoordinateLocationProps {
@@ -411,7 +405,7 @@ pub fn address_picker(props: &CoordinateLocationProps) -> Html {
     use_effect_with((), move |_| {
         let address_handle = nominatim_handle.clone();
         spawn_local(async move {
-            if let Ok(position) = GeolocationPosition::get_current_position().await {
+            if let Ok(position) = GeolocationPosition::locate().await {
                 if let Err(e) = start_new_address_picker_map(
                     position.coords.clone(),
                     map_handle,
@@ -448,11 +442,11 @@ pub fn start_new_address_picker_map(
 
     let geo_handler_clone = geo_handler.clone();
     let address_handler_clone = address_handler.clone();
-    let map_closure = move |e: MouseEvent| {
+    let map_closure = move |e: JsValue| {
         let leaflet_event = LatLng::try_from(e).expect("Failed to get coordinates");
-        let coordinates = GeolocationCoordinates::from(&leaflet_event);
+        let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
         geo_handler_clone.set(Some(coordinates.clone()));
-        marker.set_lat_lng(&leaflet_event.into());
+        marker.set_lat_lng(&leaflet_event.try_into().expect("Failed to convert"));
         let handle = address_handler_clone.clone();
         spawn_local(async move {
             if let Ok(address) = NominatimLookup::reverse(coordinates.clone()).await {

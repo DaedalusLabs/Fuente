@@ -34,6 +34,7 @@ pub struct InvoicerBot {
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     lightning_wallet: LightningClient,
 }
+
 impl InvoicerBot {
     pub async fn new() -> anyhow::Result<Self> {
         let lightning_wallet =
