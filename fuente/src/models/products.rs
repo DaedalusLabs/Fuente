@@ -10,11 +10,10 @@ use std::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::browser::indexed_db::IdbStoreManager;
+use crate::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, upgrade_shared_db, DB_NAME_SHARED,
-    DB_VERSION_SHARED, STORE_NAME_PRODUCT_LISTS,
+    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_PRODUCT_LISTS
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -202,7 +201,7 @@ impl TryFrom<SignedNote> for ProductMenu {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProductMenuIdb {
-    id: String,
+    pubkey: String,
     menu: ProductMenu,
     note: SignedNote,
 }
@@ -216,30 +215,10 @@ impl ProductMenuIdb {
         );
         let note = user_keys.sign_nostr_event(unsigned_note);
         Self {
-            id: note.get_pubkey().to_string(),
+            pubkey: note.get_pubkey(),
             menu,
             note,
         }
-    }
-    pub async fn save(self) -> Result<(), JsValue> {
-        self.save_to_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn delete(&self) -> Result<(), JsValue> {
-        self.delete_from_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn find(id: &str) -> Result<Self, JsValue> {
-        Self::retrieve::<Self>(id)?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn find_all() -> Result<Vec<Self>, JsValue> {
-        Self::retrieve_all_from_store::<Self>()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
     }
     pub fn menu(&self) -> ProductMenu {
         self.menu.clone()
@@ -248,7 +227,7 @@ impl ProductMenuIdb {
         self.note.clone()
     }
     pub fn id(&self) -> String {
-        self.id.clone()
+        self.pubkey.clone()
     }
 }
 impl TryFrom<SignedNote> for ProductMenuIdb {
@@ -260,7 +239,7 @@ impl TryFrom<SignedNote> for ProductMenuIdb {
         let content = note.get_content();
         let menu: ProductMenu = serde_json::from_str(&content)?;
         Ok(Self {
-            id: note.get_pubkey().to_string(),
+            pubkey: note.get_pubkey(),
             menu,
             note,
         })
@@ -272,27 +251,26 @@ impl TryFrom<JsValue> for ProductMenuIdb {
         Ok(serde_wasm_bindgen::from_value(js_value)?)
     }
 }
-impl TryInto<JsValue> for ProductMenuIdb {
-    type Error = JsValue;
-    fn try_into(self) -> Result<JsValue, Self::Error> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
+impl Into<JsValue> for ProductMenuIdb {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
 impl IdbStoreManager for ProductMenuIdb {
-    fn db_name() -> &'static str {
-        DB_NAME_SHARED
+    fn config() -> crate::browser_api::IdbStoreConfig {
+        crate::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_FUENTE,
+            db_version: DB_VERSION_FUENTE,
+            store_name: STORE_NAME_PRODUCT_LISTS,
+            document_key: "pubkley",
+        }
     }
-    fn db_version() -> u32 {
-        DB_VERSION_SHARED
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.pubkey)
     }
-    fn store_name() -> &'static str {
-        STORE_NAME_PRODUCT_LISTS
-    }
-    fn document_key(&self) -> JsValue {
-        JsValue::from_str(&self.id)
-    }
-    fn upgrade_db(event: web_sys::Event) -> Result<(), JsValue> {
-        upgrade_shared_db(event)
+    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
+        upgrade_fuente_db(db)?;
+        Ok(())
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]

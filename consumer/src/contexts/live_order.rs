@@ -89,7 +89,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
-        if let Some(keys) = key_ctx.get_key() {
+        if let Some(keys) = key_ctx.get_nostr_key() {
             let filter = NostrFilter::default()
                 .new_kind(NOSTR_KIND_ORDER_STATE)
                 .new_tag("p", vec![keys.get_public_key().to_string()])
@@ -102,7 +102,7 @@ pub fn commerce_data_sync() -> Html {
     });
 
     use_effect_with(unique_notes, move |notes| {
-        if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_key()) {
+        if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_nostr_key()) {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {

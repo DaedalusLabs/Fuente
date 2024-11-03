@@ -148,7 +148,7 @@ pub fn commerce_data_sync() -> Html {
         || {}
     });
 
-    let keys = keys_ctx.get_key().clone();
+    let keys = keys_ctx.get_nostr_key().clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {

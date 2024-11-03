@@ -1,19 +1,24 @@
 use crate::{
     contexts::{
-        commerce_data::CommerceDataStore, driver_data::DriverDataStore, live_order::{OrderHubAction, OrderHubStore},
+        commerce_data::CommerceDataStore,
+        driver_data::DriverDataStore,
+        live_order::{OrderHubAction, OrderHubStore},
     },
     router::DriverRoute,
 };
 use fuente::{
-    browser::geolocation::{GeolocationCoordinates, GeolocationPosition},
+    browser_api::{GeolocationCoordinates, GeolocationPosition},
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    js::leaflet::L,
     mass::atoms::{
         forms::AppLink,
         layouts::LoadingScreen,
         svgs::{HistoryIcon, HomeIcon, MenuBarsIcon, SpinnerIcon, UserBadgeIcon},
     },
-    models::{consumer_profile::ConsumerProfile, orders::{OrderInvoiceState, OrderStatus}},
+    models::{
+        consumer_profile::ConsumerProfile,
+        orders::{OrderInvoiceState, OrderStatus},
+    },
+    widgets::leaflet::{IconOptions, L},
 };
 use gloo::utils::format::JsValueSerdeExt;
 use wasm_bindgen::JsValue;
@@ -63,7 +68,7 @@ pub struct OrderPickupProps {
 pub fn live_order_details(props: &OrderPickupProps) -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Failed to get commerce context");
     let key_ctx = use_context::<NostrIdStore>().expect("Failed to get key context");
-    let keys = key_ctx.get_key().expect("Failed to get keys");
+    let keys = key_ctx.get_nostr_key().expect("Failed to get keys");
     let relay_ctx = use_context::<NostrProps>().expect("Failed to get order context");
     let live_order_ctx = use_context::<OrderHubStore>().expect("Failed to get live order context");
     let sender = relay_ctx.send_note.clone();
@@ -81,7 +86,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     use_effect_with((), move |_| {
         let state = location_state_clone.clone();
         spawn_local(async move {
-            if let Ok(position) = GeolocationPosition::get_current_position().await {
+            if let Ok(position) = GeolocationPosition::locate().await {
                 state.set(Some(position.coords));
             }
         });
@@ -105,7 +110,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
                     order_clone.update_order_status(OrderStatus::Completed);
                     order_ctx.dispatch(OrderHubAction::OrderCompleted(order_clone.id()));
                 }
-                _ => {},
+                _ => {}
             }
             let signed_order = order_clone
                 .sign_server_request(&keys_clone)
@@ -146,7 +151,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
 pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Failed to get commerce context");
     let key_ctx = use_context::<NostrIdStore>().expect("Failed to get key context");
-    let keys = key_ctx.get_key().expect("Failed to get keys");
+    let keys = key_ctx.get_nostr_key().expect("Failed to get keys");
     let relay_ctx = use_context::<NostrProps>().expect("Failed to get order context");
     let driver_ctx = use_context::<DriverDataStore>().expect("Failed to get driver context");
     let driver_profile = driver_ctx
@@ -167,7 +172,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     use_effect_with((), move |_| {
         let state = location_state_clone.clone();
         spawn_local(async move {
-            if let Ok(position) = GeolocationPosition::get_current_position().await {
+            if let Ok(position) = GeolocationPosition::locate().await {
                 state.set(Some(position.coords));
             }
         });
@@ -230,7 +235,8 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         consumer_location,
         own_location,
     } = props;
-    let map_state: UseStateHandle<Option<fuente::js::leaflet::LeafletMap>> = use_state(|| None);
+    let map_state: UseStateHandle<Option<fuente::widgets::leaflet::LeafletMap>> =
+        use_state(|| None);
     let map_id = format!("order-map-{}", order_id);
     let map_id_clone = map_id.clone();
     let state_clone = map_state.clone();
@@ -246,11 +252,26 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         gloo::console::log!("Rendering map on position:", format!("{:?}", position));
         gloo::console::log!("Rendering map on element: ", id.clone());
         let map = L::render_map(&id, &position).expect("Failed to render map");
-        map.add_custom_marker(&commerce_location, "public/assets/img/marker.png")
+        let user_marker_options = IconOptions {
+            icon_url: "public/assets/img/marker.png".to_string(),
+            icon_size: None,
+            icon_anchor: None,
+        };
+        map.add_marker_with_icon(&commerce_location, user_marker_options)
             .expect("Failed to add marker");
-        map.add_custom_marker(&consumer_location, "public/assets/img/my_marker.png")
+        let commerce_marker_options = IconOptions {
+            icon_url: "public/assets/img/my_marker.png".to_string(),
+            icon_size: None,
+            icon_anchor: None,
+        };
+        map.add_marker_with_icon(&commerce_location, commerce_marker_options)
             .expect("Failed to add marker");
-        map.add_custom_marker(&position, "public/assets/img/rider2.png")
+        let rider_marker_options = IconOptions {
+            icon_url: "public/assets/img/rider2.png".to_string(),
+            icon_size: None,
+            icon_anchor: None,
+        };
+        map.add_marker_with_icon(&commerce_location, rider_marker_options)
             .expect("Failed to add marker");
         let js_array = vec![
             vec![commerce_location.latitude, commerce_location.longitude],
@@ -258,7 +279,7 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
             vec![position.latitude, position.longitude],
         ];
         let js_value = JsValue::from_serde(&js_array).expect("Failed to convert to JsValue");
-        map.fit_bounds(&js_value);
+        map.fit_bounds(js_value);
         state.set(Some(map));
         move || {}
     });

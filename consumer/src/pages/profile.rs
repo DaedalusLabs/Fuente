@@ -2,13 +2,8 @@ use crate::contexts::consumer_data::{ConsumerDataAction, ConsumerDataStore};
 
 use super::PageHeader;
 use fuente::{
-    browser::{
-        geolocation::{GeolocationCoordinates, GeolocationPosition},
-        html::HtmlForm,
-        nominatim::NominatimLookup,
-    },
+    browser_api::{GeolocationCoordinates, GeolocationPosition, HtmlForm},
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    js::leaflet::{LatLng, LeafletMap, Marker, L},
     mass::{
         atoms::{
             forms::SimpleInput,
@@ -21,10 +16,10 @@ use fuente::{
         address::{ConsumerAddress, ConsumerAddressIdb},
         consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
     },
+    widgets::leaflet::{IconOptions, LatLng, LeafletMap, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-use web_sys::js_sys::Function;
+use wasm_bindgen::{JsCast, JsValue};
 use yew::{platform::spawn_local, prelude::*, props};
 
 #[function_component(ProfilePage)]
@@ -228,15 +223,20 @@ pub fn start_new_address_picker_map(
 ) -> Result<(), JsValue> {
     let map = L::render_map("map", &location)?;
     map_handler.set(Some(map.clone()));
-    let marker = map.add_custom_marker(&location, "public/assets/marker.png")?;
+    let icon_options = IconOptions {
+        icon_url: "public/assets/marker.png".to_string(),
+        icon_size: None,
+        icon_anchor: None,
+    };
+    let marker = map.add_marker_with_icon(&location, icon_options)?;
     marker_handler.set(Some(marker.clone()));
     geo_handler.set(Some(location));
 
     let geo_handler_clone = geo_handler.clone();
     let address_handler_clone = address_handler.clone();
-    let map_closure = Closure::<dyn Fn(_)>::new(move |e: MouseEvent| {
+    let map_closure = move |e: JsValue| {
         let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
-        let coordinates: GeolocationCoordinates = (&leaflet_event).into();
+        let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
         geo_handler_clone.set(Some(coordinates.clone()));
         marker.set_lat_lng(
             &leaflet_event
@@ -249,9 +249,8 @@ pub fn start_new_address_picker_map(
                 handle.set(Some(address));
             }
         });
-    });
-    let map_function: Function = map_closure.into_js_value().into();
-    map.on("dblclick", map_function);
+    };
+    map.add_closure("dblclick", map_closure);
 
     Ok(())
 }
@@ -282,7 +281,7 @@ pub fn new_address_menu(props: &MenuProps) -> Html {
     let coords = (*coordinate_state).clone();
     let onclick = Callback::from(move |_| {
         if let (Some(address), Some(coords), Some(keys)) =
-            (address.clone(), coords.clone(), key_ctx.get_key())
+            (address.clone(), coords.clone(), key_ctx.get_nostr_key())
         {
             let address = ConsumerAddress::new(address, coords.into());
             let db_entry = ConsumerAddressIdb::new(address.clone(), &keys);
@@ -437,7 +436,7 @@ pub fn address_picker(props: &CoordinateLocationProps) -> Html {
     use_effect_with((), move |_| {
         let address_handle = nominatim_handle.clone();
         spawn_local(async move {
-            if let Ok(position) = GeolocationPosition::get_current_position().await {
+            if let Ok(position) = GeolocationPosition::locate().await {
                 if let Err(e) = start_new_address_picker_map(
                     position.coords.clone(),
                     map_handle,
@@ -466,7 +465,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let profile = user_ctx.get_profile().expect("No user profile found");
-    let keys = key_ctx.get_key().expect("No user keys found");
+    let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = handle.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {

@@ -1,4 +1,4 @@
-use crate::browser::nominatim::NominatimLookup;
+use crate::widgets::leaflet::NominatimLookup;
 use yew::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]

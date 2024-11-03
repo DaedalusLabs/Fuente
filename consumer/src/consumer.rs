@@ -11,16 +11,13 @@ use consumer::{
 use fuente::{
     contexts::{
         key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::RelayProvider,
+        relay_pool::{RelayProvider, UserRelay},
     },
     mass::{
         atoms::layouts::{LoadingScreen, MainLayout},
         molecules::login::NewUserPage,
     },
-    models::{
-        orders::{OrderPaymentStatus, OrderStatus},
-        relays::UserRelay,
-    },
+    models::orders::{OrderPaymentStatus, OrderStatus},
 };
 use html::ChildrenProps;
 use yew::prelude::*;
@@ -97,7 +94,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !key_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
-    if key_ctx.get_key().is_none() {
+    if key_ctx.get_nostr_key().is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <NewUserPage />
@@ -138,7 +135,7 @@ fn live_order_check() -> Html {
                         <div class="flex flex-col gap-4 text-wrap max-w-md">
                             <p>{"Order ID: "}{order.1.id()}</p>
                             <p class="max-w-md text-wrap">{"Invoice: "}{order.1.get_consumer_invoice()}</p>
-                            <BitcoinQrCode 
+                            <BitcoinQrCode
                                 id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
                                 lightning={order.1.get_consumer_invoice().expect("").payment_request()} type_="svg" />
                         </div>
