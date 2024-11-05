@@ -130,7 +130,7 @@ pub fn start_new_address_picker_map(
     geo_handler: UseStateHandle<Option<GeolocationCoordinates>>,
     address_handler: UseStateHandle<Option<NominatimLookup>>,
 ) -> Result<(), JsValue> {
-    let map = L::render_map("map", &location)?;
+    let map = L::render_default_map("map", &location)?;
     map_handler.set(Some(map.clone()));
     let icon_options = IconOptions {
         icon_url: "public/assets/img/marker.png".to_string(),

@@ -24,7 +24,19 @@ pub struct CommerceProfile {
     geolocation: CoordinateStrings,
     ln_address: String,
 }
-
+impl Default for CommerceProfile {
+    fn default() -> Self {
+        Self {
+            name: "".to_string(),
+            description: "".to_string(),
+            telephone: "".to_string(),
+            web: "".to_string(),
+            lookup: NominatimLookup::default(),
+            geolocation: CoordinateStrings::default(),
+            ln_address: "".to_string(),
+        }
+    }
+}
 impl CommerceProfile {
     pub fn new(
         name: String,
@@ -172,6 +184,47 @@ impl IdbStoreManager for CommerceProfileIdb {
     }
     fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
         upgrade_fuente_db(db)?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    async fn _commerce_profile_idb() -> Result<(), JsValue> {
+        init_consumer_db()?;
+        let key_1 = UserKeys::generate();
+        let consumer_address = CommerceProfile::default();
+        let address_idb = CommerceProfileIdb::new(consumer_address.clone(), &key_1)?;
+        address_idb.clone().save_to_store().await.unwrap();
+
+        let key_2 = UserKeys::generate();
+        let address_idb_2 = CommerceProfileIdb::new(consumer_address, &key_2)?;
+        address_idb_2.clone().save_to_store().await.unwrap();
+
+        let retrieved: CommerceProfileIdb =
+            CommerceProfileIdb::retrieve_from_store(&address_idb.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved.id(), address_idb.id());
+
+        let retrieved_2: CommerceProfileIdb =
+            CommerceProfileIdb::retrieve_from_store(&address_idb_2.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved_2.id(), address_idb_2.id());
+
+        let all_addresses = CommerceProfileIdb::retrieve_all_from_store().await.unwrap();
+        assert_eq!(all_addresses.len(), 2);
+
+        let deleted = retrieved.delete_from_store().await;
+        let deleted_2 = retrieved_2.delete_from_store().await;
+        assert!(deleted.is_ok());
+        assert!(deleted_2.is_ok());
         Ok(())
     }
 }

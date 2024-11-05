@@ -17,6 +17,14 @@ pub struct DriverProfile {
     nickname: String,
     telephone: String,
 }
+impl Default for DriverProfile {
+    fn default() -> Self {
+        Self {
+            nickname: "John Doe".to_string(),
+            telephone: "11111111".to_string(),
+        }
+    }
+}
 impl ToString for DriverProfile {
     fn to_string(&self) -> String {
         serde_json::to_string(self).unwrap()
@@ -230,3 +238,45 @@ impl IdbStoreManager for DriverProfileIdb {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    async fn _commerce_profile_idb() -> Result<(), JsValue> {
+        init_consumer_db()?;
+        let key_1 = UserKeys::generate();
+        let consumer_address = DriverProfile::default();
+        let address_idb = DriverProfileIdb::new(consumer_address.clone(), &key_1);
+        address_idb.clone().save_to_store().await.unwrap();
+
+        let key_2 = UserKeys::generate();
+        let address_idb_2 = DriverProfileIdb::new(consumer_address, &key_2);
+        address_idb_2.clone().save_to_store().await.unwrap();
+
+        let retrieved: DriverProfileIdb =
+            DriverProfileIdb::retrieve_from_store(&address_idb.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved.pubkey(), address_idb.pubkey());
+
+        let retrieved_2: DriverProfileIdb =
+            DriverProfileIdb::retrieve_from_store(&address_idb_2.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved_2.pubkey(), address_idb_2.pubkey());
+
+        let all_addresses = DriverProfileIdb::retrieve_all_from_store().await.unwrap();
+        assert_eq!(all_addresses.len(), 2);
+
+        let deleted = retrieved.delete_from_store().await;
+        let deleted_2 = retrieved_2.delete_from_store().await;
+        assert!(deleted.is_ok());
+        assert!(deleted_2.is_ok());
+        Ok(())
+    }
+}
+

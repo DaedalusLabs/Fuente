@@ -8,8 +8,6 @@ pub mod commerce;
 pub mod consumer_profile;
 pub mod driver;
 pub mod gps;
-pub mod ln_address;
-pub mod lnd;
 pub mod nostr_kinds;
 pub mod orders;
 pub mod products;

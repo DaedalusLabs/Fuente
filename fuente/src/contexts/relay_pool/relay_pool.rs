@@ -123,7 +123,6 @@ impl Component for RelayProvider {
             RelayAction::Event(event) => {
                 if let RelayEvents::EVENT(_, ref _note) = event {
                     // Add notification for new event.
-                    ToastifyOptions::new_event_received("note").show();
                 }
                 self.add_event(event);
                 true
@@ -168,13 +167,11 @@ impl RelayProvider {
         
         spawn_local(async move {
             // Show initial connection attempt
-            ToastifyOptions::new_relay_connected("Connecting to relay pool").show();
             
             let relay_pool = match nostro2::pool::RelayPool::new(
                 relays.iter().map(|relay| relay.url.clone()).collect(),
             ).await {
                 Ok(pool) => {
-                    ToastifyOptions::new_relay_connected("Connected to relay pool").show();
                     pool
                 },
                 Err(e) => {
@@ -198,7 +195,6 @@ impl RelayProvider {
                         if let Ok(event) = note {
                             note_cb.emit(event);
                             // Show notification for new note
-                            ToastifyOptions::new_event_received("note").show();
                         }
                     }
                     note = send_note_rx.recv() => {

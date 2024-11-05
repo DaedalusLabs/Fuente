@@ -146,9 +146,69 @@ impl ProductCategory {
         products
     }
 }
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct ProductOrder {
+    products: Vec<ProductItem>,
+}
+impl Default for ProductOrder {
+    fn default() -> Self {
+        Self { products: vec![] }
+    }
+}
+impl ToString for ProductOrder {
+    fn to_string(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+}
+impl TryFrom<String> for ProductOrder {
+    type Error = anyhow::Error;
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(&s)?)
+    }
+}
+impl ProductOrder {
+    pub fn new(products: Vec<ProductItem>) -> Self {
+        Self { products }
+    }
+    pub fn products(&self) -> Vec<ProductItem> {
+        self.products.clone()
+    }
+    pub fn counted_products(&self) -> Vec<(ProductItem, u32)> {
+        let mut counted_products = HashMap::new();
+        self.products.iter().for_each(|product| {
+            let count = counted_products.entry(product.clone()).or_insert(0);
+            *count += 1;
+        });
+        let mut products: Vec<(ProductItem, u32)> = counted_products.into_iter().collect();
+        products.sort_by(|a, b| a.0.order.cmp(&b.0.order));
+        products
+    }
+    pub fn total(&self) -> f64 {
+        self.products
+            .iter()
+            .map(|p| p.price.parse::<f64>().unwrap())
+            .sum()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.products.is_empty()
+    }
+    pub fn add(&mut self, product: ProductItem) {
+        self.products.push(product);
+    }
+    pub fn remove_one(&mut self, product_id: String) {
+        if let Some(i) = self.products.iter().position(|p| p.id == product_id) {
+            self.products.remove(i);
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProductMenu {
     categories: Vec<ProductCategory>,
+}
+impl Default for ProductMenu {
+    fn default() -> Self {
+        Self { categories: vec![] }
+    }
 }
 impl ProductMenu {
     pub fn categories(&self) -> Vec<ProductCategory> {
@@ -262,7 +322,7 @@ impl IdbStoreManager for ProductMenuIdb {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_PRODUCT_LISTS,
-            document_key: "pubkley",
+            document_key: "pubkey",
         }
     }
     fn key(&self) -> JsValue {
@@ -273,53 +333,44 @@ impl IdbStoreManager for ProductMenuIdb {
         Ok(())
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct ProductOrder {
-    products: Vec<ProductItem>,
-}
-impl ToString for ProductOrder {
-    fn to_string(&self) -> String {
-        serde_json::to_string(self).unwrap()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    async fn _commerce_profile_idb() -> Result<(), JsValue> {
+        init_consumer_db()?;
+        let key_1 = UserKeys::generate();
+        let consumer_address = ProductMenu::default();
+        let address_idb = ProductMenuIdb::new(consumer_address.clone(), &key_1);
+        address_idb.clone().save_to_store().await.unwrap();
+
+        let key_2 = UserKeys::generate();
+        let address_idb_2 = ProductMenuIdb::new(consumer_address, &key_2);
+        address_idb_2.clone().save_to_store().await.unwrap();
+
+        let retrieved: ProductMenuIdb =
+            ProductMenuIdb::retrieve_from_store(&address_idb.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved.id(), address_idb.id());
+
+        let retrieved_2: ProductMenuIdb =
+            ProductMenuIdb::retrieve_from_store(&address_idb_2.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved_2.id(), address_idb_2.id());
+
+        let all_addresses = ProductMenuIdb::retrieve_all_from_store().await.unwrap();
+        assert_eq!(all_addresses.len(), 2);
+
+        let deleted = retrieved.delete_from_store().await;
+        let deleted_2 = retrieved_2.delete_from_store().await;
+        assert!(deleted.is_ok());
+        assert!(deleted_2.is_ok());
+        Ok(())
     }
 }
-impl TryFrom<String> for ProductOrder {
-    type Error = anyhow::Error;
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        Ok(serde_json::from_str(&s)?)
-    }
-}
-impl ProductOrder {
-    pub fn new(products: Vec<ProductItem>) -> Self {
-        Self { products }
-    }
-    pub fn products(&self) -> Vec<ProductItem> {
-        self.products.clone()
-    }
-    pub fn counted_products(&self) -> Vec<(ProductItem, u32)> {
-        let mut counted_products = HashMap::new();
-        self.products.iter().for_each(|product| {
-            let count = counted_products.entry(product.clone()).or_insert(0);
-            *count += 1;
-        });
-        let mut products: Vec<(ProductItem, u32)> = counted_products.into_iter().collect();
-        products.sort_by(|a, b| a.0.order.cmp(&b.0.order));
-        products
-    }
-    pub fn total(&self) -> f64 {
-        self.products
-            .iter()
-            .map(|p| p.price.parse::<f64>().unwrap())
-            .sum()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.products.is_empty()
-    }
-    pub fn add(&mut self, product: ProductItem) {
-        self.products.push(product);
-    }
-    pub fn remove_one(&mut self, product_id: String) {
-        if let Some(i) = self.products.iter().position(|p| p.id == product_id) {
-            self.products.remove(i);
-        }
-    }
-}
+

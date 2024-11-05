@@ -161,9 +161,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.32.3"
+version = "0.32.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0032b0e8ead7074cda7fc4f034409607e3f03a6f71d66ade8a307f79b4d99e73"
+checksum = "788902099d47c8682efe6a7afb01c8d58b9794ba66c06affd81c3d6b560743eb"
 dependencies = [
  "base58ck",
  "bech32 0.11.0",
@@ -533,7 +533,7 @@ dependencies = [
  "gloo 0.11.0",
  "hex",
  "js-sys",
- "lightning-invoice",
+ "lightning",
  "nostro2",
  "serde",
  "serde-wasm-bindgen 0.6.5",
@@ -1324,6 +1324,7 @@ dependencies = [
  "futures-util",
  "hex",
  "httparse",
+ "lightning",
  "native-tls",
  "nostro2",
  "reqwest",
@@ -1377,6 +1378,32 @@ name = "libc"
 version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
+
+[[package]]
+name = "lightning"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "base64",
+ "futures-util",
+ "hex",
+ "httparse",
+ "lightning-invoice",
+ "native-tls",
+ "nostro2",
+ "reqwest",
+ "secp256k1 0.27.0",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tokio-tungstenite 0.24.0",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+ "url",
+]
 
 [[package]]
 name = "lightning-invoice"
