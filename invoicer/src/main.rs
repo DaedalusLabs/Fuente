@@ -1,14 +1,11 @@
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
 use std::{collections::HashMap, sync::Arc};
-pub mod ln_client;
 
 use anyhow::anyhow;
 use fuente::models::{
     admin_configs::{AdminConfiguration, AdminConfigurationType, AdminServerRequest},
     commerce::CommerceProfile,
     driver::DriverProfile,
-    ln_address::LnAddressPaymentRequest,
-    lnd::{HodlState, InvoicePaymentState, LndHodlInvoice, LndPaymentRequest},
     nostr_kinds::{
         NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_ORDER_STATE,
@@ -18,7 +15,10 @@ use fuente::models::{
     products::ProductMenu,
     DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, TEST_PRIV_KEY, TEST_PUB_KEY,
 };
-use ln_client::LightningClient;
+use lightning::{
+    HodlState, InvoicePaymentState, LightningClient, LnAddressPaymentRequest, LndHodlInvoice,
+    LndPaymentRequest,
+};
 use nostro2::{notes::SignedNote, pool::RelayPool, relays::NostrFilter, userkeys::UserKeys};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn, Level};
@@ -34,6 +34,7 @@ pub struct InvoicerBot {
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     lightning_wallet: LightningClient,
 }
+
 impl InvoicerBot {
     pub async fn new() -> anyhow::Result<Self> {
         let lightning_wallet =
@@ -546,7 +547,7 @@ impl InvoicerBot {
             }
         }
         reader.close();
-        Ok(())
+        Err(anyhow!("Relay pool closed"))
     }
 }
 
@@ -558,8 +559,15 @@ pub async fn main() -> anyhow::Result<()> {
     info!("Starting Invoicer");
     let bot = InvoicerBot::new().await?;
     info!("Bot created");
-    if let Err(e) = bot.read_relay_pool().await {
-        error!("{:?}", e);
+    let mut close_counters = 0;
+    loop {
+        if close_counters > 10 {
+            break;
+        }
+        if let Err(e) = bot.clone().read_relay_pool().await {
+            error!("{:?}", e);
+            close_counters += 1;
+        }
     }
     Ok(())
 }

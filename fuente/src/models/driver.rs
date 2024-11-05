@@ -8,15 +8,22 @@ use wasm_bindgen::JsValue;
 use super::{
     nostr_kinds::{
         NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE,
-    },
-    upgrade_shared_db, DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_CONSUMER_PROFILES,
+    }, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES
 };
-use crate::browser::{geolocation::GeolocationPosition, indexed_db::IdbStoreManager};
+use crate::browser_api::{GeolocationPosition, IdbStoreManager};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
     nickname: String,
     telephone: String,
+}
+impl Default for DriverProfile {
+    fn default() -> Self {
+        Self {
+            nickname: "John Doe".to_string(),
+            telephone: "11111111".to_string(),
+        }
+    }
 }
 impl ToString for DriverProfile {
     fn to_string(&self) -> String {
@@ -104,7 +111,9 @@ pub struct DriverStateUpdate {
 impl DriverStateUpdate {
     pub async fn new(driver: SignedNote) -> anyhow::Result<Self> {
         let _: DriverProfile = driver.clone().try_into()?;
-        let geo = GeolocationPosition::get_current_position().await?;
+        let geo = GeolocationPosition::locate()
+            .await
+            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
         Ok(Self {
             driver,
             geolocation: geo,
@@ -157,28 +166,20 @@ impl TryFrom<JsValue> for DriverStateUpdate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DriverProfileIdb {
-    id: String,
+    pubkey: String,
     note: SignedNote,
     profile: DriverProfile,
 }
 
 impl DriverProfileIdb {
     pub fn new(profile: DriverProfile, keys: &UserKeys) -> Self {
-        let id = keys.get_public_key().to_string();
+        let pubkey = keys.get_public_key().to_string();
         let note = profile.signed_data(keys);
-        Self { id, note, profile }
-    }
-    pub async fn save(self) -> anyhow::Result<()> {
-        Ok(self
-            .save_to_store()
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
-            .await?)
-    }
-    pub async fn delete(&self) -> anyhow::Result<()> {
-        Ok(self
-            .delete_from_store()
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
-            .await?)
+        Self {
+            pubkey,
+            note,
+            profile,
+        }
     }
     pub fn signed_note(&self) -> SignedNote {
         self.note.clone()
@@ -186,25 +187,14 @@ impl DriverProfileIdb {
     pub fn profile(&self) -> DriverProfile {
         self.profile.clone()
     }
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-    pub async fn find_profile(id: &str) -> anyhow::Result<Self> {
-        Ok(Self::retrieve::<Self>(id)
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
-            .await?)
-    }
-    pub async fn find_all_profiles() -> anyhow::Result<Vec<Self>> {
-        Ok(Self::retrieve_all_from_store::<Self>()
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
-            .await?)
+    pub fn pubkey(&self) -> String {
+        self.pubkey.clone()
     }
 }
 
-impl TryInto<JsValue> for DriverProfileIdb {
-    type Error = JsValue;
-    fn try_into(self) -> Result<JsValue, Self::Error> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
+impl Into<JsValue> for DriverProfileIdb {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
 
@@ -221,30 +211,72 @@ impl TryFrom<SignedNote> for DriverProfileIdb {
         if note.get_kind() != NOSTR_KIND_DRIVER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let id = note.get_pubkey().to_string();
+        let pubkey = note.get_pubkey().to_string();
         let profile: DriverProfile = note.clone().try_into()?;
-        Ok(Self { id, note, profile })
+        Ok(Self {
+            pubkey,
+            note,
+            profile,
+        })
     }
 }
 
 impl IdbStoreManager for DriverProfileIdb {
-    fn db_name() -> &'static str {
-        DB_NAME_SHARED
+    fn config() -> crate::browser_api::IdbStoreConfig {
+        crate::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_FUENTE,
+            db_version: DB_VERSION_FUENTE,
+            store_name: STORE_NAME_CONSUMER_PROFILES,
+            document_key: "pubkey",
+        }
     }
-
-    fn db_version() -> u32 {
-        DB_VERSION_SHARED
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.pubkey)
     }
-
-    fn store_name() -> &'static str {
-        STORE_NAME_CONSUMER_PROFILES
-    }
-
-    fn document_key(&self) -> JsValue {
-        JsValue::from_str(&self.id)
-    }
-
-    fn upgrade_db(event: web_sys::Event) -> Result<(), JsValue> {
-        upgrade_shared_db(event)
+    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
+        upgrade_fuente_db(db)?;
+        Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    async fn _commerce_profile_idb() -> Result<(), JsValue> {
+        init_consumer_db()?;
+        let key_1 = UserKeys::generate();
+        let consumer_address = DriverProfile::default();
+        let address_idb = DriverProfileIdb::new(consumer_address.clone(), &key_1);
+        address_idb.clone().save_to_store().await.unwrap();
+
+        let key_2 = UserKeys::generate();
+        let address_idb_2 = DriverProfileIdb::new(consumer_address, &key_2);
+        address_idb_2.clone().save_to_store().await.unwrap();
+
+        let retrieved: DriverProfileIdb =
+            DriverProfileIdb::retrieve_from_store(&address_idb.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved.pubkey(), address_idb.pubkey());
+
+        let retrieved_2: DriverProfileIdb =
+            DriverProfileIdb::retrieve_from_store(&address_idb_2.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved_2.pubkey(), address_idb_2.pubkey());
+
+        let all_addresses = DriverProfileIdb::retrieve_all_from_store().await.unwrap();
+        assert_eq!(all_addresses.len(), 2);
+
+        let deleted = retrieved.delete_from_store().await;
+        let deleted_2 = retrieved_2.delete_from_store().await;
+        assert!(deleted.is_ok());
+        assert!(deleted_2.is_ok());
+        Ok(())
+    }
+}
+

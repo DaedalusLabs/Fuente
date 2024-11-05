@@ -1,5 +1,5 @@
 use fuente::{
-    browser::html::HtmlForm,
+    browser_api::HtmlForm,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     mass::atoms::forms::{SimpleFormButton, SimpleInput},
     models::consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
@@ -17,7 +17,7 @@ pub fn new_profile() -> Html {
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let user_ctx = user_ctx.clone();
-        let keys = key_ctx.get_key().expect("No user keys found");
+        let keys = key_ctx.get_nostr_key().expect("No user keys found");
         let form_element = HtmlForm::new(e).expect("Failed to get form element");
         let nickname = form_element
             .input_value("name")

@@ -1,9 +1,5 @@
-use nostro2::{
-    notes::SignedNote,
-    relays::{NostrFilter, RelayEvents},
-};
-use std::rc::Rc;
 use fuente::{
+    browser_api::IdbStoreManager,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     models::{
         address::{ConsumerAddress, ConsumerAddressIdb},
@@ -11,6 +7,12 @@ use fuente::{
         nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
     },
 };
+use nostro2::{
+    notes::SignedNote,
+    relays::{NostrFilter, RelayEvents},
+};
+use std::rc::Rc;
+use wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -84,7 +86,10 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::NewAddress(address) => {
                 let db_entry = address.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save address");
+                    db_entry
+                        .save_to_store()
+                        .await
+                        .expect("Failed to save address");
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -99,7 +104,7 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::DeleteAddress(address) => {
                 let db_entry = address.clone();
                 spawn_local(async move {
-                    let _ = db_entry.delete().await;
+                    let _ = db_entry.delete_from_store().await;
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -135,7 +140,10 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::NewProfile(profile) => {
                 let db_entry = profile.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save profile");
+                    db_entry
+                        .save_to_store()
+                        .await
+                        .expect("Failed to save profile");
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -146,7 +154,7 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::DeleteProfile(profile) => {
                 let db_entry = profile.clone();
                 spawn_local(async move {
-                    let _ = db_entry.delete().await;
+                    let _ = db_entry.delete_from_store().await;
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -176,12 +184,16 @@ pub fn key_handler(props: &ConsumerDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("User context not found");
     use_effect_with(key_ctx, |key_ctx| {
-        if let Some(key) = key_ctx.get_key() {
+        if let Some(key) = key_ctx.get_nostr_key() {
             spawn_local(async move {
-                if let Ok(profile) = ConsumerProfileIdb::find_profile(&key.get_public_key()).await {
+                if let Ok(profile) = ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(
+                    &key.get_public_key(),
+                ))
+                .await
+                {
                     ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile));
                 }
-                if let Ok(addresses) = ConsumerAddressIdb::find_all().await {
+                if let Ok(addresses) = ConsumerAddressIdb::retrieve_all_from_store().await {
                     ctx_clone.dispatch(ConsumerDataAction::LoadAddresses(addresses));
                 }
                 ctx_clone.dispatch(ConsumerDataAction::FinishedLoadingDb);
@@ -210,7 +222,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx.clone(), move |keys| {
-        if let Some(keys) = keys.get_key() {
+        if let Some(keys) = keys.get_nostr_key() {
             if &(*id_handle) == "" {
                 let pubkey = keys.get_public_key();
                 spawn_local(async move {
@@ -232,7 +244,7 @@ pub fn commerce_data_sync() -> Html {
             match note.get_kind() {
                 NOSTR_KIND_CONSUMER_PROFILE => {
                     let decrypted_note_str = key_ctx
-                        .get_key()
+                        .get_nostr_key()
                         .expect("No keys found")
                         .decrypt_nip_04_content(note)
                         .expect("Failed to decrypt note");

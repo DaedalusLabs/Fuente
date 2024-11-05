@@ -1,11 +1,10 @@
 use crate::{
-    browser::{html::HtmlForm, web_utils::clipboard_copy},
-    contexts::key_manager::{NostrIdAction, NostrIdStore},
+    browser_api::{clipboard_copy, HtmlForm},
+    contexts::key_manager::{NostrIdAction, NostrIdStore, UserIdentity},
     mass::atoms::{
         forms::{SimpleFormButton, SimpleInput},
         svgs::CopyIcon,
     },
-    models::consumer_id::UserIdentity,
 };
 use nostro2::userkeys::UserKeys;
 use yew::{platform::spawn_local, prelude::*};
@@ -91,8 +90,13 @@ pub fn new_user_form() -> Html {
         let user_ctx = user_ctx.clone();
         let new_keys = new_keys.clone();
         spawn_local(async move {
-            let user_identity = UserIdentity::from_new_keys(new_keys).await;
-            let keys = user_identity.get_user_keys().await.unwrap();
+            let user_identity = UserIdentity::from_new_keys(new_keys)
+                .await
+                .expect("Failed to create user identity");
+            let keys = user_identity
+                .get_user_keys()
+                .await
+                .expect("Failed to get user keys");
             user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
         });
     });
@@ -110,7 +114,7 @@ pub fn new_user_form() -> Html {
                 <button
                     type="button"
                     onclick={Callback::from(move |_: MouseEvent| {
-                        clipboard_copy(&key_clone);
+                         clipboard_copy(&key_clone);
                     })}
                     class="flex flex-row-reverse gap-0.5 text-blue-400 items-center text-sm w-full">
                         {"Copy Key"}
@@ -142,8 +146,13 @@ pub fn import_user_form() -> Html {
             UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
-            let user_identity = UserIdentity::from_new_keys(user_keys).await;
-            let keys = user_identity.get_user_keys().await.unwrap();
+            let user_identity = UserIdentity::from_new_keys(user_keys)
+                .await
+                .expect("Failed to create user identity");
+            let keys = user_identity
+                .get_user_keys()
+                .await
+                .expect("Failed to get user keys");
             user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
         });
     });
@@ -189,7 +198,9 @@ pub fn import_user_form() -> Html {
             UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
-            let user_identity = UserIdentity::new(user_keys).await;
+            let user_identity = UserIdentity::from_new_keys(user_keys)
+                .await
+                .expect("Failed to create user identity");
             let keys = user_identity.get_user_keys().await.unwrap();
             user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
         });
@@ -211,4 +222,3 @@ pub fn import_user_form() -> Html {
         </form>
     }
 }
-

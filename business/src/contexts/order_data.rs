@@ -1,11 +1,9 @@
 use fuente::{
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
+    browser_api::IdbStoreManager, contexts::{key_manager::NostrIdStore, relay_pool::NostrProps}, models::{
         nostr_kinds::NOSTR_KIND_ORDER_STATE,
         orders::{OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus},
-        sync::LastSyncTime,
         TEST_PUB_KEY,
-    },
+    }
 };
 use nostro2::relays::{NostrFilter, RelayEvents};
 use std::rc::Rc;
@@ -112,7 +110,7 @@ pub fn key_handler(props: &OrderDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
 
-    use_effect_with(key_ctx.get_key(), move |user_key| {
+    use_effect_with(key_ctx.get_nostr_key(), move |user_key| {
         let user_key = user_key.clone();
         spawn_local(async move {
             if let Some(keys) = user_key {
@@ -146,7 +144,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(keys) = key_ctx.get_key() {
+        if let Some(keys) = key_ctx.get_nostr_key() {
             spawn_local(async move {
                 // let last_sync_time = match LastSyncTime::get_last_sync_time().await {
                 //     Ok(time) => time,
@@ -160,9 +158,9 @@ pub fn commerce_data_sync() -> Html {
                     .subscribe();
                 id_handle.set(filter.id());
                 subscriber.emit(filter);
-                LastSyncTime::update_sync_time(nostro2::utils::get_unix_timestamp())
-                    .await
-                    .expect("Failed to update sync time");
+                // LastSyncTime::update_sync_time(nostro2::utils::get_unix_timestamp())
+                //     .await
+                //     .expect("Failed to update sync time");
             });
         }
         || {}
@@ -180,7 +178,7 @@ pub fn commerce_data_sync() -> Html {
     });
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
-    let keys = key_ctx.get_key();
+    let keys = key_ctx.get_nostr_key();
     use_effect_with(unique_notes, move |notes| {
         if let (Some(note), Some(keys)) = (notes.last(), keys) {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
@@ -191,7 +189,7 @@ pub fn commerce_data_sync() -> Html {
                         spawn_local(async move {
                             db_entry
                                 .expect("Failed to create order entry")
-                                .save()
+                                .save_to_store()
                                 .await
                                 .expect("Failed to save order entry");
                         })

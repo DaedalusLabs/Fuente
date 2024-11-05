@@ -3,19 +3,16 @@ use std::io::Read;
 use async_channel::{Receiver, Sender};
 use base64::prelude::*;
 
-use fuente::models::{
-    ln_address::{LnAddressConfirmation, LnAddressPaymentRequest},
+use crate::{
+    ln_address::LnAddressPaymentRequest,
     lnd::{
-        LndError, LndHodlInvoice, LndHodlInvoiceState, LndInfo, LndInvoice, LndInvoiceRequestBody,
-        LndPaymentRequest, LndPaymentResponse, LndResponse,
+        LndHodlInvoice, LndHodlInvoiceState, LndInfo, LndInvoice, LndInvoiceRequestBody,
+        LndPaymentRequest, LndPaymentResponse,
     },
+    LightningAddress, LndWebsocket,
 };
-use futures_util::{SinkExt, StreamExt};
-use httparse::{Header, Request};
-use nostro2::userkeys::UserKeys;
 use reqwest::header::{HeaderMap, HeaderValue};
-use serde::{de::DeserializeOwned, Serialize};
-use tracing::{error, info};
+use tracing::info;
 
 #[derive(Clone)]
 pub struct LightningClient {
@@ -55,10 +52,6 @@ impl LightningClient {
     }
     fn macaroon(data_dir: &'static str) -> anyhow::Result<String> {
         let mut macaroon = vec![];
-        // let mut file = std::fs::File::open(&format!(
-        //     "{}/data/chain/bitcoin/regtest/admin.macaroon",
-        //     data_dir
-        // ))?;
         let mut file = std::fs::File::open(data_dir)?;
         file.read_to_end(&mut macaroon)?;
         Ok(hex::encode(macaroon))
@@ -89,13 +82,8 @@ impl LightningClient {
         milisats: u64,
         ln_url: String,
     ) -> anyhow::Result<LnAddressPaymentRequest> {
-        let (user, domain) = ln_url.split_at(ln_url.find('@').unwrap());
-        let url = format!("https://{}/.well-known/lnurlp/{}", domain, user);
-        let response = self.client.get(&url).send().await?.text().await?;
-        let confirmation = LnAddressConfirmation::try_from(response)?;
-        let pr_url = format!("{}?amount={}", confirmation.callback, milisats);
-        let pay_request_fetch = self.client.get(&pr_url).send().await?.text().await?;
-        let pay_request = LnAddressPaymentRequest::try_from(pay_request_fetch)?;
+        let ln_address = LightningAddress::new(ln_url);
+        let pay_request = ln_address.get_invoice(&self.client, milisats).await?;
         Ok(pay_request)
     }
     pub async fn invoice_channel(
@@ -155,6 +143,7 @@ impl LightningClient {
             .send()
             .await?;
         let _test = response.text().await?;
+        info!("{}", _test);
         Ok(())
     }
     pub async fn cancel_htlc(&self, payment_hash: String) -> anyhow::Result<()> {
@@ -170,130 +159,10 @@ impl LightningClient {
     }
 }
 
-pub struct LndWebsocket<R, S> {
-    pub receiver: async_channel::Receiver<R>,
-    pub sender: async_channel::Sender<S>,
-}
-
-impl<R, S> LndWebsocket<R, S>
-where
-    R: TryFrom<String>
-        + TryInto<String>
-        + Send
-        + Sync
-        + 'static
-        + Serialize
-        + DeserializeOwned
-        + Clone,
-    <R as TryFrom<std::string::String>>::Error: std::marker::Send + std::fmt::Debug,
-    S: TryInto<String> + Send + Sync + 'static,
-    <S as TryInto<std::string::String>>::Error: std::marker::Send + std::fmt::Debug,
-{
-    pub async fn new(
-        url: String,
-        macaroon: String,
-        request: String,
-        timeout_pings: usize,
-    ) -> anyhow::Result<Self> {
-        let random_key = UserKeys::generate().get_public_key();
-        let mut headers = [
-            Header {
-                name: "Grpc-Metadata-macaroon",
-                value: macaroon.as_bytes(),
-            },
-            Header {
-                name: "Sec-WebSocket-Key",
-                value: random_key.as_bytes(),
-            },
-            Header {
-                name: "Host",
-                value: url.as_bytes(),
-            },
-            Header {
-                name: "Connection",
-                value: "Upgrade".as_bytes(),
-            },
-            Header {
-                name: "Upgrade",
-                value: "websocket".as_bytes(),
-            },
-            httparse::Header {
-                name: "Sec-WebSocket-Version",
-                value: "13".as_bytes(),
-            },
-        ];
-        let mut req = Request::new(&mut headers);
-        req.method = Some("GET");
-        req.path = Some(&request);
-        req.version = Some(1);
-
-        // Prepare the websocket connection with SSL
-        let danger_conf = Some(tokio_tungstenite::tungstenite::protocol::WebSocketConfig {
-            accept_unmasked_frames: true,
-            ..Default::default()
-        });
-        let tls = native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(true)
-            .build()?;
-        let (ws, _response) = tokio_tungstenite::connect_async_tls_with_config(
-            req,
-            danger_conf,
-            false,
-            Some(tokio_tungstenite::Connector::NativeTls(tls)),
-        )
-        .await?;
-        let (mut websocket_sender, websocket_reader) = ws.split();
-        let (tx, receiver) = async_channel::unbounded::<R>();
-        let mut boxed_stream = websocket_reader.fuse();
-        tokio::spawn(async move {
-            let mut pings = 0;
-            while let Ok(message) = boxed_stream.select_next_some().await {
-                match message {
-                    tokio_tungstenite::tungstenite::Message::Text(text) => {
-                        if let Ok(response) = LndError::try_from(&text) {
-                            error!("{}", response);
-                            break;
-                        }
-                        match LndResponse::try_from(text) {
-                            Ok(response) => {
-                                if let Err(e) = tx.try_send(response.inner()) {
-                                    error!("{}", e);
-                                }
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                                break;
-                            }
-                        }
-                    }
-                    tokio_tungstenite::tungstenite::Message::Ping(_) => {
-                        pings += 1;
-                        if pings > timeout_pings {
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        });
-        let (sender, rcv_tx) = async_channel::unbounded::<S>();
-        tokio::spawn(async move {
-            while let Ok(message) = rcv_tx.recv().await {
-                let message: String = message.try_into().unwrap();
-                websocket_sender
-                    .send(tokio_tungstenite::tungstenite::Message::Text(message))
-                    .await
-                    .unwrap();
-            }
-        });
-        Ok(Self { receiver, sender })
-    }
-}
-
 #[cfg(test)]
 mod test {
 
-    use fuente::models::lnd::HodlState;
+    use crate::lnd::HodlState;
     use tracing::info;
     use tracing_test::traced_test;
 
@@ -301,20 +170,9 @@ mod test {
     #[tokio::test]
     #[traced_test]
     async fn test_connection() -> anyhow::Result<()> {
-        let client = LightningClient::new("lnd.illuminodes.com", "./invoice.macaroon").await?;
+        let client = LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
         let invoice = client.get_invoice(100).await?;
         info!("{:?}", invoice);
-        Ok(())
-    }
-    #[tokio::test]
-    #[traced_test]
-    async fn test_ln_url() -> anyhow::Result<()> {
-        let client = LightningClient::new("lnd.illuminodes.com", "./invoice.macaroon").await?;
-        let ln_address = "42pupusas@blink.sv";
-        let pay_request = client
-            .get_ln_url_invoice(100000, ln_address.to_string())
-            .await?;
-        info!("{}", pay_request.pr);
         Ok(())
     }
     #[tokio::test]
@@ -355,4 +213,76 @@ mod test {
         assert!(correct_state);
         Ok(())
     }
+
+    // #[tokio::test]
+    // #[traced_test]
+    // async fn settle_htlc() -> Result<(), anyhow::Error> {
+    //  use std::sync::Arc;
+    //     use tokio::sync::Mutex;
+    //     let client = LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
+    //     let ln_address = "42pupusas@blink.sv";
+    //     let pay_request = client
+    //         .get_ln_url_invoice(10000, ln_address.to_string())
+    //         .await?;
+    //     let hodl_invoice = client.get_hodl_invoice(pay_request.r_hash()?, 20).await?;
+    //     info!("{:?}", hodl_invoice.payment_request());
+    //     let correct_state = Arc::new(Mutex::new(false));
+    //     let states = client
+    //         .subscribe_to_invoice(pay_request.r_hash_url_safe()?)
+    //         .await?;
+    //     let pr = LndPaymentRequest::new(pay_request.pr.clone(), 10, 10.to_string(), false);
+    //     let (pay_rx, pay_tx) = client.invoice_channel().await?;
+    //     tokio::spawn(async move {
+    //         info!("Sent payment request");
+    //         loop {
+    //             if pay_rx.is_closed() && pay_rx.is_empty() {
+    //                 break;
+    //             }
+    //             info!("Waiting for pr state");
+    //             match pay_rx.recv().await {
+    //                 Ok(state) => {
+    //                     match state.status() {
+    //                         InvoicePaymentState::Succeeded => {
+    //                             info!("Payment succeeded");
+    //                             client.settle_htlc(state.preimage()).await.unwrap();
+    //                             info!("Settled");
+    //                         }
+    //                         _ => {}
+    //                     }
+    //                 }
+    //                 Err(e) => {
+    //                     info!("{}", e);
+    //                 }
+    //             }
+    //         }
+    //     });
+    //     let correct_state_c = correct_state.clone();
+    //     loop {
+    //         info!("Waiting for state");
+    //         match states.recv().await {
+    //             Ok(state) => {
+    //                 info!("{:?}", state.state());
+    //                 match state.state() {
+    //                     HodlState::OPEN => {}
+    //                     HodlState::ACCEPTED => {
+    //                         pay_tx.send(pr.clone()).await.unwrap();
+    //                         info!("Sent payment");
+    //                     }
+    //                     HodlState::SETTLED => {
+    //                         info!("REALLY Settled");
+    //                         *correct_state_c.lock().await = true;
+    //                         break;
+    //                     }
+    //                     _ => {}
+    //                 }
+    //             }
+    //             Err(e) => {
+    //                 info!("{}", e);
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     assert!(*correct_state.lock().await);
+    //     Ok(())
+    // }
 }

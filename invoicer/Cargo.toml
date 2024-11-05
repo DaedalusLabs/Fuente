@@ -12,6 +12,8 @@ sha2.workspace = true
 base64.workspace = true
 nostro2.workspace = true
 
+lightning.workspace = true
+
 anyhow.workspace = true
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
@@ -26,5 +28,5 @@ reqwest = { version = "0.12.7", features = ["json"] }
 url = "2.5.2"
 
 hex.workspace = true
-secp256k1 = { version = "0.27.0", features = ["global-context"] }
+secp256k1 = { version = "0.30.0", features = ["global-context"] }
 

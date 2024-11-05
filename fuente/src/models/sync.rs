@@ -1,29 +1,26 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 
-use crate::browser::indexed_db::IdbStoreManager;
+use crate::browser_api::IdbStoreManager;
 
-use super::{upgrade_consumer_db, DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_CONFIGS};
+use super::{DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_CONFIGS};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LastSyncTime {
-    pub id: String,
+    pub tag: String,
     pub timestamp: u64,
 }
 impl LastSyncTime {
     pub async fn update_sync_time(timestamp: u64) -> Result<(), JsValue> {
         let new = Self {
-            id: "last_sync_time".to_string(),
+            tag: "last_sync_time".to_string(),
             timestamp,
         };
-        new.save_to_store()?
-            .await
-            .map_err(|e| JsValue::from_str(&format!("{}", e)))
+        new.save_to_store().await
     }
     pub async fn get_last_sync_time() -> Result<u64, JsValue> {
-        let last_sync_time = Self::retrieve::<Self>("last_sync_time")?
-            .await
-            .map_err(|e| JsValue::from_str(&format!("{}", e)))?;
+        let last_sync_time: Self =
+            Self::retrieve_from_store(&JsValue::from_str("last_sync_time")).await?;
         Ok(last_sync_time.timestamp)
     }
 }
@@ -33,26 +30,21 @@ impl TryFrom<JsValue> for LastSyncTime {
         Ok(serde_wasm_bindgen::from_value(value)?)
     }
 }
-impl TryInto<JsValue> for LastSyncTime {
-    type Error = JsValue;
-    fn try_into(self) -> Result<JsValue, Self::Error> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
+impl Into<JsValue> for LastSyncTime {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
 impl IdbStoreManager for LastSyncTime {
-    fn store_name() -> &'static str {
-        STORE_NAME_CONFIGS
+    fn config() -> crate::browser_api::IdbStoreConfig {
+        crate::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_SHARED,
+            db_version: DB_VERSION_SHARED,
+            store_name: STORE_NAME_CONFIGS,
+            document_key: "tag",
+        }
     }
-    fn db_name() -> &'static str {
-        DB_NAME_SHARED
-    }
-    fn db_version() -> u32 {
-        DB_VERSION_SHARED
-    }
-    fn document_key(&self) -> JsValue {
-        JsValue::from_str(&self.id)
-    }
-    fn upgrade_db(event: web_sys::Event) -> Result<(), JsValue> {
-        upgrade_consumer_db(event)
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.tag)
     }
 }

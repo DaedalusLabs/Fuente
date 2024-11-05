@@ -1,3 +1,4 @@
+use crate::widgets::toastify::ToastifyOptions;
 use std::collections::HashMap;
 
 use async_channel::{unbounded, Sender};
@@ -9,7 +10,8 @@ use nostro2::{
 use wasm_bindgen::JsValue;
 use yew::platform::spawn_local;
 use yew::{prelude::*, props};
-use crate::models::relays::UserRelay;
+
+use super::nostr_relay::UserRelay;
 
 #[derive(Clone, Debug, Properties, PartialEq)]
 pub struct RelayContextProps {
@@ -119,6 +121,9 @@ impl Component for RelayProvider {
                 false
             }
             RelayAction::Event(event) => {
+                if let RelayEvents::EVENT(_, ref _note) = event {
+                    // Add notification for new event.
+                }
                 self.add_event(event);
                 true
             }
@@ -159,14 +164,26 @@ impl RelayProvider {
         let (filter_tx, filter_rx) = unbounded::<NostrSubscription>();
         let (unsubscribe_tx, unsubscribe_rx) = unbounded::<String>();
         let (close_tx, close_rx) = unbounded::<()>();
+        
         spawn_local(async move {
-            let relay_pool = nostro2::pool::RelayPool::new(
+            // Show initial connection attempt
+            
+            let relay_pool = match nostro2::pool::RelayPool::new(
                 relays.iter().map(|relay| relay.url.clone()).collect(),
-            )
-            .await
-            .expect("Failed to create relay pool");
+            ).await {
+                Ok(pool) => {
+                    pool
+                },
+                Err(e) => {
+                    ToastifyOptions::new_relay_error(&format!("Failed to create relay pool: {}", e))
+                        .show();
+                    return;
+                }
+            };
+    
             let pooled_notes = relay_pool.pooled_notes();
             let relay_events = relay_pool.all_events();
+            
             loop {
                 tokio::select! {
                     event = relay_events.recv() => {
@@ -177,24 +194,35 @@ impl RelayProvider {
                     note = pooled_notes.recv() => {
                         if let Ok(event) = note {
                             note_cb.emit(event);
+                            // Show notification for new note
                         }
                     }
                     note = send_note_rx.recv() => {
                         if let Ok(note) = note {
-                            relay_pool.broadcast_note(note).await.unwrap();
+                            if let Err(e) = relay_pool.broadcast_note(note).await {
+                                ToastifyOptions::new_relay_error(&format!("Error broadcasting note: {}", e))
+                                    .show();
+                            }
                         }
                     }
                     filter = filter_rx.recv() => {
                         if let Ok(filter) = filter {
-                            relay_pool.subscribe(filter).await.unwrap();
+                            if let Err(e) = relay_pool.subscribe(filter).await {
+                                ToastifyOptions::new_relay_error(&format!("Error subscribing: {}", e))
+                                    .show();
+                            }
                         }
                     }
                     unsubscribe = unsubscribe_rx.recv() => {
                         if let Ok(filter) = unsubscribe {
-                            relay_pool.cancel_subscription(filter).await.unwrap();
+                            if let Err(e) = relay_pool.cancel_subscription(filter).await {
+                                ToastifyOptions::new_relay_error(&format!("Error unsubscribing: {}", e))
+                                    .show();
+                            }
                         }
                     }
                     _ = close_rx.recv() => {
+                        ToastifyOptions::new_relay_disconnected("Disconnecting from relay pool").show();
                         let _ = relay_pool.close().await;
                         break;
                     }
@@ -202,6 +230,7 @@ impl RelayProvider {
             }
             relay_pool.close().await.unwrap();
         });
+        
         (send_note_tx, filter_tx, unsubscribe_tx, close_tx)
     }
 
