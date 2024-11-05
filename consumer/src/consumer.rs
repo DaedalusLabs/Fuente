@@ -9,27 +9,11 @@ use consumer::{
     router::ConsumerPages,
 };
 use fuente::{
-    browser_api::GeolocationCoordinates,
-    contexts::{
+    browser_api::GeolocationCoordinates, contexts::{
         init_nostr_db,
         key_manager::{NostrIdProvider, NostrIdStore},
         relay_pool::{RelayProvider, UserRelay},
-    },
-    mass::{
-        atoms::layouts::{LoadingScreen, MainLayout},
-        molecules::{
-            address::{NewAddressMenu, NewAddressProps},
-            login::NewUserPage,
-        },
-    },
-    models::{
-        address::{ConsumerAddress, ConsumerAddressIdb},
-        init_consumer_db,
-        orders::{OrderPaymentStatus, OrderStatus},
-    },
-    widgets::leaflet::{
-        IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L,
-    },
+    }, mass::{atoms::{layouts::{LoadingScreen, MainLayout}, svgs::{CancelIcon, SpinnerIcon}}, molecules::{address::{NewAddressMenu, NewAddressProps}, login::NewUserPage}}, models::{address::{ConsumerAddress, ConsumerAddressIdb}, init_consumer_db, orders::{OrderPaymentStatus, OrderStatus}}, widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L}
 };
 use html::ChildrenProps;
 use wasm_bindgen::JsValue;
@@ -220,15 +204,12 @@ pub fn start_new_address_picker_map(
 #[function_component(LiveOrderCheck)]
 fn live_order_check() -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
-    if let Some(order) = &order_ctx.order {
+    let inside_html = if let Some(order) = &order_ctx.order {
         match order.1.get_payment_status() {
             OrderPaymentStatus::PaymentPending => {
-                return html! {
-                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
-                        <div class="bg-white p-8 rounded-lg">
-                            <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
-                        </div>
+                html! {
+                    <>
+                        <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
                         <div class="flex flex-col gap-4 text-wrap max-w-md">
                             <p>{"Order ID: "}{order.1.id()}</p>
                             <p class="max-w-md text-wrap">{"Invoice: "}{order.1.get_consumer_invoice()}</p>
@@ -236,58 +217,59 @@ fn live_order_check() -> Html {
                                 id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
                                 lightning={order.1.get_consumer_invoice().expect("").payment_request()} type_="svg" />
                         </div>
-                        <button class="absolute top-4 right-4">
-                            {"Close"}
-                        </button>
-                        </div>
-                    </div>
-                };
+                    </>
+                }
             }
             OrderPaymentStatus::PaymentReceived => {
-                return html! {
-                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
+                html! {
+                    <>
                         <div class="bg-white p-8 rounded-lg">
                             <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
                         </div>
                         <div class="flex flex-col gap-4 text-wrap max-w-md">
-                            <p>{"Order ID: "}{order.1.id()}</p>
+                            <p>{"Order ID: "}{order.1.id()[..12].to_string()}</p>
                             <p>{"Waiting for confirmation..."}</p>
                         </div>
-                        <button class="absolute top-4 right-4">
-                            {"Close"}
-                        </button>
-                        </div>
-                    </div>
-                };
-            }
-            OrderPaymentStatus::PaymentSuccess => match order.1.get_order_status() {
-                OrderStatus::Completed => {}
-                OrderStatus::Canceled => {}
-                _ => {
-                    return html! {
-                        <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                            <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
-                            <div class="bg-white p-8 rounded-lg">
-                                <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                            </div>
-                            <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                <p>{"Order ID: "}{order.1.id()}</p>
-                                <p>{"Order Status: "}{order.1.get_order_status()}</p>
-                                <p>{"Courier: "}{order.1.get_courier()}</p>
-                            </div>
-                            <button class="absolute top-4 right-4">
-                                {"Close"}
-                            </button>
-                            </div>
-                        </div>
-                    };
+                    </>
                 }
-            },
-            _ => {}
+            }
+            OrderPaymentStatus::PaymentSuccess => {
+                let order = order.1.clone();
+                let status = order.get_order_status();
+                if status == OrderStatus::Completed || status == OrderStatus::Canceled {
+                    html! {<></>}
+                } else {
+                    html! {
+                        <>
+                            <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+                            <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                <p>{"Order ID: "}{order.id()[..12].to_string()}</p>
+                                <p>{"Order Status: "}{order.get_order_status()}</p>
+                                <p>{"Courier: "}{order.get_courier()}</p>
+                            </div>
+                        </>
+                    }
+                }
+            }
+            _ => {
+                html! {<></>}
+            }
         }
+    } else {
+        html! {<></>}
     };
-    html! {<></>}
+    html! {
+        <div class="fixed w-dvw h-dvh bg-black flex items-center justify-center z-20">
+            <div class="bg-white p-4 flex flex-col gap-4">
+                {inside_html}
+            </div>
+            <SpinnerIcon class="w-8 h-8 text-fuente" />
+            <button class="absolute top-4 right-4">
+                <CancelIcon class="w-8 h-8 text-red-500" />
+            </button>
+
+        </div>
+    }
 }
 #[derive(Properties, Clone, PartialEq)]
 pub struct BitcoinQrCodeProps {
