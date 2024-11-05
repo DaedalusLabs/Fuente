@@ -56,7 +56,15 @@ jobs:
       
     - name: Install WASM toolchain
       run: rustup target add wasm32-unknown-unknown
-    
+
+    - name: Run security scan
+      run: |
+        echo "Running cargo audit..."
+        cargo install cargo-audit
+        cargo audit
+        echo "Running npm audit..."
+        npm audit
+
     - name: Build ${{ matrix.project }}
       run: |
         echo "--------- Stepping into ${{ matrix.project }}"
