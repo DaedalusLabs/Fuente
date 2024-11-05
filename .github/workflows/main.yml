@@ -15,26 +15,45 @@ jobs:
     strategy:
       matrix:
         project: ['admin', 'business', 'consumer', 'driver']
-      # Run builds in parallel
       fail-fast: false
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v4.1.0
 
-    - name: Install tailwind
-      run: npm install -D tailwindcss
+    - name: Setup Node.js and Install Tailwind
+      run: |
+        npm install -D tailwindcss @tailwindcss/forms @tailwindcss/typography
 
-    - name: Install tailwind deps (Forms)
-      run: npm install -D @tailwindcss/forms
+    - name: Cache Node.js modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
 
-    - name: Install tailwind deps (Typography)
-      run: npm install -D @tailwindcss/typography  
-      
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: clippy
+
+    - name: Run Clippy
+      working-directory: ${{ matrix.project }}
+      run: |
+        cargo clippy # -- -D warnings # relaxed run, warnings not errors
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
     - name: Install cargo-binstall
       uses: cargo-bins/cargo-binstall@v1.10.0
 
@@ -43,27 +62,28 @@ jobs:
       
     - name: Install WASM toolchain
       run: rustup target add wasm32-unknown-unknown
-    
+
+    - name: Run security scan
+      run: |
+        echo "Running cargo audit..."
+        cargo install cargo-audit
+        cargo audit
+        echo "Running npm audit..."
+        npm audit
+
     - name: Build ${{ matrix.project }}
       run: |
-        echo "---------"
+        echo "--------- Stepping into ${{ matrix.project }}"
         cd ${{ matrix.project }}
         pwd
         echo "--------- tailwindcss"
         npx tailwindcss -i ./public/styles/input.css -o ./public/styles/output.css -c ../tailwind.config.cjs
-        echo "--------- find"
-        find . 
-        echo "---------ls -l /home/runner/work/fuente/fuente/${{ matrix.project }}/./public/styles/output.css"
-        ls -l /home/runner/work/fuente/fuente/${{ matrix.project }}/./public/styles/output.css
         echo "---------"
         trunk build
 
-    # Optional: Add artifacts upload
+    # Add artifacts upload
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.project }}-dist
         path: ${{ matrix.project }}/dist
-       
-
-          
