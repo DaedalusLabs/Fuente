@@ -1,30 +1,28 @@
 use std::rc::Rc;
-
-use crate::models::consumer_id::UserIdentity;
-use nostro2::userkeys::UserKeys;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NostrId {
     has_loaded: bool,
-    identity: Option<UserIdentity>,
-    keys: Option<UserKeys>,
+    identity: Option<super::nostr_id::UserIdentity>,
+    keys: Option<nostro2::userkeys::UserKeys>,
 }
-
 impl NostrId {
     pub fn finished_loading(&self) -> bool {
         self.has_loaded
     }
-    pub fn get_key(&self) -> Option<UserKeys> {
+    pub fn get_nostr_key(&self) -> Option<nostro2::userkeys::UserKeys> {
         self.keys.clone()
+    }
+    pub fn get_identity(&self) -> Option<super::nostr_id::UserIdentity> {
+        self.identity.clone()
     }
 }
 
 pub enum NostrIdAction {
     FinishedLoadingKey,
-    LoadIdentity(UserIdentity, UserKeys),
+    LoadIdentity(super::nostr_id::UserIdentity, nostro2::userkeys::UserKeys),
 }
-
 impl Reducible for NostrId {
     type Action = NostrIdAction;
 
@@ -43,16 +41,10 @@ impl Reducible for NostrId {
         }
     }
 }
-
 pub type NostrIdStore = UseReducerHandle<NostrId>;
 
-#[derive(Clone, Debug, Properties, PartialEq)]
-pub struct NostrIdChildren {
-    pub children: Children,
-}
-
 #[function_component(NostrIdProvider)]
-pub fn key_handler(props: &NostrIdChildren) -> Html {
+pub fn key_handler(props: &yew::html::ChildrenProps) -> Html {
     let ctx = use_reducer(|| NostrId {
         has_loaded: false,
         identity: None,
@@ -62,8 +54,8 @@ pub fn key_handler(props: &NostrIdChildren) -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with((), |_| {
         spawn_local(async move {
-            if let Ok(id) = UserIdentity::find_local_identity().await {
-                let keys = id.get_user_keys().await.unwrap();
+            if let Ok(id) = super::nostr_id::UserIdentity::find_local_identity().await {
+                let keys = id.get_user_keys().await.expect("Error getting user keys");
                 ctx_clone.dispatch(NostrIdAction::LoadIdentity(id, keys));
                 ctx_clone.dispatch(NostrIdAction::FinishedLoadingKey);
             } else {

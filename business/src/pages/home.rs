@@ -79,7 +79,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
     let products = order.products.counted_products();
     let value = order.products.total();
     let accept_order = {
-        let user_keys = key_ctx.get_key().unwrap();
+        let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();
         let order_confirmation = props.order.clone();
         Callback::from(move |_: MouseEvent| {
@@ -101,7 +101,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         })
     };
     let cancel_order = {
-        let user_keys = key_ctx.get_key().unwrap();
+        let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();
         let order_confirmation = props.order.clone();
         Callback::from(move |_| {

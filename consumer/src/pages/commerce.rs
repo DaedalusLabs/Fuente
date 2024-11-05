@@ -6,7 +6,7 @@ use crate::contexts::{
 
 use super::PageHeader;
 use fuente::{
-    browser::html::HtmlForm,
+    browser_api::HtmlForm,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     mass::{atoms::layouts::CardComponent, molecules::products::ProductCard},
     models::products::{ProductItem, ProductOrder},
@@ -26,6 +26,7 @@ pub fn history_page(props: &CommercePageProps) -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let relay_ctx = use_context::<NostrProps>().expect("Consumer context not found");
+    let sent_order_request = use_state(|| None::<String>);
     let menu = commerce_ctx
         .products_lists()
         .iter()
@@ -37,15 +38,17 @@ pub fn history_page(props: &CommercePageProps) -> Html {
     let id = commerce_id.clone();
     let profile = user_ctx.get_profile();
     let address = user_ctx.get_default_address();
+    let sent_handle = sent_order_request.clone();
     let send_order_request = Callback::from(move |e: MouseEvent| {
         e.prevent_default();
-        let keys = key_ctx.get_key();
+        let keys = key_ctx.get_nostr_key();
         let note = cart_ctx.sign_request(
             &keys.unwrap(),
             id.clone(),
             profile.clone().unwrap(),
             address.clone().unwrap(),
         );
+        sent_handle.set(Some(note.get_id().to_string()));
         sender.emit(note);
     });
 

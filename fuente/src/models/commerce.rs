@@ -1,8 +1,11 @@
-use crate::browser::{indexed_db::IdbStoreManager, nominatim::NominatimLookup};
+use crate::{
+    browser_api::{GeolocationCoordinates, IdbStoreManager},
+    widgets::leaflet::NominatimLookup,
+};
 
 use super::{
-    gps::CoordinateStrings, nostr_kinds::NOSTR_KIND_COMMERCE_PROFILE, upgrade_shared_db,
-    DB_NAME_SHARED, DB_VERSION_SHARED, STORE_NAME_COMMERCE_PROFILES,
+    gps::CoordinateStrings, nostr_kinds::NOSTR_KIND_COMMERCE_PROFILE, upgrade_fuente_db,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_COMMERCE_PROFILES,
 };
 use nostro2::{
     notes::{Note, SignedNote},
@@ -10,8 +13,6 @@ use nostro2::{
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
-
-use crate::browser::geolocation::GeolocationCoordinates;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommerceProfile {
@@ -23,7 +24,19 @@ pub struct CommerceProfile {
     geolocation: CoordinateStrings,
     ln_address: String,
 }
-
+impl Default for CommerceProfile {
+    fn default() -> Self {
+        Self {
+            name: "".to_string(),
+            description: "".to_string(),
+            telephone: "".to_string(),
+            web: "".to_string(),
+            lookup: NominatimLookup::default(),
+            geolocation: CoordinateStrings::default(),
+            ln_address: "".to_string(),
+        }
+    }
+}
 impl CommerceProfile {
     pub fn new(
         name: String,
@@ -99,7 +112,7 @@ impl TryFrom<SignedNote> for CommerceProfile {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommerceProfileIdb {
-    id: String,
+    pubkey: String,
     note: SignedNote,
     profile: CommerceProfile,
 }
@@ -107,28 +120,12 @@ pub struct CommerceProfileIdb {
 impl CommerceProfileIdb {
     pub fn new(profile: CommerceProfile, keys: &UserKeys) -> Result<Self, JsValue> {
         let note = profile.signed_data(keys);
-        let id = note.get_pubkey().to_string();
-        Ok(Self { id, note, profile })
-    }
-    pub async fn save(self) -> Result<(), JsValue> {
-        self.save_to_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn delete(&self) -> Result<(), JsValue> {
-        self.delete_from_store()?
-            .await
-            .map_err(|e| format!("{:?}", e).into())
-    }
-    pub async fn find(id: &str) -> Result<Self, JsValue> {
-        Self::retrieve::<Self>(id)?
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
-    }
-    pub async fn find_all() -> Result<Vec<Self>, JsValue> {
-        Self::retrieve_all_from_store::<Self>()?
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        let pubkey = note.get_pubkey();
+        Ok(Self {
+            pubkey,
+            note,
+            profile,
+        })
     }
     pub fn profile(&self) -> &CommerceProfile {
         &self.profile
@@ -137,7 +134,10 @@ impl CommerceProfileIdb {
         &self.note
     }
     pub fn id(&self) -> &str {
-        &self.id
+        &self.pubkey
+    }
+    pub fn idb_key(&self) -> JsValue {
+        JsValue::from_str(&self.pubkey)
     }
 }
 
@@ -148,10 +148,9 @@ impl TryFrom<JsValue> for CommerceProfileIdb {
     }
 }
 
-impl TryInto<JsValue> for CommerceProfileIdb {
-    type Error = JsValue;
-    fn try_into(self) -> Result<JsValue, Self::Error> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
+impl Into<JsValue> for CommerceProfileIdb {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
 
@@ -162,29 +161,70 @@ impl TryFrom<SignedNote> for CommerceProfileIdb {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
         let profile: CommerceProfile = note.get_content().try_into()?;
-        let id = note.get_pubkey().to_string();
-        Ok(CommerceProfileIdb { id, note, profile })
+        let pubkey = note.get_pubkey();
+        Ok(CommerceProfileIdb {
+            pubkey,
+            note,
+            profile,
+        })
     }
 }
 
 impl IdbStoreManager for CommerceProfileIdb {
-    fn db_name() -> &'static str {
-        DB_NAME_SHARED
+    fn config() -> crate::browser_api::IdbStoreConfig {
+        crate::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_FUENTE,
+            db_version: DB_VERSION_FUENTE,
+            store_name: STORE_NAME_COMMERCE_PROFILES,
+            document_key: "pubkey",
+        }
     }
-
-    fn db_version() -> u32 {
-        DB_VERSION_SHARED
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.pubkey)
     }
-
-    fn store_name() -> &'static str {
-        STORE_NAME_COMMERCE_PROFILES
+    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
+        upgrade_fuente_db(db)?;
+        Ok(())
     }
+}
 
-    fn document_key(&self) -> JsValue {
-        JsValue::from_str(&self.id)
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use wasm_bindgen_test::*;
 
-    fn upgrade_db(event: web_sys::Event) -> Result<(), JsValue> {
-        upgrade_shared_db(event)
+    #[wasm_bindgen_test]
+    async fn _commerce_profile_idb() -> Result<(), JsValue> {
+        init_consumer_db()?;
+        let key_1 = UserKeys::generate();
+        let consumer_address = CommerceProfile::default();
+        let address_idb = CommerceProfileIdb::new(consumer_address.clone(), &key_1)?;
+        address_idb.clone().save_to_store().await.unwrap();
+
+        let key_2 = UserKeys::generate();
+        let address_idb_2 = CommerceProfileIdb::new(consumer_address, &key_2)?;
+        address_idb_2.clone().save_to_store().await.unwrap();
+
+        let retrieved: CommerceProfileIdb =
+            CommerceProfileIdb::retrieve_from_store(&address_idb.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved.id(), address_idb.id());
+
+        let retrieved_2: CommerceProfileIdb =
+            CommerceProfileIdb::retrieve_from_store(&address_idb_2.key())
+                .await
+                .unwrap();
+        assert_eq!(retrieved_2.id(), address_idb_2.id());
+
+        let all_addresses = CommerceProfileIdb::retrieve_all_from_store().await.unwrap();
+        assert_eq!(all_addresses.len(), 2);
+
+        let deleted = retrieved.delete_from_store().await;
+        let deleted_2 = retrieved_2.delete_from_store().await;
+        assert!(deleted.is_ok());
+        assert!(deleted_2.is_ok());
+        Ok(())
     }
 }

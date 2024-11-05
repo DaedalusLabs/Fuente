@@ -2,13 +2,9 @@ use std::rc::Rc;
 
 use fuente::{
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
-        admin_configs::{AdminConfiguration, AdminConfigurationType},
-        nostr_kinds::NOSTR_KIND_SERVER_CONFIG,
-    },
+    models::{admin_configs::AdminConfigurationType, nostr_kinds::NOSTR_KIND_SERVER_CONFIG},
 };
-use nostro2::userkeys::UserKeys;
-use yew::{platform::spawn_local, prelude::*};
+use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ServerConfigs {
@@ -119,7 +115,7 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
 
     let subscriber = relay_ctx.subscribe.clone();
     use_effect_with(user_ctx.clone(), move |keys| {
-        if let Some(keys) = keys.get_key() {
+        if let Some(keys) = keys.get_nostr_key() {
             let filter = nostro2::relays::NostrFilter::default()
                 .new_kind(NOSTR_KIND_SERVER_CONFIG)
                 .new_tag("p", vec![keys.get_public_key()]);
@@ -133,7 +129,7 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let key_clone = user_ctx.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
-        if let (Some(note), Some(key_clone)) = (notes.last() , key_clone.get_key()) {
+        if let (Some(note), Some(key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
             if note.get_kind() == NOSTR_KIND_SERVER_CONFIG {
                 let conf_type_tags = note.get_tags_by_id("d").expect("Failed to get tags");
                 let conf_type_str = conf_type_tags.get(2).expect("Failed to get tag").as_str();

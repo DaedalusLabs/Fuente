@@ -1,8 +1,11 @@
-use std::rc::Rc;
-use fuente::models::{
-    address::{ConsumerAddress, ConsumerAddressIdb},
-    consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
+use fuente::{
+    browser_api::IdbStoreManager,
+    models::{
+        address::{ConsumerAddress, ConsumerAddressIdb},
+        consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
+    },
 };
+use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -70,7 +73,10 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::NewAddress(address) => {
                 let db_entry = address.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save address");
+                    db_entry
+                        .save_to_store()
+                        .await
+                        .expect("Failed to save address");
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -85,7 +91,7 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::DeleteAddress(address) => {
                 let db_entry = address.clone();
                 spawn_local(async move {
-                    let _ = db_entry.delete().await;
+                    let _ = db_entry.delete_from_store().await;
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -121,7 +127,10 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::NewProfile(profile) => {
                 let db_entry = profile.clone();
                 spawn_local(async move {
-                    db_entry.save().await.expect("Failed to save profile");
+                    db_entry
+                        .save_to_store()
+                        .await
+                        .expect("Failed to save profile");
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
@@ -136,13 +145,13 @@ impl Reducible for ConsumerData {
             ConsumerDataAction::DeleteProfile(profile) => {
                 let db_entry = profile.clone();
                 spawn_local(async move {
-                    let _ = db_entry.delete().await;
+                    let _ = db_entry.delete_from_store().await;
                 });
                 Rc::new(ConsumerData {
                     has_loaded: self.has_loaded,
                     profile: {
                         let mut profiles = self.profile.clone();
-                        profiles.retain(|p| p.id() != profile.id());
+                        profiles.retain(|p| p.pubkey() != profile.pubkey());
                         profiles
                     },
                     addresses: self.addresses.clone(),
@@ -170,10 +179,10 @@ pub fn key_handler(props: &ConsumerDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with((), |_| {
         spawn_local(async move {
-            if let Ok(profile) = ConsumerProfileIdb::find_all_profiles().await {
+            if let Ok(profile) = ConsumerProfileIdb::retrieve_all_from_store().await {
                 ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile));
             }
-            if let Ok(addresses) = ConsumerAddressIdb::find_all().await {
+            if let Ok(addresses) = ConsumerAddressIdb::retrieve_all_from_store().await {
                 ctx_clone.dispatch(ConsumerDataAction::LoadAddresses(addresses));
             }
             ctx_clone.dispatch(ConsumerDataAction::FinishedLoadingDb);

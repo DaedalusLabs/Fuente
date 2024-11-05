@@ -1,9 +1,9 @@
 use admin::config_context::{ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
-    browser::html::HtmlForm,
+    browser_api::HtmlForm,
     contexts::{
         key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{NostrProps, RelayProvider},
+        relay_pool::{NostrProps, RelayProvider, UserRelay},
     },
     mass::{
         atoms::{
@@ -14,9 +14,7 @@ use fuente::{
     },
     models::{
         admin_configs::{AdminConfigurationType, AdminServerRequest},
-        init_shared_db,
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_SERVER_CONFIG},
-        relays::UserRelay,
+        nostr_kinds::NOSTR_KIND_COMMERCE_PROFILE,
         ADMIN_WHITELIST,
     },
 };
@@ -32,7 +30,6 @@ fn main() {
 #[function_component(App)]
 fn app() -> Html {
     use_effect_with((), move |_| {
-        init_shared_db().unwrap();
         || {}
     });
     html! {
@@ -91,7 +88,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !key_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
-    let keys = key_ctx.get_key();
+    let keys = key_ctx.get_nostr_key();
     if keys.is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
@@ -131,7 +128,7 @@ fn exchange_rate_form() -> Html {
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_key();
+    let keys = user_ctx.get_nostr_key();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let keys = keys.clone().expect("No keys found");
@@ -185,7 +182,7 @@ fn exchange_rate_form() -> Html {
         || {}
     });
     let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_key();
+    let keys = user_ctx.get_nostr_key();
     let commerce_whitelist = config_ctx.get_commerce_whitelist();
     let onclick = Callback::from(move |e: MouseEvent| {
         let keys = keys.clone().expect("No keys found");
@@ -226,7 +223,7 @@ pub fn courier_whitelist_form() -> Html {
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_key();
+    let keys = user_ctx.get_nostr_key();
     let commerce_whitelist = config_ctx.get_couriers_whitelist();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();

@@ -7,18 +7,18 @@ use business::{
     pages::new_user::NewProfilePage,
     router::CommercePages,
 };
-use html::ChildrenProps;
 use fuente::{
     contexts::{
         key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::RelayProvider,
+        relay_pool::{RelayProvider, UserRelay},
     },
     mass::{
         atoms::layouts::{LoadingScreen, MainLayout},
         molecules::login::NewUserPage,
     },
-    models::{init_commerce_db, init_consumer_db, init_shared_db, relays::UserRelay},
+    models::{init_commerce_db, init_consumer_db},
 };
+use html::ChildrenProps;
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
@@ -32,7 +32,6 @@ fn main() {
 #[function_component(App)]
 fn app() -> Html {
     use_effect_with((), move |_| {
-        init_shared_db().unwrap();
         init_commerce_db().unwrap();
         init_consumer_db().unwrap();
         || {}
@@ -100,7 +99,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !key_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
-    if key_ctx.get_key().is_none() {
+    if key_ctx.get_nostr_key().is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <NewUserPage />

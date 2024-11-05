@@ -12,6 +12,12 @@ env:
 jobs:
   build:
 
+    strategy:
+      matrix:
+        project: ['admin', 'business', 'consumer', 'driver']
+      # Run builds in parallel
+      fail-fast: false
+
     runs-on: ubuntu-latest
 
     steps:
@@ -28,12 +34,6 @@ jobs:
 
     - name: Install tailwind deps (Typography)
       run: npm install -D @tailwindcss/typography  
-
-    - name: Create temp output.css
-      run: touch ./public/styles/output.css
-      
-    - name: Run Tailwind
-      run: npx tailwindcss -i ./public/styles/input.css -o ./public/styles/output.css -c ./tailwind.config.cjs
       
     - name: Install cargo-binstall
       uses: cargo-bins/cargo-binstall@v1.10.0
@@ -44,9 +44,26 @@ jobs:
     - name: Install WASM toolchain
       run: rustup target add wasm32-unknown-unknown
     
-    - name: Build Project
-      run: trunk build
+    - name: Build ${{ matrix.project }}
+      run: |
+        echo "---------"
+        cd ${{ matrix.project }}
+        pwd
+        echo "--------- tailwindcss"
+        npx tailwindcss -i ./public/styles/input.css -o ./public/styles/output.css -c ../tailwind.config.cjs
+        echo "--------- find"
+        find . 
+        echo "---------ls -l /home/runner/work/fuente/fuente/${{ matrix.project }}/./public/styles/output.css"
+        ls -l /home/runner/work/fuente/fuente/${{ matrix.project }}/./public/styles/output.css
+        echo "---------"
+        trunk build
 
-            
+    # Optional: Add artifacts upload
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.project }}-dist
+        path: ${{ matrix.project }}/dist
+       
 
           
