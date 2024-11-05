@@ -39,6 +39,12 @@ jobs:
       with:
         toolchain: stable
         override: true
+        components: clippy
+
+    - name: Run Clippy
+      working-directory: ${{ matrix.project }}
+      run: |
+        cargo clippy -- -D warnings
 
     - name: Cache Rust dependencies
       uses: actions/cache@v3
