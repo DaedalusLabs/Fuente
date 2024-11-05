@@ -547,7 +547,7 @@ impl InvoicerBot {
             }
         }
         reader.close();
-        Ok(())
+        Err(anyhow!("Relay pool closed"))
     }
 }
 
@@ -559,8 +559,15 @@ pub async fn main() -> anyhow::Result<()> {
     info!("Starting Invoicer");
     let bot = InvoicerBot::new().await?;
     info!("Bot created");
-    if let Err(e) = bot.read_relay_pool().await {
-        error!("{:?}", e);
+    let mut close_counters = 0;
+    loop {
+        if close_counters > 10 {
+            break;
+        }
+        if let Err(e) = bot.clone().read_relay_pool().await {
+            error!("{:?}", e);
+            close_counters += 1;
+        }
     }
     Ok(())
 }

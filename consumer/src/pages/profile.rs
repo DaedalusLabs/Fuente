@@ -229,8 +229,8 @@ pub fn start_new_address_picker_map(
     let map = L::render_map_with_options("map", map_options)?;
     map_handler.set(Some(map.clone()));
     let icon_options = IconOptions {
-        icon_url: "public/assets/marker.png".to_string(),
-        icon_size: None,
+        icon_url: "public/assets/img/marker.png".to_string(),
+        icon_size: Some(vec![32, 32]),
         icon_anchor: None,
     };
     let marker = map.add_marker_with_icon(&location, icon_options)?;
