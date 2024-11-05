@@ -8,7 +8,7 @@ use super::PageHeader;
 use fuente::{
     browser_api::HtmlForm,
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::{atoms::layouts::CardComponent, molecules::products::ProductCard},
+    mass::{atoms::{layouts::CardComponent, svgs::SpinnerIcon}, molecules::products::ProductCard},
     models::products::{ProductItem, ProductOrder},
 };
 use yew::prelude::*;
@@ -71,6 +71,18 @@ pub fn history_page(props: &CommercePageProps) -> Html {
         };
     }
     let menu = menu.unwrap().menu().categories();
+    if let Some(request) = sent_order_request.as_ref() {
+        return html! {
+            <div class="h-full w-full flex flex-col">
+                <PageHeader title={"Commerce".to_string()} />
+                <div class="flex flex-1 flex-col gap-4">
+                    <span class="text-lg font-bold">{"Waiting to Confirm your Order"}</span>
+                    <span class="text-neutral-400">{"Order ID: "}{request}</span>
+                    <SpinnerIcon class="w-8 h-8" />
+                </div>
+            </div>
+        };
+    }
     html! {
         <div class="h-full w-full flex flex-col">
             <PageHeader title={"Commerce".to_string()} />

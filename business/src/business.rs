@@ -9,6 +9,7 @@ use business::{
 };
 use fuente::{
     contexts::{
+        init_nostr_db,
         key_manager::{NostrIdProvider, NostrIdStore},
         relay_pool::{RelayProvider, UserRelay},
     },
@@ -34,6 +35,7 @@ fn app() -> Html {
     use_effect_with((), move |_| {
         init_commerce_db().unwrap();
         init_consumer_db().unwrap();
+        init_nostr_db().unwrap();
         || {}
     });
     html! {
