@@ -10,14 +10,13 @@ use consumer::{
 };
 use fuente::{
     contexts::{
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
+        init_nostr_db, key_manager::{NostrIdProvider, NostrIdStore}, relay_pool::{RelayProvider, UserRelay}
     },
     mass::{
         atoms::layouts::{LoadingScreen, MainLayout},
         molecules::login::NewUserPage,
     },
-    models::orders::{OrderPaymentStatus, OrderStatus},
+    models::{init_consumer_db, orders::{OrderPaymentStatus, OrderStatus}},
 };
 use html::ChildrenProps;
 use yew::prelude::*;
@@ -29,6 +28,11 @@ fn main() {
 
 #[function_component(App)]
 fn app() -> Html {
+    use_effect_with((), move |_| {
+        init_nostr_db().expect("Error initializing Nostr database");
+        init_consumer_db().expect("Error initializing consumer database");
+        || {}
+    });
     html! {
         <BrowserRouter>
             <RelayPoolComponent>

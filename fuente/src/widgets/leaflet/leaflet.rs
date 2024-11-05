@@ -2,11 +2,26 @@ use crate::browser_api::{GeolocationCoordinates, GeolocationPosition};
 use js_sys::Function;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{convert::FromWasmAbi, prelude::*};
+use yew::MouseEvent;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LatLng {
     pub lat: f64,
     pub lng: f64,
+}
+impl TryFrom<&MouseEvent> for LatLng {
+    type Error = JsValue;
+    fn try_from(event: &MouseEvent) -> Result<Self, Self::Error> {
+        let lat_lng = js_sys::Reflect::get(event, &"latlng".into())?;
+        Ok(lat_lng.try_into()?)
+    }
+}
+impl TryFrom<MouseEvent> for LatLng {
+    type Error = JsValue;
+    fn try_from(event: MouseEvent) -> Result<Self, Self::Error> {
+        let lat_lng = js_sys::Reflect::get(&event, &"latlng".into())?;
+        Ok(lat_lng.try_into()?)
+    }
 }
 impl TryInto<JsValue> for LatLng {
     type Error = JsValue;
@@ -130,7 +145,7 @@ extern "C" {
     pub fn map_with_options(id: &str, options: JsValue) -> LeafletMap;
 }
 impl L {
-    pub fn render_map(id: &str, coords: &GeolocationCoordinates) -> Result<LeafletMap, JsValue> {
+    pub fn render_default_map(id: &str, coords: &GeolocationCoordinates) -> Result<LeafletMap, JsValue> {
         let lat_lng: LatLng = coords.into();
         let mut map_options = LeafletMapOptions::default();
         map_options.center = Some(lat_lng.clone());
@@ -139,6 +154,21 @@ impl L {
         let tile_options = TileLayerOptions::default();
         let js_tile_options: JsValue = tile_options.try_into()?;
 
+        L::tile_layer(
+            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            js_tile_options,
+        )
+        .addTo(&map);
+        Ok(map)
+    }
+    pub fn render_map_with_options(
+        id: &str,
+        map_options: LeafletMapOptions,
+    ) -> Result<LeafletMap, JsValue> {
+        let js_options: JsValue = map_options.try_into()?;
+        let map = L::map_with_options(id, js_options);
+        let tile_options = TileLayerOptions::default();
+        let js_tile_options: JsValue = tile_options.try_into()?;
         L::tile_layer(
             "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
             js_tile_options,

@@ -16,7 +16,7 @@ use fuente::{
         address::{ConsumerAddress, ConsumerAddressIdb},
         consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
     },
-    widgets::leaflet::{IconOptions, LatLng, LeafletMap, Marker, NominatimLookup, L},
+    widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};
@@ -221,7 +221,12 @@ pub fn start_new_address_picker_map(
     geo_handler: UseStateHandle<Option<GeolocationCoordinates>>,
     address_handler: UseStateHandle<Option<NominatimLookup>>,
 ) -> Result<(), JsValue> {
-    let map = L::render_map("map", &location)?;
+    let map_options = LeafletMapOptions {
+        double_click_zoom: false,
+        center: Some(location.clone().into()),
+        ..Default::default()
+    };
+    let map = L::render_map_with_options("map", map_options)?;
     map_handler.set(Some(map.clone()));
     let icon_options = IconOptions {
         icon_url: "public/assets/marker.png".to_string(),
@@ -234,7 +239,8 @@ pub fn start_new_address_picker_map(
 
     let geo_handler_clone = geo_handler.clone();
     let address_handler_clone = address_handler.clone();
-    let map_closure = move |e: JsValue| {
+    let map_closure = move |e: MouseEvent| {
+        gloo::console::log!("Event: ", &e);
         let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
         let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
         geo_handler_clone.set(Some(coordinates.clone()));

@@ -1,5 +1,5 @@
 [workspace]
-members = [ "business","consumer", "driver", "invoicer", "fuente", "admin"]
+members = [ "business","consumer", "driver", "invoicer", "fuente", "admin", "lightning"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -16,6 +16,7 @@ js-sys = "0.3.69"
 qrcode = "0.14.0"
 qrcodegen = "1.8.0"
 
+lightning = { path = "lightning" }
 lightning-invoice = "0.32.0"
 
 hex = "0.4.3"

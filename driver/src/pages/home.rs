@@ -251,7 +251,7 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         let consumer_location = consumer_loc.clone();
         gloo::console::log!("Rendering map on position:", format!("{:?}", position));
         gloo::console::log!("Rendering map on element: ", id.clone());
-        let map = L::render_map(&id, &position).expect("Failed to render map");
+        let map = L::render_default_map(&id, &position).expect("Failed to render map");
         let user_marker_options = IconOptions {
             icon_url: "public/assets/img/marker.png".to_string(),
             icon_size: None,

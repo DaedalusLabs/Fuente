@@ -50,7 +50,7 @@ pub fn leaflet_component(props: &Props) -> Html {
                 if let Ok(position) = GeolocationPosition::locate().await {
                     let coords = position.coords;
                     
-                    if let Ok(map_instance) = L::render_map(&map_id, &coords) {
+                    if let Ok(map_instance) = L::render_default_map(&map_id, &coords) {
                         // Set map state and emit to parent
                         map.set(Some(map_instance.clone()));
                         on_map_created.emit(map_instance.clone());
