@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::models::products::{ProductItem, ProductMenu};
+use crate::models::products::{ProductItem, ProductMenu, ProductOrder};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ProductCardProps {
@@ -47,3 +47,36 @@ pub fn product_menu_details(props: &ProductMenuProps) -> Html {
         }).collect::<Html>()}
     }
 }
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct ProductMenuListProps {
+    pub order: ProductOrder,
+}
+#[function_component(OrderRequestDetailsComponent)]
+pub fn order_request_details(props: &ProductMenuListProps) -> Html {
+    let ProductMenuListProps { order } = props;
+    let counted = order.counted_products();
+    let total = order.total();
+    let products_html = 
+    html! {
+        {counted.iter().map(|(item, count)| {
+            html! {
+                    <div class="flex flex-row gap-2">
+                        <p>{format!("{} x {}", count, item.name())}</p>
+                        <p>{format!("{}", item.price().parse::<u32>().unwrap() * count)}</p>
+                    </div>
+            }
+        }).collect::<Html>()}
+    };
+    html! {
+        <div class="flex flex-col gap-4">
+            {products_html}
+            <div class="flex flex-row justify-between">
+                <p class="text-lg font-bold">{"Total"}</p>
+                <p class="text-lg font-bold">{format!("${}", total)}</p>
+            </div>
+        </div>
+    }
+}
+
+

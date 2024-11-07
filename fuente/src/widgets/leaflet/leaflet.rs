@@ -117,8 +117,8 @@ pub struct TileLayerOptions {
 impl Default for TileLayerOptions {
     fn default() -> Self {
         Self {
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors".to_string(),
-            max_zoom: Some(19),
+            attribution: "".to_string(),
+            max_zoom: None,
             min_zoom: None,
             opacity: 1.0,
         }
@@ -226,7 +226,7 @@ extern "C" {
     pub fn watch_location(this: &LeafletMap);
 
     #[wasm_bindgen(method, js_name = "fitBounds")]
-    pub fn fit_bounds(this: &LeafletMap, bounds: JsValue);
+    pub fn fit_bounds(this: &LeafletMap, bounds: JsValue, options: JsValue);
 }
 
 // Add a struct for locate options

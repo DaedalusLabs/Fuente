@@ -1,23 +1,13 @@
-use crate::{
-    contexts::{
-        commerce_data::CommerceDataStore,
-        driver_data::DriverDataStore,
-        live_order::{OrderHubAction, OrderHubStore},
-    },
-    router::DriverRoute,
+use crate::contexts::{
+    commerce_data::CommerceDataStore,
+    driver_data::DriverDataStore,
+    live_order::{OrderHubAction, OrderHubStore},
 };
 use fuente::{
     browser_api::{GeolocationCoordinates, GeolocationPosition},
     contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::atoms::{
-        forms::AppLink,
-        layouts::LoadingScreen,
-        svgs::{HistoryIcon, HomeIcon, MenuBarsIcon, SpinnerIcon, UserBadgeIcon},
-    },
-    models::{
-        consumer_profile::ConsumerProfile,
-        orders::{OrderInvoiceState, OrderStatus},
-    },
+    mass::atoms::{layouts::LoadingScreen, svgs::SpinnerIcon},
+    models::orders::{OrderInvoiceState, OrderStatus},
     widgets::leaflet::{IconOptions, L},
 };
 use gloo::utils::format::JsValueSerdeExt;
@@ -244,42 +234,46 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
     let consumer_loc = consumer_location.clone();
     let position = own_location.clone();
     use_effect_with((), move |_| {
-        gloo::console::log!("Rendering map");
         let id = map_id_clone.clone();
         let state = state_clone.clone();
         let commerce_location = commerce_loc.clone();
         let consumer_location = consumer_loc.clone();
-        gloo::console::log!("Rendering map on position:", format!("{:?}", position));
-        gloo::console::log!("Rendering map on element: ", id.clone());
         let map = L::render_default_map(&id, &position).expect("Failed to render map");
         let user_marker_options = IconOptions {
             icon_url: "public/assets/img/marker.png".to_string(),
-            icon_size: None,
-            icon_anchor: None,
+            icon_size: Some(vec![32, 32]),
+            icon_anchor: Some(vec![16, 32]),
         };
-        map.add_marker_with_icon(&commerce_location, user_marker_options)
+        map.add_marker_with_icon(&consumer_location, user_marker_options)
             .expect("Failed to add marker");
         let commerce_marker_options = IconOptions {
             icon_url: "public/assets/img/my_marker.png".to_string(),
-            icon_size: None,
-            icon_anchor: None,
+            icon_size: Some(vec![32, 32]),
+            icon_anchor: Some(vec![16, 32]),
         };
         map.add_marker_with_icon(&commerce_location, commerce_marker_options)
             .expect("Failed to add marker");
         let rider_marker_options = IconOptions {
             icon_url: "public/assets/img/rider2.png".to_string(),
-            icon_size: None,
-            icon_anchor: None,
+            icon_size: Some(vec![32, 32]),
+            icon_anchor: Some(vec![16, 32]),
         };
-        map.add_marker_with_icon(&commerce_location, rider_marker_options)
+        map.add_marker_with_icon(&position, rider_marker_options)
             .expect("Failed to add marker");
         let js_array = vec![
+            vec![position.latitude, position.longitude],
             vec![commerce_location.latitude, commerce_location.longitude],
             vec![consumer_location.latitude, consumer_location.longitude],
-            vec![position.latitude, position.longitude],
         ];
         let js_value = JsValue::from_serde(&js_array).expect("Failed to convert to JsValue");
-        map.fit_bounds(js_value);
+        let fit_options = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &fit_options,
+            &JsValue::from_str("maxZoom"),
+            &JsValue::null(),
+        )
+        .expect("Failed to set padding");
+        map.fit_bounds(js_value, fit_options.into());
         state.set(Some(map));
         move || {}
     });
