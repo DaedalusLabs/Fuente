@@ -3,17 +3,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use anyhow::anyhow;
 use fuente::models::{
-    admin_configs::{AdminConfiguration, AdminConfigurationType, AdminServerRequest},
-    commerce::CommerceProfile,
-    driver::DriverProfile,
-    nostr_kinds::{
+    CommerceProfile, DriverProfile, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
+    TEST_PRIV_KEY, TEST_PUB_KEY, {AdminConfiguration, AdminConfigurationType, AdminServerRequest},
+    {OrderInvoiceState, OrderPaymentStatus, OrderRequest, OrderStatus},
+    {
         NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_ORDER_STATE,
         NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
     },
-    orders::{OrderInvoiceState, OrderPaymentStatus, OrderRequest, OrderStatus},
-    products::ProductMenu,
-    DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, TEST_PRIV_KEY, TEST_PUB_KEY,
 };
 use lightning::{
     HodlState, InvoicePaymentState, LightningClient, LnAddressPaymentRequest, LndHodlInvoice,
@@ -556,14 +553,17 @@ pub async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(Level::INFO)
         .init();
-    info!("Starting Invoicer");
-    let bot = InvoicerBot::new().await?;
     info!("Bot created");
     let mut close_counters = 0;
     loop {
         if close_counters > 10 {
             break;
         }
+        info!("Starting Invoicer");
+        if close_counters > 0 {
+            info!("Reconnecting for the {} time", close_counters);
+        }
+        let bot = InvoicerBot::new().await?;
         if let Err(e) = bot.clone().read_relay_pool().await {
             error!("{:?}", e);
             close_counters += 1;

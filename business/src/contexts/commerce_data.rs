@@ -1,10 +1,9 @@
 use fuente::{
     browser_api::IdbStoreManager,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     models::{
-        commerce::{CommerceProfile, CommerceProfileIdb},
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
-        products::{ProductMenu, ProductMenuIdb},
+        CommerceProfile, CommerceProfileIdb, ProductMenu, ProductMenuIdb,
+        NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
     },
 };
 use nostro2::relays::{NostrFilter, RelayEvents};

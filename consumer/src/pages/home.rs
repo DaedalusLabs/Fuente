@@ -1,14 +1,7 @@
-use crate::{contexts::commerce_data::CommerceDataStore, router::ConsumerRoute};
+use crate::{contexts::CommerceDataStore, router::ConsumerRoute};
 use fuente::mass::{
-    atoms::{
-        forms::AppLink,
-        layouts::LoadingScreen,
-        svgs::{
-            HeartIcon, HistoryIcon, HomeIcon, LookupIcon, MenuBarsIcon, ShoppingCartIcon,
-            UserBadgeIcon,
-        },
-    },
-    molecules::business::CommerceProfileCard,
+    AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LoadingScreen, LookupIcon,
+    MenuBarsIcon, ShoppingCartIcon, UserBadgeIcon,
 };
 use yew::prelude::*;
 

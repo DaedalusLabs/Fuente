@@ -1,21 +1,15 @@
 use fuente::{
     browser_api::{GeolocationCoordinates, GeolocationPosition, HtmlForm},
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::{
-        atoms::{
-            forms::{SimpleInput, SimpleTextArea},
-            layouts::CardComponent,
-        },
-        molecules::address::AddressLookupDetails,
-    },
-    models::commerce::{CommerceProfile, CommerceProfileIdb},
+    contexts::{NostrIdStore, NostrProps},
+    mass::{AddressLookupDetails, CardComponent, SimpleInput, SimpleTextArea},
+    models::{CommerceProfile, CommerceProfileIdb},
     widgets::leaflet::{IconOptions, LatLng, LeafletMap, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};
 use yew::{platform::spawn_local, prelude::*, props};
 
-use crate::contexts::commerce_data::{CommerceDataAction, CommerceDataStore};
+use crate::contexts::{CommerceDataAction, CommerceDataStore};
 
 #[function_component(NewProfilePage)]
 pub fn edit_profile_menu() -> Html {
@@ -76,7 +70,7 @@ pub fn edit_profile_menu() -> Html {
 }
 
 #[function_component(ProfileInputs)]
-pub fn profile_inputs() -> Html {
+fn profile_inputs() -> Html {
     html! {
         <div class="flex flex-col gap-2">
             <SimpleInput
@@ -123,7 +117,7 @@ pub fn profile_inputs() -> Html {
     }
 }
 
-pub fn start_new_address_picker_map(
+fn start_new_address_picker_map(
     location: GeolocationCoordinates,
     map_handler: UseStateHandle<Option<LeafletMap>>,
     marker_handler: UseStateHandle<Option<Marker>>,
@@ -160,7 +154,7 @@ pub fn start_new_address_picker_map(
     Ok(())
 }
 #[derive(Clone, PartialEq, Properties)]
-pub struct CoordinateLocationProps {
+struct CoordinateLocationProps {
     pub map_handle: UseStateHandle<Option<LeafletMap>>,
     pub marker_handle: UseStateHandle<Option<Marker>>,
     pub coord_handle: UseStateHandle<Option<GeolocationCoordinates>>,
@@ -168,13 +162,13 @@ pub struct CoordinateLocationProps {
 }
 
 #[derive(Clone, PartialEq, Properties)]
-pub struct CommerceAddressProps {
+struct CommerceAddressProps {
     pub coord_handle: UseStateHandle<Option<GeolocationCoordinates>>,
     pub nominatim_handle: UseStateHandle<Option<NominatimLookup>>,
 }
 
 #[function_component(NewAddressMenu)]
-pub fn new_address_menu(props: &CommerceAddressProps) -> Html {
+fn new_address_menu(props: &CommerceAddressProps) -> Html {
     let map_state = use_state(|| None);
     let marker_state = use_state(|| None);
     let props = props!(CoordinateLocationProps {
@@ -195,7 +189,7 @@ pub fn new_address_menu(props: &CommerceAddressProps) -> Html {
 }
 
 #[function_component(AddressDetails)]
-pub fn address_details(props: &CoordinateLocationProps) -> Html {
+fn address_details(props: &CoordinateLocationProps) -> Html {
     if props.nominatim_handle.is_none() || props.coord_handle.is_none() {
         return html! {<div class="w-full h-full flex justify-center items-center">{"Loading..."}</div>};
     };
@@ -208,7 +202,7 @@ pub fn address_details(props: &CoordinateLocationProps) -> Html {
 }
 
 #[function_component(AddressSearch)]
-pub fn address_search(props: &CoordinateLocationProps) -> Html {
+fn address_search(props: &CoordinateLocationProps) -> Html {
     let handle = props.nominatim_handle.clone();
     let coordinate_handle = props.coord_handle.clone();
     let map_handle = props.map_handle.clone();
@@ -315,7 +309,7 @@ pub fn address_search(props: &CoordinateLocationProps) -> Html {
 }
 
 #[function_component(AddressPickerMap)]
-pub fn address_picker(props: &CoordinateLocationProps) -> Html {
+fn address_picker(props: &CoordinateLocationProps) -> Html {
     let coordinate_handle = props.coord_handle.clone();
     let nominatim_handle = props.nominatim_handle.clone();
     let map_handle = props.map_handle.clone();

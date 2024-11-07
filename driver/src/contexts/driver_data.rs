@@ -1,10 +1,7 @@
 use fuente::{
     browser_api::IdbStoreManager,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
-        driver::{DriverProfile, DriverProfileIdb},
-        nostr_kinds::NOSTR_KIND_DRIVER_PROFILE,
-    },
+    contexts::{NostrIdStore, NostrProps},
+    models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE},
 };
 use nostro2::{
     notes::SignedNote,

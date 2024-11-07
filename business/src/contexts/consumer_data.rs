@@ -1,9 +1,6 @@
 use fuente::{
     browser_api::IdbStoreManager,
-    models::{
-        address::{ConsumerAddress, ConsumerAddressIdb},
-        consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
-    },
+    models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb},
 };
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};

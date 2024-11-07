@@ -1,19 +1,11 @@
 use driver::{
-    contexts::{
-        commerce_data::CommerceDataProvider,
-        driver_data::{DriverDataProvider, DriverDataStore},
-        live_order::OrderHubProvider,
-    }, pages::driver_profile::NewProfileForm, router::DriverPages
+    contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider},
+    pages::NewProfileForm,
+    router::DriverPages,
 };
 use fuente::{
-    contexts::{
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
-    },
-    mass::{
-        atoms::layouts::{LoadingScreen, MainLayout},
-        molecules::login::NewUserPage,
-    },
+    contexts::{NostrIdProvider, NostrIdStore, RelayProvider, UserRelay},
+    mass::{LoadingScreen, MainLayout, NewUserPage},
 };
 use html::ChildrenProps;
 use yew::prelude::*;

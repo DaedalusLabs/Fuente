@@ -2,15 +2,25 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 use crate::browser_api::IdbStoreManager;
 
-pub mod address;
-pub mod admin_configs;
-pub mod commerce;
-pub mod consumer_profile;
-pub mod driver;
-pub mod gps;
-pub mod nostr_kinds;
-pub mod orders;
-pub mod products;
+mod address;
+mod admin_configs;
+mod commerce;
+mod consumer_profile;
+mod driver;
+mod gps;
+mod nostr_kinds;
+mod orders;
+mod products;
+pub use address::*;
+pub use admin_configs::*;
+pub use commerce::*;
+pub use consumer_profile::*;
+pub use driver::*;
+pub use gps::*;
+pub use nostr_kinds::*;
+pub use orders::*;
+pub use products::*;
+
 // pub mod sync;
 pub const TEST_PRIV_KEY: &str = "874f9683a6a2342693da781b3dd6cd3fcda7436375b5301a8a96f433b4795d2d";
 pub const TEST_PUB_KEY: &str = "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";

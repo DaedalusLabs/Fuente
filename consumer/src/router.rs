@@ -1,9 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{
-    cart::CartPage, commerce::CommercePage, favorites::FavoritesPage, history::HistoryPage, home::HomePage, profile::ProfilePage
-};
+use crate::pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, ProfilePage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {

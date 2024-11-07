@@ -1,22 +1,19 @@
-use crate::contexts::consumer_data::{ConsumerDataAction, ConsumerDataStore};
+use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
 
 use super::PageHeader;
 use fuente::{
     browser_api::{GeolocationCoordinates, GeolocationPosition, HtmlForm},
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     mass::{
-        atoms::{
-            forms::SimpleInput,
-            layouts::{CardComponent, PopupSection},
-            svgs::{BackArrowIcon, LookupIcon},
-        },
-        molecules::{address::AddressLookupDetails, consumers::ConsumerProfileDetails},
+        AddressLookupDetails, BackArrowIcon, CardComponent, ConsumerProfileDetails, LookupIcon,
+        PopupSection, SimpleInput,
     },
     models::{
-        address::{ConsumerAddress, ConsumerAddressIdb},
-        consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
+        {ConsumerAddress, ConsumerAddressIdb}, {ConsumerProfile, ConsumerProfileIdb},
     },
-    widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L},
+    widgets::leaflet::{
+        IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L,
+    },
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};

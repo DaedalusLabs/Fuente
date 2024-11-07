@@ -1,10 +1,9 @@
 use fuente::{
     browser_api::IdbStoreManager,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     models::{
-        address::{ConsumerAddress, ConsumerAddressIdb},
-        consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
-        nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
+        ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb,
+        NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
     },
 };
 use nostro2::{

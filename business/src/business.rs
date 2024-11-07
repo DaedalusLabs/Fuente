@@ -1,22 +1,13 @@
 use business::{
-    contexts::{
-        commerce_data::{CommerceDataProvider, CommerceDataStore},
-        consumer_data::ConsumerDataProvider,
-        order_data::OrderDataProvider,
-    },
-    pages::new_user::NewProfilePage,
+    contexts::{CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, OrderDataProvider},
+    pages::NewProfilePage,
     router::CommercePages,
 };
 use fuente::{
     contexts::{
-        init_nostr_db,
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
+        init_nostr_db, {NostrIdProvider, NostrIdStore}, {RelayProvider, UserRelay},
     },
-    mass::{
-        atoms::layouts::{LoadingScreen, MainLayout},
-        molecules::login::NewUserPage,
-    },
+    mass::{LoadingScreen, MainLayout, NewUserPage},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -24,7 +15,7 @@ use yew::prelude::*;
 use yew_router::BrowserRouter;
 
 // 80748881f453306f3129e3a040de263f3dd62726ba03273c248ac33cac59e0c5
-//
+// 566688e5ae72ee7875376a9f2d6c6032ef0bbac1df9ed3d972eb8135a0f022a0
 
 fn main() {
     yew::Renderer::<App>::new().render();

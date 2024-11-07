@@ -1,12 +1,12 @@
 use fuente::{
     browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::atoms::forms::{SimpleFormButton, SimpleInput},
-    models::driver::{DriverProfile, DriverProfileIdb},
+    contexts::{NostrIdStore, NostrProps},
+    mass::{SimpleFormButton, SimpleInput},
+    models::{DriverProfile, DriverProfileIdb},
 };
 use yew::prelude::*;
 
-use crate::contexts::driver_data::{DriverDataAction, DriverDataStore};
+use crate::contexts::{DriverDataAction, DriverDataStore};
 
 #[function_component(NewProfileForm)]
 pub fn new_profile_form() -> Html {

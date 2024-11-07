@@ -1,6 +1,6 @@
 use crate::{
     browser_api::{GeolocationCoordinates, GeolocationPosition},
-    mass::atoms::layouts::CardComponent,
+    mass::atoms::CardComponent,
     widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;

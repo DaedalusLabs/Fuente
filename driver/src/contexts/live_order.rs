@@ -1,11 +1,10 @@
 use std::rc::Rc;
 
 use fuente::{
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     models::{
-        nostr_kinds::NOSTR_KIND_ORDER_STATE,
-        orders::{OrderInvoiceState, OrderStatus},
-        DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
+        OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
+        NOSTR_KIND_ORDER_STATE,
     },
 };
 use nostro2::{

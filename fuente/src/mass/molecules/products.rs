@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::models::products::{ProductItem, ProductMenu, ProductOrder};
+use crate::models::{ProductItem, ProductMenu, ProductOrder};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ProductCardProps {

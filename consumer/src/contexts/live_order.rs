@@ -1,15 +1,8 @@
 use std::rc::Rc;
 
 use fuente::{
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
-        commerce::CommerceProfileIdb,
-        nostr_kinds::{
-            NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_ORDER_STATE,
-        },
-        orders::{OrderInvoiceState, OrderPaymentStatus, OrderStatus},
-        products::ProductMenuIdb,
-    },
+    contexts::{NostrIdStore, NostrProps},
+    models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE},
 };
 use nostro2::{
     notes::SignedNote,
@@ -49,7 +42,6 @@ impl Reducible for LiveOrder {
                 } else {
                     self
                 }
-
             }
         }
     }
