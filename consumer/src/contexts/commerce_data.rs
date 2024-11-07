@@ -2,11 +2,10 @@ use std::rc::Rc;
 
 use fuente::{
     browser_api::IdbStoreManager,
-    contexts::relay_pool::NostrProps,
+    contexts::NostrProps,
     models::{
-        commerce::CommerceProfileIdb,
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
-        products::ProductMenuIdb,
+        CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
+        NOSTR_KIND_COMMERCE_PROFILE,
     },
 };
 use nostro2::relays::{NostrFilter, RelayEvents};

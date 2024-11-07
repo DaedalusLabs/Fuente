@@ -1,9 +1,10 @@
 use fuente::{
-    browser_api::IdbStoreManager, contexts::{key_manager::NostrIdStore, relay_pool::NostrProps}, models::{
-        nostr_kinds::NOSTR_KIND_ORDER_STATE,
-        orders::{OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus},
+    browser_api::IdbStoreManager,
+    contexts::{NostrIdStore, NostrProps},
+    models::{
+        OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
         TEST_PUB_KEY,
-    }
+    },
 };
 use nostro2::relays::{NostrFilter, RelayEvents};
 use std::rc::Rc;

@@ -1,12 +1,12 @@
 use fuente::{
     browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::atoms::forms::{SimpleFormButton, SimpleInput},
-    models::consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
+    contexts::{NostrIdStore, NostrProps},
+    mass::{SimpleFormButton, SimpleInput},
+    models::{ConsumerProfile, ConsumerProfileIdb},
 };
 use yew::prelude::*;
 
-use crate::contexts::consumer_data::{ConsumerDataAction, ConsumerDataStore};
+use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
 
 #[function_component(NewProfilePage)]
 pub fn new_profile() -> Html {

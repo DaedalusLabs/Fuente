@@ -1,11 +1,8 @@
-use fuente::mass::atoms::{
-    forms::AppLink,
-    svgs::{HistoryIcon, HomeIcon, MenuBarsIcon, UserBadgeIcon},
-};
+use fuente::mass::{AppLink, HistoryIcon, HomeIcon, MenuBarsIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::home::HomePage;
+use crate::pages::HomePage;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum DriverRoute {

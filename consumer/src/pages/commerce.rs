@@ -1,15 +1,11 @@
-use crate::contexts::{
-    cart::{CartAction, CartStore},
-    commerce_data::CommerceDataStore,
-    consumer_data::ConsumerDataStore,
-};
+use crate::contexts::{CartAction, CartStore, CommerceDataStore, ConsumerDataStore};
 
 use super::PageHeader;
 use fuente::{
     browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::{atoms::{layouts::CardComponent, svgs::SpinnerIcon}, molecules::products::ProductCard},
-    models::products::{ProductItem, ProductOrder},
+    contexts::{NostrIdStore, NostrProps},
+    mass::{CardComponent, ProductCard, SpinnerIcon},
+    models::{ProductItem, ProductOrder},
 };
 use yew::prelude::*;
 

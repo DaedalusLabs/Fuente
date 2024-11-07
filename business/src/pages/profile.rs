@@ -1,24 +1,15 @@
-use crate::contexts::commerce_data::{CommerceDataAction, CommerceDataStore};
+use crate::contexts::{CommerceDataAction, CommerceDataStore};
 
 use fuente::{
     browser_api::{
         HtmlForm, {GeolocationCoordinates, GeolocationPosition},
     },
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     mass::{
-        atoms::{
-            forms::{SimpleInput, SimpleTextArea},
-            layouts::{CardComponent, DrawerSection},
-            svgs::BackArrowIcon,
-        },
-        molecules::{
-            address::AddressLookupDetails,
-            business::{
-                CommerceProfileAddressDetails, CommerceProfileDetails, CommerceProfileProps,
-            },
-        },
+        AddressLookupDetails, BackArrowIcon, CardComponent, CommerceProfileAddressDetails,
+        CommerceProfileDetails, CommerceProfileProps, DrawerSection, SimpleInput, SimpleTextArea,
     },
-    models::commerce::{CommerceProfile, CommerceProfileIdb},
+    models::{CommerceProfile, CommerceProfileIdb},
     widgets::leaflet::{LatLng, LeafletMap, Marker, NominatimLookup, L},
 };
 use gloo::timers::callback::Timeout;

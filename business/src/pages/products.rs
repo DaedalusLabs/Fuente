@@ -1,15 +1,12 @@
-use crate::contexts::commerce_data::{CommerceDataAction, CommerceDataStore};
+use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
     browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
+    contexts::{NostrIdStore, NostrProps},
     mass::{
-        atoms::{
-            forms::{MoneyInput, SimpleFormButton, SimpleInput, SimpleSelect, SimpleTextArea},
-            layouts::{CardComponent, DrawerSection, LoadingScreen},
-        },
-        molecules::products::ProductMenuCard,
+        CardComponent, DrawerSection, LoadingScreen, MoneyInput, ProductMenuCard, SimpleFormButton,
+        SimpleInput, SimpleSelect, SimpleTextArea,
     },
-    models::products::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb, ProductSide},
+    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
 
 use yew::prelude::*;

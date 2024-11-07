@@ -1,9 +1,8 @@
 use crate::{
     browser_api::{clipboard_copy, HtmlForm},
-    contexts::key_manager::{NostrIdAction, NostrIdStore, UserIdentity},
+    contexts::{NostrIdAction, NostrIdStore, UserIdentity},
     mass::atoms::{
-        forms::{SimpleFormButton, SimpleInput},
-        svgs::CopyIcon,
+        CopyIcon, {SimpleFormButton, SimpleInput},
     },
 };
 use nostro2::userkeys::UserKeys;

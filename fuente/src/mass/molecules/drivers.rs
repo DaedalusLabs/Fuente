@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::models::driver::DriverProfile;
+use crate::models::DriverProfile;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct DriverDetailsProps {

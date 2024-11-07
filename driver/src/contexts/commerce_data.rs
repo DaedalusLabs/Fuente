@@ -1,11 +1,12 @@
 use std::rc::Rc;
 
 use fuente::{
-    browser_api::IdbStoreManager, contexts::relay_pool::NostrProps, models::{
-        commerce::CommerceProfileIdb,
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
-        products::ProductMenuIdb,
-    }
+    browser_api::IdbStoreManager,
+    contexts::NostrProps,
+    models::{
+        CommerceProfileIdb, ProductMenuIdb,
+        {NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
+    },
 };
 use nostro2::relays::{NostrFilter, RelayEvents};
 use yew::{platform::spawn_local, prelude::*};

@@ -1,31 +1,21 @@
 use consumer::{
     contexts::{
-        cart::CartProvider,
-        commerce_data::CommerceDataProvider,
-        consumer_data::{ConsumerDataAction, ConsumerDataProvider, ConsumerDataStore},
-        live_order::{LiveOrderProvider, LiveOrderStore},
+        CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
+        ConsumerDataStore, LiveOrderProvider, LiveOrderStore,
     },
-    pages::new_user::NewProfilePage,
+    pages::NewProfilePage,
     router::ConsumerPages,
 };
 use fuente::{
     browser_api::GeolocationCoordinates,
-    contexts::{
-        init_nostr_db,
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
-    },
+    contexts::{init_nostr_db, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay},
     mass::{
-        atoms::{
-            layouts::{LoadingScreen, MainLayout},
-            svgs::{CancelIcon, SpinnerIcon},
-        },
-        molecules::{
-            address::{NewAddressMenu, NewAddressProps}, drivers::DriverDetailsComponent, login::NewUserPage, products::OrderRequestDetailsComponent
-        },
+        DriverDetailsComponent, NewUserPage, OrderRequestDetailsComponent,
+        {CancelIcon, SpinnerIcon}, {LoadingScreen, MainLayout}, {NewAddressMenu, NewAddressProps},
     },
     models::{
-        address::{ConsumerAddress, ConsumerAddressIdb}, driver::DriverProfileIdb, init_consumer_db, orders::{OrderPaymentStatus, OrderStatus}
+        init_consumer_db, DriverProfileIdb, {ConsumerAddress, ConsumerAddressIdb},
+        {OrderPaymentStatus, OrderStatus},
     },
 };
 use html::ChildrenProps;
@@ -205,7 +195,7 @@ fn live_order_check() -> Html {
                         let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
                         let driver = driver_db.profile();
                         let pubkey = driver_db.pubkey();
-                                        
+
                         Ok(html! {
                             <>
                                 <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
@@ -237,11 +227,17 @@ fn live_order_check() -> Html {
     match inside_html {
         Err(e) => e,
         Ok(inside_html) => {
-            let order = order_ctx.order.clone().unwrap().1.get_order_request().products;
+            let order = order_ctx
+                .order
+                .clone()
+                .unwrap()
+                .1
+                .get_order_request()
+                .products;
             html! {
                 <div class="fixed w-dvw h-dvh bg-black flex items-center justify-center z-20">
                     <div class="relative bg-white p-4 flex flex-col gap-4">
-                        <OrderRequestDetailsComponent {order} />                      
+                        <OrderRequestDetailsComponent {order} />
                         {inside_html}
                         <SpinnerIcon class="absolute top-4 right-4 w-4 h-4 text-fuente" />
                     </div>

@@ -1,5 +1,5 @@
 use super::PageHeader;
-use fuente::mass::atoms::{svgs::HeartIcon, forms::SimpleFormButton};
+use fuente::mass::{HeartIcon, SimpleFormButton};
 use yew::prelude::*;
 
 #[function_component(FavoritesPage)]

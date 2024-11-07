@@ -1,6 +1,6 @@
-use crate::contexts::order_data::OrderDataStore;
+use crate::contexts::OrderDataStore;
 
-use fuente::mass::atoms::svgs::HistoryIcon;
+use fuente::mass::HistoryIcon;
 use yew::prelude::*;
 
 #[function_component(HistoryPage)]
