@@ -10,6 +10,8 @@ use nostro2::{
 };
 use yew::{platform::spawn_local, prelude::*};
 
+use crate::pages::LiveOrderCheck;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
     pub order: Option<(SignedNote, OrderInvoiceState)>,
@@ -58,12 +60,22 @@ pub struct LiveOrderChildren {
 pub fn key_handler(props: &LiveOrderChildren) -> Html {
     let ctx = use_reducer(|| LiveOrder { order: None });
 
-    let ctx_clone = ctx.clone();
-    use_effect_with((), move |_| {});
-
     html! {
-        <ContextProvider<LiveOrderStore> context={ctx}>
-            {props.children.clone()}
+        <ContextProvider<LiveOrderStore> context={ctx.clone()}>
+            {match ctx.order.as_ref() {
+                Some(_) => {
+                    html! {
+                        <LiveOrderCheck />
+                    }
+                }
+                None => {
+                    html! {
+                        <>
+                            {props.children.clone()}
+                        </>
+                    }
+                }
+            }}
             <LiveOrderSync />
         </ContextProvider<LiveOrderStore>>
     }

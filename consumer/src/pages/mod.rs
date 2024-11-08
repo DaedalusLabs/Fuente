@@ -3,6 +3,7 @@ mod commerce;
 mod favorites;
 mod history;
 mod home;
+mod live_order;
 mod new_user;
 mod profile;
 pub use cart::*;
@@ -10,11 +11,12 @@ pub use commerce::*;
 pub use favorites::*;
 pub use history::*;
 pub use home::*;
+pub use live_order::*;
 pub use new_user::*;
 pub use profile::*;
 
-use yew::prelude::*;
 use fuente::mass::{AppLink, BackArrowIcon};
+use yew::prelude::*;
 
 use crate::router::ConsumerRoute;
 
