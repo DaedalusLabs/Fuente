@@ -3,10 +3,7 @@ use std::rc::Rc;
 use fuente::models::{
     ConsumerAddress, ConsumerProfile, OrderRequest, ProductItem, ProductOrder, TEST_PUB_KEY,
 };
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{notes::SignedNote, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
