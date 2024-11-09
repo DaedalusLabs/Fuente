@@ -1,7 +1,9 @@
 use crate::{
     browser_api::{GeolocationCoordinates, GeolocationPosition},
     mass::atoms::CardComponent,
-    widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L},
+    widgets::leaflet::{
+        IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L,
+    },
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};
@@ -42,10 +44,7 @@ pub struct NewAddressProps {
 
 #[function_component(NewAddressMenu)]
 pub fn new_address_menu(props: &NewAddressProps) -> Html {
-    let NewAddressProps {
-        onclick,
-        ..
-    } = props;
+    let NewAddressProps { onclick, .. } = props;
     html! {
         <>
             <div class="w-full flex flex-col gap-2">

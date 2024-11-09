@@ -19,14 +19,11 @@ pub type AdminConfigsStore = UseReducerHandle<AdminConfigs>;
 
 #[function_component(AdminConfigsProvider)]
 pub fn key_handler(props: &yew::html::ChildrenProps) -> Html {
-    let ctx = use_reducer(|| AdminConfigs {
-        has_loaded: false,
-    });
+    let ctx = use_reducer(|| AdminConfigs { has_loaded: false });
 
     let ctx_clone = ctx.clone();
     use_effect_with((), |_| {
-        spawn_local(async move {
-        });
+        spawn_local(async move {});
         || {}
     });
 

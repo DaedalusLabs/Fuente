@@ -29,9 +29,7 @@ fn main() {
 }
 #[function_component(App)]
 fn app() -> Html {
-    use_effect_with((), move |_| {
-        || {}
-    });
+    use_effect_with((), move |_| || {});
     html! {
         <BrowserRouter>
            <AppContext>

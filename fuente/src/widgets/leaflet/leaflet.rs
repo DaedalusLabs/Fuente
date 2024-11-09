@@ -145,7 +145,10 @@ extern "C" {
     pub fn map_with_options(id: &str, options: JsValue) -> LeafletMap;
 }
 impl L {
-    pub fn render_default_map(id: &str, coords: &GeolocationCoordinates) -> Result<LeafletMap, JsValue> {
+    pub fn render_default_map(
+        id: &str,
+        coords: &GeolocationCoordinates,
+    ) -> Result<LeafletMap, JsValue> {
         let lat_lng: LatLng = coords.into();
         let mut map_options = LeafletMapOptions::default();
         map_options.center = Some(lat_lng.clone());

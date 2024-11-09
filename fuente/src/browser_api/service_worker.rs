@@ -16,5 +16,3 @@ impl AppServiceWorker {
         Ok(())
     }
 }
-
-

@@ -9,7 +9,8 @@ use wasm_bindgen::JsValue;
 use crate::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP}, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES
+    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
+    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]

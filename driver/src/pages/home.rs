@@ -6,7 +6,7 @@ use fuente::{
     contexts::{NostrIdStore, NostrProps},
     mass::{LoadingScreen, SpinnerIcon},
     models::{OrderInvoiceState, OrderStatus},
-    widgets::leaflet::{IconOptions, L},
+    widgets::leaflet::{IconOptions, Marker, L},
 };
 use gloo::utils::format::JsValueSerdeExt;
 use wasm_bindgen::JsValue;
@@ -21,7 +21,7 @@ pub fn home_page() -> Html {
     }
     let orders = order_ctx.get_orders();
 
-    if orders.is_empty() {
+    if orders.is_empty() && order_ctx.get_live_order().is_none() {
         return html! {
             <div class="flex flex-col flex-1 gap-8">
                 <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4">{"No orders yet!"}</h2>
@@ -30,14 +30,14 @@ pub fn home_page() -> Html {
     };
     if let Some(live_order) = order_ctx.get_live_order() {
         return html! {
-            <div class="flex flex-col flex-1 gap-8 overflow-y-auto">
+            <div class="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
                 <h2>{"Live Order!"}</h2>
                 <LiveOrderDetails order={live_order} />
             </div>
         };
     }
     html! {
-            <div class="flex flex-col flex-1 gap-8 overflow-y-auto">
+            <div class="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
             {{orders.iter().map(|order| {
                 html! {
                     <OrderPickupDetails order={order.clone()} />
@@ -108,21 +108,22 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     };
 
     html! {
-        <div class="flex flex-col flex-1 gap-2 shadow-xl p-2 w-fit h-fit">
+        <div class="flex flex-col gap-2 shadow-xl p-4 w-full h-full rounded-lg">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
                     {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname())}
                 </p>
             </div>
-            <div class="flex flex-row">
+            <div class="flex flex-row flex-1 ">
                 <OrderPickupMapPreview
                     order_id={order.id()}
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
+                    classes={classes!["w-full", "h-full", "rounded-lg", "min-w-96", "min-h-96"]}
                 />
-                <div class="flex flex-1 flex-col gap-4 items-center justify-center">
-                    <button {onclick} class="bg-fuente text-white rounded-3xl p-2 w-1/2">
+                <div class="flex flex-col gap-4 p-4">
+                    <button {onclick} class="w-fit bg-fuente text-white rounded-3xl p-2 w-1/2">
                         {{match order.get_order_status() {
                             OrderStatus::ReadyForDelivery => "Picked up Package",
                             OrderStatus::InDelivery => "Delivered Package",
@@ -197,6 +198,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
+                    classes={classes!["w-1/2", "h-1/2"]}
                 />
                 <div class="flex flex-1 flex-col gap-4 items-center justify-center">
                     <button {onclick} class="bg-fuente text-white rounded-3xl p-2 w-1/2">
@@ -214,6 +216,7 @@ pub struct OrderPickupMapPreviewProps {
     pub commerce_location: GeolocationCoordinates,
     pub consumer_location: GeolocationCoordinates,
     pub own_location: GeolocationCoordinates,
+    pub classes: Classes,
 }
 #[function_component(OrderPickupMapPreview)]
 pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
@@ -222,46 +225,47 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         commerce_location,
         consumer_location,
         own_location,
-    } = props;
+        classes,
+    } = props.clone();
     let map_state: UseStateHandle<Option<fuente::widgets::leaflet::LeafletMap>> =
         use_state(|| None);
     let map_id = format!("order-map-{}", order_id);
     let map_id_clone = map_id.clone();
-    let state_clone = map_state.clone();
+    let own_marker_state = use_state(|| None::<Marker>);
+    let map_handle = map_state.clone();
+    let marker_handle = own_marker_state.clone();
     let commerce_loc = commerce_location.clone();
     let consumer_loc = consumer_location.clone();
-    let position = own_location.clone();
     use_effect_with((), move |_| {
-        let id = map_id_clone.clone();
-        let state = state_clone.clone();
-        let commerce_location = commerce_loc.clone();
-        let consumer_location = consumer_loc.clone();
-        let map = L::render_default_map(&id, &position).expect("Failed to render map");
+        let map =
+            L::render_default_map(&map_id_clone, &own_location).expect("Failed to render map");
         let user_marker_options = IconOptions {
-            icon_url: "public/assets/img/marker.png".to_string(),
-            icon_size: Some(vec![32, 32]),
-            icon_anchor: Some(vec![16, 32]),
-        };
-        map.add_marker_with_icon(&consumer_location, user_marker_options)
-            .expect("Failed to add marker");
-        let commerce_marker_options = IconOptions {
             icon_url: "public/assets/img/my_marker.png".to_string(),
             icon_size: Some(vec![32, 32]),
             icon_anchor: Some(vec![16, 32]),
         };
-        map.add_marker_with_icon(&commerce_location, commerce_marker_options)
+        map.add_marker_with_icon(&consumer_loc, user_marker_options)
+            .expect("Failed to add marker");
+        let commerce_marker_options = IconOptions {
+            icon_url: "public/assets/img/pay_pickup.png".to_string(),
+            icon_size: Some(vec![32, 32]),
+            icon_anchor: Some(vec![16, 32]),
+        };
+        map.add_marker_with_icon(&commerce_loc, commerce_marker_options)
             .expect("Failed to add marker");
         let rider_marker_options = IconOptions {
             icon_url: "public/assets/img/rider2.png".to_string(),
             icon_size: Some(vec![32, 32]),
             icon_anchor: Some(vec![16, 32]),
         };
-        map.add_marker_with_icon(&position, rider_marker_options)
+        let my_marker = map
+            .add_marker_with_icon(&own_location, rider_marker_options)
             .expect("Failed to add marker");
+        marker_handle.set(Some(my_marker.clone()));
         let js_array = vec![
-            vec![position.latitude, position.longitude],
-            vec![commerce_location.latitude, commerce_location.longitude],
-            vec![consumer_location.latitude, consumer_location.longitude],
+            vec![own_location.latitude, own_location.longitude],
+            vec![commerce_loc.latitude, commerce_loc.longitude],
+            vec![consumer_loc.latitude, consumer_loc.longitude],
         ];
         let js_value = JsValue::from_serde(&js_array).expect("Failed to convert to JsValue");
         let fit_options = js_sys::Object::new();
@@ -272,14 +276,41 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         )
         .expect("Failed to set padding");
         map.fit_bounds(js_value, fit_options.into());
-        state.set(Some(map));
+        map_handle.set(Some(map));
+        move || {}
+    });
+    let marker_clone = own_marker_state.clone();
+    use_effect_with(map_state.clone(), move |map| {
+        if let (Some(map), Some(marker)) = (map.as_ref(), marker_clone.as_ref()) {
+            let map_clone = map.clone();
+            let marker_handle = marker.clone();
+            spawn_local(async move {
+                if let Ok((watch_id, position)) = GeolocationPosition::watch_position().await {
+                    while let Ok(position) = position.recv().await {
+                        let js_array = vec![
+                            vec![position.coords.latitude, position.coords.longitude],
+                            vec![commerce_location.latitude, commerce_location.longitude],
+                            vec![consumer_location.latitude, consumer_location.longitude],
+                        ];
+                        marker_handle.set_lat_lng(&position.try_into().unwrap());
+                        let js_value = serde_wasm_bindgen::to_value(&js_array)
+                            .expect("Failed to convert to JsValue");
+                        let fit_options = js_sys::Object::new();
+                        js_sys::Reflect::set(
+                            &fit_options,
+                            &JsValue::from_str("maxZoom"),
+                            &JsValue::null(),
+                        )
+                        .expect("Failed to set padding");
+                        map_clone.fit_bounds(js_value, fit_options.into());
+                    }
+                    let _ = GeolocationPosition::clear_watch(watch_id).await;
+                }
+            });
+        }
         move || {}
     });
     html! {
-        <div id={map_id}
-            class="w-64 h-64 max-w-64 max-h-64 min-w-64 min-h-64
-            border-2 border-fuente rounded-3xl shadow-xl"
-            >
-        </div>
+        <div id={map_id} class={classes}></div>
     }
 }

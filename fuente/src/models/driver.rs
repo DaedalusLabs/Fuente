@@ -8,7 +8,8 @@ use wasm_bindgen::JsValue;
 use super::{
     nostr_kinds::{
         NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE,
-    }, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES
+    },
+    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
 use crate::browser_api::{GeolocationPosition, IdbStoreManager};
 
@@ -257,10 +258,9 @@ mod tests {
         let address_idb_2 = DriverProfileIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 
-        let retrieved: DriverProfileIdb =
-            DriverProfileIdb::retrieve_from_store(&address_idb.key())
-                .await
-                .unwrap();
+        let retrieved: DriverProfileIdb = DriverProfileIdb::retrieve_from_store(&address_idb.key())
+            .await
+            .unwrap();
         assert_eq!(retrieved.pubkey(), address_idb.pubkey());
 
         let retrieved_2: DriverProfileIdb =
@@ -279,4 +279,3 @@ mod tests {
         Ok(())
     }
 }
-
