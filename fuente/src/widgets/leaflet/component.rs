@@ -1,8 +1,8 @@
-use yew::prelude::*;
-use wasm_bindgen_futures::spawn_local;
-use crate::browser_api::{GeolocationPosition, GeolocationCoordinates};
-use super::leaflet::{L, LeafletMap, Marker};
+use super::leaflet::{LeafletMap, Marker, L};
 use super::nominatim::NominatimLookup;
+use crate::browser_api::{GeolocationCoordinates, GeolocationPosition};
+use wasm_bindgen_futures::spawn_local;
+use yew::prelude::*;
 
 // Make Props cloneable
 #[derive(Properties, PartialEq, Clone)]
@@ -49,7 +49,7 @@ pub fn leaflet_component(props: &Props) -> Html {
             spawn_local(async move {
                 if let Ok(position) = GeolocationPosition::locate().await {
                     let coords = position.coords;
-                    
+
                     if let Ok(map_instance) = L::render_default_map(&map_id, &coords) {
                         // Set map state and emit to parent
                         map.set(Some(map_instance.clone()));
@@ -96,10 +96,10 @@ pub fn leaflet_component(props: &Props) -> Html {
 
     html! {
         <div class={classes!("flex", "flex-col", "gap-4", "w-full", props.class.clone())}>
-            <div 
-                id={props.map_id.clone()} 
+            <div
+                id={props.map_id.clone()}
                 style={props.style.clone().unwrap_or(AttrValue::from("height: 500px; width: 100%; position: relative;"))}
-                class="rounded-lg shadow-md" 
+                class="rounded-lg shadow-md"
             />
             if props.show_location_name && !(*location_name).is_empty() {
                 <div class="text-sm text-gray-600">

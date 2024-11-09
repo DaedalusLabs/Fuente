@@ -2,13 +2,12 @@ use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 use crate::browser_api::IdbStoreManager;
 
-
+mod admin_configs;
 mod key_manager;
 mod relay_pool;
-mod admin_configs;
+pub use admin_configs::*;
 pub use key_manager::*;
 pub use relay_pool::*;
-pub use admin_configs::*;
 
 pub const DB_NAME: &str = "nostr";
 pub const DB_VERSION: u32 = 2;

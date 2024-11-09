@@ -16,7 +16,7 @@ pub fn navigator() -> web_sys::Navigator {
 }
 pub fn js_array_to_vec<T>(array_buffer: JsValue) -> Result<Vec<T>, String>
 where
-    T: DeserializeOwned + TryFrom<JsValue,  Error= JsValue>,
+    T: DeserializeOwned + TryFrom<JsValue, Error = JsValue>,
 {
     let cast_vec = array_buffer.dyn_into::<js_sys::Array>().unwrap();
     let structs: Vec<T> = cast_vec
@@ -90,8 +90,7 @@ pub fn play_notification_sound() {
     let _ = audio.play().unwrap();
 }
 
-pub fn get_object_key(event: &JsValue, key: &str) -> Result<JsValue, JsValue> 
-{
+pub fn get_object_key(event: &JsValue, key: &str) -> Result<JsValue, JsValue> {
     let key = JsValue::from_str(key);
     if js_sys::Reflect::has(&event, &key).unwrap() {
         let value = js_sys::Reflect::get(&event, &key).unwrap();

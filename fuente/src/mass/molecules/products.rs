@@ -57,8 +57,7 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
     let ProductMenuListProps { order } = props;
     let counted = order.counted_products();
     let total = order.total();
-    let products_html = 
-    html! {
+    let products_html = html! {
         {counted.iter().map(|(item, count)| {
             html! {
                     <div class="flex flex-row gap-2">
@@ -78,5 +77,3 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
         </div>
     }
 }
-
-

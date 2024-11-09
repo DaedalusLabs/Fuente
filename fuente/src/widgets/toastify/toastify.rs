@@ -13,7 +13,7 @@ pub struct ToastifyOptions {
     #[serde(rename = "className")]
     class_name: &'static str,
     #[serde(rename = "style")]
-    style: ToastifyStyle,  // Changed to use a dedicated style struct
+    style: ToastifyStyle, // Changed to use a dedicated style struct
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -44,7 +44,10 @@ impl ToastifyOptions {
 
     pub fn new_relay_disconnected(relay_url: &str) -> Self {
         ToastifyOptions {
-            text: format!("Disconnected from relay: {}. Please refresh the app.", relay_url),
+            text: format!(
+                "Disconnected from relay: {}. Please refresh the app.",
+                relay_url
+            ),
             duration: u32::MAX,
             close: true,
             gravity: "top",

@@ -2,7 +2,6 @@ use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LndHodlInvoice {
     payment_addr: String,
@@ -122,4 +121,3 @@ impl LndHodlInvoiceState {
         self.payment_request.clone()
     }
 }
-

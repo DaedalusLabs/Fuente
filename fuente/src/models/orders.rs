@@ -1,3 +1,5 @@
+use crate::browser_api::IdbStoreManager;
+use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -5,8 +7,6 @@ use nostro2::{
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 use wasm_bindgen::JsValue;
-use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
-use crate::browser_api::IdbStoreManager;
 
 use super::{
     address::ConsumerAddress,

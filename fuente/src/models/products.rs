@@ -13,7 +13,8 @@ use wasm_bindgen::JsValue;
 use crate::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_PRODUCT_LISTS
+    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, upgrade_fuente_db, DB_NAME_FUENTE,
+    DB_VERSION_FUENTE, STORE_NAME_PRODUCT_LISTS,
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -351,16 +352,14 @@ mod tests {
         let address_idb_2 = ProductMenuIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 
-        let retrieved: ProductMenuIdb =
-            ProductMenuIdb::retrieve_from_store(&address_idb.key())
-                .await
-                .unwrap();
+        let retrieved: ProductMenuIdb = ProductMenuIdb::retrieve_from_store(&address_idb.key())
+            .await
+            .unwrap();
         assert_eq!(retrieved.id(), address_idb.id());
 
-        let retrieved_2: ProductMenuIdb =
-            ProductMenuIdb::retrieve_from_store(&address_idb_2.key())
-                .await
-                .unwrap();
+        let retrieved_2: ProductMenuIdb = ProductMenuIdb::retrieve_from_store(&address_idb_2.key())
+            .await
+            .unwrap();
         assert_eq!(retrieved_2.id(), address_idb_2.id());
 
         let all_addresses = ProductMenuIdb::retrieve_all_from_store().await.unwrap();
@@ -373,4 +372,3 @@ mod tests {
         Ok(())
     }
 }
-

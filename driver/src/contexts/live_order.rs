@@ -72,11 +72,15 @@ impl Reducible for OrderHub {
                     live_order: self.live_order.clone(),
                 })
             }
-            OrderHubAction::LiveOrder(order) => Rc::new(OrderHub {
-                hub_keys: self.hub_keys.clone(),
-                orders: self.orders.clone(),
-                live_order: Some(order),
-            }),
+            OrderHubAction::LiveOrder(order) => {
+                let mut orders = self.orders.clone();
+                orders.retain(|o| o.id() != order.id());
+                Rc::new(OrderHub {
+                    hub_keys: self.hub_keys.clone(),
+                    orders,
+                    live_order: Some(order),
+                })
+            }
             OrderHubAction::OrderCompleted(completed_id) => {
                 let mut orders = self.orders.clone();
                 orders.retain(|o| o.id() != completed_id);

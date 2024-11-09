@@ -1,4 +1,6 @@
-use crate::contexts::{CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore};
+use crate::contexts::{
+    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore,
+};
 
 use super::PageHeader;
 use fuente::{
