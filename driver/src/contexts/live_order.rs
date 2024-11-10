@@ -4,7 +4,7 @@ use fuente::{
     contexts::{NostrIdStore, NostrProps},
     models::{
         OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
-        NOSTR_KIND_ORDER_STATE,
+        NOSTR_KIND_ORDER_STATE, TEST_PUB_KEY,
     },
 };
 use nostro2::{
@@ -142,23 +142,25 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
-        let filter = NostrFilter::default()
-            .new_kind(NOSTR_KIND_ORDER_STATE)
-            .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()])
-            .subscribe();
-        id_handle.set(filter.id());
-        subscriber.emit(filter);
+        if let Some(keys) = key_ctx.get_nostr_key() {
+            let filter = NostrFilter::default()
+                .new_kinds(vec![NOSTR_KIND_ORDER_STATE])
+                .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()])
+                .subscribe();
+            id_handle.set(filter.id());
+            subscriber.emit(filter);
+        }
         || {}
     });
 
-    let keys = keys_ctx.get_nostr_key().clone();
+    let my_keys = keys_ctx.get_nostr_key().expect("No keys found");
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
                         if let Some(signed_note) = order_status.get_courier() {
-                            if signed_note.get_pubkey() == keys.expect("No keys").get_public_key() {
+                            if signed_note.get_pubkey() == my_keys.get_public_key() {
                                 match order_status.get_order_status() {
                                     OrderStatus::Canceled => {
                                         // TODO

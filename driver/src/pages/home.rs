@@ -186,7 +186,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     };
 
     html! {
-        <div class="flex flex-col flex-1 gap-2 shadow-xl p-2 w-fit h-fit">
+        <div class="flex flex-col gap-2 shadow-xl p-2 w-fit h-fit">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
                     {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname())}
@@ -198,7 +198,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
-                    classes={classes!["w-1/2", "h-1/2"]}
+                    classes={classes!["rounded-lg", "min-w-64", "min-h-64"]}
                 />
                 <div class="flex flex-1 flex-col gap-4 items-center justify-center">
                     <button {onclick} class="bg-fuente text-white rounded-3xl p-2 w-1/2">

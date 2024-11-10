@@ -3,11 +3,10 @@ use std::rc::Rc;
 use fuente::{
     contexts::{NostrIdStore, NostrProps},
     models::{
-        AdminConfigurationType, CommerceProfile, NOSTR_KIND_COMMERCE_PROFILE,
-        NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY,
+        AdminConfigurationType, CommerceProfile, DriverProfile, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY
     },
 };
-use nostro2::notes::SignedNote;
+use nostro2::{notes::SignedNote, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,6 +14,7 @@ pub struct ServerConfigs {
     admin_whitelist: Vec<String>,
     commerce_whitelist: Vec<String>,
     commerces: Vec<SignedNote>,
+    couriers: Vec<SignedNote>,
     couriers_whitelist: Vec<String>,
     consumer_blacklist: Vec<String>,
     user_registrations: Vec<String>,
@@ -46,6 +46,15 @@ impl ServerConfigs {
             }
         }
         commerces
+    }
+    pub fn get_whitelisted_couriers(&self) -> Vec<SignedNote> {
+        let mut couriers = vec![];
+        for note in self.couriers.iter() {
+            if self.couriers_whitelist.contains(&note.get_pubkey()) {
+                couriers.push(note.clone());
+            }
+        }
+        couriers
     }
     pub fn check_commerce_whitelist(&self, pubkey: &str) -> bool {
         self.commerce_whitelist.contains(&pubkey.to_string())
@@ -82,6 +91,7 @@ pub enum ServerConfigsAction {
     UpdateCommerceWhitelist(Vec<String>),
     UpdateCouriersWhitelist(Vec<String>),
     AddCommerce(SignedNote),
+    AddCourier(SignedNote),
 }
 
 impl Reducible for ServerConfigs {
@@ -117,6 +127,14 @@ impl Reducible for ServerConfigs {
                 new_state.commerces.push(note);
                 Rc::new(new_state)
             }
+            ServerConfigsAction::AddCourier(note) => {
+                let mut new_state = (*self).clone();
+                new_state
+                    .couriers
+                    .retain(|n| n.get_pubkey() != note.get_pubkey());
+                new_state.couriers.push(note);
+                Rc::new(new_state)
+            }
         }
     }
 }
@@ -135,6 +153,7 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
         commerce_whitelist: vec![],
         couriers_whitelist: vec![],
         commerces: vec![],
+        couriers: vec![],
         consumer_blacklist: vec![],
         user_registrations: vec![],
         exchange_rate: 0.0,
@@ -149,25 +168,43 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     use_effect_with((), move |_| || {});
     let subscriber = relay_ctx.subscribe.clone();
     use_effect_with((), move |_| {
-            let commerce_filter =
-                nostro2::relays::NostrFilter::default().new_kind(NOSTR_KIND_COMMERCE_PROFILE);
-            subscriber.emit(commerce_filter.subscribe());
-            let filter = nostro2::relays::NostrFilter::default()
-                .new_kind(NOSTR_KIND_SERVER_CONFIG)
-                .new_author(TEST_PUB_KEY);
-            let subscription = filter.subscribe();
-            sub_handler.set(Some(subscription.id()));
-            subscriber.emit(subscription);
+        let courier_filter = nostro2::relays::NostrFilter::default()
+            .new_kind(NOSTR_KIND_CONSUMER_GIFTWRAP)
+            .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()]);
+        subscriber.emit(courier_filter.subscribe());
+        let commerce_filter = nostro2::relays::NostrFilter::default()
+            .new_kinds(vec![NOSTR_KIND_COMMERCE_PROFILE]);
+        subscriber.emit(commerce_filter.subscribe());
+        let filter = nostro2::relays::NostrFilter::default()
+            .new_kind(NOSTR_KIND_SERVER_CONFIG)
+            .new_author(TEST_PUB_KEY);
+        let subscription = filter.subscribe();
+        sub_handler.set(Some(subscription.id()));
+        subscriber.emit(subscription);
         || {}
     });
 
     let key_clone = user_ctx.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
+        let driver_hub_key =
+            UserKeys::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
         if let (Some(note), Some(key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
             if note.get_kind() == NOSTR_KIND_COMMERCE_PROFILE {
                 if let Ok(_) = CommerceProfile::try_from(note.clone()) {
                     ctx_clone.dispatch(ServerConfigsAction::AddCommerce(note.clone()));
+                }
+            }
+            if note.get_kind() == NOSTR_KIND_CONSUMER_GIFTWRAP {
+                gloo::console::log!("Driver profile");
+                let cleartext = driver_hub_key
+                    .decrypt_nip_04_content(&note)
+                    .expect("Failed to decrypt");
+                let giftwrapped_note = SignedNote::try_from(cleartext).expect("Failed to parse");
+
+                if let Ok(_) = DriverProfile::try_from(giftwrapped_note.clone()) {
+                    ctx_clone.dispatch(ServerConfigsAction::AddCourier(note.clone()));
+                    gloo::console::log!("Courier added");
                 }
             }
             if note.get_kind() == NOSTR_KIND_SERVER_CONFIG {
