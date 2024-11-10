@@ -97,14 +97,15 @@ impl InvoicerBot {
         let commerce = commerce_profiles
             .get(&order.commerce)
             .ok_or(anyhow!("Commerce not found"))?;
-        let invoice_amount = order.products.total() as u64 * 100;
+        let invoice_total_srd = order.products.total();
+        let exchange_rate = self.admin_config.lock().await.get_exchange_rate();
+        let invoice_amount = ((invoice_total_srd / exchange_rate) * 100_000_000.0) as u64;
         let invoice = self
             .lightning_wallet
             .get_ln_url_invoice(invoice_amount * 1000, commerce.ln_address()?)
             .await?;
-        // We create a invoice for user to pay
-        // Value i the amount of the order + 200 illuminodes fee + whatever profit Maya
-        // wants to make
+        // TODO 
+        // Add Mayas profit to the invoice
         let hodl_amount = invoice_amount + 200;
         let hodl_invoice = self
             .lightning_wallet

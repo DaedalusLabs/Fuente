@@ -8,13 +8,27 @@ use yew::prelude::*;
 
 use crate::ServerConfigsStore;
 
+#[function_component(ExchangeRatePage)]
+pub fn exchange_rate_page() -> Html {
+    html! {
+        <div class="w-full h-full flex flex-col gap-8 p-8 items-center">
+            <ExchangeRateDisplay />
+            <ExchangeRateForm />
+        </div>
+    }
+}
+
 #[function_component(ExchangeRateDisplay)]
 pub fn exchange_rate_display() -> Html {
     let server_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let exchange_rate = server_ctx.get_exchange_rate();
-    gloo::console::info!(format!("Exchange rate is {}", exchange_rate));
+    let sat_rate = exchange_rate / 100_000_000.0;
     html! {
-        <></>
+        <>
+            <h1>{"Current Exchange Rate"}</h1>
+            <p>{format!("1 BTC = {} SRD", exchange_rate)}</p>
+            <p>{format!("1 Satoshi = {} SRD", sat_rate)}</p>
+        </>
     }
 }
 

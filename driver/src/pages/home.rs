@@ -279,37 +279,37 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         map_handle.set(Some(map));
         move || {}
     });
-    let marker_clone = own_marker_state.clone();
-    use_effect_with(map_state.clone(), move |map| {
-        if let (Some(map), Some(marker)) = (map.as_ref(), marker_clone.as_ref()) {
-            let map_clone = map.clone();
-            let marker_handle = marker.clone();
-            spawn_local(async move {
-                if let Ok((watch_id, position)) = GeolocationPosition::watch_position().await {
-                    while let Ok(position) = position.recv().await {
-                        let js_array = vec![
-                            vec![position.coords.latitude, position.coords.longitude],
-                            vec![commerce_location.latitude, commerce_location.longitude],
-                            vec![consumer_location.latitude, consumer_location.longitude],
-                        ];
-                        marker_handle.set_lat_lng(&position.try_into().unwrap());
-                        let js_value = serde_wasm_bindgen::to_value(&js_array)
-                            .expect("Failed to convert to JsValue");
-                        let fit_options = js_sys::Object::new();
-                        js_sys::Reflect::set(
-                            &fit_options,
-                            &JsValue::from_str("maxZoom"),
-                            &JsValue::null(),
-                        )
-                        .expect("Failed to set padding");
-                        map_clone.fit_bounds(js_value, fit_options.into());
-                    }
-                    let _ = GeolocationPosition::clear_watch(watch_id).await;
-                }
-            });
-        }
-        move || {}
-    });
+    // let marker_clone = own_marker_state.clone();
+    // use_effect_with(map_state.clone(), move |map| {
+    //     if let (Some(map), Some(marker)) = (map.as_ref(), marker_clone.as_ref()) {
+    //         let map_clone = map.clone();
+    //         let marker_handle = marker.clone();
+    //         spawn_local(async move {
+    //             if let Ok((watch_id, position)) = GeolocationPosition::watch_position().await {
+    //                 while let Ok(position) = position.recv().await {
+    //                     let js_array = vec![
+    //                         vec![position.coords.latitude, position.coords.longitude],
+    //                         vec![commerce_location.latitude, commerce_location.longitude],
+    //                         vec![consumer_location.latitude, consumer_location.longitude],
+    //                     ];
+    //                     marker_handle.set_lat_lng(&position.try_into().unwrap());
+    //                     let js_value = serde_wasm_bindgen::to_value(&js_array)
+    //                         .expect("Failed to convert to JsValue");
+    //                     let fit_options = js_sys::Object::new();
+    //                     js_sys::Reflect::set(
+    //                         &fit_options,
+    //                         &JsValue::from_str("maxZoom"),
+    //                         &JsValue::null(),
+    //                     )
+    //                     .expect("Failed to set padding");
+    //                     map_clone.fit_bounds(js_value, fit_options.into());
+    //                 }
+    //                 let _ = GeolocationPosition::clear_watch(watch_id).await;
+    //             }
+    //         });
+    //     }
+    //     move || {}
+    // });
     html! {
         <div id={map_id} class={classes}></div>
     }
