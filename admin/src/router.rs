@@ -1,8 +1,8 @@
-use fuente::mass::{AppLink, HomeIcon, MotoIcon, StoreIcon, UserBadgeIcon};
+use fuente::mass::{AppLink, BitcoinIcon, HomeIcon, MotoIcon, StoreIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CommerceDisplay, CourierWhitelistPage};
+use crate::pages::{CommerceDisplay, CourierWhitelistPage, ExchangeRatePage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum AdminPanelRoute {
@@ -44,6 +44,7 @@ pub fn consumer_pages() -> Html {
                                 </>},
                             AdminPanelRoute::Exchange => html!{<>
                                 <h1>{"Exchange"}</h1>
+                                <ExchangeRatePage />
                                 </>},
                             AdminPanelRoute::Commerces => html!{<>
                                 <h1>{"Commerces"}</h1>
@@ -71,6 +72,11 @@ pub fn home_footer() -> Html {
                 class="" selected_class=""
                 route={AdminPanelRoute::Home}>
                 <HomeIcon class="w-8 h-8 stroke-neutral-400" />
+            </AppLink<AdminPanelRoute>>
+            <AppLink<AdminPanelRoute>
+                class="" selected_class=""
+                route={AdminPanelRoute::Exchange}>
+                <BitcoinIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<AdminPanelRoute>>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""

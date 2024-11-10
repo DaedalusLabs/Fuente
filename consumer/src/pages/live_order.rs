@@ -1,5 +1,6 @@
 use fuente::{
     browser_api::clipboard_copy,
+    contexts::AdminConfigsStore,
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{DriverProfileIdb, OrderInvoiceState, OrderPaymentStatus, OrderStatus},
 };
@@ -11,12 +12,14 @@ use crate::contexts::LiveOrderStore;
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check() -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
+    let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    let exchange_rate = admin_ctx.get_exchange_rate();
     let inside_html = if let Some(order) = &order_ctx.order {
         match order.1.get_payment_status() {
             OrderPaymentStatus::PaymentPending => Ok(html! {
                 <>
                     <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
-                    <OrderInvoiceComponent invoice={order.1.get_consumer_invoice().unwrap()} />
+                    <OrderInvoiceComponent invoice={order.1.get_consumer_invoice().unwrap()} {exchange_rate} />
                 </>
             }),
             OrderPaymentStatus::PaymentReceived => Ok(html! {
@@ -99,12 +102,15 @@ pub fn live_order_check() -> Html {
 #[derive(Properties, Clone, PartialEq)]
 pub struct OrderInvoiceComponentProps {
     pub invoice: LndHodlInvoice,
+    pub exchange_rate: f64,
 }
 
 #[function_component(OrderInvoiceComponent)]
 pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
-    let OrderInvoiceComponentProps { invoice } = props.clone();
+    let OrderInvoiceComponentProps { invoice, exchange_rate } = props.clone();
     let invoice_pr = invoice.payment_request();
+    let sat_amount = invoice.sat_amount();
+    let srd_amount = sat_amount as f64 / 100_000_000.0 * exchange_rate;
     let onclick_copy = {
         let pr = invoice_pr.clone();
         Callback::from(move |_| {
@@ -113,6 +119,9 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
     };
     html! {
         <div class="flex flex-col gap-4 items-center text-center">
+            <h2 class="text-2xl font-bold">{"Invoice Details"}</h2>
+            <p>{"Exchange Rate: "}{format!("1 BTC = SRD {:.2}", exchange_rate)}</p>
+            <p>{"Amount: "}{format!("{} sats ~ SRD {:.2}", sat_amount, srd_amount)}</p>
             <p class="text-sm font-bold text-gray-500">
                 {"Tap the invoice to open in your wallet."}
             </p>
