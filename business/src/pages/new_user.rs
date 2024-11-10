@@ -3,7 +3,9 @@ use fuente::{
     contexts::{NostrIdStore, NostrProps},
     mass::{AddressLookupDetails, CardComponent, SimpleInput, SimpleTextArea},
     models::{CommerceProfile, CommerceProfileIdb},
-    widgets::leaflet::{IconOptions, LatLng, LeafletMap, Marker, NominatimLookup, L},
+    widgets::leaflet::{
+        IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L,
+    },
 };
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::{JsCast, JsValue};
@@ -124,7 +126,12 @@ fn start_new_address_picker_map(
     geo_handler: UseStateHandle<Option<GeolocationCoordinates>>,
     address_handler: UseStateHandle<Option<NominatimLookup>>,
 ) -> Result<(), JsValue> {
-    let map = L::render_default_map("map", &location)?;
+    let options = LeafletMapOptions {
+        double_click_zoom: false,
+        center: Some(location.clone().into()),
+        ..Default::default()
+    };
+    let map = L::render_map_with_options("map", options)?;
     map_handler.set(Some(map.clone()));
     let icon_options = IconOptions {
         icon_url: "public/assets/img/marker.png".to_string(),
@@ -137,11 +144,15 @@ fn start_new_address_picker_map(
 
     let geo_handler_clone = geo_handler.clone();
     let address_handler_clone = address_handler.clone();
-    let map_closure = move |e: JsValue| {
-        let leaflet_event = LatLng::try_from(e).expect("Failed to get LatLng");
+    let map_closure = move |e: MouseEvent| {
+        let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
         let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
         geo_handler_clone.set(Some(coordinates.clone()));
-        marker.set_lat_lng(&leaflet_event.try_into().expect("Failed to convert LatLng"));
+        marker.set_lat_lng(
+            &leaflet_event
+                .try_into()
+                .expect("Could not conver to Js value"),
+        );
         let handle = address_handler_clone.clone();
         spawn_local(async move {
             if let Ok(address) = NominatimLookup::reverse(coordinates.clone()).await {

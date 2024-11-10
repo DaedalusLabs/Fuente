@@ -20,14 +20,52 @@ use nostro2::{notes::SignedNote, pool::RelayPool, relays::NostrFilter, userkeys:
 use tokio::sync::Mutex;
 use tracing::{error, info, warn, Level};
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CommerceRegistryEntry {
+    profile: Option<SignedNote>,
+    menu: Option<SignedNote>,
+    whitelisted: bool,
+}
+impl CommerceRegistryEntry {
+    pub fn new(profile: Option<SignedNote>, menu: Option<SignedNote>) -> Self {
+        Self {
+            profile,
+            menu,
+            whitelisted: false,
+        }
+    }
+    pub fn set_whitelisted(&mut self, whitelisted: bool) {
+        self.whitelisted = whitelisted;
+    }
+    pub fn is_whitelisted(&self) -> bool {
+        self.whitelisted
+    }
+    pub fn get_profile(&self) -> Option<SignedNote> {
+        self.profile.clone()
+    }
+    pub fn get_menu(&self) -> Option<SignedNote> {
+        self.menu.clone()
+    }
+    pub fn set_profile(&mut self, profile: SignedNote) {
+        self.profile = Some(profile);
+    }
+    pub fn set_menu(&mut self, menu: SignedNote) {
+        self.menu = Some(menu);
+    }
+    pub fn ln_address(&self) -> anyhow::Result<String> {
+        let profile = self.profile.clone().ok_or(anyhow!("No profile found"))?;
+        let commerce_profile = CommerceProfile::try_from(profile)?;
+        Ok(commerce_profile.ln_address().to_string())
+    }
+}
+
 #[derive(Clone)]
 pub struct InvoicerBot {
     keys: UserKeys,
     relays: RelayPool,
     admin_config: Arc<Mutex<AdminConfiguration>>,
     courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
-    commerce_profiles: Arc<Mutex<HashMap<String, CommerceProfile>>>,
-    menu_notes: Arc<Mutex<HashMap<String, ProductMenu>>>,
+    commerce_registries: Arc<Mutex<HashMap<String, CommerceRegistryEntry>>>,
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     lightning_wallet: LightningClient,
 }
@@ -46,8 +84,7 @@ impl InvoicerBot {
             relays,
             admin_config: Arc::new(Mutex::new(admin_config)),
             courier_profiles: Arc::new(Mutex::new(HashMap::new())),
-            commerce_profiles: Arc::new(Mutex::new(HashMap::new())),
-            menu_notes: Arc::new(Mutex::new(HashMap::new())),
+            commerce_registries: Arc::new(Mutex::new(HashMap::new())),
             live_orders: Arc::new(Mutex::new(HashMap::new())),
             lightning_wallet,
         })
@@ -56,14 +93,14 @@ impl InvoicerBot {
         &self,
         order: &OrderRequest,
     ) -> anyhow::Result<(LnAddressPaymentRequest, LndHodlInvoice)> {
-        let commerce_profiles = self.commerce_profiles.lock().await;
+        let commerce_profiles = self.commerce_registries.lock().await;
         let commerce = commerce_profiles
             .get(&order.commerce)
             .ok_or(anyhow!("Commerce not found"))?;
         let invoice_amount = order.products.total() as u64 * 100;
         let invoice = self
             .lightning_wallet
-            .get_ln_url_invoice(invoice_amount * 1000, commerce.ln_address().to_string())
+            .get_ln_url_invoice(invoice_amount * 1000, commerce.ln_address()?)
             .await?;
         // We create a invoice for user to pay
         // Value i the amount of the order + 200 illuminodes fee + whatever profit Maya
@@ -269,16 +306,30 @@ impl InvoicerBot {
         Ok(())
     }
     async fn handle_commerce_profile(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let profile = CommerceProfile::try_from(signed_note.clone())?;
-        let mut profiles = self.commerce_profiles.lock().await;
-        profiles.insert(signed_note.get_pubkey().to_string(), profile.clone());
+        CommerceProfile::try_from(signed_note.clone())?;
+        let mut profiles = self.commerce_registries.lock().await;
+        let entry = profiles
+            .entry(signed_note.get_pubkey().to_string())
+            .or_insert(CommerceRegistryEntry {
+                profile: None,
+                menu: None,
+                whitelisted: false,
+            });
+        entry.set_profile(signed_note.clone());
         info!("Added commerce profile");
         Ok(())
     }
     async fn handle_commerce_product_list(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let menu = ProductMenu::try_from(signed_note.clone())?;
-        let mut menus = self.menu_notes.lock().await;
-        menus.insert(signed_note.get_pubkey().to_string(), menu.clone());
+        ProductMenu::try_from(signed_note.clone())?;
+        let mut profiles = self.commerce_registries.lock().await;
+        let entry = profiles
+            .entry(signed_note.get_pubkey().to_string())
+            .or_insert(CommerceRegistryEntry {
+                profile: None,
+                menu: None,
+                whitelisted: false,
+            });
+        entry.set_menu(signed_note.clone());
         info!("Added menu");
         Ok(())
     }
@@ -335,6 +386,7 @@ impl InvoicerBot {
                 error!("{:?}", e);
             }
         }
+        info!("Order state updated");
         Ok(())
     }
     async fn update_admin_config(&self, signed_note: SignedNote) -> anyhow::Result<()> {
@@ -342,7 +394,6 @@ impl InvoicerBot {
             .lock()
             .await
             .check_admin_whitelist(&signed_note.get_pubkey())?;
-        let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
         let config_type: AdminConfigurationType = signed_note
             .get_tags_by_id("d")
             .ok_or(anyhow!("No config type found"))?
@@ -352,18 +403,29 @@ impl InvoicerBot {
             .try_into()?;
         match config_type {
             AdminConfigurationType::CommerceWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
+                let whitelist: Vec<String> = serde_json::from_str(&signed_note.get_content())?;
+                info!("Commerce whitelist update {:?}", whitelist);
                 let mut configs = self.admin_config.lock().await;
+                let mut registered_commerces = self.commerce_registries.lock().await;
+                for (key, entry) in registered_commerces.iter_mut() {
+                    if whitelist.contains(&key) {
+                        entry.set_whitelisted(true);
+                    } else {
+                        entry.set_whitelisted(false);
+                    }
+                }
                 configs.set_commerce_whitelist(whitelist);
+                info!("Commerce whitelist updated");
             }
             AdminConfigurationType::CourierWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
+                let whitelist: Vec<String> = serde_json::from_str(&signed_note.get_content())?;
                 self.admin_config
                     .lock()
                     .await
                     .set_couriers_whitelist(whitelist);
             }
             AdminConfigurationType::ConsumerBlacklist => {
+                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
                 let blacklist: Vec<String> = serde_json::from_str(&decrypted)?;
                 self.admin_config
                     .lock()
@@ -371,6 +433,7 @@ impl InvoicerBot {
                     .set_consumer_blacklist(blacklist);
             }
             AdminConfigurationType::UserRegistrations => {
+                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
                 let registrations: Vec<String> = serde_json::from_str(&decrypted)?;
                 self.admin_config
                     .lock()
@@ -378,12 +441,13 @@ impl InvoicerBot {
                     .set_user_registrations(registrations);
             }
             AdminConfigurationType::ExchangeRate => {
-                let rate: f64 = serde_json::from_str(&decrypted)?;
+                let rate: f64 = serde_json::from_str(&signed_note.get_content())?;
                 let mut configs = self.admin_config.lock().await;
                 configs.set_exchange_rate(rate);
                 info!("Exchange rate set to: {}", rate);
             }
             AdminConfigurationType::AdminWhitelist => {
+                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
                 let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
                 self.admin_config
                     .lock()
@@ -417,42 +481,36 @@ impl InvoicerBot {
                 let mut admin_confs = self.admin_config.lock().await;
                 match admin_req.config_type {
                     AdminConfigurationType::ExchangeRate => {
-                        info!("{}", &admin_req.config_str);
                         admin_confs.set_exchange_rate(admin_req.config_str.parse()?);
-                        let update = admin_confs
-                            .sign_exchange_rate(&self.keys, self.keys.get_public_key())?;
-                        let admin_update =
-                            admin_confs.sign_exchange_rate(&self.keys, signed_note.get_pubkey())?;
+                        let update = admin_confs.sign_exchange_rate(&self.keys)?;
                         self.relays.broadcast_note(update).await?;
-                        self.relays.broadcast_note(admin_update).await?;
+                        info!("Exchange rate updated {}", admin_req.config_str);
                     }
                     AdminConfigurationType::CommerceWhitelist => {
                         let whitelist: Vec<String> = serde_json::from_str(&admin_req.config_str)?;
                         admin_confs.set_commerce_whitelist(whitelist);
-                        let update = admin_confs
-                            .sign_commerce_whitelist(&self.keys, self.keys.get_public_key())?;
-                        let admin_update = admin_confs
-                            .sign_commerce_whitelist(&self.keys, signed_note.get_pubkey())?;
+                        let update = admin_confs.sign_commerce_whitelist(&self.keys)?;
+                        info!("New commerce whitelist: {}", &update);
                         self.relays.broadcast_note(update).await?;
-                        self.relays.broadcast_note(admin_update).await?;
+                        info!("Commerce whitelist updated");
                     }
                     AdminConfigurationType::CourierWhitelist => {
                         let whitelist: Vec<String> = serde_json::from_str(&admin_req.config_str)?;
                         info!("Courier whitelist updated to: {:?}", &whitelist);
                         admin_confs.set_couriers_whitelist(whitelist);
-                        let update = admin_confs
-                            .sign_couriers_whitelist(&self.keys, self.keys.get_public_key())?;
-                        let admin_update = admin_confs
-                            .sign_couriers_whitelist(&self.keys, signed_note.get_pubkey())?;
+                        let update = admin_confs.sign_couriers_whitelist(&self.keys)?;
                         self.relays.broadcast_note(update).await?;
-                        self.relays.broadcast_note(admin_update).await?;
                         info!("Courier whitelist updated");
                     }
                     _ => {}
                 }
             }
+
             NOSTR_KIND_SERVER_CONFIG => {
-                self.update_admin_config(signed_note).await?;
+                info!("Server config received");
+                if let Err(e) = self.update_admin_config(signed_note).await {
+                    error!("{:?}", e);
+                }
             }
             NOSTR_KIND_ORDER_STATE => {
                 let courier_hub_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY)?;
@@ -475,17 +533,9 @@ impl InvoicerBot {
                 }
             }
             NOSTR_KIND_COMMERCE_PROFILE => {
-                self.admin_config
-                    .lock()
-                    .await
-                    .check_commerce_whitelist(&signed_note.get_pubkey())?;
                 self.handle_commerce_profile(signed_note).await?;
             }
             NOSTR_KIND_COMMERCE_PRODUCTS => {
-                self.admin_config
-                    .lock()
-                    .await
-                    .check_commerce_whitelist(&signed_note.get_pubkey())?;
                 self.handle_commerce_product_list(signed_note).await?;
             }
             NOSTR_KIND_COURIER_PROFILE => {
@@ -517,22 +567,25 @@ impl InvoicerBot {
             NOSTR_KIND_COMMERCE_PRODUCTS,
             NOSTR_KIND_COURIER_PROFILE,
         ]);
+        let config_filter = NostrFilter::default()
+            .new_kind(NOSTR_KIND_SERVER_CONFIG)
+            .new_author(TEST_PUB_KEY);
         self.relays.subscribe(filter.subscribe()).await?;
         self.relays.subscribe(commerces_filter.subscribe()).await?;
         self.relays.subscribe(live_filter.subscribe()).await?;
+        self.relays.subscribe(config_filter.subscribe()).await?;
         let reader = self.relays.pooled_notes();
-        // let events = self.relays.all_events();
-        // tokio::spawn(async move {
-        //     while let Ok(event) = events.recv().await {
-        //         if let RelayEvents::OK(_, _, dupe) = event {
-        //             if dupe != "" {
-        //                 warn!("Duplicate note received");
-        //             } else {
-        //                 info!("Note sent");
-        //             }
-        //         }
-        //     }
-        // });
+        let events = self.relays.all_events();
+        tokio::spawn(async move {
+            while let Ok(event) = events.recv().await {
+                match event {
+                    nostro2::relays::RelayEvents::EVENT(_, _) => {}
+                    _ => {
+                        info!("{:?}", event);
+                    }
+                }
+            }
+        });
         loop {
             if reader.is_closed() {
                 break;

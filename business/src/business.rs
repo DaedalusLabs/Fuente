@@ -1,11 +1,11 @@
 use business::{
     contexts::{CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, OrderDataProvider},
-    pages::NewProfilePage,
+    pages::{NewProductListSection, NewProfilePage},
     router::CommercePages,
 };
 use fuente::{
     contexts::{
-        init_nostr_db, {NostrIdProvider, NostrIdStore}, {RelayProvider, UserRelay},
+        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay
     },
     mass::{LoadingScreen, MainLayout, NewUserPage},
     models::{init_commerce_db, init_consumer_db},
@@ -69,27 +69,25 @@ fn relay_pool_component(props: &ChildrenProps) -> Html {
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
         <NostrIdProvider>
-            <CommerceDataProvider>
-                <ConsumerDataProvider >
-                    <OrderDataProvider>
-                        {props.children.clone()}
-                    </OrderDataProvider>
-                </ConsumerDataProvider>
-            </CommerceDataProvider>
+            <AdminConfigsProvider >
+                <CommerceDataProvider>
+                    <ConsumerDataProvider >
+                        <OrderDataProvider>
+                            {props.children.clone()}
+                        </OrderDataProvider>
+                    </ConsumerDataProvider>
+                </CommerceDataProvider>
+            </AdminConfigsProvider>
         </NostrIdProvider>
     }
 }
 
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>();
-    let user_ctx = use_context::<CommerceDataStore>();
-    if user_ctx.is_none() || key_ctx.is_none() {
-        return html! {<LoadingScreen />};
-    }
-    let key_ctx = key_ctx.unwrap();
-    let user_ctx = user_ctx.unwrap();
-    if !key_ctx.finished_loading() {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let user_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
+    let config_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    if !key_ctx.finished_loading() || !config_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
     if key_ctx.get_nostr_key().is_none() {
@@ -107,6 +105,22 @@ fn login_check(props: &ChildrenProps) -> Html {
             <div class="flex flex-col w-full h-full overflow-y-scroll">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Contact Details"}</h2>
                 <NewProfilePage />
+            </div>
+        };
+    }
+    let whitelist = config_ctx.get_commerce_whitelist();
+    if !whitelist.contains(&key_ctx.get_nostr_key().unwrap().get_public_key()) {
+        return html! {
+            <div class="flex justify-center items-center flex-1">
+                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not yet authorized to access this page"}</h2>
+            </div>
+        };
+    }
+    if user_ctx.menu().is_none() {
+        return html! {
+            <div class="flex flex-col w-full h-full overflow-y-scroll">
+                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Product List"}</h2>
+                <NewProductListSection />
             </div>
         };
     }

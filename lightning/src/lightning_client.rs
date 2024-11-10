@@ -111,7 +111,7 @@ impl LightningClient {
             self.url.to_string(),
             Self::macaroon(self.data_dir)?,
             query,
-            10,
+            3,
         )
         .await?;
         return Ok(lnd_ws.receiver.clone());

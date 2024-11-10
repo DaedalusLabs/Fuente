@@ -6,6 +6,8 @@
 // 4. User registrations
 // 5. Exchange rates
 
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -129,44 +131,50 @@ impl AdminConfiguration {
     pub fn sign_commerce_whitelist(
         &self,
         priv_key: &UserKeys,
-        receiver: String,
     ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.commerce_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
+        let mut hasher = DefaultHasher::new();
+        "commerce_whitelist".hash(&mut hasher);
+        let config_hash = hasher.finish();
+        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
+        note.add_tag("d", &config_hash.to_string());
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        Ok(priv_key.sign_nostr_event(note))
     }
     pub fn sign_couriers_whitelist(
         &self,
         priv_key: &UserKeys,
-        receiver: String,
     ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.couriers_whitelist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::CourierWhitelist.into();
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
+        let mut hasher = DefaultHasher::new();
+        "courier_whitelist".hash(&mut hasher);
+        let config_hash = hasher.finish();
+        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
+        note.add_tag("d", &config_hash.to_string());
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        Ok(priv_key.sign_nostr_event(note))
     }
     pub fn sign_consumer_blacklist(
         &self,
         priv_key: &UserKeys,
-        receiver: String,
     ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.consumer_blacklist)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::ConsumerBlacklist.into();
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
+        let mut hasher = DefaultHasher::new();
+        "consumer_blacklist".hash(&mut hasher);
+        let config_hash = hasher.finish();
+        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
+        note.add_tag("d", &config_hash.to_string());
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        Ok(priv_key.sign_nostr_event(note))
     }
     pub fn sign_user_registrations(
         &self,
@@ -185,16 +193,21 @@ impl AdminConfiguration {
     pub fn sign_exchange_rate(
         &self,
         priv_key: &UserKeys,
-        receiver: String,
     ) -> anyhow::Result<SignedNote> {
         let serialized = serde_json::to_string(&self.exchange_rate)?;
         let pubkey = priv_key.get_public_key();
         let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
         let config_str: String = AdminConfigurationType::ExchangeRate.into();
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
+        let mut hasher = DefaultHasher::new();
+        "exchange_rate".hash(&mut hasher);
+        let config_hash = hasher.finish();
+        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
+        note.add_tag("d", &config_hash.to_string());
         note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        Ok(priv_key.sign_nostr_event(note))
+    }
+    pub fn update_commerce_whitelist(&mut self, new_commerce: String) {
+        self.commerce_whitelist.push(new_commerce);
     }
     pub fn set_admin_whitelist(&mut self, admin_whitelist: Vec<String>) {
         self.admin_whitelist = admin_whitelist;
