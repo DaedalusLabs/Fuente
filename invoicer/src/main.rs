@@ -526,8 +526,8 @@ impl InvoicerBot {
                     _ => {
                         let mut live_orders = self.live_orders.lock().await;
                         if !live_orders.contains_key(&order_state.id()) {
+                            info!("Order added to live orders {:?}", order_state.get_order_status());
                             live_orders.insert(order_state.id(), order_state);
-                            info!("Order added to live orders");
                         }
                     }
                 }

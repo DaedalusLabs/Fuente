@@ -2,7 +2,7 @@ use fuente::{
     browser_api::HtmlForm,
     contexts::{NostrIdStore, NostrProps},
     mass::{SimpleFormButton, SimpleInput},
-    models::{DriverProfile, DriverProfileIdb},
+    models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
 use yew::prelude::*;
 
@@ -32,11 +32,15 @@ pub fn new_profile_form() -> Html {
             .giftwrapped_data(&keys, keys.get_public_key())
             .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
+        let pool_copy = user_profile
+            .giftwrapped_data(&keys, DRIVER_HUB_PUB_KEY.to_string())
+            .expect("Failed to giftwrap data");
+        sender.emit(pool_copy);
         user_ctx.dispatch(DriverDataAction::NewProfile(db));
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 items-center">
+        <form {onsubmit} class="flex flex-col p-8 gap-8 flex-1 items-center">
                 <SimpleInput
                     id="name"
                     name="name"

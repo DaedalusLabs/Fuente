@@ -2,7 +2,7 @@ use fuente::mass::{AppLink, HomeIcon, MotoIcon, StoreIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::CommerceDisplay;
+use crate::pages::{CommerceDisplay, CourierWhitelistPage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum AdminPanelRoute {
@@ -51,6 +51,7 @@ pub fn consumer_pages() -> Html {
                                 </>},
                             AdminPanelRoute::Couriers => html!{<>
                                 <h1>{"Couriers"}</h1>
+                                <CourierWhitelistPage />
                                 </>},
                             AdminPanelRoute::Consumers => html!{<>
                                 <h1>{"Consumers"}</h1>
