@@ -186,7 +186,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     };
 
     html! {
-        <div class="flex flex-col flex-1 gap-2 shadow-xl p-2 w-fit h-fit">
+        <div class="flex flex-col gap-2 shadow-xl p-2 w-fit h-fit">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
                     {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname())}
@@ -198,7 +198,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
-                    classes={classes!["w-1/2", "h-1/2"]}
+                    classes={classes!["rounded-lg", "min-w-64", "min-h-64"]}
                 />
                 <div class="flex flex-1 flex-col gap-4 items-center justify-center">
                     <button {onclick} class="bg-fuente text-white rounded-3xl p-2 w-1/2">
@@ -279,37 +279,37 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         map_handle.set(Some(map));
         move || {}
     });
-    let marker_clone = own_marker_state.clone();
-    use_effect_with(map_state.clone(), move |map| {
-        if let (Some(map), Some(marker)) = (map.as_ref(), marker_clone.as_ref()) {
-            let map_clone = map.clone();
-            let marker_handle = marker.clone();
-            spawn_local(async move {
-                if let Ok((watch_id, position)) = GeolocationPosition::watch_position().await {
-                    while let Ok(position) = position.recv().await {
-                        let js_array = vec![
-                            vec![position.coords.latitude, position.coords.longitude],
-                            vec![commerce_location.latitude, commerce_location.longitude],
-                            vec![consumer_location.latitude, consumer_location.longitude],
-                        ];
-                        marker_handle.set_lat_lng(&position.try_into().unwrap());
-                        let js_value = serde_wasm_bindgen::to_value(&js_array)
-                            .expect("Failed to convert to JsValue");
-                        let fit_options = js_sys::Object::new();
-                        js_sys::Reflect::set(
-                            &fit_options,
-                            &JsValue::from_str("maxZoom"),
-                            &JsValue::null(),
-                        )
-                        .expect("Failed to set padding");
-                        map_clone.fit_bounds(js_value, fit_options.into());
-                    }
-                    let _ = GeolocationPosition::clear_watch(watch_id).await;
-                }
-            });
-        }
-        move || {}
-    });
+    // let marker_clone = own_marker_state.clone();
+    // use_effect_with(map_state.clone(), move |map| {
+    //     if let (Some(map), Some(marker)) = (map.as_ref(), marker_clone.as_ref()) {
+    //         let map_clone = map.clone();
+    //         let marker_handle = marker.clone();
+    //         spawn_local(async move {
+    //             if let Ok((watch_id, position)) = GeolocationPosition::watch_position().await {
+    //                 while let Ok(position) = position.recv().await {
+    //                     let js_array = vec![
+    //                         vec![position.coords.latitude, position.coords.longitude],
+    //                         vec![commerce_location.latitude, commerce_location.longitude],
+    //                         vec![consumer_location.latitude, consumer_location.longitude],
+    //                     ];
+    //                     marker_handle.set_lat_lng(&position.try_into().unwrap());
+    //                     let js_value = serde_wasm_bindgen::to_value(&js_array)
+    //                         .expect("Failed to convert to JsValue");
+    //                     let fit_options = js_sys::Object::new();
+    //                     js_sys::Reflect::set(
+    //                         &fit_options,
+    //                         &JsValue::from_str("maxZoom"),
+    //                         &JsValue::null(),
+    //                     )
+    //                     .expect("Failed to set padding");
+    //                     map_clone.fit_bounds(js_value, fit_options.into());
+    //                 }
+    //                 let _ = GeolocationPosition::clear_watch(watch_id).await;
+    //             }
+    //         });
+    //     }
+    //     move || {}
+    // });
     html! {
         <div id={map_id} class={classes}></div>
     }
