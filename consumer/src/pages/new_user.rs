@@ -39,7 +39,7 @@ pub fn new_profile() -> Html {
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 items-center">
+        <form {onsubmit} class="flex flex-col gap-8 p-8 flex-1 items-center">
                 <SimpleInput
                     id="name"
                     name="name"

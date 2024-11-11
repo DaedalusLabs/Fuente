@@ -22,7 +22,7 @@ pub fn home_page() -> Html {
     let open_screen_clone = edit_screen_state.clone();
     let open_edit_screen = Callback::from(move |_| open_screen_clone.set(true));
     match *edit_screen_state {
-        true => html! {<NewProductListSection screen_handle={edit_screen_state.clone()} />},
+        true => html! {<NewProductListSection />},
         false => html! {
             <div class="flex flex-col flex-1 gap-8 pr-4">
                 <div class="flex flex-row w-full justify-between items-center">
@@ -54,7 +54,7 @@ pub struct NewMenuProps {
 }
 
 #[function_component(NewProductListSection)]
-pub fn product_list_section(props: &EditMenuProps) -> Html {
+pub fn product_list_section() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce data context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let relay_ctx = use_context::<NostrProps>().expect("Consumer context not found");
@@ -64,8 +64,7 @@ pub fn product_list_section(props: &EditMenuProps) -> Html {
     let handle = commerce_ctx.clone();
     let keys = key_ctx.get_nostr_key();
     let sender = relay_ctx.send_note.clone();
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
+    let onclick = Callback::from(move |_: MouseEvent| {
         if let (Some(new_menu), Some(key)) = ((*new_menu).clone(), keys.clone()) {
             let db_entry = ProductMenuIdb::new(new_menu, &key);
             sender.emit(db_entry.note());
@@ -73,19 +72,22 @@ pub fn product_list_section(props: &EditMenuProps) -> Html {
         }
     });
     html! {
-        <form
-            {onsubmit}
+        <div
             class="flex flex-col gap-4">
             <div class="w-full flex flex-row justify-between items-center">
-                <button
+                <button {onclick}
                     class="w-fit h-fit bg-fuente-light text-white text-sm
                     font-mplus px-4 py-2 rounded-3xl"
-                    type="submit"
                     >{"Save Menu"}</button>
             </div>
             <AddCategoryForm menu={menu_state.clone()} />
             <AddProductForm menu={menu_state.clone()} />
-        </form>
+            {if let Some(menu) = menu_state.as_ref() {
+                html!{<ProductMenuCard menu={menu.clone()} />}
+            } else {
+                html! {}
+            }}
+        </div>
     }
 }
 

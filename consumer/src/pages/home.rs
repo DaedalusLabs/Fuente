@@ -56,29 +56,27 @@ pub fn home_page() -> Html {
 #[derive(Clone, PartialEq)]
 pub enum CommerceFilter {
     All,
-    FastFood,
-    Pizza,
-    Drinks,
-    Desserts,
+    Books,
+    Tech,
+    Clothing,
+    Hardware,
+    Pharmacy,
     Groceries,
-    Sushi,
-    Breakfast,
-    FineDining,
-    Catering,
+    Music,
+    Movies,
 }
 impl CommerceFilter {
     pub fn all_filters() -> Vec<CommerceFilter> {
         vec![
             CommerceFilter::All,
-            CommerceFilter::FastFood,
-            CommerceFilter::Pizza,
-            CommerceFilter::Drinks,
-            CommerceFilter::Desserts,
+            CommerceFilter::Books,
+            CommerceFilter::Tech,
+            CommerceFilter::Clothing,
+            CommerceFilter::Hardware,
+            CommerceFilter::Pharmacy,
             CommerceFilter::Groceries,
-            CommerceFilter::Sushi,
-            CommerceFilter::Breakfast,
-            CommerceFilter::FineDining,
-            CommerceFilter::Catering,
+            CommerceFilter::Music,
+            CommerceFilter::Movies,
         ]
     }
 }
@@ -87,15 +85,15 @@ impl ToString for CommerceFilter {
     fn to_string(&self) -> String {
         match self {
             CommerceFilter::All => "All".to_string(),
-            CommerceFilter::FastFood => "Fast Food".to_string(),
-            CommerceFilter::Pizza => "Pizza".to_string(),
-            CommerceFilter::Drinks => "Drinks".to_string(),
-            CommerceFilter::Desserts => "Desserts".to_string(),
             CommerceFilter::Groceries => "Groceries".to_string(),
-            CommerceFilter::Sushi => "Sushi".to_string(),
-            CommerceFilter::Breakfast => "Breakfast".to_string(),
-            CommerceFilter::FineDining => "Fine Dining".to_string(),
-            CommerceFilter::Catering => "Catering".to_string(),
+            CommerceFilter::Books => "Books".to_string(),
+            CommerceFilter::Tech => "Tech".to_string(),
+            CommerceFilter::Clothing => "Clothing".to_string(),
+            CommerceFilter::Hardware => "Hardware".to_string(),
+            CommerceFilter::Pharmacy => "Pharmacy".to_string(),
+            CommerceFilter::Music => "Music".to_string(),
+            CommerceFilter::Movies => "Movies".to_string(),
+
         }
     }
 }

@@ -8,12 +8,14 @@ use consumer::{
 };
 use fuente::{
     browser_api::GeolocationCoordinates,
-    contexts::{init_nostr_db, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay},
+    contexts::{
+        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay
+    },
     mass::{
-        NewUserPage, {LoadingScreen, MainLayout}, {NewAddressMenu, NewAddressProps},
+        LoadingScreen, MainLayout, NewAddressMenu, NewAddressProps, NewUserPage
     },
     models::{
-        init_consumer_db, {ConsumerAddress, ConsumerAddressIdb},
+        init_consumer_db, ConsumerAddress, ConsumerAddressIdb,
     },
 };
 use html::ChildrenProps;
@@ -34,13 +36,17 @@ fn app() -> Html {
     html! {
         <BrowserRouter>
             <RelayPoolComponent>
-                <AppContext>
+                <AuthContext>
                     <MainLayout>
-                        <LoginCheck>
-                            <ConsumerPages />
-                        </LoginCheck>
+                    <LoginCheck>
+                        <AppContext>
+                            <ProfileCheck>
+                                <ConsumerPages />
+                            </ProfileCheck>
+                        </AppContext>
+                    </LoginCheck>
                     </MainLayout>
-                </AppContext>
+                </AuthContext>
             </RelayPoolComponent>
         </BrowserRouter>
     }
@@ -67,36 +73,35 @@ fn relay_pool_component(props: &ChildrenProps) -> Html {
     }
 }
 
-#[function_component(AppContext)]
+#[function_component(AuthContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
         <NostrIdProvider>
-            <ConsumerDataProvider>
-                <CommerceDataProvider>
-                    <CartProvider>
-                        <LiveOrderProvider>
-                            {props.children.clone()}
-                        </LiveOrderProvider>
-                    </CartProvider>
-                </CommerceDataProvider>
-            </ConsumerDataProvider>
+            <AdminConfigsProvider>
+                {props.children.clone()}
+            </AdminConfigsProvider>
         </NostrIdProvider>
+    }
+}
+#[function_component(AppContext)]
+fn app_context(props: &ChildrenProps) -> Html {
+    html! {
+       <ConsumerDataProvider>
+           <CommerceDataProvider>
+               <CartProvider>
+                   <LiveOrderProvider>
+                       {props.children.clone()}
+                   </LiveOrderProvider>
+               </CartProvider>
+           </CommerceDataProvider>
+       </ConsumerDataProvider>
     }
 }
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>();
-    let user_ctx = use_context::<ConsumerDataStore>();
-    let coordinate_state = use_state(|| None::<GeolocationCoordinates>);
-    let nominatim_state = use_state(|| None);
-    let map_state = use_state(|| None);
-    let marker_state = use_state(|| None);
-    if user_ctx.is_none() || key_ctx.is_none() {
-        return html! {<LoadingScreen />};
-    }
-    let key_ctx = key_ctx.unwrap();
-    let user_ctx = user_ctx.unwrap();
-    if !key_ctx.finished_loading() {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    if !key_ctx.finished_loading() || !admin_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
     if key_ctx.get_nostr_key().is_none() {
@@ -106,6 +111,20 @@ fn login_check(props: &ChildrenProps) -> Html {
             </div>
         };
     }
+    html! {
+        <>
+            {props.children.clone()}
+        </>
+    }
+}
+#[function_component(ProfileCheck)]
+fn login_check(props: &ChildrenProps) -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let user_ctx = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
+    let coordinate_state = use_state(|| None::<GeolocationCoordinates>);
+    let nominatim_state = use_state(|| None);
+    let map_state = use_state(|| None);
+    let marker_state = use_state(|| None);
     if !user_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
@@ -140,7 +159,7 @@ fn login_check(props: &ChildrenProps) -> Html {
             onclick,
         });
         return html! {
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-col flex-1 p-8">
                 <h2 class="text-2xl m-8 font-bold">{"Save Your Address"}</h2>
                 <NewAddressMenu ..props />
             </div>
@@ -148,7 +167,8 @@ fn login_check(props: &ChildrenProps) -> Html {
     }
     html! {
         <>
-        {props.children.clone()}
+            {props.children.clone()}
         </>
     }
 }
+
