@@ -57,6 +57,16 @@ impl TryFrom<SignedNote> for OrderRequest {
         Ok(order)
     }
 }
+impl TryFrom<&SignedNote> for OrderRequest {
+    type Error = anyhow::Error;
+    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
+        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+            return Err(anyhow::anyhow!("Wrong Kind"));
+        }
+        let order: OrderRequest = note.get_content().try_into()?;
+        Ok(order)
+    }
+}
 impl OrderRequest {
     pub fn new(
         commerce: String,
@@ -172,6 +182,16 @@ impl TryFrom<String> for OrderInvoiceState {
 impl TryFrom<SignedNote> for OrderInvoiceState {
     type Error = anyhow::Error;
     fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
+        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+            return Err(anyhow::anyhow!("Wrong Kind"));
+        }
+        let order: OrderInvoiceState = note.get_content().try_into()?;
+        Ok(order)
+    }
+}
+impl TryFrom<&SignedNote> for OrderInvoiceState {
+    type Error = anyhow::Error;
+    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
         if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }

@@ -9,14 +9,11 @@ use consumer::{
 use fuente::{
     browser_api::GeolocationCoordinates,
     contexts::{
-        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay
+        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdProvider, NostrIdStore,
+        RelayProvider, UserRelay,
     },
-    mass::{
-        LoadingScreen, MainLayout, NewAddressMenu, NewAddressProps, NewUserPage
-    },
-    models::{
-        init_consumer_db, ConsumerAddress, ConsumerAddressIdb,
-    },
+    mass::{LoadingScreen, MainLayout, NewAddressMenu, NewAddressProps, NewUserPage},
+    models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
 };
 use html::ChildrenProps;
 use yew::{prelude::*, props};
@@ -171,4 +168,3 @@ fn login_check(props: &ChildrenProps) -> Html {
         </>
     }
 }
-
