@@ -30,10 +30,10 @@ pub const DRIVER_HUB_PUB_KEY: &str =
     "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 
 pub const DB_NAME_FUENTE: &str = "fuente_db";
-pub const DB_VERSION_FUENTE: u32 = 1;
+pub const DB_VERSION_FUENTE: u32 = 3;
 
 pub const DB_NAME_COMMERCE: &str = "commerce_db";
-pub const DB_VERSION_COMMERCE: u32 = 1;
+pub const DB_VERSION_COMMERCE: u32 = 3;
 
 // ADMIN MODELS
 pub const STORE_NAME_CONFIGS: &str = "configs";
@@ -81,11 +81,21 @@ pub fn init_consumer_db() -> Result<(), JsValue> {
 }
 
 fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-    address::ConsumerAddressIdb::create_data_store(&db)?;
-    consumer_profile::ConsumerProfileIdb::create_data_store(&db)?;
-    commerce::CommerceProfileIdb::create_data_store(&db)?;
-    products::ProductMenuIdb::create_data_store(&db)?;
-    orders::OrderStateIdb::create_data_store(&db)?;
+    if !db.object_store_names().contains(STORE_NAME_CONSUMER_PROFILES) {
+        consumer_profile::ConsumerProfileIdb::create_data_store(&db)?;
+    }
+    if !db.object_store_names().contains(STORE_NAME_CONSUMER_ADDRESSES) {
+        address::ConsumerAddressIdb::create_data_store(&db)?;
+    }
+    if !db.object_store_names().contains(STORE_NAME_COMMERCE_PROFILES) {
+        commerce::CommerceProfileIdb::create_data_store(&db)?;    
+    }
+    if !db.object_store_names().contains(STORE_NAME_PRODUCT_LISTS) {
+        products::ProductMenuIdb::create_data_store(&db)?;
+    }
+    if !db.object_store_names().contains(STORE_NAME_ORDER_HISTORY) {
+        orders::OrderStateIdb::create_data_store(&db)?;
+    }
     Ok(())
 }
 
@@ -114,8 +124,15 @@ fn upgrade_commerce_db(event: web_sys::Event) -> Result<(), JsValue> {
         .dyn_into::<web_sys::IdbOpenDbRequest>()?
         .result()?
         .dyn_into::<web_sys::IdbDatabase>()?;
-    db.create_object_store(STORE_NAME_COMMERCE)?;
-    db.create_object_store(STORE_NAME_COMMERCE_KEYS)?;
-    db.create_object_store(STORE_NAME_COMMERCE_PROFILES)?;
+    let store_names = db.object_store_names();
+    if !store_names.contains(STORE_NAME_COMMERCE) {
+        db.create_object_store(STORE_NAME_COMMERCE)?;
+    }
+    if !store_names.contains(STORE_NAME_COMMERCE_KEYS) {
+        db.create_object_store(STORE_NAME_COMMERCE_KEYS)?;
+    }
+    if !store_names.contains(STORE_NAME_COMMERCE_PROFILES) {
+        db.create_object_store(STORE_NAME_COMMERCE_PROFILES)?;
+    }
     Ok(())
 }
