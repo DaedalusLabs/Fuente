@@ -104,7 +104,7 @@ impl InvoicerBot {
             .lightning_wallet
             .get_ln_url_invoice(invoice_amount * 1000, commerce.ln_address()?)
             .await?;
-        // TODO 
+        // TODO
         // Add Mayas profit to the invoice
         let hodl_amount = invoice_amount + 200;
         let hodl_invoice = self
@@ -191,21 +191,23 @@ impl InvoicerBot {
         Ok(success)
     }
     async fn handle_order_request(self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let order: OrderRequest = signed_note.clone().try_into()?;
-        let invoice = self.create_order_invoice(&order).await?;
-        let state_update = OrderInvoiceState::new(
-            signed_note.clone(),
-            Some(invoice.1),
-            Some(invoice.0.clone()),
-        );
-        let state_update_note = state_update.sign_customer_update(&self.keys)?;
-        self.relays.broadcast_note(state_update_note).await?;
-        let self_clone = self.clone();
-        tokio::spawn(async move {
-            if let Err(e) = self_clone.order_payment_notifier(state_update).await {
-                error!("{:?}", e);
-            }
-        });
+        if let Ok(order) = OrderRequest::try_from(signed_note.clone()) {
+            let invoice = self.create_order_invoice(&order).await?;
+            let state_update = OrderInvoiceState::new(
+                signed_note.clone(),
+                Some(invoice.1),
+                Some(invoice.0.clone()),
+            );
+            let state_update_note = state_update.sign_customer_update(&self.keys)?;
+            self.relays.broadcast_note(state_update_note).await?;
+            let self_clone = self.clone();
+            tokio::spawn(async move {
+                if let Err(e) = self_clone.order_payment_notifier(state_update).await {
+                    error!("{:?}", e);
+                }
+            });
+        }
+
         Ok(())
     }
     async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
@@ -362,7 +364,7 @@ impl InvoicerBot {
         Ok(())
     }
     async fn handle_order_state_update(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let order_state = OrderInvoiceState::try_from(signed_note.get_content())?;
+        let mut order_state = OrderInvoiceState::try_from(signed_note.get_content())?;
         let commerce = order_state.get_order_request().commerce.clone();
         if signed_note.get_pubkey() == commerce {
             if let Err(e) = self
@@ -371,6 +373,23 @@ impl InvoicerBot {
                 .await
             {
                 error!("{:?}", e);
+            }
+        }
+        if signed_note.get_pubkey() == order_state.get_order().get_pubkey() {
+            if order_state.get_order_status() == OrderStatus::Canceled {
+                let invoice = order_state
+                    .get_commerce_invoice()
+                    .ok_or(anyhow!("No commerce invoice found"))?;
+                self.lightning_wallet
+                    .cancel_htlc(invoice.r_hash_url_safe()?)
+                    .await?;
+                warn!("Canceled HTLC due to inactivity");
+                self.update_order_status(
+                    &mut order_state,
+                    OrderPaymentStatus::PaymentFailed,
+                    OrderStatus::Canceled,
+                )
+                .await?;
             }
         }
         match self
@@ -576,17 +595,17 @@ impl InvoicerBot {
         self.relays.subscribe(live_filter.subscribe()).await?;
         self.relays.subscribe(config_filter.subscribe()).await?;
         let reader = self.relays.pooled_notes();
-        let events = self.relays.all_events();
-        tokio::spawn(async move {
-            while let Ok(event) = events.recv().await {
-                match event {
-                    nostro2::relays::RelayEvents::EVENT(_, _) => {}
-                    _ => {
-                        info!("{:?}", event);
-                    }
-                }
-            }
-        });
+        // let events = self.relays.all_events();
+        // tokio::spawn(async move {
+        //     while let Ok(event) = events.recv().await {
+        //         match event {
+        //             nostro2::relays::RelayEvents::EVENT(_, _) => {}
+        //             _ => {
+        //                 info!("{:?}", event);
+        //             }
+        //         }
+        //     }
+        // });
         loop {
             if reader.is_closed() {
                 break;

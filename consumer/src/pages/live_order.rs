@@ -1,18 +1,20 @@
 use fuente::{
     browser_api::clipboard_copy,
-    contexts::AdminConfigsStore,
+    contexts::{AdminConfigsStore, NostrIdStore, NostrProps},
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
-    models::{DriverProfileIdb, OrderInvoiceState, OrderPaymentStatus, OrderStatus},
+    models::{DriverProfileIdb, OrderPaymentStatus, OrderStatus},
 };
 use lightning::LndHodlInvoice;
 use yew::prelude::*;
 
-use crate::contexts::LiveOrderStore;
+use crate::contexts::{LiveOrderAction, LiveOrderStore};
 
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check() -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let exchange_rate = admin_ctx.get_exchange_rate();
     let inside_html = if let Some(order) = &order_ctx.order {
         match order.1.get_payment_status() {
@@ -72,6 +74,22 @@ pub fn live_order_check() -> Html {
     } else {
         Err(html! {<></>})
     };
+    let onclick = {
+        let order_ctx = order_ctx.clone();
+        let keys = key_ctx.get_nostr_key().clone();
+        let sender = relay_ctx.send_note.clone();
+        Callback::from(move |_| {
+            let keys = keys.clone().expect("Nostr keys not found");
+            let mut order = order_ctx.order.clone().expect("Order not found").1;
+            if order.get_payment_status() == OrderPaymentStatus::PaymentPending {
+                order.update_order_status(OrderStatus::Canceled);
+                let signed_note = order.sign_server_request(&keys).expect("Could not sign order");
+                sender.emit(signed_note);
+                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order.id()));
+
+            }
+        })
+    };
     match inside_html {
         Err(e) => e,
         Ok(inside_html) => {
@@ -89,7 +107,7 @@ pub fn live_order_check() -> Html {
                         {inside_html}
                         <SpinnerIcon class="absolute top-4 right-4 w-4 h-4 text-fuente" />
                     </div>
-                    <button class="absolute top-4 right-4">
+                    <button {onclick} class="absolute top-4 right-4">
                         <CancelIcon class="w-8 h-8 text-red-500" />
                     </button>
 
