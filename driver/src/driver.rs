@@ -1,17 +1,15 @@
-use std::ascii::AsciiExt;
-
 use driver::{
     contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider},
     pages::NewProfileForm,
     router::DriverPages,
 };
 use fuente::{
-    browser_api::{clipboard_copy, HtmlForm},
+    browser_api::{clipboard_copy, HtmlDocument, HtmlForm},
     contexts::{
         init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdAction, NostrIdProvider,
         NostrIdStore, RelayProvider, UserIdentity, UserRelay,
     },
-    mass::{LoadingScreen, MainLayout, NewUserPage, SimpleFormButton, SimpleInput},
+    mass::{LoadingScreen, MainLayout, NewUserPage, SimpleFormButton, SimpleInput}, models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
 use nostro2::userkeys::UserKeys;
@@ -26,6 +24,8 @@ fn main() {
 fn app() -> Html {
     use_effect_with((), move |_| {
         init_nostr_db().expect("Error initializing Nostr database");
+        init_consumer_db().expect("Error initializing Fuente database");
+        init_commerce_db().expect("Error initializing Commerce database");
         || {}
     });
     html! {
@@ -148,7 +148,13 @@ pub fn admin_login() -> Html {
             hex_str.push_str(&format!("{:02x}", byte));
         }
         clipboard_copy(&hex_str);
-        gloo::console::log!("New Keys: ", &hex_str);
+        let input_element = HtmlDocument::new()
+            .expect("Failed to get document")
+            .find_element_by_id::<web_sys::HtmlInputElement>("password")
+            .expect("Failed to get element");
+        input_element
+            .set_attribute("value", &hex_str)
+            .expect("Failed to set value");
     });
     html! {
         <div class="flex flex-col h-full w-full items-center justify-center gap-4">

@@ -28,7 +28,7 @@ wasm-bindgen-test = "0.3.42"
 web-sys = { version = "0.3.70", features = ["HtmlInputElement", "HtmlFormElement", "SubtleCrypto", "CryptoKey", 
 "Window", "Crypto", "AesKeyGenParams", "AesGcmParams", "IdbFactory", "IdbOpenDbOptions", "HtmlSelectElement", "Clipboard",
 "IdbOpenDbRequest", "IdbTransaction", "IdbRequest", "IdbDatabase", "IdbObjectStore", "IdbRequestReadyState", "Navigator",
-"HtmlAudioElement", "HtmlMediaElement", "Geolocation", "Response", "ReadableStream", "PositionOptions",
+"HtmlAudioElement", "HtmlMediaElement", "Geolocation", "Response", "ReadableStream", "PositionOptions", "DomStringList",
 "IdbTransactionMode", "IdbObjectStoreParameters", "Navigator", "ServiceWorkerContainer", "FetchEvent", "CustomEvent"] }
 yew = { version = "0.21.0", features = ["csr"] }
 yew-router = "0.18.0"

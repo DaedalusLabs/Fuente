@@ -10,7 +10,7 @@ pub use key_manager::*;
 pub use relay_pool::*;
 
 pub const DB_NAME: &str = "nostr";
-pub const DB_VERSION: u32 = 2;
+pub const DB_VERSION: u32 = 3;
 pub const STORE_NAME_NOSTR_IDS: &str = "nostr_ids";
 pub const STORE_NAME_NOSTR_RELAYS: &str = "nostr_relays";
 
@@ -38,7 +38,12 @@ fn upgrade_nostr_db(event: web_sys::Event) -> Result<(), JsValue> {
         .dyn_into::<web_sys::IdbOpenDbRequest>()?
         .result()?
         .dyn_into::<web_sys::IdbDatabase>()?;
-    key_manager::UserIdentity::create_data_store(&db)?;
-    relay_pool::UserRelay::create_data_store(&db)?;
+    let db_store_names = db.object_store_names();
+    if !db_store_names.contains(STORE_NAME_NOSTR_IDS) {
+        key_manager::UserIdentity::create_data_store(&db)?;
+    }
+    if !db_store_names.contains(STORE_NAME_NOSTR_RELAYS) {
+        relay_pool::UserRelay::create_data_store(&db)?;
+    }
     Ok(())
 }
