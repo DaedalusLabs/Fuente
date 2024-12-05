@@ -1,5 +1,5 @@
-use crate::browser_api::IdbStoreManager;
 use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
+use minions::browser_api::IdbStoreManager;
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -15,8 +15,7 @@ use super::{
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_REQUEST,
     },
     products::ProductOrder,
-    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, DRIVER_HUB_PUB_KEY,
-    STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, DRIVER_HUB_PUB_KEY, STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY,
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -346,8 +345,8 @@ impl OrderStateIdb {
     }
 }
 impl IdbStoreManager for OrderStateIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_ORDER_HISTORY,
@@ -357,16 +356,14 @@ impl IdbStoreManager for OrderStateIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.order_id)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
+
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

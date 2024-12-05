@@ -1,9 +1,8 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
     mass::{DriverDetailsComponent, SimpleFormButton, SimpleInput},
     models::{AdminConfigurationType, AdminServerRequest, DriverProfile, DRIVER_HUB_PRIV_KEY},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::SignedNote, userkeys::UserKeys};
 use yew::prelude::*;
 

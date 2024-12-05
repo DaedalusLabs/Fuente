@@ -2,6 +2,7 @@ const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrak
 use std::{collections::HashMap, sync::Arc};
 
 use anyhow::anyhow;
+use async_channel::{Receiver, Sender};
 use fuente::models::{
     CommerceProfile, DriverProfile, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
     TEST_PRIV_KEY, TEST_PUB_KEY, {AdminConfiguration, AdminConfigurationType, AdminServerRequest},
@@ -16,9 +17,18 @@ use lightning::{
     HodlState, InvoicePaymentState, LightningClient, LnAddressPaymentRequest, LndHodlInvoice,
     LndPaymentRequest,
 };
-use nostro2::{notes::SignedNote, pool::RelayPool, relays::NostrFilter, userkeys::UserKeys};
-use tokio::sync::Mutex;
+use nostro2::{
+    notes::SignedNote,
+    relays::{NostrSubscription, RelayPool, SendNoteEvent},
+    userkeys::UserKeys,
+};
+use tokio::sync::{mpsc::UnboundedSender, Mutex};
+use tokio_tungstenite::tungstenite::Message;
 use tracing::{error, info, warn, Level};
+pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
+pub const MILISATOSHIS_IN_ONE_SATOSHI: u64 = 1000;
+pub const ILLUMINODES_FEES: u64 = 20;
+pub const FUENTE_FEES: u64 = 0;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CommerceRegistryEntry {
@@ -59,35 +69,365 @@ impl CommerceRegistryEntry {
     }
 }
 
+#[tokio::main]
+pub async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::fmt()
+        .with_max_level(Level::INFO)
+        .init();
+    let vec_strings = RELAY_URLS.iter().map(|s| s.to_string()).collect();
+    let relay_pool = RelayPool::new(vec_strings).await?;
+    let (public_notes_tx, public_notes_channel) = async_channel::unbounded();
+    let (private_notes_tx, private_notes_channel) = async_channel::unbounded();
+    let (live_order_tx, live_order_channel) = async_channel::unbounded();
+    let bot = InvoicerBot::new(
+        relay_pool.broadcaster(),
+        public_notes_channel,
+        private_notes_channel,
+        live_order_channel,
+    )
+    .await?;
+    info!("Bot created");
+    let relay_future = InvoicerBot::read_relay_pool(
+        relay_pool,
+        bot.keys.clone(),
+        public_notes_tx.clone(),
+        private_notes_tx.clone(),
+        live_order_tx.clone(),
+    );
+    let public_notes_future = bot.handle_public_notes(bot.public_notes_channel.clone());
+    let private_notes_future = bot.handle_private_notes(bot.private_notes_channel.clone());
+    let order_states_future = bot.handle_courier_order_update(bot.live_order_channel.clone());
+    loop {
+        tokio::select! {
+            _ = relay_future => {
+                error!("Relay pool task ended");
+                break;
+            }
+             _ = public_notes_future => {
+                 error!("Public channel task ended");
+                 break;
+             }
+             _ = private_notes_future => {
+                 error!("Private notes channel task ended");
+                 break;
+             }
+             _ = order_states_future => {
+                 error!("Order state task ended");
+                 break;
+             }
+        }
+    }
+    Ok(())
+}
 #[derive(Clone)]
 pub struct InvoicerBot {
     keys: UserKeys,
-    relays: RelayPool,
     admin_config: Arc<Mutex<AdminConfiguration>>,
+    lightning_wallet: LightningClient,
+    broadcaster: Vec<UnboundedSender<Message>>,
+    live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
     commerce_registries: Arc<Mutex<HashMap<String, CommerceRegistryEntry>>>,
-    live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
-    lightning_wallet: LightningClient,
+    public_notes_channel: Receiver<(u32, SignedNote)>,
+    private_notes_channel: Receiver<(u32, SignedNote)>,
+    live_order_channel: Receiver<OrderInvoiceState>,
 }
 
 impl InvoicerBot {
-    pub async fn new() -> anyhow::Result<Self> {
+    pub async fn new(
+        broadcaster: Vec<UnboundedSender<Message>>,
+        public_notes_channel: Receiver<(u32, SignedNote)>,
+        private_notes_channel: Receiver<(u32, SignedNote)>,
+        live_order_channel: Receiver<OrderInvoiceState>,
+    ) -> anyhow::Result<Self> {
         let lightning_wallet =
-            LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
-        let urls = RELAY_URLS.iter().map(|s| s.to_string()).collect();
-        let relays = RelayPool::new(urls).await?;
+            LightningClient::new("lnd.illuminodes.com", "./invoices.macaroon").await?;
         let server_keys = UserKeys::new(TEST_PRIV_KEY)?;
+        info!("Relay pool started");
         let mut admin_config = AdminConfiguration::default();
         admin_config.set_admin_whitelist(vec![TEST_PUB_KEY.to_string()]);
         Ok(Self {
             keys: server_keys,
-            relays,
+            broadcaster,
             admin_config: Arc::new(Mutex::new(admin_config)),
             courier_profiles: Arc::new(Mutex::new(HashMap::new())),
             commerce_registries: Arc::new(Mutex::new(HashMap::new())),
             live_orders: Arc::new(Mutex::new(HashMap::new())),
             lightning_wallet,
+            public_notes_channel,
+            private_notes_channel,
+            live_order_channel,
         })
+    }
+    async fn note_processor(
+        server_keys: UserKeys,
+        courier_hub_keys: UserKeys,
+        commerce_profile_channel: Sender<(u32, SignedNote)>,
+        private_notes_channel: Sender<(u32, SignedNote)>,
+        live_order_channel: Sender<OrderInvoiceState>,
+        signed_note: SignedNote,
+    ) -> anyhow::Result<()> {
+        match signed_note.get_kind() {
+            NOSTR_KIND_SERVER_REQUEST => {
+                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = SignedNote::try_from(decrypted)?;
+                if let Err(e) = private_notes_channel
+                    .send((inner_note.get_kind(), inner_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                }
+            }
+            NOSTR_KIND_ADMIN_REQUEST => {
+                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = SignedNote::try_from(decrypted)?;
+                if let Err(e) = private_notes_channel
+                    .send((signed_note.get_kind(), inner_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            NOSTR_KIND_SERVER_CONFIG => {
+                if let Err(e) = commerce_profile_channel
+                    .send((signed_note.get_kind(), signed_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            NOSTR_KIND_ORDER_STATE => {
+                let decrypted = courier_hub_keys.decrypt_nip_04_content(&signed_note)?;
+                if let Err(e) = live_order_channel
+                    .send(OrderInvoiceState::try_from(decrypted)?)
+                    .await
+                {
+                    error!("{:?}", e);
+                }
+            }
+            NOSTR_KIND_COMMERCE_PROFILE => {
+                // TODO this goes to a channel and handled by the admin server
+                if let Err(e) = commerce_profile_channel
+                    .send((signed_note.get_kind(), signed_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            NOSTR_KIND_COMMERCE_PRODUCTS => {
+                // TODO this goes to a channel and handled by the admin server
+                if let Err(e) = commerce_profile_channel
+                    .send((signed_note.get_kind(), signed_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            NOSTR_KIND_COURIER_PROFILE => {
+                if let Err(e) = commerce_profile_channel
+                    .send((signed_note.get_kind(), signed_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+    pub async fn read_relay_pool(
+        mut relays: RelayPool,
+        keys: UserKeys,
+        commerce_profile_channel: Sender<(u32, SignedNote)>,
+        private_notes_channel: Sender<(u32, SignedNote)>,
+        live_order_channel: Sender<OrderInvoiceState>,
+    ) -> anyhow::Result<()> {
+        let mut live_filter = NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
+            ..Default::default()
+        };
+        live_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
+        let mut filter = NostrSubscription {
+            kinds: Some(vec![
+                NOSTR_KIND_SERVER_REQUEST,
+                NOSTR_KIND_SERVER_CONFIG,
+                NOSTR_KIND_ADMIN_REQUEST,
+            ]),
+            ..Default::default()
+        };
+        filter.add_tag("#p", TEST_PUB_KEY);
+        let commerces_filter = NostrSubscription {
+            kinds: Some(vec![
+                NOSTR_KIND_COMMERCE_PROFILE,
+                NOSTR_KIND_COMMERCE_PRODUCTS,
+                NOSTR_KIND_COURIER_PROFILE,
+            ]),
+            ..Default::default()
+        };
+        let config_filter = NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
+            authors: Some(vec![TEST_PUB_KEY.to_string()]),
+            ..Default::default()
+        };
+        relays.subscribe(filter.relay_subscription())?;
+        relays.subscribe(commerces_filter.relay_subscription())?;
+        relays.subscribe(live_filter.relay_subscription())?;
+        relays.subscribe(config_filter.relay_subscription())?;
+        let server_keys = keys.clone();
+        let courier_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY)?;
+        loop {
+            if relays.event_channel.is_closed() {
+                break;
+            }
+            tokio::select! {
+                Some(_) = relays.event_channel.recv() => {
+                }
+                Some(signed_note) = relays.note_channel.recv() => {
+                    if let Err(e) = InvoicerBot::note_processor(
+                        server_keys.clone(),
+                        courier_keys.clone(),
+                        commerce_profile_channel.clone(),
+                        private_notes_channel.clone(),
+                        live_order_channel.clone(),
+                        signed_note.1,
+                    ).await {
+                        error!("{:?}", e);
+                    }
+                }
+                else => {
+                    break;
+                }
+            }
+        }
+        Err(anyhow!("Relay pool closed"))
+    }
+    async fn handle_public_notes(
+        &self,
+        note_channel: Receiver<(u32, SignedNote)>,
+    ) -> anyhow::Result<()> {
+        loop {
+            if note_channel.is_closed() {
+                break;
+            }
+            if let Ok((note_kind, signed_note)) = note_channel.recv().await {
+                match note_kind {
+                    NOSTR_KIND_COMMERCE_PROFILE => {
+                        if let Ok(_) = CommerceProfile::try_from(signed_note.clone()) {
+                            let mut profiles = self.commerce_registries.lock().await;
+                            let entry = profiles
+                                .entry(signed_note.get_pubkey().to_string())
+                                .or_insert(CommerceRegistryEntry {
+                                    profile: None,
+                                    menu: None,
+                                    whitelisted: false,
+                                });
+                            entry.set_profile(signed_note.clone());
+                            info!("Added commerce profile");
+                        }
+                    }
+                    NOSTR_KIND_COMMERCE_PRODUCTS => {
+                        ProductMenu::try_from(signed_note.clone())?;
+                        let mut profiles = self.commerce_registries.lock().await;
+                        let entry = profiles
+                            .entry(signed_note.get_pubkey().to_string())
+                            .or_insert(CommerceRegistryEntry {
+                                profile: None,
+                                menu: None,
+                                whitelisted: false,
+                            });
+                        entry.set_menu(signed_note.clone());
+                        info!("Added menu");
+                    }
+                    NOSTR_KIND_COURIER_PROFILE => {
+                        let _ = DriverProfile::try_from(signed_note.clone())?;
+                        let mut profiles = self.courier_profiles.lock().await;
+                        profiles.insert(signed_note.get_pubkey().to_string(), signed_note);
+                        info!("Added courier profile");
+                    }
+                    NOSTR_KIND_SERVER_CONFIG => {
+                        if let Err(e) = self.update_admin_config(signed_note.clone()).await {
+                            error!("{:?}", e);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Err(anyhow!("Public notes channel closed"))
+    }
+    async fn handle_private_notes(
+        &self,
+        note_channel: Receiver<(u32, SignedNote)>,
+    ) -> anyhow::Result<()> {
+        loop {
+            if note_channel.is_closed() {
+                break;
+            }
+            if let Ok((note_kind, signed_note)) = note_channel.recv().await {
+                let process: anyhow::Result<()> = {
+                    match note_kind {
+                        NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
+                            if let Err(e) = self.handle_order_request(signed_note).await {
+                                error!("ORDER REQUEST ERROR {:?}", e);
+                            }
+                        }
+                        NOSTR_KIND_ORDER_STATE => {
+                            if let Err(e) = self.handle_order_state_update(signed_note).await {
+                                error!("ORDER STATE ERROR {:?}", e);
+                            }
+                        }
+                        NOSTR_KIND_ADMIN_REQUEST => {
+                            if let Ok(admin_req) = AdminServerRequest::try_from(&signed_note) {
+                                let mut admin_confs = self.admin_config.lock().await;
+                                match admin_req.config_type {
+                                    AdminConfigurationType::ExchangeRate => {
+                                        admin_confs
+                                            .set_exchange_rate(admin_req.config_str.parse()?);
+                                        let update = admin_confs.sign_exchange_rate(&self.keys)?;
+                                        self.broadcast_note(update)?;
+                                        info!("Exchange rate updated {}", admin_req.config_str);
+                                    }
+                                    AdminConfigurationType::CommerceWhitelist => {
+                                        let whitelist: Vec<String> =
+                                            serde_json::from_str(&admin_req.config_str)?;
+                                        admin_confs.set_commerce_whitelist(whitelist);
+                                        let update =
+                                            admin_confs.sign_commerce_whitelist(&self.keys)?;
+                                        info!("New commerce whitelist: {}", &update);
+                                        self.broadcast_note(update)?;
+                                        info!("Commerce whitelist updated");
+                                    }
+                                    AdminConfigurationType::CourierWhitelist => {
+                                        let whitelist: Vec<String> =
+                                            serde_json::from_str(&admin_req.config_str)?;
+                                        info!("Courier whitelist updated to: {:?}", &whitelist);
+                                        admin_confs.set_couriers_whitelist(whitelist);
+                                        let update =
+                                            admin_confs.sign_couriers_whitelist(&self.keys)?;
+                                        self.broadcast_note(update)?;
+                                        info!("Courier whitelist updated");
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                    Ok(())
+                };
+                if let Err(e) = process {
+                    error!(" PRIVATE NOTE ERRORED WITH {:?}", e);
+                }
+            }
+        }
+        Err(anyhow!("Private notes channel closed"))
+    }
+    fn broadcast_note(&self, note: SignedNote) -> anyhow::Result<()> {
+        let relay_event = SendNoteEvent(nostro2::relays::RelayEventTag::EVENT, note);
+        for broadcaster in self.broadcaster.iter() {
+            broadcaster.send(Message::text(relay_event.clone()))?;
+        }
+        Ok(())
     }
     async fn create_order_invoice(
         &self,
@@ -99,18 +439,21 @@ impl InvoicerBot {
             .ok_or(anyhow!("Commerce not found"))?;
         let invoice_total_srd = order.products.total();
         let exchange_rate = self.admin_config.lock().await.get_exchange_rate();
-        let invoice_amount = ((invoice_total_srd / exchange_rate) * 100_000_000.0) as u64;
+        let invoice_amount = ((invoice_total_srd / exchange_rate) * SATOSHIS_IN_ONE_BTC) as u64;
         let invoice = self
             .lightning_wallet
-            .get_ln_url_invoice(invoice_amount * 1000, commerce.ln_address()?)
+            .get_ln_url_invoice(
+                invoice_amount * MILISATOSHIS_IN_ONE_SATOSHI,
+                commerce.ln_address()?,
+            )
             .await?;
-        // TODO
-        // Add Mayas profit to the invoice
-        let hodl_amount = invoice_amount + 200;
+        info!("commerce Invoice created");
+        let hodl_amount = invoice_amount + ILLUMINODES_FEES + FUENTE_FEES;
         let hodl_invoice = self
             .lightning_wallet
             .get_hodl_invoice(invoice.r_hash()?, hodl_amount)
             .await?;
+        info!("Hodl invoice created");
         Ok((invoice, hodl_invoice))
     }
     async fn update_order_status(
@@ -123,6 +466,37 @@ impl InvoicerBot {
         state.update_order_status(order_status.clone());
         self.broadcast_order_update(&state).await?;
         Ok(())
+    }
+    async fn handle_courier_order_update(
+        &self,
+        order_state: Receiver<OrderInvoiceState>,
+    ) -> anyhow::Result<()> {
+        loop {
+            if order_state.is_closed() {
+                break;
+            }
+            if let Ok(order_state) = order_state.recv().await {
+                match (
+                    order_state.get_payment_status(),
+                    order_state.get_order_status(),
+                ) {
+                    (_, OrderStatus::Completed) => {}
+                    (_, OrderStatus::Canceled) => {}
+                    (OrderPaymentStatus::PaymentFailed, _) => {}
+                    _ => {
+                        let mut live_orders = self.live_orders.lock().await;
+                        if !live_orders.contains_key(&order_state.id()) {
+                            info!(
+                                "Order added to live orders {:?}",
+                                order_state.get_order_status()
+                            );
+                            live_orders.insert(order_state.id(), order_state);
+                        }
+                    }
+                }
+            }
+        }
+        Err(anyhow!("Order state channel closed"))
     }
     async fn order_payment_notifier(self, mut state: OrderInvoiceState) -> anyhow::Result<bool> {
         let invoice = state
@@ -190,20 +564,24 @@ impl InvoicerBot {
         }
         Ok(success)
     }
-    async fn handle_order_request(self, signed_note: SignedNote) -> anyhow::Result<()> {
+    async fn handle_order_request(&self, signed_note: SignedNote) -> anyhow::Result<()> {
         if let Ok(order) = OrderRequest::try_from(signed_note.clone()) {
+            info!("Order request received");
             let invoice = self.create_order_invoice(&order).await?;
+            info!("Order invoice created");
             let state_update = OrderInvoiceState::new(
                 signed_note.clone(),
                 Some(invoice.1),
                 Some(invoice.0.clone()),
             );
+            info!("Order state created");
             let state_update_note = state_update.sign_customer_update(&self.keys)?;
-            self.relays.broadcast_note(state_update_note).await?;
+            info!("Order state update signed");
+            self.broadcast_note(state_update_note)?;
             let self_clone = self.clone();
             tokio::spawn(async move {
                 if let Err(e) = self_clone.order_payment_notifier(state_update).await {
-                    error!("{:?}", e);
+                    error!("NOTIFIER ERROR {:?}", e);
                 }
             });
         }
@@ -235,17 +613,17 @@ impl InvoicerBot {
     async fn broadcast_order_update(&self, state: &OrderInvoiceState) -> anyhow::Result<()> {
         let user_note = state.sign_customer_update(&self.keys)?;
         let commerce_note = state.sign_commerce_update(&self.keys)?;
-        self.relays.broadcast_note(user_note).await?;
-        self.relays.broadcast_note(commerce_note).await?;
+        self.broadcast_note(user_note)?;
+        self.broadcast_note(commerce_note)?;
         match state.get_courier() {
             Some(_) => {
                 let courier_note = state.sign_courier_update(&self.keys)?;
-                self.relays.broadcast_note(courier_note).await?;
+                self.broadcast_note(courier_note)?;
             }
             None => {
                 if state.get_order_status() == OrderStatus::ReadyForDelivery {
                     let courier_note = state.sign_courier_update(&self.keys)?;
-                    self.relays.broadcast_note(courier_note).await?;
+                    self.broadcast_note(courier_note)?;
                 }
             }
         }
@@ -301,41 +679,6 @@ impl InvoicerBot {
         }
         Ok(())
     }
-    async fn handle_courier_profile(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let _ = DriverProfile::try_from(signed_note.clone())?;
-        let mut profiles = self.courier_profiles.lock().await;
-        profiles.insert(signed_note.get_pubkey().to_string(), signed_note);
-        info!("Added courier profile");
-        Ok(())
-    }
-    async fn handle_commerce_profile(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        CommerceProfile::try_from(signed_note.clone())?;
-        let mut profiles = self.commerce_registries.lock().await;
-        let entry = profiles
-            .entry(signed_note.get_pubkey().to_string())
-            .or_insert(CommerceRegistryEntry {
-                profile: None,
-                menu: None,
-                whitelisted: false,
-            });
-        entry.set_profile(signed_note.clone());
-        info!("Added commerce profile");
-        Ok(())
-    }
-    async fn handle_commerce_product_list(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        ProductMenu::try_from(signed_note.clone())?;
-        let mut profiles = self.commerce_registries.lock().await;
-        let entry = profiles
-            .entry(signed_note.get_pubkey().to_string())
-            .or_insert(CommerceRegistryEntry {
-                profile: None,
-                menu: None,
-                whitelisted: false,
-            });
-        entry.set_menu(signed_note.clone());
-        info!("Added menu");
-        Ok(())
-    }
     async fn handle_courier_updates(
         &self,
         inner_note: SignedNote,
@@ -344,7 +687,7 @@ impl InvoicerBot {
         let updated_order: OrderInvoiceState =
             OrderInvoiceState::try_from(inner_note.get_content().to_string())?;
         // Check if order is part of live orders
-        let mut orders = self.live_orders.lock().await;
+        let mut orders = self.live_orders.clone().lock_owned().await;
         let live_order = orders
             .get_mut(&updated_order.id())
             .ok_or(anyhow!("Order not found"))?;
@@ -361,14 +704,13 @@ impl InvoicerBot {
             self.broadcast_order_update(&updated_order).await?;
             info!("Order updated by courier");
         }
-        Ok(())
+        Err(anyhow!("Invalid courier update"))
     }
     async fn handle_order_state_update(&self, signed_note: SignedNote) -> anyhow::Result<()> {
         let mut order_state = OrderInvoiceState::try_from(signed_note.get_content())?;
         let commerce = order_state.get_order_request().commerce.clone();
         if signed_note.get_pubkey() == commerce {
             if let Err(e) = self
-                .clone()
                 .handle_commerce_updates(signed_note.clone(), signed_note.clone())
                 .await
             {
@@ -392,19 +734,15 @@ impl InvoicerBot {
                 .await?;
             }
         }
-        match self
+        if let Ok(_) = self
             .admin_config
-            .lock()
+            .clone()
+            .lock_owned()
             .await
             .check_couriers_whitelist(&signed_note.get_pubkey())
         {
-            Ok(_) => {
-                self.handle_courier_updates(signed_note.clone(), signed_note.clone())
-                    .await?;
-            }
-            Err(e) => {
-                error!("{:?}", e);
-            }
+            self.handle_courier_updates(signed_note.clone(), signed_note.clone())
+                .await?;
         }
         info!("Order state updated");
         Ok(())
@@ -477,170 +815,4 @@ impl InvoicerBot {
         }
         Ok(())
     }
-    pub async fn note_processor(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        match signed_note.get_kind() {
-            NOSTR_KIND_SERVER_REQUEST => {
-                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
-                let inner_note = SignedNote::try_from(decrypted)?;
-                match inner_note.get_kind() {
-                    NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-                        self.clone().handle_order_request(inner_note).await?;
-                    }
-                    NOSTR_KIND_ORDER_STATE => {
-                        self.handle_order_state_update(inner_note).await?;
-                    }
-                    _ => {
-                        return Err(anyhow!("Invalid inner note"));
-                    }
-                }
-            }
-            NOSTR_KIND_ADMIN_REQUEST => {
-                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
-                let inner_note = SignedNote::try_from(decrypted)?;
-                let admin_req = AdminServerRequest::try_from(&inner_note)?;
-                let mut admin_confs = self.admin_config.lock().await;
-                match admin_req.config_type {
-                    AdminConfigurationType::ExchangeRate => {
-                        admin_confs.set_exchange_rate(admin_req.config_str.parse()?);
-                        let update = admin_confs.sign_exchange_rate(&self.keys)?;
-                        self.relays.broadcast_note(update).await?;
-                        info!("Exchange rate updated {}", admin_req.config_str);
-                    }
-                    AdminConfigurationType::CommerceWhitelist => {
-                        let whitelist: Vec<String> = serde_json::from_str(&admin_req.config_str)?;
-                        admin_confs.set_commerce_whitelist(whitelist);
-                        let update = admin_confs.sign_commerce_whitelist(&self.keys)?;
-                        info!("New commerce whitelist: {}", &update);
-                        self.relays.broadcast_note(update).await?;
-                        info!("Commerce whitelist updated");
-                    }
-                    AdminConfigurationType::CourierWhitelist => {
-                        let whitelist: Vec<String> = serde_json::from_str(&admin_req.config_str)?;
-                        info!("Courier whitelist updated to: {:?}", &whitelist);
-                        admin_confs.set_couriers_whitelist(whitelist);
-                        let update = admin_confs.sign_couriers_whitelist(&self.keys)?;
-                        self.relays.broadcast_note(update).await?;
-                        info!("Courier whitelist updated");
-                    }
-                    _ => {}
-                }
-            }
-
-            NOSTR_KIND_SERVER_CONFIG => {
-                info!("Server config received");
-                if let Err(e) = self.update_admin_config(signed_note).await {
-                    error!("{:?}", e);
-                }
-            }
-            NOSTR_KIND_ORDER_STATE => {
-                let courier_hub_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY)?;
-                let decrypted = courier_hub_keys.decrypt_nip_04_content(&signed_note)?;
-                let order_state = OrderInvoiceState::try_from(decrypted)?;
-                match (
-                    order_state.get_payment_status(),
-                    order_state.get_order_status(),
-                ) {
-                    (_, OrderStatus::Completed) => {}
-                    (_, OrderStatus::Canceled) => {}
-                    (OrderPaymentStatus::PaymentFailed, _) => {}
-                    _ => {
-                        let mut live_orders = self.live_orders.lock().await;
-                        if !live_orders.contains_key(&order_state.id()) {
-                            info!("Order added to live orders {:?}", order_state.get_order_status());
-                            live_orders.insert(order_state.id(), order_state);
-                        }
-                    }
-                }
-            }
-            NOSTR_KIND_COMMERCE_PROFILE => {
-                self.handle_commerce_profile(signed_note).await?;
-            }
-            NOSTR_KIND_COMMERCE_PRODUCTS => {
-                self.handle_commerce_product_list(signed_note).await?;
-            }
-            NOSTR_KIND_COURIER_PROFILE => {
-                self.admin_config
-                    .lock()
-                    .await
-                    .check_couriers_whitelist(&signed_note.get_pubkey())?;
-                self.handle_courier_profile(signed_note).await?;
-            }
-            _ => {
-                return Err(anyhow!("Invalid note kind"));
-            }
-        }
-        Ok(())
-    }
-    pub async fn read_relay_pool(self) -> anyhow::Result<()> {
-        let live_filter = NostrFilter::default()
-            .new_kinds(vec![NOSTR_KIND_ORDER_STATE])
-            .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()]);
-        let filter = NostrFilter::default()
-            .new_kinds(vec![
-                NOSTR_KIND_SERVER_REQUEST,
-                NOSTR_KIND_SERVER_CONFIG,
-                NOSTR_KIND_ADMIN_REQUEST,
-            ])
-            .new_tag("p", vec![TEST_PUB_KEY.to_string()]);
-        let commerces_filter = NostrFilter::default().new_kinds(vec![
-            NOSTR_KIND_COMMERCE_PROFILE,
-            NOSTR_KIND_COMMERCE_PRODUCTS,
-            NOSTR_KIND_COURIER_PROFILE,
-        ]);
-        let config_filter = NostrFilter::default()
-            .new_kind(NOSTR_KIND_SERVER_CONFIG)
-            .new_author(TEST_PUB_KEY);
-        self.relays.subscribe(filter.subscribe()).await?;
-        self.relays.subscribe(commerces_filter.subscribe()).await?;
-        self.relays.subscribe(live_filter.subscribe()).await?;
-        self.relays.subscribe(config_filter.subscribe()).await?;
-        let reader = self.relays.pooled_notes();
-        // let events = self.relays.all_events();
-        // tokio::spawn(async move {
-        //     while let Ok(event) = events.recv().await {
-        //         match event {
-        //             nostro2::relays::RelayEvents::EVENT(_, _) => {}
-        //             _ => {
-        //                 info!("{:?}", event);
-        //             }
-        //         }
-        //     }
-        // });
-        loop {
-            if reader.is_closed() {
-                break;
-            }
-            if let Ok(signed_note) = reader.recv().await {
-                if let Err(e) = self.clone().note_processor(signed_note).await {
-                    error!("{:?}", e);
-                }
-            }
-        }
-        reader.close();
-        Err(anyhow!("Relay pool closed"))
-    }
-}
-
-#[tokio::main]
-pub async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::fmt()
-        .with_max_level(Level::INFO)
-        .init();
-    info!("Bot created");
-    let mut close_counters = 0;
-    loop {
-        if close_counters > 10 {
-            break;
-        }
-        info!("Starting Invoicer");
-        if close_counters > 0 {
-            info!("Reconnecting for the {} time", close_counters);
-        }
-        let bot = InvoicerBot::new().await?;
-        if let Err(e) = bot.clone().read_relay_pool().await {
-            error!("{:?}", e);
-            close_counters += 1;
-        }
-    }
-    Ok(())
 }

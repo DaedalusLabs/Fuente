@@ -1,7 +1,5 @@
 use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
     mass::{
         CardComponent, DrawerSection, LoadingScreen, MoneyInput, ProductMenuCard, SimpleFormButton,
         SimpleInput, SimpleSelect, SimpleTextArea,
@@ -9,6 +7,7 @@ use fuente::{
     models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
 
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 #[function_component(ProductsPage)]

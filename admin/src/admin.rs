@@ -1,14 +1,14 @@
 use admin::{AdminPanelPages, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
-    contexts::{
-        init_nostr_db, NostrIdProvider, NostrIdStore, RelayProvider, UserRelay
-    },
-    mass::{
-        AdminLoginPage, LoadingScreen, MainLayout,
-    },
+    mass::{AdminLoginPage, LoadingScreen, MainLayout},
     models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
 };
 use html::ChildrenProps;
+use minions::{
+    init_nostr_db,
+    key_manager::{NostrIdProvider, NostrIdStore},
+    relay_pool::{RelayProvider, UserRelay},
+};
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
@@ -17,11 +17,13 @@ fn main() {
 }
 #[function_component(App)]
 fn app() -> Html {
-    use_effect_with((), move |_| || {
+    use_effect_with((), move |_| {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing Fuente database");
         init_commerce_db().expect("Error initializing Commerce database");
+        || {}
     });
+
     html! {
         <BrowserRouter>
            <AppContext>

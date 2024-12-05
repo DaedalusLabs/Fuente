@@ -1,14 +1,9 @@
 use std::rc::Rc;
 
-use fuente::{
-    contexts::{NostrIdStore, NostrProps},
-    models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE},
-};
-use nostro2::{
-    notes::SignedNote,
-    relays::{NostrFilter, RelayEvents},
-};
-use yew::{platform::spawn_local, prelude::*};
+use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE};
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::{notes::SignedNote, relays::NostrSubscription};
+use yew::prelude::*;
 
 use crate::pages::LiveOrderCheck;
 
@@ -94,12 +89,14 @@ pub fn commerce_data_sync() -> Html {
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
         if let Some(keys) = key_ctx.get_nostr_key() {
-            let filter = NostrFilter::default()
-                .new_kind(NOSTR_KIND_ORDER_STATE)
-                .new_tag("p", vec![keys.get_public_key().to_string()])
-                .subscribe();
-            id_handle.set(filter.id());
-            subscriber.emit(filter);
+            let mut filter = NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
+                ..Default::default()
+            };
+            filter.add_tag("#p", keys.get_public_key().as_str());
+            let sub = filter.relay_subscription();
+            id_handle.set(sub.1.clone());
+            subscriber.emit(sub);
             gloo::console::log!("Subscribed to order state");
         }
         || {}

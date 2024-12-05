@@ -1,10 +1,9 @@
+use minions::relay_pool::NostrProps;
+use nostro2::relays::EndOfSubscriptionEvent;
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{
-    contexts::NostrProps,
-    models::{AdminConfigurationType, NOSTR_KIND_SERVER_CONFIG},
-};
+use crate::models::{AdminConfigurationType, NOSTR_KIND_SERVER_CONFIG};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AdminConfigs {
@@ -91,10 +90,12 @@ fn admin_config_sync() -> Html {
     let subscription_id = use_state(|| None::<String>);
     let id_handler = subscription_id.clone();
     use_effect_with((), move |_| {
-        let filter = nostro2::relays::NostrFilter::default()
-            .new_kind(NOSTR_KIND_SERVER_CONFIG)
-            .subscribe();
-        id_handler.set(Some(filter.id()));
+        let filter = nostro2::relays::NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
+            ..Default::default()
+        }
+        .relay_subscription();
+        id_handler.set(Some(filter.1.clone()));
         subscriber.emit(filter);
         || {}
     });
@@ -149,7 +150,9 @@ fn admin_config_sync() -> Html {
     let sub_id = subscription_id.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(nostro2::relays::RelayEvents::EOSE(id)) = events.last() {
+        if let Some(nostro2::relays::RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) =
+            events.last()
+        {
             if id == sub_id.as_ref().unwrap() {
                 ctx_clone.dispatch(AdminConfigsAction::FinishLoading);
             }

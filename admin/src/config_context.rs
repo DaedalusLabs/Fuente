@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
-use fuente::{
-    contexts::{NostrIdStore, NostrProps},
-    models::{
-        AdminConfigurationType, CommerceProfile, DriverProfile, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY
-    },
+use fuente::models::{
+    AdminConfigurationType, CommerceProfile, DriverProfile, DRIVER_HUB_PRIV_KEY,
+    DRIVER_HUB_PUB_KEY, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_CONSUMER_GIFTWRAP,
+    NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY,
 };
-use nostro2::{notes::SignedNote, userkeys::UserKeys};
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::{notes::SignedNote, relays::EndOfSubscriptionEvent, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -168,18 +168,24 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     use_effect_with((), move |_| || {});
     let subscriber = relay_ctx.subscribe.clone();
     use_effect_with((), move |_| {
-        let courier_filter = nostro2::relays::NostrFilter::default()
-            .new_kind(NOSTR_KIND_CONSUMER_GIFTWRAP)
-            .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()]);
-        subscriber.emit(courier_filter.subscribe());
-        let commerce_filter = nostro2::relays::NostrFilter::default()
-            .new_kinds(vec![NOSTR_KIND_COMMERCE_PROFILE]);
-        subscriber.emit(commerce_filter.subscribe());
-        let filter = nostro2::relays::NostrFilter::default()
-            .new_kind(NOSTR_KIND_SERVER_CONFIG)
-            .new_author(TEST_PUB_KEY);
-        let subscription = filter.subscribe();
-        sub_handler.set(Some(subscription.id()));
+        let mut courier_filter = nostro2::relays::NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_CONSUMER_GIFTWRAP]),
+            ..Default::default()
+        };
+        courier_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
+        subscriber.emit(courier_filter.relay_subscription());
+        let commerce_filter = nostro2::relays::NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
+            ..Default::default()
+        };
+        subscriber.emit(commerce_filter.relay_subscription());
+        let filter = nostro2::relays::NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
+            authors: Some(vec![TEST_PUB_KEY.to_string()]),
+            ..Default::default()
+        };
+        let subscription = filter.relay_subscription();
+        sub_handler.set(Some(subscription.1.clone()));
         subscriber.emit(subscription);
         || {}
     });
@@ -189,7 +195,7 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         let driver_hub_key =
             UserKeys::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
-        if let (Some(note), Some(key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
+        if let (Some(note), Some(_key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
             if note.get_kind() == NOSTR_KIND_COMMERCE_PROFILE {
                 if let Ok(_) = CommerceProfile::try_from(note.clone()) {
                     ctx_clone.dispatch(ServerConfigsAction::AddCommerce(note.clone()));
@@ -252,7 +258,9 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let sub_id = subscription_id.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(nostro2::relays::RelayEvents::EOSE(id)) = events.last() {
+        if let Some(nostro2::relays::RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) =
+            events.last()
+        {
             if id == sub_id.as_ref().unwrap() {
                 ctx_clone.dispatch(ServerConfigsAction::FinishLoading);
             }

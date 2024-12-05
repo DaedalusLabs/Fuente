@@ -1,9 +1,5 @@
-use fuente::{
-    contexts::{NostrIdStore, NostrProps},
-    models::{
-        AdminConfigurationType, AdminServerRequest, CommerceProfile, NOSTR_KIND_COMMERCE_PROFILE,
-    },
-};
+use fuente::models::{AdminConfigurationType, AdminServerRequest, CommerceProfile};
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::notes::SignedNote;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
@@ -62,14 +58,12 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
 
 #[function_component(CommerceDisplay)]
 pub fn unregistered_commerces() -> Html {
-    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
-    let subscriber = relay_ctx.subscribe.clone();
     let unregistered_commerces: UseStateHandle<Vec<SignedNote>> = use_state(|| vec![]);
     let unregistered = unregistered_commerces.clone();
     let registered_commerces: UseStateHandle<Vec<SignedNote>> = use_state(|| vec![]);
     let registered = registered_commerces.clone();
-    
+
     use_effect_with(config_ctx, move |configs| {
         gloo::console::log!("CommerceDisplay effect");
         let not_in_wl = configs.get_unregistered_commerces();

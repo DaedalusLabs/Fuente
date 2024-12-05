@@ -1,10 +1,10 @@
 use fuente::{
-    browser_api::clipboard_copy,
-    contexts::{AdminConfigsStore, NostrIdStore, NostrProps},
+    contexts::AdminConfigsStore,
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{DriverProfileIdb, OrderPaymentStatus, OrderStatus},
 };
 use lightning::LndHodlInvoice;
+use minions::{browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 use crate::contexts::{LiveOrderAction, LiveOrderStore};
@@ -83,10 +83,11 @@ pub fn live_order_check() -> Html {
             let mut order = order_ctx.order.clone().expect("Order not found").1;
             if order.get_payment_status() == OrderPaymentStatus::PaymentPending {
                 order.update_order_status(OrderStatus::Canceled);
-                let signed_note = order.sign_server_request(&keys).expect("Could not sign order");
+                let signed_note = order
+                    .sign_server_request(&keys)
+                    .expect("Could not sign order");
                 sender.emit(signed_note);
                 order_ctx.dispatch(LiveOrderAction::CompleteOrder(order.id()));
-
             }
         })
     };
@@ -125,7 +126,10 @@ pub struct OrderInvoiceComponentProps {
 
 #[function_component(OrderInvoiceComponent)]
 pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
-    let OrderInvoiceComponentProps { invoice, exchange_rate } = props.clone();
+    let OrderInvoiceComponentProps {
+        invoice,
+        exchange_rate,
+    } = props.clone();
     let invoice_pr = invoice.payment_request();
     let sat_amount = invoice.sat_amount();
     let srd_amount = sat_amount as f64 / 100_000_000.0 * exchange_rate;

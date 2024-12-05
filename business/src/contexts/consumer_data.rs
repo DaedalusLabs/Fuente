@@ -1,7 +1,5 @@
-use fuente::{
-    browser_api::IdbStoreManager,
-    models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb},
-};
+use fuente::models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb};
+use minions::browser_api::IdbStoreManager;
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 

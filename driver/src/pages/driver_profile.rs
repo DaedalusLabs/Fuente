@@ -1,9 +1,8 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
     mass::{SimpleFormButton, SimpleInput},
     models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 use crate::contexts::{DriverDataAction, DriverDataStore};

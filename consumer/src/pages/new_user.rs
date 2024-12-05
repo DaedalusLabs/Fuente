@@ -1,9 +1,8 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
     mass::{SimpleFormButton, SimpleInput},
     models::{ConsumerProfile, ConsumerProfileIdb},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 use crate::contexts::{ConsumerDataAction, ConsumerDataStore};

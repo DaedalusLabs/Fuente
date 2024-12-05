@@ -1,16 +1,10 @@
 use std::rc::Rc;
 
-use fuente::{
-    contexts::{NostrIdStore, NostrProps},
-    models::{
-        OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
-        NOSTR_KIND_ORDER_STATE, TEST_PUB_KEY,
-    },
+use fuente::models::{
+    OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE,
 };
-use nostro2::{
-    relays::{NostrFilter, RelayEvents},
-    userkeys::UserKeys,
-};
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::{relays::NostrSubscription, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -142,13 +136,15 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
-        if let Some(keys) = key_ctx.get_nostr_key() {
-            let filter = NostrFilter::default()
-                .new_kinds(vec![NOSTR_KIND_ORDER_STATE])
-                .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()])
-                .subscribe();
-            id_handle.set(filter.id());
-            subscriber.emit(filter);
+        if let Some(_keys) = key_ctx.get_nostr_key() {
+            let mut filter = NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
+                ..Default::default()
+            };
+            filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
+            let sub = filter.relay_subscription();
+            id_handle.set(sub.1.clone());
+            subscriber.emit(sub);
         }
         || {}
     });

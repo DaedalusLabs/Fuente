@@ -9,9 +9,9 @@ use super::{
     nostr_kinds::{
         NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE,
     },
-    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
-use crate::browser_api::{GeolocationPosition, IdbStoreManager};
+use minions::browser_api::{GeolocationPosition, IdbStoreManager};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
@@ -223,8 +223,8 @@ impl TryFrom<SignedNote> for DriverProfileIdb {
 }
 
 impl IdbStoreManager for DriverProfileIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_CONSUMER_PROFILES,
@@ -234,16 +234,13 @@ impl IdbStoreManager for DriverProfileIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

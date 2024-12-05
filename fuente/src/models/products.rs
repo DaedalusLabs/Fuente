@@ -10,11 +10,11 @@ use std::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::browser_api::IdbStoreManager;
+use minions::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, upgrade_fuente_db, DB_NAME_FUENTE,
-    DB_VERSION_FUENTE, STORE_NAME_PRODUCT_LISTS,
+    nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, DB_NAME_FUENTE, DB_VERSION_FUENTE,
+    STORE_NAME_PRODUCT_LISTS,
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -318,8 +318,8 @@ impl Into<JsValue> for ProductMenuIdb {
     }
 }
 impl IdbStoreManager for ProductMenuIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_PRODUCT_LISTS,
@@ -329,15 +329,13 @@ impl IdbStoreManager for ProductMenuIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
+
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

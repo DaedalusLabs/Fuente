@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::browser_api::GeolocationCoordinates;
+use minions::browser_api::GeolocationCoordinates;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct CoordinateStrings {
