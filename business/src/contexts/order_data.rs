@@ -1,12 +1,9 @@
-use fuente::{
-    browser_api::IdbStoreManager,
-    contexts::{NostrIdStore, NostrProps},
-    models::{
-        OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
-        TEST_PUB_KEY,
-    },
+use fuente::models::{
+    OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
+    TEST_PUB_KEY,
 };
-use nostro2::relays::{NostrFilter, RelayEvents};
+use minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -151,14 +148,15 @@ pub fn commerce_data_sync() -> Html {
                 //     Ok(time) => time,
                 //     Err(_) => 0,
                 // };
-                let filter = NostrFilter::default()
-                    .new_kind(NOSTR_KIND_ORDER_STATE)
-                    .new_author(TEST_PUB_KEY)
-                    .new_tag("p", vec![keys.get_public_key()])
-                    // .new_since(last_sync_time)
-                    .subscribe();
-                id_handle.set(filter.id());
-                subscriber.emit(filter);
+                let mut filter = NostrSubscription {
+                    kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
+                    authors: Some(vec![TEST_PUB_KEY.to_string()]),
+                    ..Default::default()
+                };
+                filter.add_tag("#p", keys.get_public_key().as_str());
+                let relay_sub = filter.relay_subscription();
+                id_handle.set(relay_sub.1.clone());
+                subscriber.emit(relay_sub);
                 // LastSyncTime::update_sync_time(nostro2::utils::get_unix_timestamp())
                 //     .await
                 //     .expect("Failed to update sync time");
@@ -170,7 +168,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvents::EOSE(id)) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(OrderDataAction::CheckedRelay);
             }

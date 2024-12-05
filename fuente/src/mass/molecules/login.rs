@@ -1,10 +1,7 @@
-use crate::{
-    browser_api::{clipboard_copy, HtmlForm},
-    contexts::{NostrIdAction, NostrIdStore, UserIdentity},
-    mass::atoms::{
-        CopyIcon, {SimpleFormButton, SimpleInput},
-    },
+use crate::mass::atoms::{
+    CopyIcon, {SimpleFormButton, SimpleInput},
 };
+use minions::{browser_api::{clipboard_copy, HtmlForm}, key_manager::{NostrIdAction, NostrIdStore, UserIdentity}};
 use nostro2::userkeys::UserKeys;
 use yew::{platform::spawn_local, prelude::*};
 

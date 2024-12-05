@@ -4,14 +4,17 @@ use driver::{
     router::DriverPages,
 };
 use fuente::{
-    browser_api::{clipboard_copy, HtmlDocument, HtmlForm},
-    contexts::{
-        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdAction, NostrIdProvider,
-        NostrIdStore, RelayProvider, UserIdentity, UserRelay,
-    },
-    mass::{LoadingScreen, MainLayout, NewUserPage, SimpleFormButton, SimpleInput}, models::{init_commerce_db, init_consumer_db},
+    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    mass::{LoadingScreen, MainLayout, SimpleFormButton, SimpleInput},
+    models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
+use minions::{
+    browser_api::{clipboard_copy, HtmlDocument, HtmlForm},
+    init_nostr_db,
+    key_manager::{NostrIdAction, NostrIdProvider, NostrIdStore, UserIdentity},
+    relay_pool::{RelayProvider, UserRelay},
+};
 use nostro2::userkeys::UserKeys;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
@@ -152,9 +155,7 @@ pub fn admin_login() -> Html {
             .expect("Failed to get document")
             .find_element_by_id::<web_sys::HtmlInputElement>("password")
             .expect("Failed to get element");
-        input_element
-            .set_attribute("value", &hex_str)
-            .expect("Failed to set value");
+        input_element.set_value(&hex_str);
     });
     html! {
         <div class="flex flex-col h-full w-full items-center justify-center gap-4">
@@ -165,6 +166,7 @@ pub fn admin_login() -> Html {
             <button class="text-lg bg-fuente-light rounded-lg w-fit h-fit py-2 px-4 text-white font-bold " {onclick}>
                 {"NewKey"}
             </button>
+            <p class="text-sm text-gray-500 text-wrap max-w-sm">{"Click the NewKey button to generate a new key and copy it to your clipboard"}</p>
         </div>
     }
 }

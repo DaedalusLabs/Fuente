@@ -4,11 +4,10 @@ use crate::contexts::{
 
 use super::PageHeader;
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
     mass::{CardComponent, ProductCard, SpinnerIcon},
     models::{ProductItem, ProductOrder},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]

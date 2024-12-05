@@ -1,9 +1,8 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{NostrIdStore, NostrProps},
-    models::{AdminConfigurationType, AdminServerRequest},
     mass::SimpleFormButton,
+    models::{AdminConfigurationType, AdminServerRequest},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 use crate::ServerConfigsStore;

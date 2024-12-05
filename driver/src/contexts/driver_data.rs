@@ -1,11 +1,8 @@
-use fuente::{
-    browser_api::IdbStoreManager,
-    contexts::{NostrIdStore, NostrProps},
-    models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE},
-};
+use fuente::models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE};
+use minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
     notes::SignedNote,
-    relays::{NostrFilter, RelayEvents},
+    relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
@@ -141,11 +138,13 @@ pub fn commerce_data_sync() -> Html {
             if &(*id_handle) == "" {
                 let pubkey = keys.get_public_key();
                 spawn_local(async move {
-                    let filter = NostrFilter::default()
-                        .new_kind(NOSTR_KIND_DRIVER_PROFILE)
-                        .new_author(&pubkey)
-                        .subscribe();
-                    id_handle.set(filter.id());
+                    let filter = NostrSubscription {
+                        kinds: Some(vec![NOSTR_KIND_DRIVER_PROFILE]),
+                        authors: Some(vec![pubkey.clone()]),
+                        ..Default::default()
+                    }
+                    .relay_subscription();
+                    id_handle.set(filter.1.clone());
                     subscriber.emit(filter);
                 });
             }
@@ -167,7 +166,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvents::EOSE(id)) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(DriverDataAction::FinishedLoadingRelays);
             }

@@ -7,15 +7,17 @@ use consumer::{
     router::ConsumerPages,
 };
 use fuente::{
-    browser_api::GeolocationCoordinates,
-    contexts::{
-        init_nostr_db, AdminConfigsProvider, AdminConfigsStore, NostrIdProvider, NostrIdStore,
-        RelayProvider, UserRelay,
-    },
-    mass::{LoadingScreen, MainLayout, NewAddressMenu, NewAddressProps, NewUserPage},
+    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    mass::{LoadingScreen, MainLayout, NewAddressForm, NewAddressProps, NewUserPage},
     models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
 };
 use html::ChildrenProps;
+use minions::{
+    browser_api::GeolocationCoordinates,
+    init_nostr_db,
+    key_manager::{NostrIdProvider, NostrIdStore},
+    relay_pool::{RelayProvider, UserRelay},
+};
 use yew::{prelude::*, props};
 use yew_router::BrowserRouter;
 
@@ -158,7 +160,7 @@ fn login_check(props: &ChildrenProps) -> Html {
         return html! {
             <div class="flex flex-col flex-1 p-8">
                 <h2 class="text-2xl m-8 font-bold">{"Save Your Address"}</h2>
-                <NewAddressMenu ..props />
+                <NewAddressForm ..props />
             </div>
         };
     }

@@ -1,10 +1,10 @@
 use crate::contexts::{CommerceDataStore, OrderDataStore};
 use fuente::{
-    contexts::{NostrIdStore, NostrProps},
     // js::draggable::Droppable,
     mass::LoadingScreen,
     models::{OrderInvoiceState, OrderStatus},
 };
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 #[function_component(HomePage)]
