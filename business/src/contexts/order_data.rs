@@ -2,7 +2,7 @@ use fuente::models::{
     OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
     TEST_PUB_KEY,
 };
-use minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};

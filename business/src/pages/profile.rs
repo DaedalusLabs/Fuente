@@ -8,7 +8,7 @@ use fuente::{
     },
     models::{CommerceProfile, CommerceProfileIdb},
 };
-use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::{prelude::*, props};
 
 #[derive(Clone, PartialEq)]
@@ -218,7 +218,7 @@ pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
                 id="ln_address"
                 name="ln_address"
                 label="Lightning Address"
-                value={commerce_data.ln_address().to_string()}
+                value={commerce_data.ln_address().0.to_string()}
                 input_type="text"
                 required={true}
             />

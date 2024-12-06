@@ -1,4 +1,4 @@
-use minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
+use nostr_minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -182,8 +182,8 @@ impl ConsumerAddressIdb {
     }
 }
 impl IdbStoreManager for ConsumerAddressIdb {
-    fn config() -> minions::browser_api::IdbStoreConfig {
-        minions::browser_api::IdbStoreConfig {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
             store_name: STORE_NAME_CONSUMER_ADDRESSES,
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
@@ -198,7 +198,7 @@ impl IdbStoreManager for ConsumerAddressIdb {
 mod tests {
     use super::*;
     use crate::models::init_consumer_db;
-    use minions::browser_api::IdbStoreManager;
+    use nostr_minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

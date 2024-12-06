@@ -6,7 +6,7 @@ use fuente::{
     models::{OrderInvoiceState, OrderStatus},
 };
 use gloo::utils::format::JsValueSerdeExt;
-use minions::{
+use nostr_minions::{
     browser_api::GeolocationCoordinates,
     key_manager::NostrIdStore,
     relay_pool::NostrProps,

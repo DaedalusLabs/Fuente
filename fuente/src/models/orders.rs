@@ -1,5 +1,5 @@
-use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
-use minions::browser_api::IdbStoreManager;
+use bright_lightning::{LnAddressPaymentRequest, LndHodlInvoice};
+use nostr_minions::browser_api::IdbStoreManager;
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -345,8 +345,8 @@ impl OrderStateIdb {
     }
 }
 impl IdbStoreManager for OrderStateIdb {
-    fn config() -> minions::browser_api::IdbStoreConfig {
-        minions::browser_api::IdbStoreConfig {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_ORDER_HISTORY,
@@ -362,7 +362,7 @@ impl IdbStoreManager for OrderStateIdb {
 mod tests {
     use super::*;
     use crate::models::init_consumer_db;
-    use minions::browser_api::IdbStoreManager;
+    use nostr_minions::browser_api::IdbStoreManager;
 
     use wasm_bindgen_test::*;
 

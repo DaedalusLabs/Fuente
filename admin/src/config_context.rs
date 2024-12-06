@@ -5,7 +5,7 @@ use fuente::models::{
     DRIVER_HUB_PUB_KEY, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_CONSUMER_GIFTWRAP,
     NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY,
 };
-use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::SignedNote, relays::EndOfSubscriptionEvent, userkeys::UserKeys};
 use yew::prelude::*;
 

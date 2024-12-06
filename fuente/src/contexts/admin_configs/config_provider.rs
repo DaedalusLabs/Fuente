@@ -1,4 +1,4 @@
-use minions::relay_pool::NostrProps;
+use nostr_minions::relay_pool::NostrProps;
 use nostro2::relays::EndOfSubscriptionEvent;
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};

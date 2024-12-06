@@ -8,7 +8,7 @@ use fuente::{
     },
     models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb},
 };
-use minions::{
+use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
     relay_pool::NostrProps,

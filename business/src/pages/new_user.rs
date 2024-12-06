@@ -2,7 +2,7 @@ use fuente::{
     mass::{NewAddressForm, NewAddressProps, SimpleInput, SimpleTextArea},
     models::{CommerceProfile, CommerceProfileIdb},
 };
-use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::{prelude::*, props};
 
 use crate::contexts::{CommerceDataAction, CommerceDataStore};

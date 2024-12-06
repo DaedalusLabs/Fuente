@@ -1,4 +1,5 @@
-use minions::{
+use bright_lightning::LightningAddress;
+use nostr_minions::{
     browser_api::{GeolocationCoordinates, IdbStoreManager},
     widgets::leaflet::nominatim::NominatimLookup,
 };
@@ -81,8 +82,9 @@ impl CommerceProfile {
     pub fn geolocation(&self) -> GeolocationCoordinates {
         self.geolocation.clone().into()
     }
-    pub fn ln_address(&self) -> &str {
-        &self.ln_address
+    pub fn ln_address(&self) -> LightningAddress {
+        let address = Box::leak(self.ln_address.clone().into_boxed_str());
+        LightningAddress(address)
     }
     pub fn lookup(&self) -> &NominatimLookup {
         &self.lookup
@@ -171,8 +173,8 @@ impl TryFrom<SignedNote> for CommerceProfileIdb {
 }
 
 impl IdbStoreManager for CommerceProfileIdb {
-    fn config() -> minions::browser_api::IdbStoreConfig {
-        minions::browser_api::IdbStoreConfig {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_COMMERCE_PROFILES,
@@ -188,7 +190,7 @@ impl IdbStoreManager for CommerceProfileIdb {
 mod tests {
     use super::*;
     use crate::models::init_consumer_db;
-    use minions::browser_api::IdbStoreManager;
+    use nostr_minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

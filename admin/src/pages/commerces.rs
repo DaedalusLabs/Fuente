@@ -1,5 +1,5 @@
 use fuente::models::{AdminConfigurationType, AdminServerRequest, CommerceProfile};
-use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::notes::SignedNote;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;

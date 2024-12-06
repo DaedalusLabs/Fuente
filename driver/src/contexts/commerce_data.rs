@@ -3,7 +3,7 @@ use std::rc::Rc;
 use fuente::models::{
     CommerceProfileIdb, ProductMenuIdb, {NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
 };
-use minions::{browser_api::IdbStoreManager, relay_pool::NostrProps};
+use nostr_minions::{browser_api::IdbStoreManager, relay_pool::NostrProps};
 use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use yew::{platform::spawn_local, prelude::*};
 

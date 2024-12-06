@@ -4,7 +4,7 @@ use fuente::{
     mass::LoadingScreen,
     models::{OrderInvoiceState, OrderStatus},
 };
-use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 #[function_component(HomePage)]

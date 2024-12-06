@@ -3,8 +3,8 @@ use fuente::{
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{DriverProfileIdb, OrderPaymentStatus, OrderStatus},
 };
-use lightning::LndHodlInvoice;
-use minions::{browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps};
+use bright_lightning::LndHodlInvoice;
+use nostr_minions::{browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 use crate::contexts::{LiveOrderAction, LiveOrderStore};

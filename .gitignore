@@ -5,7 +5,7 @@
 /test
 
 # Ignore output.css files
-**/output.css
+**/output*.css
 
 # Ignore secret files
 *.pem
