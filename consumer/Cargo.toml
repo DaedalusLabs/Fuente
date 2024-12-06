@@ -8,12 +8,14 @@ name = "consumer"
 path = "src/consumer.rs"
 
 [dependencies]
+fuente.workspace = true
 gloo.workspace = true
+lightning.workspace = true
+minions.workspace = true
 nostro2.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde-wasm-bindgen.workspace = true
-fuente.workspace = true
 wasm-bindgen.workspace = true
 web-sys.workspace = true
 yew.workspace = true

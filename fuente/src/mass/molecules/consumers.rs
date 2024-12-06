@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::models::consumer_profile::ConsumerProfile;
+use crate::models::ConsumerProfile;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ConsumerProfileProps {

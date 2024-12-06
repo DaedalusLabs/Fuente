@@ -1,7 +1,7 @@
 use base64::prelude::*;
+use lightning_invoice::Bolt11Invoice;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LndHodlInvoice {
@@ -24,6 +24,11 @@ impl LndHodlInvoice {
         //     .p();
         let url_safe = BASE64_URL_SAFE.encode(self.payment_addr.as_bytes());
         Ok(url_safe)
+    }
+    pub fn sat_amount(&self) -> u64 {
+        let bolt11 = self.payment_request.clone();
+        let bolt11 = bolt11.parse::<Bolt11Invoice>().unwrap();
+        bolt11.amount_milli_satoshis().unwrap() / 1000
     }
 }
 impl TryFrom<String> for LndHodlInvoice {
@@ -122,4 +127,3 @@ impl LndHodlInvoiceState {
         self.payment_request.clone()
     }
 }
-

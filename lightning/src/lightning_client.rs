@@ -73,6 +73,7 @@ impl LightningClient {
         let url = format!("https://{}/v1/invoices", self.url);
         let form = LndInvoiceRequestBody::new(amount.to_string());
         let response = self.client.post(&url).body(form.to_string());
+        info!("{:?}", response);
         let response = response.send().await?;
         let response = response.json::<LndInvoice>().await?;
         Ok(response)
@@ -107,11 +108,12 @@ impl LightningClient {
             "wss://{}/v2/invoices/subscribe/{}",
             self.url, r_hash_url_safe
         );
+        println!("SUB QUERY {}", query);
         let lnd_ws = LndWebsocket::<LndHodlInvoiceState, String>::new(
             self.url.to_string(),
             Self::macaroon(self.data_dir)?,
             query,
-            10,
+            3,
         )
         .await?;
         return Ok(lnd_ws.receiver.clone());
@@ -130,6 +132,7 @@ impl LightningClient {
             .send()
             .await?;
         let response = response.text().await?;
+        info!("{}", response);
         LndHodlInvoice::try_from(response)
     }
     pub async fn settle_htlc(&self, preimage: String) -> anyhow::Result<()> {
@@ -170,9 +173,32 @@ mod test {
     #[tokio::test]
     #[traced_test]
     async fn test_connection() -> anyhow::Result<()> {
-        let client = LightningClient::new("lnd.illuminodes.com", "./admin.macaroon").await?;
+        let client = LightningClient::new("pvlnd.theconstruct.work", "./admin.macaroon").await?;
         let invoice = client.get_invoice(100).await?;
         info!("{:?}", invoice);
+        let subscription = client
+            .subscribe_to_invoice(invoice.r_hash_url_safe())
+            .await?;
+        loop {
+            match subscription.recv().await {
+                Ok(state) => {
+                    info!("{:?}", state);
+                    match state.state() {
+                        HodlState::OPEN => {
+                            client.cancel_htlc(invoice.r_hash_url_safe()).await?;
+                        }
+                        HodlState::CANCELED => {
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+                Err(e) => {
+                    info!("{}", e);
+                    break;
+                }
+            }
+        }
         Ok(())
     }
     #[tokio::test]

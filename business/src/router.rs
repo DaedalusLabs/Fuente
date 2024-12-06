@@ -1,10 +1,8 @@
-use fuente::mass::atoms::{forms::AppLink, svgs::{CategoriesIcon, HistoryIcon, HomeIcon, UserBadgeIcon}};
+use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{
-    history::HistoryPage, home::HomePage, products::ProductsPage, profile::ProfilePage,
-};
+use crate::pages::{HistoryPage, HomePage, ProductsPage, ProfilePage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum CommerceRoute {

@@ -1,5 +1,4 @@
-use crate::browser_api::IdbStoreManager;
-use crate::widgets::leaflet::NominatimLookup;
+use minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -11,7 +10,7 @@ use wasm_bindgen::JsValue;
 use super::{
     gps::CoordinateStrings,
     nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE_ADDRESS, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
-    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_ADDRESSES,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_ADDRESSES,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq, Hash)]
@@ -183,8 +182,8 @@ impl ConsumerAddressIdb {
     }
 }
 impl IdbStoreManager for ConsumerAddressIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             store_name: STORE_NAME_CONSUMER_ADDRESSES,
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
@@ -194,15 +193,12 @@ impl IdbStoreManager for ConsumerAddressIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.nostr_id)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

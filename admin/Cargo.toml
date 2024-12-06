@@ -18,4 +18,5 @@ wasm-bindgen.workspace = true
 web-sys.workspace = true
 yew.workspace = true
 yew-router.workspace = true
-wasm-bindgen-test = "0.3.45"
+minions.workspace = true
+

@@ -21,4 +21,3 @@ fn main() {
         panic!("Tailwind CSS command failed");
     }
 }
-

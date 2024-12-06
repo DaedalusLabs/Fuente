@@ -164,26 +164,29 @@ impl RelayProvider {
         let (filter_tx, filter_rx) = unbounded::<NostrSubscription>();
         let (unsubscribe_tx, unsubscribe_rx) = unbounded::<String>();
         let (close_tx, close_rx) = unbounded::<()>();
-        
+
         spawn_local(async move {
             // Show initial connection attempt
-            
+
             let relay_pool = match nostro2::pool::RelayPool::new(
                 relays.iter().map(|relay| relay.url.clone()).collect(),
-            ).await {
-                Ok(pool) => {
-                    pool
-                },
+            )
+            .await
+            {
+                Ok(pool) => pool,
                 Err(e) => {
-                    ToastifyOptions::new_relay_error(&format!("Failed to create relay pool: {}", e))
-                        .show();
+                    ToastifyOptions::new_relay_error(&format!(
+                        "Failed to create relay pool: {}",
+                        e
+                    ))
+                    .show();
                     return;
                 }
             };
-    
+
             let pooled_notes = relay_pool.pooled_notes();
             let relay_events = relay_pool.all_events();
-            
+
             loop {
                 tokio::select! {
                     event = relay_events.recv() => {
@@ -230,7 +233,7 @@ impl RelayProvider {
             }
             relay_pool.close().await.unwrap();
         });
-        
+
         (send_note_tx, filter_tx, unsubscribe_tx, close_tx)
     }
 

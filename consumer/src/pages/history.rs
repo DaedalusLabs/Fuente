@@ -1,5 +1,5 @@
 use super::PageHeader;
-use fuente::mass::atoms::{svgs::HistoryIcon, forms::SimpleFormButton};
+use fuente::mass::{HistoryIcon, SimpleFormButton};
 use yew::prelude::*;
 
 #[function_component(HistoryPage)]

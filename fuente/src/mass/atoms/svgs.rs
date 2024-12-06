@@ -424,3 +424,44 @@ pub fn categories_icon(props: &IconProps) -> Html {
         </svg>
     }
 }
+#[function_component(MotoIcon)]
+pub fn moto_icon(props: &IconProps) -> Html {
+    let class = props.class;
+    html! {
+        <svg xmlns="http://www.w3.org/2000/svg" {class} viewBox="0 0 24 24"
+            stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M5 16m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+            <path d="M19 16m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+            <path d="M7.5 14h5l4 -4h-10.5m1.5 4l4 -4" />
+            <path d="M13 6h2l1.5 3l2 4" />
+        </svg>
+    }
+}
+#[function_component(StoreIcon)]
+pub fn store_icon(props: &IconProps) -> Html {
+    let class = props.class;
+    html! {
+        <svg xmlns="http://www.w3.org/2000/svg" {class} viewBox="0 0 24 24"
+            stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M3 21l18 0" />
+            <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4" />
+            <path d="M5 21l0 -10.15" />
+            <path d="M19 21l0 -10.15" />
+            <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4" />
+        </svg>
+    }
+}
+#[function_component(BitcoinIcon)]
+pub fn store_icon(props: &IconProps) -> Html {
+    let class = props.class;
+    html! {
+        <svg xmlns="http://www.w3.org/2000/svg" {class} viewBox="0 0 24 24"
+            stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M9 8h4.09c1.055 0 1.91 .895 1.91 2s-.855 2 -1.91 2c1.055 0 1.91 .895 1.91 2s-.855 2 -1.91 2h-4.09" />
+            <path d="M10 12h4" /><path d="M10 7v10v-9" /><path d="M13 7v1" /><path d="M13 16v1" />
+        </svg>
+    }
+}

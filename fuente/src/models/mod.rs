@@ -1,16 +1,26 @@
+use minions::browser_api::IdbStoreManager;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-use crate::browser_api::IdbStoreManager;
 
-pub mod address;
-pub mod admin_configs;
-pub mod commerce;
-pub mod consumer_profile;
-pub mod driver;
-pub mod gps;
-pub mod nostr_kinds;
-pub mod orders;
-pub mod products;
+mod address;
+mod admin_configs;
+mod commerce;
+mod consumer_profile;
+mod driver;
+mod gps;
+mod nostr_kinds;
+mod orders;
+mod products;
+pub use address::*;
+pub use admin_configs::*;
+pub use commerce::*;
+pub use consumer_profile::*;
+pub use driver::*;
+pub use gps::*;
+pub use nostr_kinds::*;
+pub use orders::*;
+pub use products::*;
+
 // pub mod sync;
 pub const TEST_PRIV_KEY: &str = "874f9683a6a2342693da781b3dd6cd3fcda7436375b5301a8a96f433b4795d2d";
 pub const TEST_PUB_KEY: &str = "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
@@ -20,10 +30,10 @@ pub const DRIVER_HUB_PUB_KEY: &str =
     "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 
 pub const DB_NAME_FUENTE: &str = "fuente_db";
-pub const DB_VERSION_FUENTE: u32 = 1;
+pub const DB_VERSION_FUENTE: u32 = 5;
 
 pub const DB_NAME_COMMERCE: &str = "commerce_db";
-pub const DB_VERSION_COMMERCE: u32 = 1;
+pub const DB_VERSION_COMMERCE: u32 = 5;
 
 // ADMIN MODELS
 pub const STORE_NAME_CONFIGS: &str = "configs";
@@ -71,11 +81,27 @@ pub fn init_consumer_db() -> Result<(), JsValue> {
 }
 
 fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-    address::ConsumerAddressIdb::create_data_store(&db)?;
-    consumer_profile::ConsumerProfileIdb::create_data_store(&db)?;
-    commerce::CommerceProfileIdb::create_data_store(&db)?;
-    products::ProductMenuIdb::create_data_store(&db)?;
-    orders::OrderStateIdb::create_data_store(&db)?;
+    if !db.object_store_names().contains(STORE_NAME_CONSUMER_PROFILES) {
+        consumer_profile::ConsumerProfileIdb::create_data_store(&db)?;
+        gloo::console::log!("Consumer profile store created");
+    }
+    if !db.object_store_names().contains(STORE_NAME_CONSUMER_ADDRESSES) {
+        address::ConsumerAddressIdb::create_data_store(&db)?;
+        gloo::console::log!("Consumer address store created");
+    }
+    if !db.object_store_names().contains(STORE_NAME_COMMERCE_PROFILES) {
+        commerce::CommerceProfileIdb::create_data_store(&db)?;    
+        gloo::console::log!("Commerce profile store created");
+    }
+    if !db.object_store_names().contains(STORE_NAME_PRODUCT_LISTS) {
+        products::ProductMenuIdb::create_data_store(&db)?;
+        gloo::console::log!("Product list store created");
+    }
+    if !db.object_store_names().contains(STORE_NAME_ORDER_HISTORY) {
+        orders::OrderStateIdb::create_data_store(&db)?;
+        gloo::console::log!("Order history store created");
+    }
+    gloo::console::log!("Fuente database upgraded");
     Ok(())
 }
 
@@ -104,8 +130,15 @@ fn upgrade_commerce_db(event: web_sys::Event) -> Result<(), JsValue> {
         .dyn_into::<web_sys::IdbOpenDbRequest>()?
         .result()?
         .dyn_into::<web_sys::IdbDatabase>()?;
-    db.create_object_store(STORE_NAME_COMMERCE)?;
-    db.create_object_store(STORE_NAME_COMMERCE_KEYS)?;
-    db.create_object_store(STORE_NAME_COMMERCE_PROFILES)?;
+    let store_names = db.object_store_names();
+    if !store_names.contains(STORE_NAME_COMMERCE) {
+        db.create_object_store(STORE_NAME_COMMERCE)?;
+    }
+    if !store_names.contains(STORE_NAME_COMMERCE_KEYS) {
+        db.create_object_store(STORE_NAME_COMMERCE_KEYS)?;
+    }
+    if !store_names.contains(STORE_NAME_COMMERCE_PROFILES) {
+        db.create_object_store(STORE_NAME_COMMERCE_PROFILES)?;
+    }
     Ok(())
 }

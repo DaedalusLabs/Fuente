@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::models::commerce::CommerceProfile;
+use crate::models::CommerceProfile;
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct CommerceProfileProps {

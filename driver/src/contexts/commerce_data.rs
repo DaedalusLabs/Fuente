@@ -1,13 +1,10 @@
 use std::rc::Rc;
 
-use fuente::{
-    browser_api::IdbStoreManager, contexts::relay_pool::NostrProps, models::{
-        commerce::CommerceProfileIdb,
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
-        products::ProductMenuIdb,
-    }
+use fuente::models::{
+    CommerceProfileIdb, ProductMenuIdb, {NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
 };
-use nostro2::relays::{NostrFilter, RelayEvents};
+use minions::{browser_api::IdbStoreManager, relay_pool::NostrProps};
+use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -151,13 +148,15 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with((), move |_| {
-        let filter = NostrFilter::default()
-            .new_kinds(vec![
+        let filter = NostrSubscription {
+            kinds: Some(vec![
                 NOSTR_KIND_COMMERCE_PROFILE,
                 NOSTR_KIND_COMMERCE_PRODUCTS,
-            ])
-            .subscribe();
-        id_handle.set(filter.id());
+            ]),
+            ..Default::default()
+        }
+        .relay_subscription();
+        id_handle.set(filter.1.clone());
         subscriber.emit(filter);
         || {}
     });
@@ -165,8 +164,8 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvents::EOSE(id)) = events.last() {
-            if id == &(*id_handle) {
+        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
+            if *id == *id_handle {
                 ctx_clone.dispatch(CommerceDataAction::FinishedLoadingRelays);
             }
         }

@@ -1,39 +1,24 @@
 use consumer::{
     contexts::{
-        cart::CartProvider,
-        commerce_data::CommerceDataProvider,
-        consumer_data::{ConsumerDataAction, ConsumerDataProvider, ConsumerDataStore},
-        live_order::{LiveOrderProvider, LiveOrderStore},
+        CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
+        ConsumerDataStore, LiveOrderProvider,
     },
-    pages::new_user::NewProfilePage,
+    pages::NewProfilePage,
     router::ConsumerPages,
 };
 use fuente::{
-    browser_api::GeolocationCoordinates,
-    contexts::{
-        init_nostr_db,
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
-    },
-    mass::{
-        atoms::layouts::{LoadingScreen, MainLayout},
-        molecules::{
-            address::{NewAddressMenu, NewAddressProps},
-            login::NewUserPage,
-        },
-    },
-    models::{
-        address::{ConsumerAddress, ConsumerAddressIdb},
-        init_consumer_db,
-        orders::{OrderPaymentStatus, OrderStatus},
-    },
-    widgets::leaflet::{
-        IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L,
-    },
+    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    mass::{LoadingScreen, MainLayout, NewAddressForm, NewAddressProps, NewUserPage},
+    models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
 };
 use html::ChildrenProps;
-use wasm_bindgen::JsValue;
-use yew::{platform::spawn_local, prelude::*, props};
+use minions::{
+    browser_api::GeolocationCoordinates,
+    init_nostr_db,
+    key_manager::{NostrIdProvider, NostrIdStore},
+    relay_pool::{RelayProvider, UserRelay},
+};
+use yew::{prelude::*, props};
 use yew_router::BrowserRouter;
 
 fn main() {
@@ -50,13 +35,17 @@ fn app() -> Html {
     html! {
         <BrowserRouter>
             <RelayPoolComponent>
-                <AppContext>
+                <AuthContext>
                     <MainLayout>
-                        <LoginCheck>
-                            <ConsumerPages />
-                        </LoginCheck>
+                    <LoginCheck>
+                        <AppContext>
+                            <ProfileCheck>
+                                <ConsumerPages />
+                            </ProfileCheck>
+                        </AppContext>
+                    </LoginCheck>
                     </MainLayout>
-                </AppContext>
+                </AuthContext>
             </RelayPoolComponent>
         </BrowserRouter>
     }
@@ -83,37 +72,35 @@ fn relay_pool_component(props: &ChildrenProps) -> Html {
     }
 }
 
-#[function_component(AppContext)]
+#[function_component(AuthContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
         <NostrIdProvider>
-            <ConsumerDataProvider>
-                <CommerceDataProvider>
-                    <CartProvider>
-                        <LiveOrderProvider>
-                            {props.children.clone()}
-                        </LiveOrderProvider>
-                    </CartProvider>
-                </CommerceDataProvider>
-            </ConsumerDataProvider>
+            <AdminConfigsProvider>
+                {props.children.clone()}
+            </AdminConfigsProvider>
         </NostrIdProvider>
     }
 }
-
+#[function_component(AppContext)]
+fn app_context(props: &ChildrenProps) -> Html {
+    html! {
+       <ConsumerDataProvider>
+           <CommerceDataProvider>
+               <CartProvider>
+                   <LiveOrderProvider>
+                       {props.children.clone()}
+                   </LiveOrderProvider>
+               </CartProvider>
+           </CommerceDataProvider>
+       </ConsumerDataProvider>
+    }
+}
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>();
-    let user_ctx = use_context::<ConsumerDataStore>();
-    let coordinate_state = use_state(|| None::<GeolocationCoordinates>);
-    let nominatim_state = use_state(|| None);
-    let map_state = use_state(|| None);
-    let marker_state = use_state(|| None);
-    if user_ctx.is_none() || key_ctx.is_none() {
-        return html! {<LoadingScreen />};
-    }
-    let key_ctx = key_ctx.unwrap();
-    let user_ctx = user_ctx.unwrap();
-    if !key_ctx.finished_loading() {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    if !key_ctx.finished_loading() || !admin_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
     if key_ctx.get_nostr_key().is_none() {
@@ -123,6 +110,20 @@ fn login_check(props: &ChildrenProps) -> Html {
             </div>
         };
     }
+    html! {
+        <>
+            {props.children.clone()}
+        </>
+    }
+}
+#[function_component(ProfileCheck)]
+fn login_check(props: &ChildrenProps) -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let user_ctx = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
+    let coordinate_state = use_state(|| None::<GeolocationCoordinates>);
+    let nominatim_state = use_state(|| None);
+    let map_state = use_state(|| None);
+    let marker_state = use_state(|| None);
     if !user_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
@@ -157,168 +158,15 @@ fn login_check(props: &ChildrenProps) -> Html {
             onclick,
         });
         return html! {
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-col flex-1 p-8">
                 <h2 class="text-2xl m-8 font-bold">{"Save Your Address"}</h2>
-                <NewAddressMenu ..props />
+                <NewAddressForm ..props />
             </div>
         };
     }
     html! {
         <>
-        {props.children.clone()}
-        <LiveOrderCheck />
+            {props.children.clone()}
         </>
-    }
-}
-
-pub fn start_new_address_picker_map(
-    location: GeolocationCoordinates,
-    map_handler: UseStateHandle<Option<LeafletMap>>,
-    marker_handler: UseStateHandle<Option<Marker>>,
-    geo_handler: UseStateHandle<Option<GeolocationCoordinates>>,
-    address_handler: UseStateHandle<Option<NominatimLookup>>,
-) -> Result<(), JsValue> {
-    let map_options = LeafletMapOptions {
-        double_click_zoom: false,
-        center: Some(location.clone().into()),
-        ..Default::default()
-    };
-    let map = L::render_map_with_options("new-user-map", map_options)?;
-    map_handler.set(Some(map.clone()));
-    let icon_options = IconOptions {
-        icon_url: "public/assets/marker.png".to_string(),
-        icon_size: Some(vec![32, 32]),
-        icon_anchor: None,
-    };
-    let marker = map.add_marker_with_icon(&location, icon_options)?;
-    marker_handler.set(Some(marker.clone()));
-    geo_handler.set(Some(location));
-
-    let geo_handler_clone = geo_handler.clone();
-    let address_handler_clone = address_handler.clone();
-    let map_closure = move |e: MouseEvent| {
-        let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
-        let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
-        geo_handler_clone.set(Some(coordinates.clone()));
-        marker.set_lat_lng(
-            &leaflet_event
-                .try_into()
-                .expect("Could not conver to Js value"),
-        );
-        let handle = address_handler_clone.clone();
-        spawn_local(async move {
-            if let Ok(address) = NominatimLookup::reverse(coordinates.clone()).await {
-                handle.set(Some(address));
-            }
-        });
-    };
-    map.add_closure("dblclick", map_closure);
-
-    Ok(())
-}
-
-#[function_component(LiveOrderCheck)]
-fn live_order_check() -> Html {
-    let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
-    if let Some(order) = &order_ctx.order {
-        match order.1.get_payment_status() {
-            OrderPaymentStatus::PaymentPending => {
-                return html! {
-                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
-                        <div class="bg-white p-8 rounded-lg">
-                            <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
-                        </div>
-                        <div class="flex flex-col gap-4 text-wrap max-w-md">
-                            <p>{"Order ID: "}{order.1.id()}</p>
-                            <p class="max-w-md text-wrap">{"Invoice: "}{order.1.get_consumer_invoice()}</p>
-                            <BitcoinQrCode
-                                id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
-                                lightning={order.1.get_consumer_invoice().expect("").payment_request()} type_="svg" />
-                        </div>
-                        <button class="absolute top-4 right-4">
-                            {"Close"}
-                        </button>
-                        </div>
-                    </div>
-                };
-            }
-            OrderPaymentStatus::PaymentReceived => {
-                return html! {
-                    <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                        <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
-                        <div class="bg-white p-8 rounded-lg">
-                            <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                        </div>
-                        <div class="flex flex-col gap-4 text-wrap max-w-md">
-                            <p>{"Order ID: "}{order.1.id()}</p>
-                            <p>{"Waiting for confirmation..."}</p>
-                        </div>
-                        <button class="absolute top-4 right-4">
-                            {"Close"}
-                        </button>
-                        </div>
-                    </div>
-                };
-            }
-            OrderPaymentStatus::PaymentSuccess => match order.1.get_order_status() {
-                OrderStatus::Completed => {}
-                OrderStatus::Canceled => {}
-                _ => {
-                    return html! {
-                        <div class="fixed inset-0 bg-black flex justify-center items-center z-20">
-                            <div class="bg-white p-8 rounded-lg w-fit h-fit text-wrap max-w-lg">
-                            <div class="bg-white p-8 rounded-lg">
-                                <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                            </div>
-                            <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                <p>{"Order ID: "}{order.1.id()}</p>
-                                <p>{"Order Status: "}{order.1.get_order_status()}</p>
-                                <p>{"Courier: "}{order.1.get_courier()}</p>
-                            </div>
-                            <button class="absolute top-4 right-4">
-                                {"Close"}
-                            </button>
-                            </div>
-                        </div>
-                    };
-                }
-            },
-            _ => {}
-        }
-    };
-    html! {<></>}
-}
-#[derive(Properties, Clone, PartialEq)]
-pub struct BitcoinQrCodeProps {
-    pub id: String,
-    pub width: String,
-    pub height: String,
-    pub lightning: String,
-    pub type_: String,
-}
-
-#[function_component(BitcoinQrCode)]
-pub fn bitcoin_qr(props: &BitcoinQrCodeProps) -> Html {
-    let BitcoinQrCodeProps {
-        id,
-        width,
-        height,
-        type_,
-        lightning,
-    } = props.clone();
-    html! {
-    <bitcoin-qr
-        {id}
-        {width}
-        {height}
-        {lightning}
-        type={type_}
-        corners-square-color="#b23c05"
-        corners-dot-color={"#e24a04"}
-        corners-square-type={"extra-rounded"}
-        dots-type={"classy-rounded"}
-        dots-color={"#ff5000"}
-    />
     }
 }

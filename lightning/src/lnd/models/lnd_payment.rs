@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LndPaymentRequest {
     payment_request: String,  // String
@@ -88,5 +87,3 @@ impl Display for LndPaymentResponse {
         write!(f, "{}", serde_json::to_string_pretty(self).unwrap())
     }
 }
-
-

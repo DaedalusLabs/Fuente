@@ -1,13 +1,22 @@
-pub mod cart;
-pub mod commerce;
-pub mod favorites;
-pub mod history;
-pub mod home;
-pub mod new_user;
-pub mod profile;
+mod cart;
+mod commerce;
+mod favorites;
+mod history;
+mod home;
+mod live_order;
+mod new_user;
+mod profile;
+pub use cart::*;
+pub use commerce::*;
+pub use favorites::*;
+pub use history::*;
+pub use home::*;
+pub use live_order::*;
+pub use new_user::*;
+pub use profile::*;
 
+use fuente::mass::{AppLink, BackArrowIcon};
 use yew::prelude::*;
-use fuente::mass::atoms::{forms::AppLink, svgs::BackArrowIcon};
 
 use crate::router::ConsumerRoute;
 

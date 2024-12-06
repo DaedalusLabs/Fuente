@@ -1,10 +1,10 @@
-use crate::contexts::{commerce_data::CommerceDataStore, order_data::OrderDataStore};
+use crate::contexts::{CommerceDataStore, OrderDataStore};
 use fuente::{
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
     // js::draggable::Droppable,
-    mass::atoms::layouts::LoadingScreen,
-    models::orders::{OrderInvoiceState, OrderStatus},
+    mass::LoadingScreen,
+    models::{OrderInvoiceState, OrderStatus},
 };
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
 #[function_component(HomePage)]
@@ -69,7 +69,6 @@ pub struct OrderCardProps {
 
 #[function_component(OrderCard)]
 pub fn order_card(props: &OrderCardProps) -> Html {
-    let order_ctx = use_context::<OrderDataStore>().expect("No order context found");
     let key_ctx = use_context::<NostrIdStore>().expect("No user context found");
     let relay_ctx = use_context::<NostrProps>().expect("No relay context found");
     let id = props.order.get_order();
@@ -135,13 +134,27 @@ pub fn order_card(props: &OrderCardProps) -> Html {
                 </div>
             </div>
             <div class="flex flex-row gap-4 select-none">
-                <button
-                    onmousedown={accept_order}
-                    class="text-sm font-bold px-4 py-2 border border-purple-900 rounded-lg">{"Accept"}</button>
-                <button
-                    onclick={cancel_order}
-                    onmousedown={|event: MouseEvent| event.stop_propagation()}
-                    class="text-sm font-bold px-4 py-2 border border-red-500 rounded-lg">{"Decline"}</button>
+                {match order_status {
+                    OrderStatus::Pending => html! {
+                        <>
+                        <button
+                            onmousedown={accept_order}
+                            class="text-sm font-bold px-4 py-2 border border-purple-900 rounded-lg">{"Accept"}</button>
+                        <button
+                            onclick={cancel_order}
+                            onmousedown={|event: MouseEvent| event.stop_propagation()}
+                            class="text-sm font-bold px-4 py-2 border border-red-500 rounded-lg">{"Decline"}</button>
+                        </>
+                    },
+                    OrderStatus::Preparing => html! {
+                        <>
+                        <button
+                            onmousedown={accept_order}
+                            class="text-sm font-bold px-4 py-2 border border-purple-900 rounded-lg">{"Ready"}</button>
+                        </>
+                    },
+                    _ => html! {}
+                }}
             </div>
         </div>
     }
