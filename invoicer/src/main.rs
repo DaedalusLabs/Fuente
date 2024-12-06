@@ -119,12 +119,14 @@ pub async fn main() -> anyhow::Result<()> {
     }
     Ok(())
 }
+
+pub type RelayBroadcaster = Vec<UnboundedSender<Message>>;
 #[derive(Clone)]
 pub struct InvoicerBot {
     keys: UserKeys,
-    admin_config: Arc<Mutex<AdminConfiguration>>,
     lightning_wallet: LightningClient,
-    broadcaster: Vec<UnboundedSender<Message>>,
+    broadcaster: RelayBroadcaster,
+    admin_config: Arc<Mutex<AdminConfiguration>>,
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
     courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
     commerce_registries: Arc<Mutex<HashMap<String, CommerceRegistryEntry>>>,
@@ -135,7 +137,7 @@ pub struct InvoicerBot {
 
 impl InvoicerBot {
     pub async fn new(
-        broadcaster: Vec<UnboundedSender<Message>>,
+        broadcaster: RelayBroadcaster,
         public_notes_channel: Receiver<(u32, SignedNote)>,
         private_notes_channel: Receiver<(u32, SignedNote)>,
         live_order_channel: Receiver<OrderInvoiceState>,
@@ -206,7 +208,6 @@ impl InvoicerBot {
                 }
             }
             NOSTR_KIND_COMMERCE_PROFILE => {
-                // TODO this goes to a channel and handled by the admin server
                 if let Err(e) = commerce_profile_channel
                     .send((signed_note.get_kind(), signed_note))
                     .await
@@ -215,7 +216,6 @@ impl InvoicerBot {
                 };
             }
             NOSTR_KIND_COMMERCE_PRODUCTS => {
-                // TODO this goes to a channel and handled by the admin server
                 if let Err(e) = commerce_profile_channel
                     .send((signed_note.get_kind(), signed_note))
                     .await
