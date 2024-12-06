@@ -1,7 +1,0 @@
-192.168.1.127:2101 {
-    # Timeouts
-    reverse_proxy http://[::1]:7201
-    # Handle errors
-}
-
-
