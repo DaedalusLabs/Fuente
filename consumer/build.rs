@@ -5,7 +5,7 @@ fn main() {
     if std::env::var("CI").is_ok() {
         println!("cargo:warning=Skipping tailwindcss command on GitHub CI");
         return;
-    }    
+    }
     // Step 1: Run Tailwind CSS command
     let tailwind_output = Command::new("tailwindcss")
         .arg("-i")
@@ -21,4 +21,3 @@ fn main() {
         panic!("Tailwind CSS command failed");
     }
 }
-

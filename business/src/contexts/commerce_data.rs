@@ -1,13 +1,9 @@
-use fuente::{
-    browser_api::IdbStoreManager,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
-        commerce::{CommerceProfile, CommerceProfileIdb},
-        nostr_kinds::{NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE},
-        products::{ProductMenu, ProductMenuIdb},
-    },
+use fuente::models::{
+    CommerceProfile, CommerceProfileIdb, ProductMenu, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
+    NOSTR_KIND_COMMERCE_PROFILE,
 };
-use nostro2::relays::{NostrFilter, RelayEvents};
+use minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
@@ -169,14 +165,16 @@ pub fn commerce_data_sync() -> Html {
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(key) = key_ctx.get_nostr_key() {
-            let filter = NostrFilter::default()
-                .new_kinds(vec![
+            let filter = NostrSubscription {
+                kinds: Some(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
-                ])
-                .new_author(&key.get_public_key())
-                .subscribe();
-            id_handle.set(filter.id());
+                ]),
+                authors: Some(vec![key.get_public_key()]),
+                ..Default::default()
+            }
+            .relay_subscription();
+            id_handle.set(filter.1.clone());
             subscriber.emit(filter);
         }
         || {}
@@ -185,7 +183,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvents::EOSE(id)) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(CommerceDataAction::CheckedRelay);
             }

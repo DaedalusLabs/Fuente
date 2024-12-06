@@ -1,9 +1,12 @@
-use crate::{
-    browser_api::{GeolocationCoordinates, GeolocationPosition},
-    mass::atoms::layouts::CardComponent,
-    widgets::leaflet::{IconOptions, LatLng, LeafletMap, LeafletMapOptions, Marker, NominatimLookup, L},
-};
+use crate::mass::atoms::CardComponent;
 use gloo::timers::callback::Timeout;
+use minions::{
+    browser_api::GeolocationCoordinates,
+    widgets::leaflet::{
+        nominatim::NominatimLookup, IconOptions, LatLng, LeafletComponent, LeafletMap,
+        LeafletMapOptions, Marker,
+    },
+};
 use wasm_bindgen::{JsCast, JsValue};
 use yew::{platform::spawn_local, prelude::*};
 
@@ -40,14 +43,11 @@ pub struct NewAddressProps {
     pub onclick: Callback<MouseEvent>,
 }
 
-#[function_component(NewAddressMenu)]
+#[function_component(NewAddressForm)]
 pub fn new_address_menu(props: &NewAddressProps) -> Html {
-    let NewAddressProps {
-        onclick,
-        ..
-    } = props;
+    let NewAddressProps { onclick, .. } = props;
     html! {
-        <>
+        <div class="h-full w-full flex flex-col gap-4 min-h-96 min-w-96">
             <div class="w-full flex flex-col gap-2">
                 <div class="flex flex-row justify-between items-center pr-4">
                     <h3 class="font-bold">{"Address Details"}</h3>
@@ -61,7 +61,7 @@ pub fn new_address_menu(props: &NewAddressProps) -> Html {
             </div>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
-        </>
+        </div>
     }
 }
 
@@ -121,7 +121,7 @@ pub fn address_search(props: &NewAddressProps) -> Html {
     });
     html! {
         <div class="w-full relative">
-            <form class="flex w-full items-center space-x-2">
+            <div class="flex w-full items-center space-x-2">
                 <input
                     type="text"
                     class="w-full p-2 px-4 rounded-3xl shadow-xl bg-transparent placeholder:bg-transparent
@@ -130,7 +130,7 @@ pub fn address_search(props: &NewAddressProps) -> Html {
                     {oninput}
                     {onblur}
                 />
-            </form>
+            </div>
             {if !search_results.is_empty() {
                 html! {
                     <div class="absolute top-full left-0 right-0 mt-1 z-[9998]
@@ -153,8 +153,10 @@ pub fn address_search(props: &NewAddressProps) -> Html {
                                 coordinate_handle.set(Some(coordinates.clone()));
                                 address_handle.set(Some(address_clone.clone()));
                                 if map.as_ref().is_some()  || marker.as_ref().is_some() {
-                                    marker.as_ref().unwrap().set_lat_lng(&coordinates.clone().into());
-                                    map.as_ref().unwrap().set_view(&coordinates.into(), 13);
+                                    let latlng: LatLng = coordinates.into();
+                                    let js_value: JsValue = latlng.try_into().unwrap();
+                                    marker.as_ref().unwrap().set_lat_lng(&js_value);
+                                    map.as_ref().unwrap().set_view(&js_value, 13);
                                 }
                             });
                             let split = address.display_name().split(",");
@@ -186,81 +188,81 @@ pub fn address_search(props: &NewAddressProps) -> Html {
     }
 }
 
-pub fn start_new_address_picker_map(
-    location: GeolocationCoordinates,
-    map_handler: &UseStateHandle<Option<LeafletMap>>,
-    marker_handler: &UseStateHandle<Option<Marker>>,
-    geo_handler: &UseStateHandle<Option<GeolocationCoordinates>>,
-    address_handler: &UseStateHandle<Option<NominatimLookup>>,
-) -> Result<(), JsValue> {
+#[function_component(AddressPickerMap)]
+pub fn address_picker_v2(props: &NewAddressProps) -> Html {
+    let map = props.map_handle.clone();
+    let location_state = props.coord_handle.clone();
+    let lookup_handle = props.nominatim_handle.clone();
     let map_options = LeafletMapOptions {
         double_click_zoom: false,
-        center: Some(location.clone().into()),
         ..Default::default()
     };
-    let map = L::render_map_with_options("map", map_options)?;
-    map_handler.set(Some(map.clone()));
-    let icon_options = IconOptions {
-        icon_url: "public/assets/img/marker.png".to_string(),
+    let location_icon_options = IconOptions {
+        icon_url: "/public/assets/img/my_marker.png".to_string(),
         icon_size: Some(vec![32, 32]),
-        icon_anchor: None,
+        icon_anchor: Some(vec![16, 32]),
     };
-    let marker = map.add_marker_with_icon(&location, icon_options)?;
-    marker_handler.set(Some(marker.clone()));
-    geo_handler.set(Some(location));
-
-    let geo_handler_clone = geo_handler.clone();
-    let address_handler_clone = address_handler.clone();
-    let map_closure = move |e: MouseEvent| {
-        let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
-        let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
-        geo_handler_clone.set(Some(coordinates.clone()));
-        marker.set_lat_lng(
-            &leaflet_event
-                .try_into()
-                .expect("Could not conver to Js value"),
-        );
-        let handle = address_handler_clone.clone();
-        spawn_local(async move {
-            if let Ok(address) = NominatimLookup::reverse(coordinates.clone()).await {
-                handle.set(Some(address));
-            }
-        });
-    };
-    map.add_closure("dblclick", map_closure);
-
-    Ok(())
-}
-#[function_component(AddressPickerMap)]
-pub fn address_picker(props: &NewAddressProps) -> Html {
-    let NewAddressProps {
-        map_handle,
-        marker_handle,
-        coord_handle,
-        nominatim_handle,
-        ..
-    } = props.clone();
-    use_effect_with((), move |_| {
-        let address_handle = nominatim_handle.clone();
-        spawn_local(async move {
-            if let Ok(position) = GeolocationPosition::locate().await {
-                if let Err(e) = start_new_address_picker_map(
-                    position.coords.clone(),
-                    &map_handle,
-                    &marker_handle,
-                    &coord_handle,
-                    &nominatim_handle,
-                ) {
-                    gloo::console::error!("Error starting map: ", e);
+    let geo_handler_clone = props.coord_handle.clone();
+    let address_handler_clone = props.nominatim_handle.clone();
+    let marker = props.marker_handle.clone();
+    use_effect_with(map.clone(), move |map_handle| {
+        if let Some(map) = map_handle.as_ref() {
+            gloo::console::log!("Map created and adding event listener");
+            let map_closure = move |e: MouseEvent| {
+                gloo::console::log!("Map event triggered", &e);
+                let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
+                let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
+                geo_handler_clone.set(Some(coordinates.clone()));
+                if let Some(marker) = marker.as_ref() {
+                    marker.set_lat_lng(
+                        &leaflet_event
+                            .try_into()
+                            .expect("Could not conver to Js value"),
+                    );
                 }
-                if let Ok(address) = NominatimLookup::reverse(position.coords).await {
-                    address_handle.set(Some(address));
-                }
-            }
-        });
+                let handle = address_handler_clone.clone();
+                spawn_local(async move {
+                    if let Ok(address) = NominatimLookup::reverse(coordinates.clone()).await {
+                        handle.set(Some(address));
+                    }
+                });
+            };
+            map.add_closure("dblclick", map_closure);
+            gloo::console::log!("Map event listener added");
+        }
         || {}
     });
+    let marker_handle = props.marker_handle.clone();
+    let markers = use_state(|| Vec::<(f64, f64)>::new());
     html! {
-        <div id="map" class="w-full h-full border-2 border-fuente rounded-3xl shadow-xl"></div>
+        <LeafletComponent
+            map_id="map"
+            {map_options}
+            {location_icon_options}
+            markers={(*markers).clone()}
+            on_location_changed={Callback::from({
+                let location_state = location_state.clone();
+                move |coords: GeolocationCoordinates| {
+                    location_state.set(Some(coords));
+                }
+            })}
+            on_map_created={Callback::from({
+                let map = map.clone();
+                move |map_instance: LeafletMap| map.set(Some(map_instance))
+            })}
+            on_location_name_changed={Callback::from({
+                // let location_name = location_name.clone();
+                move |lookup: NominatimLookup| {
+                    gloo::console::log!("Location name changed: ", lookup.display_name());
+                    lookup_handle.set(Some(lookup));
+                }
+            })}
+            on_marker_created={Callback::from({
+                move |marker: Marker| {
+                    marker_handle.set(Some(marker));
+                }
+            })}
+            class={classes!["w-full", "h-full", "border-2", "border-fuente", "rounded-3xl", "shadow-xl", "overflow-hidden", "-p-8"]}
+        />
     }
 }

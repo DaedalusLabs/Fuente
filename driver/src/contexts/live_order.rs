@@ -1,17 +1,10 @@
 use std::rc::Rc;
 
-use fuente::{
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    models::{
-        nostr_kinds::NOSTR_KIND_ORDER_STATE,
-        orders::{OrderInvoiceState, OrderStatus},
-        DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
-    },
+use fuente::models::{
+    OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE,
 };
-use nostro2::{
-    relays::{NostrFilter, RelayEvents},
-    userkeys::UserKeys,
-};
+use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::{relays::NostrSubscription, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -73,11 +66,15 @@ impl Reducible for OrderHub {
                     live_order: self.live_order.clone(),
                 })
             }
-            OrderHubAction::LiveOrder(order) => Rc::new(OrderHub {
-                hub_keys: self.hub_keys.clone(),
-                orders: self.orders.clone(),
-                live_order: Some(order),
-            }),
+            OrderHubAction::LiveOrder(order) => {
+                let mut orders = self.orders.clone();
+                orders.retain(|o| o.id() != order.id());
+                Rc::new(OrderHub {
+                    hub_keys: self.hub_keys.clone(),
+                    orders,
+                    live_order: Some(order),
+                })
+            }
             OrderHubAction::OrderCompleted(completed_id) => {
                 let mut orders = self.orders.clone();
                 orders.retain(|o| o.id() != completed_id);
@@ -139,23 +136,27 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
-        let filter = NostrFilter::default()
-            .new_kind(NOSTR_KIND_ORDER_STATE)
-            .new_tag("p", vec![DRIVER_HUB_PUB_KEY.to_string()])
-            .subscribe();
-        id_handle.set(filter.id());
-        subscriber.emit(filter);
+        if let Some(_keys) = key_ctx.get_nostr_key() {
+            let mut filter = NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
+                ..Default::default()
+            };
+            filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
+            let sub = filter.relay_subscription();
+            id_handle.set(sub.1.clone());
+            subscriber.emit(sub);
+        }
         || {}
     });
 
-    let keys = keys_ctx.get_nostr_key().clone();
+    let my_keys = keys_ctx.get_nostr_key().expect("No keys found");
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             if note.get_kind() == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
                         if let Some(signed_note) = order_status.get_courier() {
-                            if signed_note.get_pubkey() == keys.expect("No keys").get_public_key() {
+                            if signed_note.get_pubkey() == my_keys.get_public_key() {
                                 match order_status.get_order_status() {
                                     OrderStatus::Canceled => {
                                         // TODO

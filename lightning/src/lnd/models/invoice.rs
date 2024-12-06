@@ -50,4 +50,3 @@ impl LndInvoice {
         self.add_index.clone()
     }
 }
-

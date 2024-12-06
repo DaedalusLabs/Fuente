@@ -1,12 +1,11 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::atoms::forms::{SimpleFormButton, SimpleInput},
-    models::consumer_profile::{ConsumerProfile, ConsumerProfileIdb},
+    mass::{SimpleFormButton, SimpleInput},
+    models::{ConsumerProfile, ConsumerProfileIdb},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
-use crate::contexts::consumer_data::{ConsumerDataAction, ConsumerDataStore};
+use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
 
 #[function_component(NewProfilePage)]
 pub fn new_profile() -> Html {
@@ -39,7 +38,7 @@ pub fn new_profile() -> Html {
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 items-center">
+        <form {onsubmit} class="flex flex-col gap-8 p-8 flex-1 items-center">
                 <SimpleInput
                     id="name"
                     name="name"

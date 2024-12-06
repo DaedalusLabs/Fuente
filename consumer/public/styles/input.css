@@ -10,6 +10,9 @@
         @apply font-product;
     }
 }
+div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div {
+    display: none;
+}
 
 @font-face {
   font-family: 'OpenSans';

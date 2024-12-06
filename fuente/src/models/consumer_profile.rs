@@ -6,10 +6,11 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use wasm_bindgen::JsValue;
 
-use crate::browser_api::IdbStoreManager;
+use minions::browser_api::IdbStoreManager;
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP}, upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES
+    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -171,8 +172,8 @@ impl TryFrom<SignedNote> for ConsumerProfileIdb {
 }
 
 impl IdbStoreManager for ConsumerProfileIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_CONSUMER_PROFILES,
@@ -182,15 +183,12 @@ impl IdbStoreManager for ConsumerProfileIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

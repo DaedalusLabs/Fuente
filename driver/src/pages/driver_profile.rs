@@ -1,12 +1,11 @@
 use fuente::{
-    browser_api::HtmlForm,
-    contexts::{key_manager::NostrIdStore, relay_pool::NostrProps},
-    mass::atoms::forms::{SimpleFormButton, SimpleInput},
-    models::driver::{DriverProfile, DriverProfileIdb},
+    mass::{SimpleFormButton, SimpleInput},
+    models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
+use minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
-use crate::contexts::driver_data::{DriverDataAction, DriverDataStore};
+use crate::contexts::{DriverDataAction, DriverDataStore};
 
 #[function_component(NewProfileForm)]
 pub fn new_profile_form() -> Html {
@@ -32,11 +31,15 @@ pub fn new_profile_form() -> Html {
             .giftwrapped_data(&keys, keys.get_public_key())
             .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
+        let pool_copy = user_profile
+            .giftwrapped_data(&keys, DRIVER_HUB_PUB_KEY.to_string())
+            .expect("Failed to giftwrap data");
+        sender.emit(pool_copy);
         user_ctx.dispatch(DriverDataAction::NewProfile(db));
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 items-center">
+        <form {onsubmit} class="flex flex-col p-8 gap-8 flex-1 items-center">
                 <SimpleInput
                     id="name"
                     name="name"

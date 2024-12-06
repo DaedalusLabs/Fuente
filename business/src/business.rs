@@ -1,29 +1,20 @@
 use business::{
-    contexts::{
-        commerce_data::{CommerceDataProvider, CommerceDataStore},
-        consumer_data::ConsumerDataProvider,
-        order_data::OrderDataProvider,
-    },
-    pages::new_user::NewProfilePage,
+    contexts::{CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, OrderDataProvider},
+    pages::{NewProductListSection, NewProfilePage},
     router::CommercePages,
 };
 use fuente::{
-    contexts::{
-        key_manager::{NostrIdProvider, NostrIdStore},
-        relay_pool::{RelayProvider, UserRelay},
-    },
-    mass::{
-        atoms::layouts::{LoadingScreen, MainLayout},
-        molecules::login::NewUserPage,
-    },
+    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    mass::{LoadingScreen, MainLayout, NewUserPage},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
+use minions::{init_nostr_db, key_manager::{NostrIdProvider, NostrIdStore}, relay_pool::{RelayProvider,UserRelay}};
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
 // 80748881f453306f3129e3a040de263f3dd62726ba03273c248ac33cac59e0c5
-//
+// 566688e5ae72ee7875376a9f2d6c6032ef0bbac1df9ed3d972eb8135a0f022a0
 
 fn main() {
     yew::Renderer::<App>::new().render();
@@ -34,6 +25,7 @@ fn app() -> Html {
     use_effect_with((), move |_| {
         init_commerce_db().unwrap();
         init_consumer_db().unwrap();
+        init_nostr_db().unwrap();
         || {}
     });
     html! {
@@ -76,27 +68,25 @@ fn relay_pool_component(props: &ChildrenProps) -> Html {
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
         <NostrIdProvider>
-            <CommerceDataProvider>
-                <ConsumerDataProvider >
-                    <OrderDataProvider>
-                        {props.children.clone()}
-                    </OrderDataProvider>
-                </ConsumerDataProvider>
-            </CommerceDataProvider>
+            <AdminConfigsProvider >
+                <CommerceDataProvider>
+                    <ConsumerDataProvider >
+                        <OrderDataProvider>
+                            {props.children.clone()}
+                        </OrderDataProvider>
+                    </ConsumerDataProvider>
+                </CommerceDataProvider>
+            </AdminConfigsProvider>
         </NostrIdProvider>
     }
 }
 
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>();
-    let user_ctx = use_context::<CommerceDataStore>();
-    if user_ctx.is_none() || key_ctx.is_none() {
-        return html! {<LoadingScreen />};
-    }
-    let key_ctx = key_ctx.unwrap();
-    let user_ctx = user_ctx.unwrap();
-    if !key_ctx.finished_loading() {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let user_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
+    let config_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
+    if !key_ctx.finished_loading() || !config_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
     if key_ctx.get_nostr_key().is_none() {
@@ -114,6 +104,22 @@ fn login_check(props: &ChildrenProps) -> Html {
             <div class="flex flex-col w-full h-full overflow-y-scroll">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Contact Details"}</h2>
                 <NewProfilePage />
+            </div>
+        };
+    }
+    let whitelist = config_ctx.get_commerce_whitelist();
+    if !whitelist.contains(&key_ctx.get_nostr_key().unwrap().get_public_key()) {
+        return html! {
+            <div class="flex justify-center items-center flex-1">
+                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not yet authorized to access this page"}</h2>
+            </div>
+        };
+    }
+    if user_ctx.menu().is_none() {
+        return html! {
+            <div class="flex flex-col w-full h-full overflow-y-scroll">
+                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Product List"}</h2>
+                <NewProductListSection />
             </div>
         };
     }

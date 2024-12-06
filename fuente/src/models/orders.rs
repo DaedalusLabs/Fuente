@@ -1,3 +1,5 @@
+use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
+use minions::browser_api::IdbStoreManager;
 use nostro2::{
     notes::{Note, SignedNote},
     userkeys::UserKeys,
@@ -5,8 +7,6 @@ use nostro2::{
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 use wasm_bindgen::JsValue;
-use lightning::{LnAddressPaymentRequest, LndHodlInvoice};
-use crate::browser_api::IdbStoreManager;
 
 use super::{
     address::ConsumerAddress,
@@ -15,8 +15,7 @@ use super::{
         NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_REQUEST,
     },
     products::ProductOrder,
-    upgrade_fuente_db, DB_NAME_FUENTE, DB_VERSION_FUENTE, DRIVER_HUB_PUB_KEY,
-    STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, DRIVER_HUB_PUB_KEY, STORE_NAME_ORDER_HISTORY, TEST_PUB_KEY,
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -50,6 +49,16 @@ impl TryFrom<String> for OrderRequest {
 impl TryFrom<SignedNote> for OrderRequest {
     type Error = anyhow::Error;
     fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
+        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+            return Err(anyhow::anyhow!("Wrong Kind"));
+        }
+        let order: OrderRequest = note.get_content().try_into()?;
+        Ok(order)
+    }
+}
+impl TryFrom<&SignedNote> for OrderRequest {
+    type Error = anyhow::Error;
+    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
         if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
@@ -172,6 +181,16 @@ impl TryFrom<String> for OrderInvoiceState {
 impl TryFrom<SignedNote> for OrderInvoiceState {
     type Error = anyhow::Error;
     fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
+        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+            return Err(anyhow::anyhow!("Wrong Kind"));
+        }
+        let order: OrderInvoiceState = note.get_content().try_into()?;
+        Ok(order)
+    }
+}
+impl TryFrom<&SignedNote> for OrderInvoiceState {
+    type Error = anyhow::Error;
+    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
         if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
@@ -326,8 +345,8 @@ impl OrderStateIdb {
     }
 }
 impl IdbStoreManager for OrderStateIdb {
-    fn config() -> crate::browser_api::IdbStoreConfig {
-        crate::browser_api::IdbStoreConfig {
+    fn config() -> minions::browser_api::IdbStoreConfig {
+        minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_ORDER_HISTORY,
@@ -337,16 +356,14 @@ impl IdbStoreManager for OrderStateIdb {
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.order_id)
     }
-    fn upgrade_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-        upgrade_fuente_db(db)?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
+    use crate::models::init_consumer_db;
+    use minions::browser_api::IdbStoreManager;
+
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

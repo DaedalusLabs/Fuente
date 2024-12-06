@@ -1,5 +1,5 @@
 use super::PageHeader;
-use fuente::mass::atoms::{forms::SimpleFormButton, svgs::ShoppingCartIcon};
+use fuente::mass::{ShoppingCartIcon, SimpleFormButton};
 use yew::prelude::*;
 
 #[function_component(CartPage)]

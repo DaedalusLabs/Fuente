@@ -135,7 +135,6 @@ pub fn money_input(props: &SimpleInputProps) -> Html {
     }
 }
 
-
 #[derive(Clone, Debug, Properties, PartialEq)]
 pub struct AppLinkProps<T>
 where

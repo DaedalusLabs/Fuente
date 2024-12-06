@@ -1,16 +1,9 @@
 use std::rc::Rc;
 
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
 use fuente::models::{
-    address::ConsumerAddress,
-    consumer_profile::ConsumerProfile,
-    orders::OrderRequest,
-    products::{ProductItem, ProductOrder},
-    TEST_PUB_KEY,
+    ConsumerAddress, ConsumerProfile, OrderRequest, ProductItem, ProductOrder, TEST_PUB_KEY,
 };
+use nostro2::{notes::SignedNote, userkeys::UserKeys};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

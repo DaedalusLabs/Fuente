@@ -9,7 +9,9 @@ path = "src/driver.rs"
 
 [dependencies]
 gloo.workspace = true
+minions.workspace = true
 nostro2.workspace = true
+js-sys.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde-wasm-bindgen.workspace = true
