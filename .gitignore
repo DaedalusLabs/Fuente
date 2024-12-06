@@ -12,7 +12,8 @@
 *.key
 *.macaroon
 
+
 # Ignore text scripts
-run_*.sh
+*.sh
 
 
