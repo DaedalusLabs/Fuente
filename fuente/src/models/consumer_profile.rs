@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use wasm_bindgen::JsValue;
 
-use minions::browser_api::IdbStoreManager;
+use nostr_minions::browser_api::IdbStoreManager;
 
 use super::{
     nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
@@ -172,8 +172,8 @@ impl TryFrom<SignedNote> for ConsumerProfileIdb {
 }
 
 impl IdbStoreManager for ConsumerProfileIdb {
-    fn config() -> minions::browser_api::IdbStoreConfig {
-        minions::browser_api::IdbStoreConfig {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_CONSUMER_PROFILES,
@@ -188,7 +188,7 @@ impl IdbStoreManager for ConsumerProfileIdb {
 mod tests {
     use super::*;
     use crate::models::init_consumer_db;
-    use minions::browser_api::IdbStoreManager;
+    use nostr_minions::browser_api::IdbStoreManager;
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]

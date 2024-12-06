@@ -12,7 +12,7 @@ use fuente::{
     models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
 };
 use html::ChildrenProps;
-use minions::{
+use nostr_minions::{
     browser_api::GeolocationCoordinates,
     init_nostr_db,
     key_manager::{NostrIdProvider, NostrIdStore},

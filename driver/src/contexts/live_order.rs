@@ -3,7 +3,7 @@ use std::rc::Rc;
 use fuente::models::{
     OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE,
 };
-use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{relays::NostrSubscription, userkeys::UserKeys};
 use yew::prelude::*;
 

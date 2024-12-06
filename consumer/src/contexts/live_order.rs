@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE};
-use minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::SignedNote, relays::NostrSubscription};
 use yew::prelude::*;
 

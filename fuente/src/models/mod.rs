@@ -1,4 +1,4 @@
-use minions::browser_api::IdbStoreManager;
+use nostr_minions::browser_api::IdbStoreManager;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 
@@ -22,6 +22,8 @@ pub use orders::*;
 pub use products::*;
 
 // pub mod sync;
+// // TODO 
+// replace these keys with reading keys from pem file
 pub const TEST_PRIV_KEY: &str = "874f9683a6a2342693da781b3dd6cd3fcda7436375b5301a8a96f433b4795d2d";
 pub const TEST_PUB_KEY: &str = "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 pub const DRIVER_HUB_PRIV_KEY: &str =
@@ -48,8 +50,6 @@ pub const STORE_NAME_CONSUMER_ADDRESSES: &str = "consumer_address";
 pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 
-// a17bf270406aad26f8ab33ca7bddee38c4f1eb94e08847626902ecb491ac31ad
-// eae521c94eff7292a1068c9f6614b06f5453089d84304af983f849079d3da9e2
 pub const ADMIN_WHITELIST: [&str; 2] = [
     "decfef1c4a027fe815eda8ea5748aa0d3e971c4c377423a49d94fa0fc3e25575",
     "93effcf32813a65c82c6f97e3d514a77e48cbe14ef36e89453e20bd155809b33",

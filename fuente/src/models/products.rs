@@ -10,7 +10,7 @@ use std::{
 };
 use wasm_bindgen::JsValue;
 
-use minions::browser_api::IdbStoreManager;
+use nostr_minions::browser_api::IdbStoreManager;
 
 use super::{
     nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, DB_NAME_FUENTE, DB_VERSION_FUENTE,
@@ -318,8 +318,8 @@ impl Into<JsValue> for ProductMenuIdb {
     }
 }
 impl IdbStoreManager for ProductMenuIdb {
-    fn config() -> minions::browser_api::IdbStoreConfig {
-        minions::browser_api::IdbStoreConfig {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
             db_name: DB_NAME_FUENTE,
             db_version: DB_VERSION_FUENTE,
             store_name: STORE_NAME_PRODUCT_LISTS,
@@ -334,9 +334,10 @@ impl IdbStoreManager for ProductMenuIdb {
 mod tests {
     use super::*;
     use crate::models::init_consumer_db;
-    use minions::browser_api::IdbStoreManager;
+    use nostr_minions::browser_api::IdbStoreManager;
 
     use wasm_bindgen_test::*;
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
     async fn _commerce_profile_idb() -> Result<(), JsValue> {
@@ -370,44 +371,3 @@ mod tests {
         Ok(())
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{browser_api::IdbStoreManager, models::init_consumer_db};
-    use wasm_bindgen_test::*;
-
-    #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), JsValue> {
-        init_consumer_db()?;
-        let key_1 = UserKeys::generate();
-        let consumer_address = ProductMenu::default();
-        let address_idb = ProductMenuIdb::new(consumer_address.clone(), &key_1);
-        address_idb.clone().save_to_store().await.unwrap();
-
-        let key_2 = UserKeys::generate();
-        let address_idb_2 = ProductMenuIdb::new(consumer_address, &key_2);
-        address_idb_2.clone().save_to_store().await.unwrap();
-
-        let retrieved: ProductMenuIdb =
-            ProductMenuIdb::retrieve_from_store(&address_idb.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved.id(), address_idb.id());
-
-        let retrieved_2: ProductMenuIdb =
-            ProductMenuIdb::retrieve_from_store(&address_idb_2.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved_2.id(), address_idb_2.id());
-
-        let all_addresses = ProductMenuIdb::retrieve_all_from_store().await.unwrap();
-        assert_eq!(all_addresses.len(), 2);
-
-        let deleted = retrieved.delete_from_store().await;
-        let deleted_2 = retrieved_2.delete_from_store().await;
-        assert!(deleted.is_ok());
-        assert!(deleted_2.is_ok());
-        Ok(())
-    }
-}
-

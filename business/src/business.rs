@@ -9,7 +9,7 @@ use fuente::{
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
-use minions::{init_nostr_db, key_manager::{NostrIdProvider, NostrIdStore}, relay_pool::{RelayProvider,UserRelay}};
+use nostr_minions::{init_nostr_db, key_manager::{NostrIdProvider, NostrIdStore}, relay_pool::{RelayProvider,UserRelay}};
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 

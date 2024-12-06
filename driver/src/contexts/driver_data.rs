@@ -1,5 +1,5 @@
 use fuente::models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE};
-use minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
     notes::SignedNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},

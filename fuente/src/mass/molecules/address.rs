@@ -1,6 +1,6 @@
 use crate::mass::atoms::CardComponent;
 use gloo::timers::callback::Timeout;
-use minions::{
+use nostr_minions::{
     browser_api::GeolocationCoordinates,
     widgets::leaflet::{
         nominatim::NominatimLookup, IconOptions, LatLng, LeafletComponent, LeafletMap,

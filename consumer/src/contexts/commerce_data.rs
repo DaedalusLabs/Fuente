@@ -7,7 +7,7 @@ use fuente::{
         NOSTR_KIND_COMMERCE_PROFILE,
     },
 };
-use minions::relay_pool::NostrProps;
+use nostr_minions::relay_pool::NostrProps;
 use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
 use yew::prelude::*;
 

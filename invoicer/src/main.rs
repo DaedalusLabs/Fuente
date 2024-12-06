@@ -3,6 +3,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use anyhow::anyhow;
 use async_channel::{Receiver, Sender};
+use bright_lightning::{
+    HodlState, InvoicePaymentState, LightningAddress, LightningClient, LnAddressPaymentRequest, LndHodlInvoice, LndPaymentRequest
+};
 use fuente::models::{
     CommerceProfile, DriverProfile, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
     TEST_PRIV_KEY, TEST_PUB_KEY, {AdminConfiguration, AdminConfigurationType, AdminServerRequest},
@@ -13,13 +16,9 @@ use fuente::models::{
         NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
     },
 };
-use lightning::{
-    HodlState, InvoicePaymentState, LightningClient, LnAddressPaymentRequest, LndHodlInvoice,
-    LndPaymentRequest,
-};
 use nostro2::{
     notes::SignedNote,
-    relays::{NostrSubscription, RelayPool, SendNoteEvent},
+    relays::{NostrSubscription, NoteEvent, RelayEvent, RelayPool, SendNoteEvent},
     userkeys::UserKeys,
 };
 use tokio::sync::{mpsc::UnboundedSender, Mutex};
@@ -62,10 +61,10 @@ impl CommerceRegistryEntry {
     pub fn set_menu(&mut self, menu: SignedNote) {
         self.menu = Some(menu);
     }
-    pub fn ln_address(&self) -> anyhow::Result<String> {
+    pub fn ln_address(&self) -> anyhow::Result<LightningAddress> {
         let profile = self.profile.clone().ok_or(anyhow!("No profile found"))?;
         let commerce_profile = CommerceProfile::try_from(profile)?;
-        Ok(commerce_profile.ln_address().to_string())
+        Ok(commerce_profile.ln_address())
     }
 }
 
@@ -124,6 +123,7 @@ pub type RelayBroadcaster = Vec<UnboundedSender<Message>>;
 #[derive(Clone)]
 pub struct InvoicerBot {
     keys: UserKeys,
+    ln_address_client: reqwest::Client,
     lightning_wallet: LightningClient,
     broadcaster: RelayBroadcaster,
     admin_config: Arc<Mutex<AdminConfiguration>>,
@@ -151,6 +151,7 @@ impl InvoicerBot {
         Ok(Self {
             keys: server_keys,
             broadcaster,
+            ln_address_client: reqwest::Client::new(),
             admin_config: Arc::new(Mutex::new(admin_config)),
             courier_profiles: Arc::new(Mutex::new(HashMap::new())),
             commerce_registries: Arc::new(Mutex::new(HashMap::new())),
@@ -275,27 +276,19 @@ impl InvoicerBot {
         relays.subscribe(config_filter.relay_subscription())?;
         let server_keys = keys.clone();
         let courier_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY)?;
-        loop {
-            if relays.event_channel.is_closed() {
-                break;
-            }
-            tokio::select! {
-                Some(_) = relays.event_channel.recv() => {
-                }
-                Some(signed_note) = relays.note_channel.recv() => {
-                    if let Err(e) = InvoicerBot::note_processor(
-                        server_keys.clone(),
-                        courier_keys.clone(),
-                        commerce_profile_channel.clone(),
-                        private_notes_channel.clone(),
-                        live_order_channel.clone(),
-                        signed_note.1,
-                    ).await {
-                        error!("{:?}", e);
-                    }
-                }
-                else => {
-                    break;
+        while let Some(signed_note) = relays.incoming_channel.recv().await {
+            if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
+                if let Err(e) = InvoicerBot::note_processor(
+                    server_keys.clone(),
+                    courier_keys.clone(),
+                    commerce_profile_channel.clone(),
+                    private_notes_channel.clone(),
+                    live_order_channel.clone(),
+                    note,
+                )
+                .await
+                {
+                    error!("{:?}", e);
                 }
             }
         }
@@ -440,13 +433,7 @@ impl InvoicerBot {
         let invoice_total_srd = order.products.total();
         let exchange_rate = self.admin_config.lock().await.get_exchange_rate();
         let invoice_amount = ((invoice_total_srd / exchange_rate) * SATOSHIS_IN_ONE_BTC) as u64;
-        let invoice = self
-            .lightning_wallet
-            .get_ln_url_invoice(
-                invoice_amount * MILISATOSHIS_IN_ONE_SATOSHI,
-                commerce.ln_address()?,
-            )
-            .await?;
+        let invoice = commerce.ln_address()?.get_invoice(&self.ln_address_client, invoice_amount).await?;
         info!("commerce Invoice created");
         let hodl_amount = invoice_amount + ILLUMINODES_FEES + FUENTE_FEES;
         let hodl_invoice = self
@@ -502,13 +489,13 @@ impl InvoicerBot {
         let invoice = state
             .get_commerce_invoice()
             .ok_or(anyhow!("No commerce invoice found"))?;
-        let subscriber = self
+        let mut subscriber = self
             .lightning_wallet
             .subscribe_to_invoice(invoice.r_hash_url_safe()?)
             .await?;
         let mut success = false;
         loop {
-            if subscriber.is_closed() {
+            if subscriber.receiver.is_closed() {
                 self.lightning_wallet
                     .cancel_htlc(invoice.r_hash_url_safe()?)
                     .await?;
@@ -521,7 +508,7 @@ impl InvoicerBot {
                 .await?;
                 break;
             }
-            if let Ok(status) = subscriber.recv().await {
+            if let Some(status) = subscriber.receiver.recv().await {
                 match status.state() {
                     HodlState::ACCEPTED => {
                         self.update_order_status(
@@ -590,13 +577,13 @@ impl InvoicerBot {
     }
     async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
         let payment_req = LndPaymentRequest::new(invoice.pr, 10, 150.to_string(), false);
-        let (payment_rx, payment_tx) = self.lightning_wallet.invoice_channel().await?;
-        payment_tx.send(payment_req).await?;
+        let mut lnd_ws = self.lightning_wallet.invoice_channel().await?;
+        lnd_ws.sender.send(payment_req)?;
         loop {
-            if payment_rx.is_closed() && payment_rx.is_empty() {
+            if lnd_ws.receiver.is_closed() && lnd_ws.receiver.is_empty() {
                 return Err(anyhow!("Payment channel closed"));
             }
-            if let Ok(payment_status) = payment_rx.recv().await {
+            if let Some(payment_status) = lnd_ws.receiver.recv().await {
                 info!("{:?}", payment_status);
                 if payment_status.status() == InvoicePaymentState::Succeeded {
                     let settled = self

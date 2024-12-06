@@ -4,7 +4,7 @@ use fuente::{
     models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
 };
 use html::ChildrenProps;
-use minions::{
+use nostr_minions::{
     init_nostr_db,
     key_manager::{NostrIdProvider, NostrIdStore},
     relay_pool::{RelayProvider, UserRelay},

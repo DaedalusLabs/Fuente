@@ -9,7 +9,7 @@ use fuente::{
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
-use minions::{
+use nostr_minions::{
     browser_api::{clipboard_copy, HtmlDocument, HtmlForm},
     init_nostr_db,
     key_manager::{NostrIdAction, NostrIdProvider, NostrIdStore, UserIdentity},
