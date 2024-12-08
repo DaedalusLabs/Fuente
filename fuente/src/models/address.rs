@@ -1,8 +1,5 @@
 use nostr_minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
-use nostro2::{
-    keypair::NostrKeypair,
-    notes::{NostrNote, NostrTag},
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use wasm_bindgen::JsValue;
@@ -60,7 +57,7 @@ impl ConsumerAddress {
             .iter()
             .map(|b| format!("{:02x}", b))
             .collect::<String>();
-        giftwrap.tags.add_tag(NostrTag::Custom("d"), &d_tag);
+        giftwrap.tags.add_parameter_tag(&d_tag);
 
         keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
             .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;

@@ -8,10 +8,7 @@
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use nostro2::{
-    keypair::NostrKeypair,
-    notes::{NostrNote, NostrTag},
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -133,12 +130,10 @@ impl AdminConfiguration {
             ..Default::default()
         };
         let config_str: String = AdminConfigurationType::AdminWhitelist.into();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &receiver, &config_str),
-        );
-        note.tags.add_tag(NostrTag::Custom("d"), &receiver);
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &receiver, &config_str));
+        note.tags.add_parameter_tag(&receiver);
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nip_04_encrypted(&mut note, receiver)?;
         Ok(note)
     }
@@ -152,13 +147,10 @@ impl AdminConfiguration {
         };
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
         let config_hash = AdminConfigurationType::CommerceWhitelist.to_hash();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &config_hash, &config_str),
-        );
         note.tags
-            .add_tag(NostrTag::Custom("d"), &config_hash.to_string());
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -173,13 +165,10 @@ impl AdminConfiguration {
         };
         let config_str: String = AdminConfigurationType::CourierWhitelist.into();
         let config_hash = AdminConfigurationType::CourierWhitelist.to_hash();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &config_hash, &config_str),
-        );
         note.tags
-            .add_tag(NostrTag::Custom("d"), &config_hash.to_string());
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -195,13 +184,10 @@ impl AdminConfiguration {
 
         let config_str: String = AdminConfigurationType::ConsumerBlacklist.into();
         let config_hash = AdminConfigurationType::ConsumerBlacklist.to_hash();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &config_hash, &config_str),
-        );
         note.tags
-            .add_tag(NostrTag::Custom("d"), &config_hash.to_string());
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -220,13 +206,10 @@ impl AdminConfiguration {
         };
 
         let config_str: String = AdminConfigurationType::UserRegistrations.into();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &receiver, &config_str),
-        );
         note.tags
-            .add_tag(NostrTag::Custom("d"), &receiver.to_string());
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+            .add_parameter_tag(&format!("{}-{}", &receiver, &config_str));
+        note.tags.add_parameter_tag(&receiver.to_string());
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -242,13 +225,10 @@ impl AdminConfiguration {
 
         let config_str: String = AdminConfigurationType::ExchangeRate.into();
         let config_hash = AdminConfigurationType::ExchangeRate.to_hash();
-        note.tags.add_tag(
-            NostrTag::Custom("d"),
-            &format!("{}-{}", &config_hash, &config_str),
-        );
         note.tags
-            .add_tag(NostrTag::Custom("d"), &config_hash.to_string());
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -339,7 +319,7 @@ impl AdminServerRequest {
             ..Default::default()
         };
         let config_str: String = self.config_type.clone().into();
-        note.tags.add_tag(NostrTag::Custom("d"), &config_str);
+        note.tags.add_parameter_tag(&config_str);
         priv_key.sign_nostr_event(&mut note);
         let mut giftwrap = NostrNote {
             pubkey: priv_key.public_key(),
@@ -379,8 +359,7 @@ impl TryFrom<&NostrNote> for AdminServerRequest {
         let config_str = value.content.clone();
         let config_type = value
             .tags
-            .find_custom_tags(NostrTag::Custom("d"))
-            .first()
+            .find_first_parameter()
             .ok_or(anyhow::anyhow!("No config type"))?
             .clone();
         let config_type = AdminConfigurationType::try_from(config_type)?;
@@ -396,8 +375,7 @@ impl TryFrom<NostrNote> for AdminServerRequest {
         let config_str = value.content;
         let config_type = value
             .tags
-            .find_custom_tags(NostrTag::Custom("d"))
-            .first()
+            .find_first_parameter()
             .ok_or(anyhow::anyhow!("No config type"))?
             .clone();
         let config_type = AdminConfigurationType::try_from(config_type)?;

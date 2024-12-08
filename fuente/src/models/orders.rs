@@ -97,7 +97,7 @@ impl OrderRequest {
         let content = note.to_string();
         let mut giftwrap = NostrNote {
             pubkey: keys.public_key(),
-            kind: NOSTR_KIND_CONSUMER_ORDER_REQUEST,
+            kind: NOSTR_KIND_SERVER_REQUEST,
             content,
             ..Default::default()
         };
@@ -236,10 +236,11 @@ impl OrderInvoiceState {
             content,
             ..Default::default()
         };
-        note.tags.add_tag(
-            nostro2::notes::NostrTag::Custom("d"),
-            &format!("{}{}", "consumer", self.order.id.as_ref().unwrap()),
-        );
+        note.tags.add_parameter_tag(&format!(
+            "{}{}",
+            "consumer",
+            self.order.id.as_ref().unwrap()
+        ));
         keys.sign_nip_04_encrypted(&mut note, receiver_pubkey)?;
         Ok(note)
     }
@@ -254,10 +255,11 @@ impl OrderInvoiceState {
             content,
             ..Default::default()
         };
-        note.tags.add_tag(
-            nostro2::notes::NostrTag::Custom("d"),
-            &format!("{}{}", "business", self.order.id.as_ref().unwrap()),
-        );
+        note.tags.add_parameter_tag(&format!(
+            "{}{}",
+            "business",
+            self.order.id.as_ref().unwrap()
+        ));
         keys.sign_nip_04_encrypted(&mut note, commerce)?;
         Ok(note)
     }
@@ -269,10 +271,8 @@ impl OrderInvoiceState {
             content,
             ..Default::default()
         };
-        note.tags.add_tag(
-            nostro2::notes::NostrTag::Custom("d"),
-            &format!("{}{}", "courier", self.order.id.as_ref().unwrap()),
-        );
+        note.tags
+            .add_parameter_tag(&format!("{}{}", "courier", self.order.id.as_ref().unwrap()));
         keys.sign_nip_04_encrypted(&mut note, DRIVER_HUB_PUB_KEY.to_string())?;
         Ok(note)
     }
@@ -284,10 +284,8 @@ impl OrderInvoiceState {
             content,
             ..Default::default()
         };
-        note.tags.add_tag(
-            nostro2::notes::NostrTag::Custom("d"),
-            &self.order.id.as_ref().unwrap(),
-        );
+        note.tags
+            .add_parameter_tag(&self.order.id.as_ref().unwrap());
         keys.sign_nostr_event(&mut note);
 
         let mut giftwrap = NostrNote {
@@ -358,8 +356,7 @@ impl OrderStateIdb {
     pub fn new(order: NostrNote) -> Result<Self, JsValue> {
         if let Some(order_id) = order
             .tags
-            .find_custom_tags(nostro2::notes::NostrTag::Custom("d"))
-            .first()
+            .find_first_parameter()
         {
             Ok(Self {
                 order_id: order_id.clone(),

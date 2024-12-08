@@ -105,7 +105,7 @@ fn admin_config_sync() -> Html {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_SERVER_CONFIG {
                 if let Some(conf_type_str) =
-                    note.tags.find_custom_tags(NostrTag::Custom("d")).get(2)
+                    note.tags.find_tags(NostrTag::Parameterized).get(2)
                 {
                     let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
                         .expect("Failed to parse conf type");

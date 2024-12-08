@@ -153,7 +153,7 @@ pub fn commerce_data_sync() -> Html {
                     authors: Some(vec![TEST_PUB_KEY.to_string()]),
                     ..Default::default()
                 };
-                filter.add_tag("#p", keys.get_public_key().as_str());
+                filter.add_tag("#p", keys.public_key().as_str());
                 let relay_sub = filter.relay_subscription();
                 id_handle.set(relay_sub.1.clone());
                 subscriber.emit(relay_sub);
@@ -180,7 +180,7 @@ pub fn commerce_data_sync() -> Html {
     let keys = key_ctx.get_nostr_key();
     use_effect_with(unique_notes, move |notes| {
         if let (Some(note), Some(keys)) = (notes.last(), keys) {
-            if note.get_kind() == NOSTR_KIND_ORDER_STATE {
+            if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(plaintext) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order) = plaintext.try_into() {
                         ctx_clone.dispatch(OrderDataAction::UpdateCommerceOrder(order));

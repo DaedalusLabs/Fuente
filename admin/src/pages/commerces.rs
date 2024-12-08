@@ -1,6 +1,6 @@
 use fuente::models::{AdminConfigurationType, AdminServerRequest, CommerceProfile};
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::notes::SignedNote;
+use nostro2::notes::NostrNote;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use yew::prelude::*;
@@ -9,7 +9,7 @@ use crate::ServerConfigsStore;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct CommerceDetailsProps {
-    pub commerce_id: SignedNote,
+    pub commerce_id: NostrNote,
     pub onclick: Callback<MouseEvent>,
     pub action: String,
 }
@@ -42,7 +42,7 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
               </div>
             </div>
             <div class="flex items-center justify-center p-6 md:p-8 bg-muted">
-              <button {onclick} id={commerce_id.get_pubkey()}
+              <button {onclick} id={commerce_id.pubkey.clone()}
                 class="w-full md:w-auto text-lg">
                     {action}
               </button>
@@ -59,9 +59,9 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
 #[function_component(CommerceDisplay)]
 pub fn unregistered_commerces() -> Html {
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
-    let unregistered_commerces: UseStateHandle<Vec<SignedNote>> = use_state(|| vec![]);
+    let unregistered_commerces: UseStateHandle<Vec<NostrNote>> = use_state(|| vec![]);
     let unregistered = unregistered_commerces.clone();
-    let registered_commerces: UseStateHandle<Vec<SignedNote>> = use_state(|| vec![]);
+    let registered_commerces: UseStateHandle<Vec<NostrNote>> = use_state(|| vec![]);
     let registered = registered_commerces.clone();
 
     use_effect_with(config_ctx, move |configs| {

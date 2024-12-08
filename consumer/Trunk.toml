@@ -3,5 +3,5 @@
 watch = ["../fuente", "src", "index.html", "styles"]
 
 [serve]
-port = 7202
+port = 8000
 open = false

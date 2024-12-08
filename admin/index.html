@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link data-trunk rel="tailwind-css" href="./styles/output.css">
+    <link data-trunk rel="copy-dir" href="../public">
+    <link data-trunk rel="copy-file" href="manifest.json">
+    <link data-trunk rel="copy-file" href="serviceWorker.js">
+
+    <title>Fuente.ai Admin</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="/public/assets/img/logo.png" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+</head>
+
+<body href="/">
+    <div id="spinner" class="fixed z-50 flex flex-col gap-4 items-center justify-center w-dvw h-dvh bg-white">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .spinner_HIK5 {
+                    transform-origin: center;
+                    animation: spinner_XVY9 1s cubic-bezier(0.36, .6, .31, 1) infinite
+                }
+
+                @keyframes spinner_XVY9 {
+                    50% {
+                        transform: rotate(180deg)
+                    }
+
+                    100% {
+                        transform: rotate(360deg)
+                    }
+                }
+            </style>
+            <circle cx="12" cy="12" r="3" />
+            <g class="spinner_HIK5">
+                <circle cx="4" cy="12" r="3" />
+                <circle cx="20" cy="12" r="3" />
+            </g>
+        </svg>
+    </div>
+</body>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker
+                .register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered with scope: ', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed: ', error);
+                });
+        });
+    }
+    window.addEventListener('beforeunload', (event) => {
+        // This will trigger before the page is unloaded or refreshed.
+        // You can intercept it and reroute to `/`.
+        if (window.location.pathname !== '/') {
+            event.preventDefault(); // Prevent default refresh or unload action
+            window.location.href = '/'; // Redirect to the root (index.html)
+        }
+    });
+</script>
+<script>
+
+    // Function to hide the spinner
+    function hideSpinner() {
+        // completely remove the spinener from the dom 
+        var el = document.getElementById('spinner');
+        if (el) {
+            el.remove();
+        }
+    }
+
+    // // Show the spinner when the page starts loading
+    // showSpinner();
+
+    // Polling function to check if the WASM module is loaded
+    function checkWasmLoaded() {
+        if (window.hasOwnProperty('wasmBindings')) {
+            // WASM module has been loaded and bindings are available
+            hideSpinner(); // Hide the spinner once the WASM module is ready
+        } else {
+            // Continue polling every 200ms until it's loaded
+            setTimeout(checkWasmLoaded, 200);
+        }
+    }
+
+    // Start polling for WASM readiness
+    checkWasmLoaded();
+</script>
+
+</html>
