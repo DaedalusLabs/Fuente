@@ -5,7 +5,6 @@ use fuente::{
     mass::LoadingScreen,
     models::{OrderInvoiceState, OrderStatus},
 };
-use gloo::utils::format::JsValueSerdeExt;
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
     key_manager::NostrIdStore,

@@ -134,16 +134,16 @@ pub fn commerce_data_sync() -> Html {
     let admin_wl = admin_configs.get_commerce_whitelist();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            match note.get_kind() {
+            match note.kind {
                 NOSTR_KIND_COMMERCE_PROFILE => {
-                    if admin_wl.contains(&note.get_pubkey()) {
+                    if admin_wl.contains(&note.pubkey) {
                         if let Ok(profile) = note.clone().try_into() {
                             ctx_clone.dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
                         }
                     }
                 }
                 NOSTR_KIND_COMMERCE_PRODUCTS => {
-                    if admin_wl.contains(&note.get_pubkey()) {
+                    if admin_wl.contains(&note.pubkey) {
                         if let Ok(products) = note.clone().try_into() {
                             ctx_clone.dispatch(CommerceDataAction::UpdateProductList(products));
                         }

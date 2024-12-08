@@ -87,7 +87,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !server_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
-    if !ADMIN_WHITELIST.contains(&keys.unwrap().get_public_key().as_str()) {
+    if !ADMIN_WHITELIST.contains(&keys.unwrap().public_key().as_str()) {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not authorized to access this page"}</h2>

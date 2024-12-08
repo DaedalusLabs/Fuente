@@ -1,7 +1,4 @@
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 
@@ -53,13 +50,13 @@ impl TryFrom<String> for DriverProfile {
         Ok(serde_json::from_str(&value).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
-impl TryFrom<SignedNote> for DriverProfile {
+impl TryFrom<NostrNote> for DriverProfile {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_DRIVER_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_DRIVER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let profile: DriverProfile = note.get_content().try_into()?;
+        let profile: DriverProfile = note.content.try_into()?;
         Ok(profile)
     }
 }
@@ -70,31 +67,36 @@ impl DriverProfile {
             telephone,
         }
     }
-    pub fn signed_data(&self, keys: &UserKeys) -> SignedNote {
-        let unsigned_note = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_DRIVER_PROFILE,
-            &self.to_string(),
-        );
-        keys.sign_nostr_event(unsigned_note)
+    pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
+        let mut new_note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_DRIVER_PROFILE,
+            content: self.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nostr_event(&mut new_note);
+        new_note
     }
     pub fn giftwrapped_data(
         &self,
-        keys: &UserKeys,
+        keys: &NostrKeypair,
         receiver: String,
-    ) -> anyhow::Result<SignedNote> {
-        let unsigned_note = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_DRIVER_PROFILE,
-            &self.to_string(),
-        );
-        let signed_profile = keys.sign_nostr_event(unsigned_note);
-        let giftwrap = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_GIFTWRAP,
-            &signed_profile.to_string(),
-        );
-        keys.sign_nip_04_encrypted(giftwrap, receiver)
+    ) -> anyhow::Result<NostrNote> {
+        let mut unsigned_note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_DRIVER_PROFILE,
+            content: self.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nostr_event(&mut unsigned_note);
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_GIFTWRAP,
+            content: unsigned_note.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nip_04_encrypted(&mut giftwrap, receiver)?;
+        Ok(giftwrap)
     }
     pub fn nickname(&self) -> String {
         self.nickname.clone()
@@ -106,11 +108,11 @@ impl DriverProfile {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DriverStateUpdate {
-    driver: SignedNote,
+    driver: NostrNote,
     geolocation: GeolocationPosition,
 }
 impl DriverStateUpdate {
-    pub async fn new(driver: SignedNote) -> anyhow::Result<Self> {
+    pub async fn new(driver: NostrNote) -> anyhow::Result<Self> {
         let _: DriverProfile = driver.clone().try_into()?;
         let geo = GeolocationPosition::locate()
             .await
@@ -122,20 +124,22 @@ impl DriverStateUpdate {
     }
     pub fn sign_update(
         &self,
-        user_keys: &UserKeys,
+        user_keys: &NostrKeypair,
         recipient: String,
-    ) -> anyhow::Result<SignedNote> {
-        let unsigned_note = Note::new(
-            &user_keys.get_public_key(),
-            NOSTR_KIND_DRIVER_STATE,
-            &self.to_string(),
-        );
-        user_keys.sign_nip_04_encrypted(unsigned_note, recipient)
+    ) -> anyhow::Result<NostrNote> {
+        let mut new_note = NostrNote {
+            pubkey: user_keys.public_key(),
+            kind: NOSTR_KIND_DRIVER_STATE,
+            content: self.to_string(),
+            ..Default::default()
+        };
+        user_keys.sign_nip_04_encrypted(&mut new_note, recipient)?;
+        Ok(new_note)
     }
     pub fn from_signed_update(
         &self,
-        user_keys: &UserKeys,
-        signed_note: SignedNote,
+        user_keys: &NostrKeypair,
+        signed_note: NostrNote,
     ) -> anyhow::Result<Self> {
         let note = user_keys.decrypt_nip_04_content(&signed_note)?;
         let update: DriverStateUpdate = note.try_into()?;
@@ -168,13 +172,13 @@ impl TryFrom<JsValue> for DriverStateUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DriverProfileIdb {
     pubkey: String,
-    note: SignedNote,
+    note: NostrNote,
     profile: DriverProfile,
 }
 
 impl DriverProfileIdb {
-    pub fn new(profile: DriverProfile, keys: &UserKeys) -> Self {
-        let pubkey = keys.get_public_key().to_string();
+    pub fn new(profile: DriverProfile, keys: &NostrKeypair) -> Self {
+        let pubkey = keys.public_key().to_string();
         let note = profile.signed_data(keys);
         Self {
             pubkey,
@@ -182,7 +186,7 @@ impl DriverProfileIdb {
             profile,
         }
     }
-    pub fn signed_note(&self) -> SignedNote {
+    pub fn signed_note(&self) -> NostrNote {
         self.note.clone()
     }
     pub fn profile(&self) -> DriverProfile {
@@ -206,13 +210,13 @@ impl TryFrom<JsValue> for DriverProfileIdb {
     }
 }
 
-impl TryFrom<SignedNote> for DriverProfileIdb {
+impl TryFrom<NostrNote> for DriverProfileIdb {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_DRIVER_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_DRIVER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let pubkey = note.get_pubkey().to_string();
+        let pubkey = note.pubkey.to_string();
         let profile: DriverProfile = note.clone().try_into()?;
         Ok(Self {
             pubkey,
@@ -246,12 +250,12 @@ mod tests {
     #[wasm_bindgen_test]
     async fn _commerce_profile_idb() -> Result<(), JsValue> {
         init_consumer_db()?;
-        let key_1 = UserKeys::generate();
+        let key_1 = NostrKeypair::generate(false);
         let consumer_address = DriverProfile::default();
         let address_idb = DriverProfileIdb::new(consumer_address.clone(), &key_1);
         address_idb.clone().save_to_store().await.unwrap();
 
-        let key_2 = UserKeys::generate();
+        let key_2 = NostrKeypair::generate(false);
         let address_idb_2 = DriverProfileIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 
@@ -276,4 +280,3 @@ mod tests {
         Ok(())
     }
 }
-

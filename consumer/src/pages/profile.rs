@@ -12,7 +12,6 @@ use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
-    widgets::leaflet::{nominatim::NominatimLookup, LeafletMap, Marker},
 };
 use yew::{platform::spawn_local, prelude::*, props};
 
@@ -271,7 +270,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
             let user_profile = ConsumerProfile::new(nickname, email, telephone);
             let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
             let giftwrapped_note = user_profile
-                .giftwrapped_data(&user_keys, user_keys.get_public_key())
+                .giftwrapped_data(&user_keys, user_keys.public_key())
                 .expect("Failed to giftwrap data");
             sender.emit(giftwrapped_note);
             user_ctx.dispatch(ConsumerDataAction::NewProfile(db));

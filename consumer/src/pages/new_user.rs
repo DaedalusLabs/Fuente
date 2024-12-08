@@ -31,7 +31,7 @@ pub fn new_profile() -> Html {
         let user_profile = ConsumerProfile::new(nickname, email, telephone);
         let db = ConsumerProfileIdb::new(user_profile.clone(), &keys);
         let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.get_public_key())
+            .giftwrapped_data(&keys, keys.public_key())
             .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
         user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
