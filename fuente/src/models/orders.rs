@@ -1,9 +1,6 @@
 use bright_lightning::{LnAddressPaymentRequest, LndHodlInvoice};
 use nostr_minions::browser_api::IdbStoreManager;
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 use wasm_bindgen::JsValue;
@@ -46,23 +43,23 @@ impl TryFrom<String> for OrderRequest {
         Ok(serde_json::from_str(&s).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
-impl TryFrom<SignedNote> for OrderRequest {
+impl TryFrom<NostrNote> for OrderRequest {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let order: OrderRequest = note.get_content().try_into()?;
+        let order: OrderRequest = note.content.try_into()?;
         Ok(order)
     }
 }
-impl TryFrom<&SignedNote> for OrderRequest {
+impl TryFrom<&NostrNote> for OrderRequest {
     type Error = anyhow::Error;
-    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+    fn try_from(note: &NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let order: OrderRequest = note.get_content().try_into()?;
+        let order: OrderRequest = note.content.clone().try_into()?;
         Ok(order)
     }
 }
@@ -80,24 +77,32 @@ impl OrderRequest {
             products,
         }
     }
-    pub fn sign_request(&self, keys: &UserKeys) -> SignedNote {
+    pub fn sign_request(&self, keys: &NostrKeypair) -> NostrNote {
         let content = self.to_string();
-        let note = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_ORDER_REQUEST,
-            &content,
-        );
-        keys.sign_nostr_event(note)
+        let mut note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_ORDER_REQUEST,
+            content,
+            ..Default::default()
+        };
+        keys.sign_nostr_event(&mut note);
+        note
     }
     pub fn giftwrapped_request(
         &self,
-        keys: &UserKeys,
+        keys: &NostrKeypair,
         recipient: String,
-    ) -> anyhow::Result<SignedNote> {
+    ) -> anyhow::Result<NostrNote> {
         let note = self.sign_request(keys);
         let content = note.to_string();
-        let note = Note::new(&keys.get_public_key(), NOSTR_KIND_SERVER_REQUEST, &content);
-        keys.sign_nip_04_encrypted(note, recipient)
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_ORDER_REQUEST,
+            content,
+            ..Default::default()
+        };
+        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)?;
+        Ok(giftwrap)
     }
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
@@ -147,16 +152,16 @@ impl ToString for OrderPaymentStatus {
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct OrderInvoiceState {
-    order: SignedNote,
+    order: NostrNote,
     commerce_invoice: Option<LnAddressPaymentRequest>,
     consumer_invoice: Option<LndHodlInvoice>,
     payment_status: OrderPaymentStatus,
     order_status: OrderStatus,
-    courier: Option<SignedNote>,
+    courier: Option<NostrNote>,
 }
 impl Default for OrderInvoiceState {
     fn default() -> Self {
-        let order = OrderRequest::default().sign_request(&UserKeys::generate());
+        let order = OrderRequest::default().sign_request(&NostrKeypair::generate(false));
         Self {
             order,
             consumer_invoice: None,
@@ -178,29 +183,29 @@ impl TryFrom<String> for OrderInvoiceState {
         Ok(serde_json::from_str(&s).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
-impl TryFrom<SignedNote> for OrderInvoiceState {
+impl TryFrom<NostrNote> for OrderInvoiceState {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let order: OrderInvoiceState = note.get_content().try_into()?;
+        let order: OrderInvoiceState = note.content.try_into()?;
         Ok(order)
     }
 }
-impl TryFrom<&SignedNote> for OrderInvoiceState {
+impl TryFrom<&NostrNote> for OrderInvoiceState {
     type Error = anyhow::Error;
-    fn try_from(note: &SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+    fn try_from(note: &NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let order: OrderInvoiceState = note.get_content().try_into()?;
+        let order: OrderInvoiceState = note.content.clone().try_into()?;
         Ok(order)
     }
 }
 impl OrderInvoiceState {
     pub fn new(
-        order: SignedNote,
+        order: NostrNote,
         consumer_invoice: Option<LndHodlInvoice>,
         commerce_invoice: Option<LnAddressPaymentRequest>,
     ) -> Self {
@@ -219,43 +224,82 @@ impl OrderInvoiceState {
     pub fn update_order_status(&mut self, status: OrderStatus) {
         self.order_status = status;
     }
-    pub fn update_courier(&mut self, courier: SignedNote) {
+    pub fn update_courier(&mut self, courier: NostrNote) {
         self.courier = Some(courier);
     }
-    pub fn sign_customer_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_customer_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let content = self.to_string();
-        let pubkey = self.order.get_pubkey();
-        let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
-        note.add_tag("d", &format!("{}{}", "consumer", self.order.get_id()));
-        Ok(keys.sign_nip_04_encrypted(note, pubkey.to_string())?)
+        let receiver_pubkey = self.order.pubkey.clone();
+        let mut note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_ORDER_STATE,
+            content,
+            ..Default::default()
+        };
+        note.tags.add_tag(
+            nostro2::notes::NostrTag::Custom("d"),
+            &format!("{}{}", "consumer", self.order.id.as_ref().unwrap()),
+        );
+        keys.sign_nip_04_encrypted(&mut note, receiver_pubkey)?;
+        Ok(note)
     }
-    pub fn sign_commerce_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
+    pub fn sign_commerce_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let content = self.to_string();
         let order: OrderRequest = self.order.clone().try_into()?;
         let commerce = order.commerce;
-        let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
-        note.add_tag("d", &format!("{}{}", "business", self.order.get_id()));
-        Ok(keys.sign_nip_04_encrypted(note, commerce)?)
-    }
-    pub fn sign_courier_update(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
-        let content = self.to_string();
-        let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
-        note.add_tag("d", &format!("{}{}", "driver", self.order.get_id()));
-        Ok(keys.sign_nip_04_encrypted(note, DRIVER_HUB_PUB_KEY.to_string())?)
-    }
-    pub fn sign_server_request(&self, keys: &UserKeys) -> anyhow::Result<SignedNote> {
-        let content = self.to_string();
-        let mut note = Note::new(&keys.get_public_key(), NOSTR_KIND_ORDER_STATE, &content);
-        note.add_tag("d", &self.order.get_id());
-        let signed_request = keys.sign_nostr_event(note);
-        let giftwrap = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_SERVER_REQUEST,
-            &signed_request.to_string(),
+
+        let mut note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_ORDER_STATE,
+            content,
+            ..Default::default()
+        };
+        note.tags.add_tag(
+            nostro2::notes::NostrTag::Custom("d"),
+            &format!("{}{}", "business", self.order.id.as_ref().unwrap()),
         );
-        Ok(keys.sign_nip_04_encrypted(giftwrap, TEST_PUB_KEY.to_string())?)
+        keys.sign_nip_04_encrypted(&mut note, commerce)?;
+        Ok(note)
     }
-    pub fn get_order(&self) -> SignedNote {
+    pub fn sign_courier_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
+        let content = self.to_string();
+        let mut note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_ORDER_STATE,
+            content,
+            ..Default::default()
+        };
+        note.tags.add_tag(
+            nostro2::notes::NostrTag::Custom("d"),
+            &format!("{}{}", "courier", self.order.id.as_ref().unwrap()),
+        );
+        keys.sign_nip_04_encrypted(&mut note, DRIVER_HUB_PUB_KEY.to_string())?;
+        Ok(note)
+    }
+    pub fn sign_server_request(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
+        let content = self.to_string();
+        let mut note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_ORDER_STATE,
+            content,
+            ..Default::default()
+        };
+        note.tags.add_tag(
+            nostro2::notes::NostrTag::Custom("d"),
+            &self.order.id.as_ref().unwrap(),
+        );
+        keys.sign_nostr_event(&mut note);
+
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_SERVER_REQUEST,
+            content: note.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
+        Ok(giftwrap)
+    }
+    pub fn get_order(&self) -> NostrNote {
         self.order.clone()
     }
     pub fn get_payment_status(&self) -> OrderPaymentStatus {
@@ -270,7 +314,7 @@ impl OrderInvoiceState {
     pub fn get_consumer_invoice(&self) -> Option<LndHodlInvoice> {
         self.consumer_invoice.clone()
     }
-    pub fn get_courier(&self) -> Option<SignedNote> {
+    pub fn get_courier(&self) -> Option<NostrNote> {
         self.courier.clone()
     }
     pub fn get_order_request(&self) -> OrderRequest {
@@ -278,23 +322,23 @@ impl OrderInvoiceState {
         order
     }
     pub fn id(&self) -> String {
-        self.order.get_id()
+        self.order.id.as_ref().unwrap().to_string()
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct OrderStateIdb {
     order_id: String,
-    timestamp: u64,
-    state_note: SignedNote,
+    timestamp: i64,
+    state_note: NostrNote,
 }
 impl Default for OrderStateIdb {
     fn default() -> Self {
-        let order_id = UserKeys::generate().get_public_key();
+        let order_id = NostrKeypair::generate(false).public_key();
         let order = OrderInvoiceState::default();
         Self {
             order_id,
-            timestamp: order.order.get_created_at(),
+            timestamp: order.order.created_at,
             state_note: order.get_order(),
         }
     }
@@ -311,19 +355,22 @@ impl TryFrom<JsValue> for OrderStateIdb {
     }
 }
 impl OrderStateIdb {
-    pub fn new(order: SignedNote) -> Result<Self, JsValue> {
-        if let Some(d_tags) = order.get_tags_by_id("d") {
-            let order_id = d_tags[0].clone();
+    pub fn new(order: NostrNote) -> Result<Self, JsValue> {
+        if let Some(order_id) = order
+            .tags
+            .find_custom_tags(nostro2::notes::NostrTag::Custom("d"))
+            .first()
+        {
             Ok(Self {
-                order_id,
-                timestamp: order.get_created_at(),
+                order_id: order_id.clone(),
+                timestamp: order.created_at,
                 state_note: order,
             })
         } else {
             Err(JsValue::from_str("No id tag found"))
         }
     }
-    pub async fn find_history(user_keys: &UserKeys) -> Result<Vec<OrderInvoiceState>, JsValue> {
+    pub async fn find_history(user_keys: &NostrKeypair) -> Result<Vec<OrderInvoiceState>, JsValue> {
         let db_entries = Self::retrieve_all_from_store().await?;
         let order_states = db_entries
             .iter()
@@ -331,10 +378,10 @@ impl OrderStateIdb {
             .collect::<Vec<OrderInvoiceState>>();
         Ok(order_states)
     }
-    pub fn signed_note(&self) -> SignedNote {
+    pub fn signed_note(&self) -> NostrNote {
         self.state_note.clone()
     }
-    fn parse_order(&self, user_keys: &UserKeys) -> Result<OrderInvoiceState, String> {
+    fn parse_order(&self, user_keys: &NostrKeypair) -> Result<OrderInvoiceState, String> {
         let decrypted = user_keys
             .decrypt_nip_04_content(&self.state_note)
             .map_err(|e| format!("{:?}", e))?;

@@ -1,7 +1,7 @@
 use nostr_minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
 use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
+    keypair::NostrKeypair,
+    notes::{NostrNote, NostrTag},
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -31,25 +31,28 @@ impl ConsumerAddress {
     pub fn coordinates(&self) -> CoordinateStrings {
         self.coordinates.clone()
     }
-    pub fn signed_data(&self, keys: &UserKeys) -> SignedNote {
-        let unsigned_note = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_PROFILE_ADDRESS,
-            &self.to_string(),
-        );
-        keys.sign_nostr_event(unsigned_note)
+    pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
+        let mut new_note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_PROFILE_ADDRESS,
+            content: self.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nostr_event(&mut new_note);
+        new_note
     }
     pub fn giftwrapped_data(
         &self,
-        keys: &UserKeys,
+        keys: &NostrKeypair,
         recipient: String,
-    ) -> Result<SignedNote, JsValue> {
+    ) -> Result<NostrNote, JsValue> {
         let inner_note = self.signed_data(keys);
-        let mut giftwrap = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
-            &inner_note.to_string(),
-        );
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
+            content: inner_note.to_string(),
+            ..Default::default()
+        };
         let mut hasher = Sha256::new();
         hasher.update("address".as_bytes());
         let d_tag = hasher
@@ -57,9 +60,11 @@ impl ConsumerAddress {
             .iter()
             .map(|b| format!("{:02x}", b))
             .collect::<String>();
-        giftwrap.add_tag("d", &d_tag);
-        keys.sign_nip_04_encrypted(giftwrap, recipient)
-            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))
+        giftwrap.tags.add_tag(NostrTag::Custom("d"), &d_tag);
+
+        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
+            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
+        Ok(giftwrap)
     }
 }
 impl Default for ConsumerAddress {
@@ -88,14 +93,14 @@ impl From<JsValue> for ConsumerAddress {
     }
 }
 
-impl TryFrom<SignedNote> for ConsumerAddress {
+impl TryFrom<NostrNote> for ConsumerAddress {
     type Error = anyhow::Error;
-    fn try_from(value: SignedNote) -> Result<Self, Self::Error> {
-        let kind = value.get_kind();
+    fn try_from(value: NostrNote) -> Result<Self, Self::Error> {
+        let kind = value.kind;
         if kind != NOSTR_KIND_CONSUMER_PROFILE_ADDRESS {
             return Err(anyhow::anyhow!("Wrong kind"));
         }
-        let serde_str = value.get_content();
+        let serde_str = value.content;
         let address: ConsumerAddress = serde_json::from_str(&serde_str)?;
         Ok(address)
     }
@@ -104,9 +109,9 @@ impl TryFrom<SignedNote> for ConsumerAddress {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ConsumerAddressIdb {
     nostr_id: String,
-    timestamp: u64,
+    timestamp: i64,
     default: bool,
-    note: SignedNote,
+    note: NostrNote,
     address: ConsumerAddress,
 }
 impl Into<JsValue> for ConsumerAddressIdb {
@@ -120,17 +125,16 @@ impl TryFrom<JsValue> for ConsumerAddressIdb {
         Ok(serde_wasm_bindgen::from_value(value)?)
     }
 }
-impl TryFrom<SignedNote> for ConsumerAddressIdb {
+impl TryFrom<NostrNote> for ConsumerAddressIdb {
     type Error = anyhow::Error;
-    fn try_from(value: SignedNote) -> Result<Self, Self::Error> {
-        let kind = value.get_kind();
+    fn try_from(value: NostrNote) -> Result<Self, Self::Error> {
+        let kind = value.kind;
         if kind != NOSTR_KIND_CONSUMER_PROFILE_ADDRESS {
             return Err(anyhow::anyhow!("Wrong kind"));
         }
-        let serde_str = value.get_content();
-        let address: ConsumerAddress = serde_json::from_str(&serde_str)?;
-        let nostr_id = value.get_id().to_string();
-        let timestamp = value.get_created_at();
+        let address: ConsumerAddress = serde_json::from_str(&value.content)?;
+        let nostr_id = value.id.as_ref().unwrap().to_string();
+        let timestamp = value.created_at;
         Ok(ConsumerAddressIdb {
             nostr_id,
             timestamp,
@@ -142,12 +146,12 @@ impl TryFrom<SignedNote> for ConsumerAddressIdb {
 }
 
 impl ConsumerAddressIdb {
-    pub fn new(address: ConsumerAddress, keys: &UserKeys) -> Self {
+    pub fn new(address: ConsumerAddress, keys: &NostrKeypair) -> Self {
         let note = address.signed_data(keys);
-        let nostr_id = note.get_id().to_string();
+        let nostr_id = note.id.as_ref().unwrap().to_string();
         Self {
             nostr_id,
-            timestamp: note.get_created_at(),
+            timestamp: note.created_at,
             default: false,
             note,
             address,
@@ -171,7 +175,7 @@ impl ConsumerAddressIdb {
         self.save_to_store().await?;
         Ok(())
     }
-    pub fn signed_note(&self) -> SignedNote {
+    pub fn signed_note(&self) -> NostrNote {
         self.note.clone()
     }
     pub fn address(&self) -> ConsumerAddress {
@@ -204,12 +208,12 @@ mod tests {
     #[wasm_bindgen_test]
     async fn _test_address_idb() -> Result<(), JsValue> {
         init_consumer_db()?;
-        let key_1 = UserKeys::generate();
+        let key_1 = NostrKeypair::generate(false);
         let consumer_address = ConsumerAddress::default();
         let address_idb = ConsumerAddressIdb::new(consumer_address.clone(), &key_1);
         address_idb.clone().save_to_store().await.unwrap();
 
-        let key_2 = UserKeys::generate();
+        let key_2 = NostrKeypair::generate(false);
         let address_idb_2 = ConsumerAddressIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 

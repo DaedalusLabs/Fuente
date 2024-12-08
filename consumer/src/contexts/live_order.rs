@@ -2,20 +2,20 @@ use std::rc::Rc;
 
 use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE};
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{notes::SignedNote, relays::NostrSubscription};
+use nostro2::{notes::NostrNote, relays::NostrSubscription};
 use yew::prelude::*;
 
 use crate::pages::LiveOrderCheck;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
-    pub order: Option<(SignedNote, OrderInvoiceState)>,
+    pub order: Option<(NostrNote, OrderInvoiceState)>,
 }
 
 impl LiveOrder {}
 
 pub enum LiveOrderAction {
-    SetOrder(SignedNote, OrderInvoiceState),
+    SetOrder(NostrNote, OrderInvoiceState),
     ClearOrder,
     CompleteOrder(String),
 }
@@ -93,7 +93,7 @@ pub fn commerce_data_sync() -> Html {
                 kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
                 ..Default::default()
             };
-            filter.add_tag("#p", keys.get_public_key().as_str());
+            filter.add_tag("#p", keys.public_key().as_str());
             let sub = filter.relay_subscription();
             id_handle.set(sub.1.clone());
             subscriber.emit(sub);
@@ -104,7 +104,7 @@ pub fn commerce_data_sync() -> Html {
 
     use_effect_with(unique_notes, move |notes| {
         if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_nostr_key()) {
-            if note.get_kind() == NOSTR_KIND_ORDER_STATE {
+            if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
                         match (

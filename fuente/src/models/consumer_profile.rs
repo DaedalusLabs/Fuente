@@ -1,6 +1,6 @@
 use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
+    keypair::NostrKeypair,
+    notes::{NostrNote, NostrTag},
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -55,13 +55,13 @@ impl TryFrom<String> for ConsumerProfile {
         Ok(serde_json::from_str(&value).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
-impl TryFrom<SignedNote> for ConsumerProfile {
+impl TryFrom<NostrNote> for ConsumerProfile {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let profile: ConsumerProfile = note.get_content().try_into()?;
+        let profile: ConsumerProfile = note.content.try_into()?;
         Ok(profile)
     }
 }
@@ -73,25 +73,28 @@ impl ConsumerProfile {
             email,
         }
     }
-    pub fn signed_data(&self, keys: &UserKeys) -> SignedNote {
-        let unsigned_note = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_PROFILE,
-            &self.to_string(),
-        );
-        keys.sign_nostr_event(unsigned_note)
+    pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
+        let mut unsigned_note = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_PROFILE,
+            content: self.to_string(),
+            ..Default::default()
+        };
+        keys.sign_nostr_event(&mut unsigned_note);
+        unsigned_note
     }
     pub fn giftwrapped_data(
         &self,
-        keys: &UserKeys,
+        keys: &NostrKeypair,
         recipient: String,
-    ) -> Result<SignedNote, JsValue> {
+    ) -> Result<NostrNote, JsValue> {
         let inner_note = self.signed_data(keys);
-        let mut giftwrap = Note::new(
-            &keys.get_public_key(),
-            NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
-            &inner_note.to_string(),
-        );
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
+            content: inner_note.to_string(),
+            ..Default::default()
+        };
         let mut hasher = Sha256::new();
         hasher.update("profile".as_bytes());
         let d_tag = hasher
@@ -99,9 +102,10 @@ impl ConsumerProfile {
             .iter()
             .map(|b| format!("{:02x}", b))
             .collect::<String>();
-        giftwrap.add_tag("d", &d_tag);
-        keys.sign_nip_04_encrypted(giftwrap, recipient)
-            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))
+        giftwrap.tags.add_tag(NostrTag::Custom("d"), &d_tag);
+        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
+            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
+        Ok(giftwrap)
     }
     pub fn nickname(&self) -> String {
         self.nickname.clone()
@@ -117,13 +121,13 @@ impl ConsumerProfile {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConsumerProfileIdb {
     pubkey: String,
-    note: SignedNote,
+    note: NostrNote,
     profile: ConsumerProfile,
 }
 
 impl ConsumerProfileIdb {
-    pub fn new(profile: ConsumerProfile, keys: &UserKeys) -> Self {
-        let pubkey = keys.get_public_key().to_string();
+    pub fn new(profile: ConsumerProfile, keys: &NostrKeypair) -> Self {
+        let pubkey = keys.public_key().to_string();
         let note = profile.signed_data(keys);
         Self {
             pubkey,
@@ -131,7 +135,7 @@ impl ConsumerProfileIdb {
             profile,
         }
     }
-    pub fn signed_note(&self) -> SignedNote {
+    pub fn signed_note(&self) -> NostrNote {
         self.note.clone()
     }
     pub fn profile(&self) -> ConsumerProfile {
@@ -155,13 +159,13 @@ impl TryFrom<JsValue> for ConsumerProfileIdb {
     }
 }
 
-impl TryFrom<SignedNote> for ConsumerProfileIdb {
+impl TryFrom<NostrNote> for ConsumerProfileIdb {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_CONSUMER_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_CONSUMER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let pubkey = note.get_pubkey().to_string();
+        let pubkey = note.pubkey.to_string();
         let profile: ConsumerProfile = note.clone().try_into()?;
         Ok(Self {
             pubkey,
@@ -194,12 +198,12 @@ mod tests {
     #[wasm_bindgen_test]
     async fn _commerce_profile_idb() -> Result<(), JsValue> {
         init_consumer_db()?;
-        let key_1 = UserKeys::generate();
+        let key_1 = NostrKeypair::generate(false);
         let consumer_address = ConsumerProfile::default();
         let address_idb = ConsumerProfileIdb::new(consumer_address.clone(), &key_1);
         address_idb.clone().save_to_store().await.unwrap();
 
-        let key_2 = UserKeys::generate();
+        let key_2 = NostrKeypair::generate(false);
         let address_idb_2 = ConsumerProfileIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 

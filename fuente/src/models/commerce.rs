@@ -8,10 +8,7 @@ use super::{
     gps::CoordinateStrings, nostr_kinds::NOSTR_KIND_COMMERCE_PROFILE, DB_NAME_FUENTE,
     DB_VERSION_FUENTE, STORE_NAME_COMMERCE_PROFILES,
 };
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 
@@ -58,14 +55,16 @@ impl CommerceProfile {
             ln_address,
         }
     }
-    pub fn signed_data(&self, user_keys: &UserKeys) -> SignedNote {
+    pub fn signed_data(&self, user_keys: &NostrKeypair) -> NostrNote {
         let data = serde_json::to_string(self).unwrap();
-        let new_note = Note::new(
-            &user_keys.get_public_key(),
-            NOSTR_KIND_COMMERCE_PROFILE,
-            &data,
-        );
-        user_keys.sign_nostr_event(new_note)
+        let mut new_note = NostrNote {
+            pubkey: user_keys.public_key(),
+            kind: NOSTR_KIND_COMMERCE_PROFILE,
+            content: data,
+            ..Default::default()
+        };
+        user_keys.sign_nostr_event(&mut new_note);
+        new_note
     }
     pub fn name(&self) -> &str {
         &self.name
@@ -101,13 +100,13 @@ impl ToString for CommerceProfile {
         serde_json::to_string(self).unwrap()
     }
 }
-impl TryFrom<SignedNote> for CommerceProfile {
+impl TryFrom<NostrNote> for CommerceProfile {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_COMMERCE_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_COMMERCE_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let details: CommerceProfile = serde_json::from_str(&note.get_content())?;
+        let details: CommerceProfile = serde_json::from_str(&note.content)?;
         Ok(details)
     }
 }
@@ -115,14 +114,14 @@ impl TryFrom<SignedNote> for CommerceProfile {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommerceProfileIdb {
     pubkey: String,
-    note: SignedNote,
+    note: NostrNote,
     profile: CommerceProfile,
 }
 
 impl CommerceProfileIdb {
-    pub fn new(profile: CommerceProfile, keys: &UserKeys) -> Result<Self, JsValue> {
+    pub fn new(profile: CommerceProfile, keys: &NostrKeypair) -> Result<Self, JsValue> {
         let note = profile.signed_data(keys);
-        let pubkey = note.get_pubkey();
+        let pubkey = note.pubkey.clone();
         Ok(Self {
             pubkey,
             note,
@@ -132,7 +131,7 @@ impl CommerceProfileIdb {
     pub fn profile(&self) -> &CommerceProfile {
         &self.profile
     }
-    pub fn signed_note(&self) -> &SignedNote {
+    pub fn signed_note(&self) -> &NostrNote {
         &self.note
     }
     pub fn id(&self) -> &str {
@@ -156,14 +155,14 @@ impl Into<JsValue> for CommerceProfileIdb {
     }
 }
 
-impl TryFrom<SignedNote> for CommerceProfileIdb {
+impl TryFrom<NostrNote> for CommerceProfileIdb {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_COMMERCE_PROFILE {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_COMMERCE_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let profile: CommerceProfile = note.get_content().try_into()?;
-        let pubkey = note.get_pubkey();
+        let profile: CommerceProfile = note.content.clone().try_into()?;
+        let pubkey = note.pubkey.clone();
         Ok(CommerceProfileIdb {
             pubkey,
             note,
@@ -196,12 +195,12 @@ mod tests {
     #[wasm_bindgen_test]
     async fn _commerce_profile_idb() -> Result<(), JsValue> {
         init_consumer_db()?;
-        let key_1 = UserKeys::generate();
+        let key_1 = NostrKeypair::generate(false);
         let consumer_address = CommerceProfile::default();
         let address_idb = CommerceProfileIdb::new(consumer_address.clone(), &key_1)?;
         address_idb.clone().save_to_store().await.unwrap();
 
-        let key_2 = UserKeys::generate();
+        let key_2 = NostrKeypair::generate(false);
         let address_idb_2 = CommerceProfileIdb::new(consumer_address, &key_2)?;
         address_idb_2.clone().save_to_store().await.unwrap();
 
