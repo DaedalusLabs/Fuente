@@ -4,12 +4,12 @@ use fuente::models::{
     OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE,
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{relays::NostrSubscription, userkeys::UserKeys};
+use nostro2::{relays::NostrSubscription, keypair::NostrKeypair};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderHub {
-    hub_keys: UserKeys,
+    hub_keys: NostrKeypair,
     orders: Vec<OrderInvoiceState>,
     live_order: Option<OrderInvoiceState>,
 }
@@ -107,7 +107,7 @@ pub struct OrderHubChildren {
 #[function_component(OrderHubProvider)]
 pub fn key_handler(props: &OrderHubChildren) -> Html {
     let ctx = use_reducer(|| OrderHub {
-        hub_keys: UserKeys::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
+        hub_keys: NostrKeypair::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
         orders: vec![],
         live_order: None,
     });
@@ -152,11 +152,11 @@ pub fn commerce_data_sync() -> Html {
     let my_keys = keys_ctx.get_nostr_key().expect("No keys found");
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            if note.get_kind() == NOSTR_KIND_ORDER_STATE {
+            if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
                         if let Some(signed_note) = order_status.get_courier() {
-                            if signed_note.get_pubkey() == my_keys.get_public_key() {
+                            if signed_note.pubkey == my_keys.public_key() {
                                 match order_status.get_order_status() {
                                     OrderStatus::Canceled => {
                                         // TODO

@@ -8,10 +8,7 @@
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -19,7 +16,7 @@ use super::{
     TEST_PUB_KEY,
 };
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Hash)]
 pub enum AdminConfigurationType {
     AdminWhitelist,
     CommerceWhitelist,
@@ -27,6 +24,13 @@ pub enum AdminConfigurationType {
     UserRegistrations,
     ExchangeRate,
     CourierWhitelist,
+}
+impl AdminConfigurationType {
+    pub fn to_hash(&self) -> String {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish().to_string()
+    }
 }
 impl TryFrom<&str> for AdminConfigurationType {
     type Error = anyhow::Error;
@@ -115,96 +119,118 @@ impl Default for AdminConfiguration {
 impl AdminConfiguration {
     pub fn sign_admin_whitelist(
         &self,
-        priv_key: &UserKeys,
+        priv_key: &NostrKeypair,
         receiver: String,
-    ) -> anyhow::Result<SignedNote> {
+    ) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.admin_whitelist)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
         let config_str: String = AdminConfigurationType::AdminWhitelist.into();
-
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
-        note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &receiver, &config_str));
+        note.tags.add_parameter_tag(&receiver);
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nip_04_encrypted(&mut note, receiver)?;
+        Ok(note)
     }
-    pub fn sign_commerce_whitelist(
-        &self,
-        priv_key: &UserKeys,
-    ) -> anyhow::Result<SignedNote> {
+    pub fn sign_commerce_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.commerce_whitelist)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
         let config_str: String = AdminConfigurationType::CommerceWhitelist.into();
-        let mut hasher = DefaultHasher::new();
-        "commerce_whitelist".hash(&mut hasher);
-        let config_hash = hasher.finish();
-        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
-        note.add_tag("d", &config_hash.to_string());
-        note.add_tag("d", &config_str);
-        Ok(priv_key.sign_nostr_event(note))
+        let config_hash = AdminConfigurationType::CommerceWhitelist.to_hash();
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        Ok(note)
     }
-    pub fn sign_couriers_whitelist(
-        &self,
-        priv_key: &UserKeys,
-    ) -> anyhow::Result<SignedNote> {
+    pub fn sign_couriers_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.couriers_whitelist)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
         let config_str: String = AdminConfigurationType::CourierWhitelist.into();
-        let mut hasher = DefaultHasher::new();
-        "courier_whitelist".hash(&mut hasher);
-        let config_hash = hasher.finish();
-        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
-        note.add_tag("d", &config_hash.to_string());
-        note.add_tag("d", &config_str);
-        Ok(priv_key.sign_nostr_event(note))
+        let config_hash = AdminConfigurationType::CourierWhitelist.to_hash();
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        Ok(note)
     }
-    pub fn sign_consumer_blacklist(
-        &self,
-        priv_key: &UserKeys,
-    ) -> anyhow::Result<SignedNote> {
+    pub fn sign_consumer_blacklist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.consumer_blacklist)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
+
         let config_str: String = AdminConfigurationType::ConsumerBlacklist.into();
-        let mut hasher = DefaultHasher::new();
-        "consumer_blacklist".hash(&mut hasher);
-        let config_hash = hasher.finish();
-        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
-        note.add_tag("d", &config_hash.to_string());
-        note.add_tag("d", &config_str);
-        Ok(priv_key.sign_nostr_event(note))
+        let config_hash = AdminConfigurationType::ConsumerBlacklist.to_hash();
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        Ok(note)
     }
     pub fn sign_user_registrations(
         &self,
-        priv_key: &UserKeys,
+        priv_key: &NostrKeypair,
         receiver: String,
-    ) -> anyhow::Result<SignedNote> {
+    ) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.user_registrations)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
+
         let config_str: String = AdminConfigurationType::UserRegistrations.into();
-        note.add_tag("d", &format!("{}-{}", &receiver, &config_str));
-        note.add_tag("d", &receiver);
-        note.add_tag("d", &config_str);
-        priv_key.sign_nip_04_encrypted(note, receiver)
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &receiver, &config_str));
+        note.tags.add_parameter_tag(&receiver.to_string());
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        Ok(note)
     }
-    pub fn sign_exchange_rate(
-        &self,
-        priv_key: &UserKeys,
-    ) -> anyhow::Result<SignedNote> {
+    pub fn sign_exchange_rate(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
         let serialized = serde_json::to_string(&self.exchange_rate)?;
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_SERVER_CONFIG, &serialized);
+
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_SERVER_CONFIG,
+            content: serialized,
+            ..Default::default()
+        };
+
         let config_str: String = AdminConfigurationType::ExchangeRate.into();
-        let mut hasher = DefaultHasher::new();
-        "exchange_rate".hash(&mut hasher);
-        let config_hash = hasher.finish();
-        note.add_tag("d", &format!("{}-{}", &config_hash, &config_str));
-        note.add_tag("d", &config_hash.to_string());
-        note.add_tag("d", &config_str);
-        Ok(priv_key.sign_nostr_event(note))
+        let config_hash = AdminConfigurationType::ExchangeRate.to_hash();
+        note.tags
+            .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
+        note.tags.add_parameter_tag(&config_hash.to_string());
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        Ok(note)
     }
     pub fn update_commerce_whitelist(&mut self, new_commerce: String) {
         self.commerce_whitelist.push(new_commerce);
@@ -285,14 +311,24 @@ impl AdminServerRequest {
             config_str,
         }
     }
-    pub fn sign_data(&self, priv_key: &UserKeys) -> anyhow::Result<SignedNote> {
-        let pubkey = priv_key.get_public_key();
-        let mut note = Note::new(&pubkey, NOSTR_KIND_ADMIN_REQUEST, &self.config_str);
+    pub fn sign_data(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
+        let mut note = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_ADMIN_REQUEST,
+            content: self.config_str.clone(),
+            ..Default::default()
+        };
         let config_str: String = self.config_type.clone().into();
-        note.add_tag("d", &config_str);
-        let inner_note = priv_key.sign_nostr_event(note);
-        let giftwrap = Note::new(&pubkey, NOSTR_KIND_ADMIN_REQUEST, &inner_note.to_string());
-        priv_key.sign_nip_04_encrypted(giftwrap, TEST_PUB_KEY.to_string())
+        note.tags.add_parameter_tag(&config_str);
+        priv_key.sign_nostr_event(&mut note);
+        let mut giftwrap = NostrNote {
+            pubkey: priv_key.public_key(),
+            kind: NOSTR_KIND_ADMIN_REQUEST,
+            content: note.into(),
+            ..Default::default()
+        };
+        priv_key.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
+        Ok(giftwrap)
     }
 }
 impl ToString for AdminServerRequest {
@@ -314,31 +350,33 @@ impl TryFrom<String> for AdminServerRequest {
         Ok(req)
     }
 }
-impl TryFrom<&SignedNote> for AdminServerRequest {
+impl TryFrom<&NostrNote> for AdminServerRequest {
     type Error = anyhow::Error;
-    fn try_from(value: &SignedNote) -> Result<Self, Self::Error> {
-        if value.get_kind() != NOSTR_KIND_ADMIN_REQUEST {
+    fn try_from(value: &NostrNote) -> Result<Self, Self::Error> {
+        if value.kind != NOSTR_KIND_ADMIN_REQUEST {
             return Err(anyhow::anyhow!("Invalid kind"));
         }
-        let config_str = value.get_content();
+        let config_str = value.content.clone();
         let config_type = value
-            .get_tags_by_id("d")
-            .ok_or(anyhow::anyhow!("No config type"))?[0]
+            .tags
+            .find_first_parameter()
+            .ok_or(anyhow::anyhow!("No config type"))?
             .clone();
         let config_type = AdminConfigurationType::try_from(config_type)?;
         Ok(AdminServerRequest::new(config_type, config_str))
     }
 }
-impl TryFrom<SignedNote> for AdminServerRequest {
+impl TryFrom<NostrNote> for AdminServerRequest {
     type Error = anyhow::Error;
-    fn try_from(value: SignedNote) -> Result<Self, Self::Error> {
-        if value.get_kind() != NOSTR_KIND_ADMIN_REQUEST {
+    fn try_from(value: NostrNote) -> Result<Self, Self::Error> {
+        if value.kind != NOSTR_KIND_ADMIN_REQUEST {
             return Err(anyhow::anyhow!("Invalid kind"));
         }
-        let config_str = value.get_content();
+        let config_str = value.content;
         let config_type = value
-            .get_tags_by_id("d")
-            .ok_or(anyhow::anyhow!("No config type"))?[0]
+            .tags
+            .find_first_parameter()
+            .ok_or(anyhow::anyhow!("No config type"))?
             .clone();
         let config_type = AdminConfigurationType::try_from(config_type)?;
         Ok(AdminServerRequest::new(config_type, config_str))

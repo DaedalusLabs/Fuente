@@ -2,7 +2,7 @@ use crate::mass::atoms::{
     CopyIcon, {SimpleFormButton, SimpleInput},
 };
 use nostr_minions::{browser_api::{clipboard_copy, HtmlForm}, key_manager::{NostrIdAction, NostrIdStore, UserIdentity}};
-use nostro2::userkeys::UserKeys;
+use nostro2::keypair::NostrKeypair;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Debug, Clone, PartialEq, Properties)]
@@ -75,7 +75,7 @@ pub fn popup_selector(props: &LoginProps) -> Html {
 #[function_component(NewUserForm)]
 pub fn new_user_form() -> Html {
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
-    let new_keys = UserKeys::generate_extractable();
+    let new_keys = NostrKeypair::generate(true);
     let private_key = new_keys
         .get_secret_key()
         .iter()
@@ -139,7 +139,7 @@ pub fn import_user_form() -> Html {
             .input_value("password")
             .expect("Failed to get password");
         let user_keys =
-            UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
+            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)
@@ -191,7 +191,7 @@ pub fn import_user_form() -> Html {
             .input_value("password")
             .expect("Failed to get password");
         let user_keys =
-            UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
+            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)

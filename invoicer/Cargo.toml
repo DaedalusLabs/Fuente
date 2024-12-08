@@ -26,9 +26,6 @@ async-channel.workspace = true
 futures-util = { version = "0.3.30", features = ["sink", "std"] }
 tokio.workspace = true
 
-# Custom websockets 
-native-tls = "0.2.12"
-tokio-tungstenite = { version = "0.24.0", features = ["native-tls"] }
 
 # REST requests
 reqwest = { version = "0.12.9", features = ["json"] }

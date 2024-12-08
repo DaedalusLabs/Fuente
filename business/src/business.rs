@@ -108,7 +108,7 @@ fn login_check(props: &ChildrenProps) -> Html {
         };
     }
     let whitelist = config_ctx.get_commerce_whitelist();
-    if !whitelist.contains(&key_ctx.get_nostr_key().unwrap().get_public_key()) {
+    if !whitelist.contains(&key_ctx.get_nostr_key().unwrap().public_key()) {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not yet authorized to access this page"}</h2>

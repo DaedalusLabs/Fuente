@@ -15,7 +15,7 @@ use nostr_minions::{
     key_manager::{NostrIdAction, NostrIdProvider, NostrIdStore, UserIdentity},
     relay_pool::{RelayProvider, UserRelay},
 };
-use nostro2::userkeys::UserKeys;
+use nostro2::keypair::NostrKeypair;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
 
@@ -108,7 +108,7 @@ fn login_check(props: &ChildrenProps) -> Html {
         };
     }
     let wl = admin_ctx.get_courier_whitelist();
-    let pubkey = key_ctx.get_nostr_key().unwrap().get_public_key();
+    let pubkey = key_ctx.get_nostr_key().unwrap().public_key();
     if !wl.contains(&pubkey) {
         return html! {
             <div class="flex flex-col gap-2 justify-center items-center flex-1">
@@ -144,7 +144,7 @@ fn login_check(props: &ChildrenProps) -> Html {
 #[function_component(DriverLoginPage)]
 pub fn admin_login() -> Html {
     let onclick = Callback::from(move |_| {
-        let new_keys = UserKeys::generate_extractable();
+        let new_keys = NostrKeypair::generate(true);
         let new_keys_str = new_keys.get_secret_key();
         let mut hex_str = String::new();
         for byte in new_keys_str.iter() {
@@ -180,7 +180,7 @@ pub fn import_user_form() -> Html {
             .input_value("password")
             .expect("Failed to get password");
         let user_keys =
-            UserKeys::new_extractable(&user_keys_str).expect("Failed to create user keys");
+            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)

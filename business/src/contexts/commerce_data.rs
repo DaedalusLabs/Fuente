@@ -125,7 +125,7 @@ pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(key) = key_ctx.get_nostr_key() {
-            let pubkey = key.get_public_key().to_string();
+            let pubkey = key.public_key().to_string();
             spawn_local(async move {
                 if let Ok(profile) =
                     CommerceProfileIdb::retrieve_from_store(&JsValue::from_str(&pubkey)).await
@@ -170,7 +170,7 @@ pub fn commerce_data_sync() -> Html {
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
                 ]),
-                authors: Some(vec![key.get_public_key()]),
+                authors: Some(vec![key.public_key()]),
                 ..Default::default()
             }
             .relay_subscription();
@@ -193,7 +193,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            match note.get_kind() {
+            match note.kind {
                 NOSTR_KIND_COMMERCE_PROFILE => {
                     if let Ok(profile) = note.clone().try_into() {
                         ctx_clone.dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
