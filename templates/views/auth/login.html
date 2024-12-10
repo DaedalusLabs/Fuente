@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="icon" href="/public/assets/img/logo.png" />
+    <title>{Login}</title>
+    <link rel="stylesheet" href="../../css/app.css">
+</head>
+<body>
+    <main class="flex min-h-screen">
+        <div class="bg-white bg-logo bg-no-repeat bg-[length:200px_75px] mt-10 ml-16 flex justify-end items-center flex-1">
+            <h2 class="text-fuente text-[135px] lg:text-[175px] font-bold -rotate-90 -mr-24 tracking-tighter lg:tracking-[-1rem]">{Shop}</h2>
+        </div>
+
+        <div class="bg-fuente flex items-center flex-auto">
+            <h2 class="text-white text-[135px] lg:text-[175px] font-bold -rotate-90 -ml-[5.4rem] lg:-ml-[7.9rem] tracking-[-1rem] -mb-16">{Now}</h2>
+
+            <div class="w-full lg:max-w-[360px] mx-auto xl:ml-44 lg:mb-48">
+                <p class="text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">{Login}</p>
+                <form class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+                    <div class="space-y-1">
+                        <label
+                            for="key"
+                            class="text-white text-lg block text-left"
+                        >{Write the key}</label>
+                        <input
+                            id="key"
+                            type="text"
+                            class="p-2 w-full rounded-xl"
+                        >
+                    </div>
+
+                    <div class="space-y-5 flex flex-col mt-5">
+                        <a href="#" class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-light">{How the key works?}</a>
+                        <a href="/templates/src/views/auth/register.html" class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-light">{I'm not already registered}</a>
+                        <input
+                            type="submit"
+                            class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto"
+                            value="Buy Now"
+                        >
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

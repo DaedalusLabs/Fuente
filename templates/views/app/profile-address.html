@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="icon" href="/public/assets/img/logo.png" />
+    <title>{Profile - Address}</title>
+    <link rel="stylesheet" href="../../css/app.css">
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="container mx-auto py-10 flex justify-between">
+        <a href="/templates/src/views/app/home.html">
+            <img src="/templates/src/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex justify-between items-center w-full">
+                <input type="text" class="w-96 ml-auto pl-10 pr-4 py-3 border-2 border-fuente rounded-xl">
+                <svg class="feather feather-search absolute right-3 h-8 w-8 text-fuente" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>
+                </svg>
+            </div>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 w-10 h-10 text-fuente cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+
+            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente cursor-pointer">
+                <rect fill="none" height="256" width="256"/><path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+            </svg>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 w-10 h-10 text-fuente cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+        </div>
+    </header>
+    
+    <nav class="max-w-6xl mx-auto">
+        <div class="flex justify-between">
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Books}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Tech}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Clothing}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Hardware}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Pharmacy}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Groceries}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Music}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Movies}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{Furniture}</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto py-10 flex justify-between">
+        <h1 class="text-fuente text-6xl font-bold tracking-tighter">{My Profile}</h1>
+
+        <div class="flex items-center gap-4">
+            <div class="flex justify-center items-center">
+                <button type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
+
+                    <svg viewBox="0 0 30 30" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 30 30" class="h-8 w-8"><path d="M7 22V4h18v18a4 4 0 0 1-4 4" fill="none" stroke="#4167e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M17 22h0H4h0a4 4 0 0 0 4 4h13a4 4 0 0 1-4-4z" fill="none" stroke="#4167e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M15 13h6M11 13h2M15 17h6M11 17h2M15 9h6M11 9h2" fill="none" stroke="#4167e8" stroke-width="2" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M17 22H4a4 4 0 0 0 4 4h13a4 4 0 0 1-4-4z" fill="#4167e8" class="fill-000000"></path></svg>
+
+                    <span class="text-lg font-bold text-center">{My Orders}</span>
+                </button>
+            </div>
+            <div class="flex justify-center items-center">
+                <button type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                        <g data-name="14. Delivery Truck"><path d="M7 5h6v3.88A1.12 1.12 0 0 1 11.88 10H8.12A1.12 1.12 0 0 1 7 8.88V5Z" fill="#4167e8" class="fill-77acf1"></path><path d="m31.41 17-1.54-1.54-1.69-5.09A2 2 0 0 0 26.28 9H20V7a3 3 0 0 0-3-3H3a3 3 0 0 0-3 3v15a3 3 0 0 0 3 3h1.14a4 4 0 1 0 0-2H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v16h-3a1 1 0 0 0 0 2h6.14a4 4 0 0 0 7.72 0H30a2 2 0 0 0 2-2v-4.59a2 2 0 0 0-.59-1.41ZM8 22a2 2 0 1 1-2 2 2 2 0 0 1 2-2Zm19.61-7H24v-4h2.28ZM25 26a2 2 0 1 1 2-2 2 2 0 0 1-2 2Zm5-3h-1.14a4 4 0 0 0-7.72 0H20V11h2v5a1 1 0 0 0 1 1h5.59L30 18.41Z" fill="#4167e8" class="fill-04009a"></path></g>
+                    </svg>
+
+                    <span class="text-lg font-bold text-center">{Track Packages}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <main class="container mx-auto flex-grow">
+        <div class="flex gap-10">
+            <aside class="flex flex-col gap-3">
+                <a class="py-4 px-8 rounded-2xl font-bold text-lg bg-gray-100 text-gray-500 text-left tracking-wide" href="/templates/src/views/app/profile-personal.html">
+                    {Personal Information}
+                </a>
+                <a class="py-4 px-8 rounded-2xl font-bold text-lg bg-fuente text-white text-left tracking-wide" href="/templates/src/views/app/profile-address.html">
+                    {Address}
+                </a>
+            </aside>
+
+            <div class="border border-fuente rounded-xl flex items-center justify-between flex-1" style="padding: 0px 80px;">
+                <div>
+                    <p class="text-xl font-bold text-gray-500">{Address Registered}</p>
+                    <span class="text-xl font-thin text-gray-500">{Cali Street, New York, United States, 11232}</span>
+                </div>
+
+                <button type="button" class="flex gap-4 tracking-wide">
+                    <span class="text-fuente font-bold text-xl">{Edit}</span>
+                    <svg class="feather feather-edit text-fuente" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-end my-5">
+            <button class="font-bold text-lg bg-fuente-buttons text-fuente py-3 px-7 rounded-full">{Add new address}</button>
+        </div>
+    </main>
+
+    <footer class="bg-fuente p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+            <a href="/src/views/app/home.html">
+                <h3 class="text-white font-bold text-5xl">{Fuente}</h3>
+            </a>
+
+            <div>
+                <h3 class="text-xl text-white">{About Fuente}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {How to buy?}</p>
+                    <p class="text-white font-light text-lg">&gt; {How to sale?}</p>
+                    <p class="text-white font-light text-lg">&gt; {Why is secure?}</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl text-white">{Benefits of Fuente}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {Our benefits}</p>
+                    <p class="text-white font-light text-lg">&gt; {Shipping and collections of orders}</p>
+                    <p class="text-white font-light text-lg">&gt; {Payment methods}</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl text-white">{Politics of Fuente}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {Terms and conditions}</p>
+                    <p class="text-white font-light text-lg">&gt; {General policies}</p>
+                    <p class="text-white font-light text-lg">&gt; {Privacy Policy}</p>
+                    <p class="text-white font-light text-lg">&gt; {Return and exchanges}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
