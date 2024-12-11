@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"Favorites - Products"}</title>
+    <link rel="stylesheet" href="../../css/app.css">
+</head>
+<body>
+    <header class="container mx-auto py-10 flex justify-between">
+        <a href="/templates/views/app/home.html">
+            <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex justify-between items-center w-full">
+                <input type="text" class="w-96 ml-auto pl-10 pr-4 py-3 border-2 border-fuente rounded-xl">
+                <svg class="feather feather-search absolute right-3 h-8 w-8 text-fuente" fill="none" height="24"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                </svg>
+            </div>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+    
+            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                <rect fill="none" height="256" width="256" />
+                <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+            </svg>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+        </div>
+    </header>
+
+    <nav class="max-w-6xl mx-auto">
+        <div class="flex justify-between">
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Hardware"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Pharmacy"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Groceries"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Music"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Movies"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-20">
+        <h1 class="text-5xl text-fuente font-bold tracking-tighter">{"Favorites"}</h1>
+        <div class="flex gap-10">
+            <aside class="flex flex-grow flex-col max-w-60 mt-5 space-y-4 min-h-screen">
+                <button class="bg-gray-100 py-4 px-10 text-left text-gray-500 font-semibold text-lg rounded-2xl">{"Stores"}</button>
+                <button class="bg-fuente text-white text-left text-lg font-semibold py-4 px-10 rounded-2xl">{"Products"}</button>
+            </aside>
+
+            <div class="grid grid-cols-3 gap-4 flex-1">
+                <div class="border border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
+                    <div class="relative">
+                        <img src="/templates/img/tshirt.png" alt="Favorites Image" class="object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl">
+                        <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
+                            <path d="M429.9 95.6c-40.4-42.1-106-42.1-146.4 0L256 124.1l-27.5-28.6c-40.5-42.1-106-42.1-146.4 0-45.5 47.3-45.5 124.1 0 171.4L256 448l173.9-181c45.5-47.3 45.5-124.1 0-171.4z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                    </div>
+
+                    <h2 class="text-lg text-gray-500 text-center mt-3">{"T-shirt Jurassic Vibes"}</h2>
+                    <p class="font-bold text-gray-500 text-center">{"DEMO STORE"}</p>
+                    <div class="flex items-center justify-center gap-1">
+                        <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                            <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                        <p class="text-gray-500">{"5.0 (3 reviews)"}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-3 px-5">
+                        <p class="text-2xl font-bold text-fuente">{"$14.99"}</p>
+                        <button class="bg-fuente-orange text-white py-2 px-7 rounded-full">
+                            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8">
+                                <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="border border-fuente rounded-2xl p-1 max-w-72 max-h-96">
+                    <div class="relative">
+                        <img src="/templates/img/hp.jpg" alt="Favorites Image" class="object-contain w-full mx-auto max-h-52 bg-gray-100 rounded-2xl">
+                        <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
+                            <path d="M429.9 95.6c-40.4-42.1-106-42.1-146.4 0L256 124.1l-27.5-28.6c-40.5-42.1-106-42.1-146.4 0-45.5 47.3-45.5 124.1 0 171.4L256 448l173.9-181c45.5-47.3 45.5-124.1 0-171.4z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                    </div>
+
+                    <h2 class="text-lg text-gray-500 text-center mt-3">{"Harry Potter Book"}</h2>
+                    <p class="font-bold text-gray-500 text-center">{"ANDINA STORE"}</p>
+                    <div class="flex items-center justify-center gap-1">
+                        <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                            <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                        <p class="text-gray-500">{"2.0 (0 reviews)"}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-3 px-5">
+                        <p class="text-2xl font-bold text-fuente">{"$49.99"}</p>
+                        <button class="bg-fuente-orange text-white py-2 px-7 rounded-full">
+                            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8">
+                                <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="border border-fuente rounded-2xl p-1 max-w-72 max-h-96">
+                    <div class="relative">
+                        <img src="/templates/img/whey.jpg" alt="Favorites Image" class="object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl">
+                        <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
+                            <path d="M429.9 95.6c-40.4-42.1-106-42.1-146.4 0L256 124.1l-27.5-28.6c-40.5-42.1-106-42.1-146.4 0-45.5 47.3-45.5 124.1 0 171.4L256 448l173.9-181c45.5-47.3 45.5-124.1 0-171.4z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                    </div>
+
+                    <h2 class="text-lg text-gray-500 text-center mt-3">{"Whey Protein 100%"}</h2>
+                    <p class="font-bold text-gray-500 text-center">{"WHEY STORE"}</p>
+                    <div class="flex items-center justify-center gap-1">
+                        <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                            <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                        <p class="text-gray-500">{"5.0 (30 reviews)"}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-3 px-5">
+                        <p class="text-2xl font-bold text-fuente">{"$99.99"}</p>
+                        <button class="bg-fuente-orange text-white py-2 px-7 rounded-full">
+                            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8">
+                                <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-fuente p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+            <a href="/templates/views/app/home.html">
+                <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+            </a>
+    
+            <div>
+                <h3 class="text-xl text-white">{"About Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"How to sale?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Why is secure?"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Shipping and collections of orders"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Payment methods"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"General policies"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Privacy Policy"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Return and exchanges"}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

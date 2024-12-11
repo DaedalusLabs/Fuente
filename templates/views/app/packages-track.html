@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{"Payment"}</title>
+    <title>{"Packages - Track"}</title>
     <link rel="stylesheet" href="../../css/app.css">
 </head>
 <body>
@@ -49,27 +49,76 @@
         </div>
     </header>
 
-    <div class="bg-gray-100 py-5 flex items-center gap-16">
-        <div class="container mx-auto flex items-center justify-end gap-4">
-            <p class="text-white bg-fuente-orange w-16 h-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"1"}</p>
-            <p class="text-fuente-orange font-bold text-xl">{"Payment"}</p>
+    <nav class="max-w-6xl mx-auto">
+        <div class="flex justify-between">
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Hardware"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Pharmacy"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Groceries"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Music"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Movies"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-20">
+        <h1 class="text-6xl font-bold text-fuente tracking-tighter">{"Your Packages"}</h1>
+        <div class="mt-5 flex gap-4">
+            <button class="bg-fuente text-white text-center font-bold text-lg rounded-2xl py-4 w-56">{"On Going"}</button>
+            <button class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56">{"Completed"}</button>
         </div>
 
-        <div class="container mx-auto flex items-center gap-5">
-            <p class="text-white bg-fuente h-16 w-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"2"}</p>
-            <p class="text-fuente font-bold text-xl">{"Confirmation"}</p>
-        </div>
-    </div>
+        <table class="table-auto w-full border-collapse mt-5">
+            <thead>
+              <tr>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Order Number"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Purchased Date"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Product Details"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Driver Assigned"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Time to Deliver"}</th>
+              </tr>
+            </thead>
+            <tbody class="bg-gray-100">
+              <tr>
+                <td class="text-center text-xl font-semibold text-fuente-dark">{"#1234567"}</td>
+                <td class="text-center text-xl font-semibold text-fuente-dark">{"12/12/24"}</td>
+                <td class="flex flex-col space-y-7">
+                    <div class="flex gap-5 justify-center pt-5">
+                        <img src="/templates/img/sneaker_2.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
+                        </div>
+                    </div>
 
-    <main class="mt-20">
-        <div class="w-52 mx-auto">
-            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M26 12.54A5.43 5.43 0 0 0 21.88 6l-1.53-.35.69-3-1.8-.42-.7 3-2.09-.48.69-3-1.8-.42-.69 3-5-1.14L9.29 5l3 .69L8.2 23.4l-3-.69-.41 1.8 4.94 1.14-.69 3 1.8.41.69-3 2.1.48-.69 3 1.8.41.69-3h.07l2.44.56a6 6 0 0 0 1.46.17 6.45 6.45 0 0 0 6.25-5 6.41 6.41 0 0 0-.82-4.85 6.53 6.53 0 0 0-1.65-1.78c.12-.06.24-.11.36-.18A5.45 5.45 0 0 0 26 12.54Zm-2.31-3.12a3.58 3.58 0 0 1-1.14 4.93 3.55 3.55 0 0 1-1.78.53 3.93 3.93 0 0 0 .94-1.78l.68-2.93a4 4 0 0 0-.09-2 3.54 3.54 0 0 1 1.39 1.25ZM20.28 20l-.67 2.93a3.09 3.09 0 0 1-3.69 2.3l-2-.47L16 15.8l2 .47A3.07 3.07 0 0 1 20.28 20Zm0-11.76a2 2 0 0 1 .26 1.57l-.67 2.92a2.09 2.09 0 0 1-2.49 1.56L16.37 14 18 7l1 .27a2 2 0 0 1 1.32.92Zm-6.2-2.11 2.1.48L12.1 24.3l-2.1-.49Zm9.76 16.18a4.52 4.52 0 0 1-3.91 3.5 4.8 4.8 0 0 0 1.48-2.52l.68-2.92a4.9 4.9 0 0 0-.23-2.92 4.55 4.55 0 0 1 2 4.86Z" data-name="2" fill="#f4801b" class="fill-000000"></path></svg>
-        </div>
+                    <div class="flex gap-5 justify-center">
+                        <img src="/templates/img/sneaker_1.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
+                        </div>
+                    </div>
 
-        <div class="max-w-md mx-auto mt-5 space-y-3">
-            <h1 class="text-3xl font-bold text-fuente text-center">{"Your transaction is waiting to be approved by the store."}</h1>
-            <p class="font-light text-fuente text-center w-5/6 mx-auto">{"Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded tho the account"}</p>
-        </div>
+                    <div class="flex gap-5 justify-center">
+                        <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center text-fuente-dark font-semibold text-xl">{"John Doe"}</td>
+                <td class="text-center text-fuente-dark font-semibold text-xl">{"3:30 PM"}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <img src="/templates/img/mapa.png" alt="Mapa image" class="w-full px-40 py-20 mx-auto bg-gray-100">
     </main>
 
     <footer class="bg-fuente p-20 mt-40">
