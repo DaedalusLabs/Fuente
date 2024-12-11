@@ -12,7 +12,8 @@ module.exports = {
                 'fuente': '#4167e8',
                 'fuente-dark': '#3b1197',
                 'fuente-forms': "#3859c7",
-                "fuente-buttons": "#6fe5fa"
+                "fuente-buttons": "#6fe5fa",
+                "fuente-orange": "#f4801b"
             },
             fontFamily: {
                 'product': ['OpenSans', 'sans-serif'],
