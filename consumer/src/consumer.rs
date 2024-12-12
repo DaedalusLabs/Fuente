@@ -1,7 +1,7 @@
 use consumer::{
     contexts::{
         CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
-        ConsumerDataStore, LiveOrderProvider,
+        ConsumerDataStore, LiveOrderProvider, FavoritesProvider,
     },
     pages::NewProfilePage,
     router::ConsumerPages,
@@ -89,7 +89,9 @@ fn app_context(props: &ChildrenProps) -> Html {
            <CommerceDataProvider>
                <CartProvider>
                    <LiveOrderProvider>
-                       {props.children.clone()}
+                       <FavoritesProvider>
+                           {props.children.clone()}
+                       </FavoritesProvider>
                    </LiveOrderProvider>
                </CartProvider>
            </CommerceDataProvider>
