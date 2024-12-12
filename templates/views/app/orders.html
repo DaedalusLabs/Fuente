@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{"Packages - Track"}</title>
+    <title>{"My orders"}</title>
     <link rel="stylesheet" href="../../styles/output.css">
 </head>
 <body>
@@ -63,11 +63,11 @@
         </div>
     </nav>
 
-    <main class="container mx-auto mt-20">
-        <h1 class="text-6xl font-bold text-fuente tracking-tighter">{"Your Packages"}</h1>
+    <main class="mt-20 container mx-auto">
+        <h1 class="text-6xl font-bold text-fuente tracking-tighter">{"My Orders"}</h1>
         <div class="mt-5 flex gap-4">
-            <a class="bg-fuente text-white text-center font-bold text-lg rounded-2xl py-4 w-56" href="#">{"On Going"}</a>
-            <a class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56" href="#">{"Completed"}</a>
+            <button class="bg-fuente text-white text-center font-bold text-lg rounded-2xl py-4 w-56">{"Completed"}</button>
+            <button class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56">{"Failed"}</button>
         </div>
 
         <table class="table-auto w-full border-collapse mt-5">
@@ -77,7 +77,7 @@
                 <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Purchased Date"}</th>
                 <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Product Details"}</th>
                 <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Driver Assigned"}</th>
-                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Time to Deliver"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{"Status of Store"}</th>
               </tr>
             </thead>
             <tbody class="bg-gray-100">
@@ -104,7 +104,7 @@
                     </div>
 
                     <div class="flex gap-5 justify-center">
-                        <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain">
+                        <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain pb-5">
                         <div>
                             <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
                             <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
@@ -113,12 +113,10 @@
                     </div>
                 </td>
                 <td class="text-center text-fuente-dark font-semibold text-xl">{"John Doe"}</td>
-                <td class="text-center text-fuente-dark font-semibold text-xl">{"3:30 PM"}</td>
+                <td class="text-center text-fuente-dark font-semibold text-xl">{"Delivered"}</td>
               </tr>
             </tbody>
           </table>
-
-          <img src="/templates/img/mapa.png" alt="Mapa image" class="w-full px-40 py-20 mx-auto bg-gray-100">
     </main>
 
     <footer class="bg-fuente p-20 mt-40">
