@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{"Favorites - Products"}</title>
-    <link rel="stylesheet" href="../../css/app.css">
+    <link rel="stylesheet" href="../../styles/output.css">
 </head>
 <body>
     <header class="container mx-auto py-10 flex justify-between">
@@ -64,15 +64,20 @@
     </nav>
 
     <main class="container mx-auto mt-20">
-        <h1 class="text-5xl text-fuente font-bold tracking-tighter">{"Favorites"}</h1>
-        <div class="flex gap-10">
-            <aside class="flex flex-grow flex-col max-w-60 mt-5 space-y-4 min-h-screen">
-                <button class="bg-gray-100 py-4 px-10 text-left text-gray-500 font-semibold text-lg rounded-2xl">{"Stores"}</button>
-                <button class="bg-fuente text-white text-left text-lg font-semibold py-4 px-10 rounded-2xl">{"Products"}</button>
+        <h1 class="text-6xl text-fuente font-bold tracking-tighter">{"Favorites"}</h1>
+        
+        <div class="flex gap-10 mt-5">
+            <aside class="flex flex-grow flex-col max-w-72 space-y-4 min-h-screen">
+                <a class="py-4 px-8 rounded-2xl font-bold text-lg bg-gray-100 text-gray-500 text-left tracking-wide" href="/templates/views/app/favorites-stores.html">
+                    {"Stores"}
+                </a>
+                <a class="py-4 px-8 rounded-2xl font-bold text-lg bg-fuente text-white text-left tracking-wide" href="/templates/views/app/favorites-products.html">
+                    {"Products"}
+                </a>
             </aside>
 
-            <div class="grid grid-cols-3 gap-4 flex-1">
-                <div class="border border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
+            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
+                <div class="border-2 border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
                     <div class="relative">
                         <img src="/templates/img/tshirt.png" alt="Favorites Image" class="object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl">
                         <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
@@ -98,7 +103,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="border border-fuente rounded-2xl p-1 max-w-72 max-h-96">
+                <div class="border-2 border-fuente rounded-2xl p-1 max-w-72 max-h-96">
                     <div class="relative">
                         <img src="/templates/img/hp.jpg" alt="Favorites Image" class="object-contain w-full mx-auto max-h-52 bg-gray-100 rounded-2xl">
                         <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
@@ -124,7 +129,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="border border-fuente rounded-2xl p-1 max-w-72 max-h-96">
+                <div class="border-2 border-fuente rounded-2xl p-1 max-w-72 max-h-96">
                     <div class="relative">
                         <img src="/templates/img/whey.jpg" alt="Favorites Image" class="object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl">
                         <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-7 h-7 absolute top-3 left-3">
