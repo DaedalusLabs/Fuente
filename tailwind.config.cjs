@@ -20,7 +20,7 @@ module.exports = {
                 'mplus': ['MPlus', 'sans-serif'],
             },
             backgroundImage: {
-                logo: `url('/templates/src/img/Logo Fuente.jpeg')`
+                logo: `url('/templates/img/Logo Fuente.jpeg')`
             }
         },
     },
