@@ -1,9 +1,12 @@
-use crate::{contexts::CommerceDataStore, router::ConsumerRoute};
+use crate::{contexts::CommerceDataStore, router::ConsumerRoute, contexts::FavoritesStore};
 use fuente::mass::{
     AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LoadingScreen, LookupIcon,
     MenuBarsIcon, ShoppingCartIcon, UserBadgeIcon,
 };
 use yew::prelude::*;
+use fuente::models::FavoriteStore;
+use nostr_minions::key_manager::NostrIdStore;
+use crate::contexts::FavoritesAction;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
@@ -37,19 +40,74 @@ pub fn home_page() -> Html {
                 <CommerceFilters filter_handle={filter_state} />
                 <div class="flex flex-1 flex-row overflow-x-scroll gap-8 pl-8 items-center">
                     {businesses.iter().map(|profile| {
+                        let commerce_data = profile.profile().clone();
                         html! {
-                        <AppLink<ConsumerRoute>
-                            class="w-64"
-                            selected_class=""
-                            route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
-                        <CommerceProfileCard commerce_data={profile.profile().clone()} />
-                        </AppLink<ConsumerRoute>>
+                            <AppLink<ConsumerRoute>
+                                class="w-64"
+                                selected_class=""
+                                route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
+                                <div class="relative">
+                                <CommerceProfileCard commerce_data={commerce_data.clone()} />
+                                <FavoriteButton 
+                                    commerce_id={profile.id().to_string()}
+                                    commerce_data={commerce_data} 
+                                />
+                            </div>
+                            </AppLink<ConsumerRoute>>
                         }
                     }).collect::<Html>()}
                 </div>
             </div>
             <HomeFooter />
         </div>
+    }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct HomeFavoriteButtonProps {
+    pub commerce_id: String,
+    pub commerce_data: fuente::models::CommerceProfile,
+}
+
+#[function_component(FavoriteButton)]
+fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
+    let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    
+    let is_favorite = favorites_ctx.is_favorite(&props.commerce_id);
+    
+    let onclick = {
+        let commerce_id = props.commerce_id.clone();
+        let favorites = favorites_ctx.clone();
+        let user_id = key_ctx.get_nostr_key().unwrap().public_key();
+        
+        Callback::from(move |e: MouseEvent| {
+            e.stop_propagation();
+            if favorites.is_favorite(&commerce_id) {
+                favorites.dispatch(FavoritesAction::RemoveFavorite(commerce_id.clone()));
+            } else {
+                let favorite = FavoriteStore::new(commerce_id.clone(), user_id.clone());
+                favorites.dispatch(FavoritesAction::AddFavorite(favorite));
+            }
+        })
+    };
+
+    html! {
+        <button 
+            {onclick}
+            class={classes!(
+                "absolute",
+                "top-4",
+                "right-4",
+                "p-2",
+                "rounded-full",
+                "hover:bg-gray-100",
+                "transition-colors",
+                if is_favorite { "text-red-500" } else { "text-gray-400" }
+            )}
+        >
+            <HeartIcon class="w-6 h-6" />
+        </button>
     }
 }
 
