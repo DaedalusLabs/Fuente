@@ -11,6 +11,7 @@ mod gps;
 mod nostr_kinds;
 mod orders;
 mod products;
+mod favorites;
 pub use address::*;
 pub use admin_configs::*;
 pub use commerce::*;
@@ -20,6 +21,7 @@ pub use gps::*;
 pub use nostr_kinds::*;
 pub use orders::*;
 pub use products::*;
+pub use favorites::*;
 
 // pub mod sync;
 // // TODO 
@@ -49,6 +51,7 @@ pub const STORE_NAME_CONSUMER_PROFILES: &str = "user_profiles";
 pub const STORE_NAME_CONSUMER_ADDRESSES: &str = "consumer_address";
 pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
+pub const STORE_NAME_CONSUMER_FAVORITES: &str = "consumer_favorites";
 
 pub const ADMIN_WHITELIST: [&str; 2] = [
     "decfef1c4a027fe815eda8ea5748aa0d3e971c4c377423a49d94fa0fc3e25575",
@@ -100,6 +103,10 @@ fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
     if !db.object_store_names().contains(STORE_NAME_ORDER_HISTORY) {
         orders::OrderStateIdb::create_data_store(&db)?;
         gloo::console::log!("Order history store created");
+    }
+    if !db.object_store_names().contains(STORE_NAME_CONSUMER_FAVORITES) {
+        FavoriteStore::create_data_store(&db)?;
+        gloo::console::log!("Favorites store created");
     }
     gloo::console::log!("Fuente database upgraded");
     Ok(())
