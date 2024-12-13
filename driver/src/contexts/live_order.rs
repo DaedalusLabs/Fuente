@@ -1,11 +1,12 @@
 use std::rc::Rc;
 
 use fuente::models::{
-    OrderInvoiceState, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE,
+    OrderInvoiceState, OrderStateIdb, OrderStatus, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{relays::NostrSubscription, keypair::NostrKeypair};
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
+use nostr_minions::browser_api::IdbStoreManager;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderHub {
@@ -157,10 +158,20 @@ pub fn commerce_data_sync() -> Html {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
                         if let Some(signed_note) = order_status.get_courier() {
                             if signed_note.pubkey == my_keys.public_key() {
+                                // First save to IndexedDB for any order belonging to this driver
+                                let db_entry = OrderStateIdb::new(note.clone());
+                                if let Ok(entry) = db_entry {
+                                    spawn_local(async move {
+                                        if let Err(e) = entry.save_to_store().await {
+                                            gloo::console::error!("Failed to save order to IndexedDB:", e);
+                                        } else {
+                                            gloo::console::log!("Order saved to IndexedDB");
+                                        }
+                                    });
+                                }
+    
                                 match order_status.get_order_status() {
                                     OrderStatus::Canceled => {
-                                        // TODO
-                                        // add to local history
                                         gloo::console::info!(
                                             "Order Canceled: ",
                                             format!("{:?}", order_status.get_order_status())
@@ -170,8 +181,6 @@ pub fn commerce_data_sync() -> Html {
                                         ));
                                     }
                                     OrderStatus::Completed => {
-                                        // TODO
-                                        // add to local history
                                         gloo::console::info!(
                                             "Order Completed: ",
                                             format!("{:?}", order_status.get_order_status())
@@ -181,7 +190,6 @@ pub fn commerce_data_sync() -> Html {
                                         ));
                                     }
                                     _ => {
-                                        // If my key matches assigned courier means im assigned
                                         gloo::console::info!(
                                             "New LIVE Order: ",
                                             format!("{:?}", order_status.get_order_status())
