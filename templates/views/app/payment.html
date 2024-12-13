@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"Payment"}</title>
+    <link rel="stylesheet" href="../../styles/output.css">
+</head>
+<body>
+    <header class="container mx-auto py-10 flex justify-between">
+        <a href="/templates/views/app/home.html">
+            <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex justify-between items-center w-full">
+                <input type="text" class="w-96 ml-auto pl-10 pr-4 py-3 border-2 border-fuente rounded-xl">
+                <svg class="feather feather-search absolute right-3 h-8 w-8 text-fuente" fill="none" height="24"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                </svg>
+            </div>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+    
+            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                <rect fill="none" height="256" width="256" />
+                <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+            </svg>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+        </div>
+    </header>
+
+    <div class="bg-gray-100 py-5 flex items-center gap-16">
+        <div class="container mx-auto flex items-center justify-end gap-4">
+            <p class="text-white bg-fuente-orange w-16 h-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"1"}</p>
+            <p class="text-fuente-orange font-bold text-xl">{"Payment"}</p>
+        </div>
+
+        <div class="container mx-auto flex items-center gap-5">
+            <p class="text-white bg-fuente h-16 w-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"2"}</p>
+            <p class="text-fuente font-bold text-xl">{"Confirmation"}</p>
+        </div>
+    </div>
+
+    <main class="mt-20">
+        <div class="w-52 mx-auto">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M26 12.54A5.43 5.43 0 0 0 21.88 6l-1.53-.35.69-3-1.8-.42-.7 3-2.09-.48.69-3-1.8-.42-.69 3-5-1.14L9.29 5l3 .69L8.2 23.4l-3-.69-.41 1.8 4.94 1.14-.69 3 1.8.41.69-3 2.1.48-.69 3 1.8.41.69-3h.07l2.44.56a6 6 0 0 0 1.46.17 6.45 6.45 0 0 0 6.25-5 6.41 6.41 0 0 0-.82-4.85 6.53 6.53 0 0 0-1.65-1.78c.12-.06.24-.11.36-.18A5.45 5.45 0 0 0 26 12.54Zm-2.31-3.12a3.58 3.58 0 0 1-1.14 4.93 3.55 3.55 0 0 1-1.78.53 3.93 3.93 0 0 0 .94-1.78l.68-2.93a4 4 0 0 0-.09-2 3.54 3.54 0 0 1 1.39 1.25ZM20.28 20l-.67 2.93a3.09 3.09 0 0 1-3.69 2.3l-2-.47L16 15.8l2 .47A3.07 3.07 0 0 1 20.28 20Zm0-11.76a2 2 0 0 1 .26 1.57l-.67 2.92a2.09 2.09 0 0 1-2.49 1.56L16.37 14 18 7l1 .27a2 2 0 0 1 1.32.92Zm-6.2-2.11 2.1.48L12.1 24.3l-2.1-.49Zm9.76 16.18a4.52 4.52 0 0 1-3.91 3.5 4.8 4.8 0 0 0 1.48-2.52l.68-2.92a4.9 4.9 0 0 0-.23-2.92 4.55 4.55 0 0 1 2 4.86Z" data-name="2" fill="#f4801b" class="fill-000000"></path></svg>
+        </div>
+
+        <div class="max-w-md mx-auto mt-5 space-y-3">
+            <h1 class="text-3xl font-bold text-fuente text-center">{"Your transaction is waiting to be approved by the store."}</h1>
+            <p class="font-light text-fuente text-center w-5/6 mx-auto">{"Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded tho the account"}</p>
+        </div>
+    </main>
+
+    <footer class="bg-fuente p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+            <a href="/templates/views/app/home.html">
+                <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+            </a>
+    
+            <div>
+                <h3 class="text-xl text-white">{"About Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"How to sale?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Why is secure?"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Shipping and collections of orders"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Payment methods"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"General policies"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Privacy Policy"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Return and exchanges"}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
