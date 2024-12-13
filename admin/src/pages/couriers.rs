@@ -3,7 +3,7 @@ use fuente::{
     models::{AdminConfigurationType, AdminServerRequest, DriverProfile, DRIVER_HUB_PRIV_KEY},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{notes::SignedNote, userkeys::UserKeys};
+use nostro2::{notes::NostrNote, keypair::NostrKeypair};
 use yew::prelude::*;
 
 use crate::ServerConfigsStore;
@@ -68,11 +68,11 @@ pub fn courier_whitelist_display() -> Html {
 pub fn courier_whitelist_display() -> Html {
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let wl_profiles = config_ctx.get_whitelisted_couriers();
-    let driver_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY).unwrap();
+    let driver_keys = NostrKeypair::new(DRIVER_HUB_PRIV_KEY).unwrap();
     let profiles = wl_profiles.iter().filter_map(|profile| {
-        let pubkey = profile.get_pubkey();
+        let pubkey = profile.pubkey.clone();
         let cleartext = driver_keys.decrypt_nip_04_content(&profile).unwrap();
-        let giftwrapped: SignedNote = cleartext.try_into().unwrap();
+        let giftwrapped: NostrNote = cleartext.try_into().unwrap();
         return match DriverProfile::try_from(giftwrapped.clone()) {
             Err(_) => None,
             Ok(profile) => Some((pubkey, profile)),

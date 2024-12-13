@@ -4,7 +4,7 @@ use fuente::models::{
 };
 use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
-    notes::SignedNote,
+    notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
@@ -183,7 +183,7 @@ pub fn key_handler(props: &ConsumerDataChildren) -> Html {
         if let Some(key) = key_ctx.get_nostr_key() {
             spawn_local(async move {
                 if let Ok(profile) = ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(
-                    &key.get_public_key(),
+                    &key.public_key(),
                 ))
                 .await
                 {
@@ -220,7 +220,7 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(key_ctx.clone(), move |keys| {
         if let Some(keys) = keys.get_nostr_key() {
             if &(*id_handle) == "" {
-                let pubkey = keys.get_public_key();
+                let pubkey = keys.public_key();
                 spawn_local(async move {
                     let filter = NostrSubscription {
                         kinds: Some(vec![NOSTR_KIND_CONSUMER_PROFILE]),
@@ -239,14 +239,14 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            match note.get_kind() {
+            match note.kind {
                 NOSTR_KIND_CONSUMER_PROFILE => {
                     let decrypted_note_str = key_ctx
                         .get_nostr_key()
                         .expect("No keys found")
                         .decrypt_nip_04_content(note)
                         .expect("Failed to decrypt note");
-                    let decrypted_note: SignedNote = serde_json::from_str(&decrypted_note_str)
+                    let decrypted_note: NostrNote = serde_json::from_str(&decrypted_note_str)
                         .expect("Failed to deserialize note");
                     if let Ok(profile) = decrypted_note.try_into() {
                         ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile))

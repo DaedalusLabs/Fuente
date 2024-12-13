@@ -6,9 +6,9 @@ resolver = "2"
 fuente = { path = "fuente" }
 
 # ILLUMINODES stack
-nostr-minions = "0.1.1"
+nostr-minions = "0.1.4"
 bright-lightning = "0.1.1"
-nostro2 = "0.1.35"
+nostro2 = "0.2.2"
 
 anyhow = "1.0.94"
 async-channel = "2.2.0"

@@ -1527,13 +1527,11 @@ dependencies = [
  "fuente",
  "futures-util",
  "httparse",
- "native-tls",
  "nostro2",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
- "tokio-tungstenite 0.24.0",
  "tracing",
  "tracing-subscriber",
  "tracing-test",
@@ -1700,12 +1698,11 @@ dependencies = [
 
 [[package]]
 name = "nostr-minions"
-version = "0.1.1"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50d14d21525726bb7e159e63a27cdf34abb34454e2bf4250e7305c65580cc120"
+checksum = "aa6d0279f4de903a4e3d5fc8b6a4db331af8358be028794bad1cac75dca017c5"
 dependencies = [
  "gloo 0.11.0",
- "gloo-timers 0.3.0",
  "js-sys",
  "nostro2",
  "serde",
@@ -1721,9 +1718,9 @@ dependencies = [
 
 [[package]]
 name = "nostro2"
-version = "0.1.35"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "851f0d89dc551ca00a74858dbc548937bcd5e9da42bbd01a6f32b48c9aba7f11"
+checksum = "aa010f955459c9e092823fa09272933b5b9f4bf19232173b0a0d9d75556e631d"
 dependencies = [
  "anyhow",
  "base64",
@@ -1736,7 +1733,6 @@ dependencies = [
  "hkdf",
  "hmac",
  "libaes",
- "rand",
  "ring",
  "rustls 0.23.19",
  "secp256k1 0.30.0",
@@ -1749,8 +1745,6 @@ dependencies = [
  "tokio-tungstenite-wasm",
  "tracing",
  "tracing-subscriber",
- "url",
- "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
 

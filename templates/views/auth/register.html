@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{"Register"}</title>
+    <link rel="stylesheet" href="../../styles/output.css">
+</head>
+<body>
+    <main class="flex min-h-screen">
+        <div class="bg-white bg-logo bg-no-repeat bg-[length:200px_75px] mt-10 ml-16 flex justify-end items-center flex-1">
+            <p class="text-fuente text-[175px] font-bold -rotate-90 -mr-52 tracking-[-1rem]">{"Register"}</p>
+        </div>
+
+        <div class="bg-fuente flex items-center flex-auto">
+            <h2 class="text-white text-[175px] font-bold -rotate-90 -ml-[7.5rem] tracking-[-1rem] -mb-28">{"Now"}</h2>
+
+            <div class="w-full max-w-[380px] -ml-16 xl:ml-20">
+                <h2 class="text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">{"Register"}</h2>
+                <form class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+                    <div class="space-y-5">
+                        <div class="space-y-1">
+                            <label
+                                for="username"
+                                class="text-white text-lg block text-left"
+                            >{"Your username"}</label>
+                            <input
+                                id="username"
+                                type="text"
+                                class="p-3 w-full rounded-xl"
+                            >
+                        </div>
+
+                        <div class="space-y-1">
+                            <label
+                                for="email"
+                                class="text-white text-lg block text-left"
+                            >{"Your email"}</label>
+                            <input
+                                id="email"
+                                type="email"
+                                class="p-3 w-full rounded-xl"
+                            >
+                        </div>
+
+                        <div class="space-y-1">
+                            <label
+                                for="phone"
+                                class="text-white text-lg block text-left"
+                            >{"Phone number"}</label>
+                            <input
+                                id="phone"
+                                type="tel"
+                                class="p-3 w-full rounded-xl"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="space-y-5 flex flex-col mt-5">
+                        <a href="/templates/views/auth/login.html" class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">{"I have an account - Login"}</a>
+                        <input
+                            type="submit"
+                            class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                            value="Register Now"
+                        >
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

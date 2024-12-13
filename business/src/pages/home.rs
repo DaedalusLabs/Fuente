@@ -114,7 +114,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
     };
     html! {
         <div
-            id={id.get_id().to_string()}
+            id={id.id.as_ref().unwrap().to_string()}
             class="draggable h-fit col-span-1 bg-white rounded-lg shadow-lg m-1 p-4">
             <div class="flex flex-row justify-between select-none">
                 <div class="flex flex-col gap-2">

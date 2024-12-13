@@ -4,7 +4,8 @@ use std::{collections::HashMap, sync::Arc};
 use anyhow::anyhow;
 use async_channel::{Receiver, Sender};
 use bright_lightning::{
-    HodlState, InvoicePaymentState, LightningAddress, LightningClient, LnAddressPaymentRequest, LndHodlInvoice, LndPaymentRequest
+    HodlState, InvoicePaymentState, LightningAddress, LightningClient, LnAddressPaymentRequest,
+    LndHodlInvoice, LndPaymentRequest,
 };
 use fuente::models::{
     CommerceProfile, DriverProfile, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
@@ -17,12 +18,11 @@ use fuente::models::{
     },
 };
 use nostro2::{
-    notes::SignedNote,
-    relays::{NostrSubscription, NoteEvent, RelayEvent, RelayPool, SendNoteEvent},
-    userkeys::UserKeys,
+    keypair::NostrKeypair,
+    notes::{NostrNote, NostrTag},
+    relays::{NostrRelayPool, NostrSubscription, NoteEvent, PoolRelayBroadcaster, RelayEvent},
 };
-use tokio::sync::{mpsc::UnboundedSender, Mutex};
-use tokio_tungstenite::tungstenite::Message;
+use tokio::sync::Mutex;
 use tracing::{error, info, warn, Level};
 pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
 pub const MILISATOSHIS_IN_ONE_SATOSHI: u64 = 1000;
@@ -31,12 +31,12 @@ pub const FUENTE_FEES: u64 = 0;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CommerceRegistryEntry {
-    profile: Option<SignedNote>,
-    menu: Option<SignedNote>,
+    profile: Option<NostrNote>,
+    menu: Option<NostrNote>,
     whitelisted: bool,
 }
 impl CommerceRegistryEntry {
-    pub fn new(profile: Option<SignedNote>, menu: Option<SignedNote>) -> Self {
+    pub fn new(profile: Option<NostrNote>, menu: Option<NostrNote>) -> Self {
         Self {
             profile,
             menu,
@@ -49,16 +49,16 @@ impl CommerceRegistryEntry {
     pub fn is_whitelisted(&self) -> bool {
         self.whitelisted
     }
-    pub fn get_profile(&self) -> Option<SignedNote> {
+    pub fn get_profile(&self) -> Option<NostrNote> {
         self.profile.clone()
     }
-    pub fn get_menu(&self) -> Option<SignedNote> {
+    pub fn get_menu(&self) -> Option<NostrNote> {
         self.menu.clone()
     }
-    pub fn set_profile(&mut self, profile: SignedNote) {
+    pub fn set_profile(&mut self, profile: NostrNote) {
         self.profile = Some(profile);
     }
-    pub fn set_menu(&mut self, menu: SignedNote) {
+    pub fn set_menu(&mut self, menu: NostrNote) {
         self.menu = Some(menu);
     }
     pub fn ln_address(&self) -> anyhow::Result<LightningAddress> {
@@ -74,12 +74,12 @@ pub async fn main() -> anyhow::Result<()> {
         .with_max_level(Level::INFO)
         .init();
     let vec_strings = RELAY_URLS.iter().map(|s| s.to_string()).collect();
-    let relay_pool = RelayPool::new(vec_strings).await?;
+    let relay_pool = NostrRelayPool::new(vec_strings).await?;
     let (public_notes_tx, public_notes_channel) = async_channel::unbounded();
     let (private_notes_tx, private_notes_channel) = async_channel::unbounded();
     let (live_order_tx, live_order_channel) = async_channel::unbounded();
     let bot = InvoicerBot::new(
-        relay_pool.broadcaster(),
+        relay_pool.writer.clone(),
         public_notes_channel,
         private_notes_channel,
         live_order_channel,
@@ -119,32 +119,31 @@ pub async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub type RelayBroadcaster = Vec<UnboundedSender<Message>>;
 #[derive(Clone)]
 pub struct InvoicerBot {
-    keys: UserKeys,
+    keys: NostrKeypair,
     ln_address_client: reqwest::Client,
     lightning_wallet: LightningClient,
-    broadcaster: RelayBroadcaster,
+    broadcaster: PoolRelayBroadcaster,
     admin_config: Arc<Mutex<AdminConfiguration>>,
     live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
-    courier_profiles: Arc<Mutex<HashMap<String, SignedNote>>>,
+    courier_profiles: Arc<Mutex<HashMap<String, NostrNote>>>,
     commerce_registries: Arc<Mutex<HashMap<String, CommerceRegistryEntry>>>,
-    public_notes_channel: Receiver<(u32, SignedNote)>,
-    private_notes_channel: Receiver<(u32, SignedNote)>,
+    public_notes_channel: Receiver<(u32, NostrNote)>,
+    private_notes_channel: Receiver<(u32, NostrNote)>,
     live_order_channel: Receiver<OrderInvoiceState>,
 }
 
 impl InvoicerBot {
     pub async fn new(
-        broadcaster: RelayBroadcaster,
-        public_notes_channel: Receiver<(u32, SignedNote)>,
-        private_notes_channel: Receiver<(u32, SignedNote)>,
+        broadcaster: PoolRelayBroadcaster,
+        public_notes_channel: Receiver<(u32, NostrNote)>,
+        private_notes_channel: Receiver<(u32, NostrNote)>,
         live_order_channel: Receiver<OrderInvoiceState>,
     ) -> anyhow::Result<Self> {
         let lightning_wallet =
             LightningClient::new("lnd.illuminodes.com", "./invoices.macaroon").await?;
-        let server_keys = UserKeys::new(TEST_PRIV_KEY)?;
+        let server_keys = NostrKeypair::new(TEST_PRIV_KEY)?;
         info!("Relay pool started");
         let mut admin_config = AdminConfiguration::default();
         admin_config.set_admin_whitelist(vec![TEST_PUB_KEY.to_string()]);
@@ -163,19 +162,19 @@ impl InvoicerBot {
         })
     }
     async fn note_processor(
-        server_keys: UserKeys,
-        courier_hub_keys: UserKeys,
-        commerce_profile_channel: Sender<(u32, SignedNote)>,
-        private_notes_channel: Sender<(u32, SignedNote)>,
+        server_keys: NostrKeypair,
+        courier_hub_keys: NostrKeypair,
+        commerce_profile_channel: Sender<(u32, NostrNote)>,
+        private_notes_channel: Sender<(u32, NostrNote)>,
         live_order_channel: Sender<OrderInvoiceState>,
-        signed_note: SignedNote,
+        signed_note: NostrNote,
     ) -> anyhow::Result<()> {
-        match signed_note.get_kind() {
+        match signed_note.kind {
             NOSTR_KIND_SERVER_REQUEST => {
                 let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
-                let inner_note = SignedNote::try_from(decrypted)?;
+                let inner_note = NostrNote::try_from(decrypted)?;
                 if let Err(e) = private_notes_channel
-                    .send((inner_note.get_kind(), inner_note))
+                    .send((inner_note.kind, inner_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -183,9 +182,9 @@ impl InvoicerBot {
             }
             NOSTR_KIND_ADMIN_REQUEST => {
                 let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
-                let inner_note = SignedNote::try_from(decrypted)?;
+                let inner_note = NostrNote::try_from(decrypted)?;
                 if let Err(e) = private_notes_channel
-                    .send((signed_note.get_kind(), inner_note))
+                    .send((signed_note.kind, inner_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -193,7 +192,7 @@ impl InvoicerBot {
             }
             NOSTR_KIND_SERVER_CONFIG => {
                 if let Err(e) = commerce_profile_channel
-                    .send((signed_note.get_kind(), signed_note))
+                    .send((signed_note.kind, signed_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -210,7 +209,7 @@ impl InvoicerBot {
             }
             NOSTR_KIND_COMMERCE_PROFILE => {
                 if let Err(e) = commerce_profile_channel
-                    .send((signed_note.get_kind(), signed_note))
+                    .send((signed_note.kind, signed_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -218,7 +217,7 @@ impl InvoicerBot {
             }
             NOSTR_KIND_COMMERCE_PRODUCTS => {
                 if let Err(e) = commerce_profile_channel
-                    .send((signed_note.get_kind(), signed_note))
+                    .send((signed_note.kind, signed_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -226,7 +225,7 @@ impl InvoicerBot {
             }
             NOSTR_KIND_COURIER_PROFILE => {
                 if let Err(e) = commerce_profile_channel
-                    .send((signed_note.get_kind(), signed_note))
+                    .send((signed_note.kind, signed_note))
                     .await
                 {
                     error!("{:?}", e);
@@ -237,10 +236,10 @@ impl InvoicerBot {
         Ok(())
     }
     pub async fn read_relay_pool(
-        mut relays: RelayPool,
-        keys: UserKeys,
-        commerce_profile_channel: Sender<(u32, SignedNote)>,
-        private_notes_channel: Sender<(u32, SignedNote)>,
+        mut relays: NostrRelayPool,
+        keys: NostrKeypair,
+        commerce_profile_channel: Sender<(u32, NostrNote)>,
+        private_notes_channel: Sender<(u32, NostrNote)>,
         live_order_channel: Sender<OrderInvoiceState>,
     ) -> anyhow::Result<()> {
         let mut live_filter = NostrSubscription {
@@ -270,13 +269,22 @@ impl InvoicerBot {
             authors: Some(vec![TEST_PUB_KEY.to_string()]),
             ..Default::default()
         };
-        relays.subscribe(filter.relay_subscription())?;
-        relays.subscribe(commerces_filter.relay_subscription())?;
-        relays.subscribe(live_filter.relay_subscription())?;
-        relays.subscribe(config_filter.relay_subscription())?;
+        relays.writer.subscribe(filter.relay_subscription()).await?;
+        relays
+            .writer
+            .subscribe(commerces_filter.relay_subscription())
+            .await?;
+        relays
+            .writer
+            .subscribe(live_filter.relay_subscription())
+            .await?;
+        relays
+            .writer
+            .subscribe(config_filter.relay_subscription())
+            .await?;
         let server_keys = keys.clone();
-        let courier_keys = UserKeys::new(DRIVER_HUB_PRIV_KEY)?;
-        while let Some(signed_note) = relays.incoming_channel.recv().await {
+        let courier_keys = NostrKeypair::new(DRIVER_HUB_PRIV_KEY)?;
+        while let Some(signed_note) = relays.listener.recv().await {
             if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
                 if let Err(e) = InvoicerBot::note_processor(
                     server_keys.clone(),
@@ -296,7 +304,7 @@ impl InvoicerBot {
     }
     async fn handle_public_notes(
         &self,
-        note_channel: Receiver<(u32, SignedNote)>,
+        note_channel: Receiver<(u32, NostrNote)>,
     ) -> anyhow::Result<()> {
         loop {
             if note_channel.is_closed() {
@@ -307,13 +315,13 @@ impl InvoicerBot {
                     NOSTR_KIND_COMMERCE_PROFILE => {
                         if let Ok(_) = CommerceProfile::try_from(signed_note.clone()) {
                             let mut profiles = self.commerce_registries.lock().await;
-                            let entry = profiles
-                                .entry(signed_note.get_pubkey().to_string())
-                                .or_insert(CommerceRegistryEntry {
+                            let entry = profiles.entry(signed_note.pubkey.to_string()).or_insert(
+                                CommerceRegistryEntry {
                                     profile: None,
                                     menu: None,
                                     whitelisted: false,
-                                });
+                                },
+                            );
                             entry.set_profile(signed_note.clone());
                             info!("Added commerce profile");
                         }
@@ -321,20 +329,20 @@ impl InvoicerBot {
                     NOSTR_KIND_COMMERCE_PRODUCTS => {
                         ProductMenu::try_from(signed_note.clone())?;
                         let mut profiles = self.commerce_registries.lock().await;
-                        let entry = profiles
-                            .entry(signed_note.get_pubkey().to_string())
-                            .or_insert(CommerceRegistryEntry {
+                        let entry = profiles.entry(signed_note.pubkey.to_string()).or_insert(
+                            CommerceRegistryEntry {
                                 profile: None,
                                 menu: None,
                                 whitelisted: false,
-                            });
+                            },
+                        );
                         entry.set_menu(signed_note.clone());
                         info!("Added menu");
                     }
                     NOSTR_KIND_COURIER_PROFILE => {
                         let _ = DriverProfile::try_from(signed_note.clone())?;
                         let mut profiles = self.courier_profiles.lock().await;
-                        profiles.insert(signed_note.get_pubkey().to_string(), signed_note);
+                        profiles.insert(signed_note.pubkey.to_string(), signed_note);
                         info!("Added courier profile");
                     }
                     NOSTR_KIND_SERVER_CONFIG => {
@@ -350,7 +358,7 @@ impl InvoicerBot {
     }
     async fn handle_private_notes(
         &self,
-        note_channel: Receiver<(u32, SignedNote)>,
+        note_channel: Receiver<(u32, NostrNote)>,
     ) -> anyhow::Result<()> {
         loop {
             if note_channel.is_closed() {
@@ -360,6 +368,7 @@ impl InvoicerBot {
                 let process: anyhow::Result<()> = {
                     match note_kind {
                         NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
+                            info!("ORDER REQUEST RECEIVED");
                             if let Err(e) = self.handle_order_request(signed_note).await {
                                 error!("ORDER REQUEST ERROR {:?}", e);
                             }
@@ -377,7 +386,7 @@ impl InvoicerBot {
                                         admin_confs
                                             .set_exchange_rate(admin_req.config_str.parse()?);
                                         let update = admin_confs.sign_exchange_rate(&self.keys)?;
-                                        self.broadcast_note(update)?;
+                                        self.broadcaster.broadcast_note(update).await?;
                                         info!("Exchange rate updated {}", admin_req.config_str);
                                     }
                                     AdminConfigurationType::CommerceWhitelist => {
@@ -387,7 +396,7 @@ impl InvoicerBot {
                                         let update =
                                             admin_confs.sign_commerce_whitelist(&self.keys)?;
                                         info!("New commerce whitelist: {}", &update);
-                                        self.broadcast_note(update)?;
+                                        self.broadcaster.broadcast_note(update).await?;
                                         info!("Commerce whitelist updated");
                                     }
                                     AdminConfigurationType::CourierWhitelist => {
@@ -397,7 +406,7 @@ impl InvoicerBot {
                                         admin_confs.set_couriers_whitelist(whitelist);
                                         let update =
                                             admin_confs.sign_couriers_whitelist(&self.keys)?;
-                                        self.broadcast_note(update)?;
+                                        self.broadcaster.broadcast_note(update).await?;
                                         info!("Courier whitelist updated");
                                     }
                                     _ => {}
@@ -415,13 +424,6 @@ impl InvoicerBot {
         }
         Err(anyhow!("Private notes channel closed"))
     }
-    fn broadcast_note(&self, note: SignedNote) -> anyhow::Result<()> {
-        let relay_event = SendNoteEvent(nostro2::relays::RelayEventTag::EVENT, note);
-        for broadcaster in self.broadcaster.iter() {
-            broadcaster.send(Message::text(relay_event.clone()))?;
-        }
-        Ok(())
-    }
     async fn create_order_invoice(
         &self,
         order: &OrderRequest,
@@ -433,7 +435,20 @@ impl InvoicerBot {
         let invoice_total_srd = order.products.total();
         let exchange_rate = self.admin_config.lock().await.get_exchange_rate();
         let invoice_amount = ((invoice_total_srd / exchange_rate) * SATOSHIS_IN_ONE_BTC) as u64;
-        let invoice = commerce.ln_address()?.get_invoice(&self.ln_address_client, invoice_amount).await?;
+        let invoice = match commerce
+            .ln_address()?
+            .get_invoice(
+                &self.ln_address_client,
+                invoice_amount * MILISATOSHIS_IN_ONE_SATOSHI,
+            )
+            .await
+        {
+            Ok(invoice) => invoice,
+            Err(e) => {
+                error!("{:?}", e);
+                return Err(anyhow!("Could not create invoice"));
+            }
+        };
         info!("commerce Invoice created");
         let hodl_amount = invoice_amount + ILLUMINODES_FEES + FUENTE_FEES;
         let hodl_invoice = self
@@ -551,29 +566,34 @@ impl InvoicerBot {
         }
         Ok(success)
     }
-    async fn handle_order_request(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        if let Ok(order) = OrderRequest::try_from(signed_note.clone()) {
-            info!("Order request received");
-            let invoice = self.create_order_invoice(&order).await?;
-            info!("Order invoice created");
-            let state_update = OrderInvoiceState::new(
-                signed_note.clone(),
-                Some(invoice.1),
-                Some(invoice.0.clone()),
-            );
-            info!("Order state created");
-            let state_update_note = state_update.sign_customer_update(&self.keys)?;
-            info!("Order state update signed");
-            self.broadcast_note(state_update_note)?;
-            let self_clone = self.clone();
-            tokio::spawn(async move {
-                if let Err(e) = self_clone.order_payment_notifier(state_update).await {
-                    error!("NOTIFIER ERROR {:?}", e);
-                }
-            });
+    async fn handle_order_request(&self, signed_note: NostrNote) -> anyhow::Result<()> {
+        match OrderRequest::try_from(signed_note.clone()) {
+            Ok(order) => {
+                info!("Order request received");
+                let invoice = self.create_order_invoice(&order).await?;
+                info!("Order invoice created");
+                let state_update = OrderInvoiceState::new(
+                    signed_note.clone(),
+                    Some(invoice.1),
+                    Some(invoice.0.clone()),
+                );
+                info!("Order state created");
+                let state_update_note = state_update.sign_customer_update(&self.keys)?;
+                info!("Order state update signed");
+                self.broadcaster.broadcast_note(state_update_note).await?;
+                let self_clone = self.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = self_clone.order_payment_notifier(state_update).await {
+                        error!("NOTIFIER ERROR {:?}", e);
+                    }
+                });
+                Ok(())
+            }
+            Err(e) => {
+                error!("{:?}", e);
+                Err(e)
+            }
         }
-
-        Ok(())
     }
     async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
         let payment_req = LndPaymentRequest::new(invoice.pr, 10, 150.to_string(), false);
@@ -600,17 +620,17 @@ impl InvoicerBot {
     async fn broadcast_order_update(&self, state: &OrderInvoiceState) -> anyhow::Result<()> {
         let user_note = state.sign_customer_update(&self.keys)?;
         let commerce_note = state.sign_commerce_update(&self.keys)?;
-        self.broadcast_note(user_note)?;
-        self.broadcast_note(commerce_note)?;
+        self.broadcaster.broadcast_note(user_note).await?;
+        self.broadcaster.broadcast_note(commerce_note).await?;
         match state.get_courier() {
             Some(_) => {
                 let courier_note = state.sign_courier_update(&self.keys)?;
-                self.broadcast_note(courier_note)?;
+                self.broadcaster.broadcast_note(courier_note).await?;
             }
             None => {
                 if state.get_order_status() == OrderStatus::ReadyForDelivery {
                     let courier_note = state.sign_courier_update(&self.keys)?;
-                    self.broadcast_note(courier_note)?;
+                    self.broadcaster.broadcast_note(courier_note).await?;
                 }
             }
         }
@@ -618,12 +638,12 @@ impl InvoicerBot {
     }
     async fn handle_commerce_updates(
         &self,
-        inner_note: SignedNote,
-        outer_note: SignedNote,
+        inner_note: NostrNote,
+        outer_note: NostrNote,
     ) -> anyhow::Result<()> {
         let mut order: OrderInvoiceState =
-            OrderInvoiceState::try_from(inner_note.get_content().to_string())?;
-        if outer_note.get_pubkey() != order.get_order_request().commerce {
+            OrderInvoiceState::try_from(inner_note.content.to_string())?;
+        if outer_note.pubkey != order.get_order_request().commerce {
             return Err(anyhow!("Only commerce can update order"));
         }
         match order.get_order_status() {
@@ -668,11 +688,11 @@ impl InvoicerBot {
     }
     async fn handle_courier_updates(
         &self,
-        inner_note: SignedNote,
-        outer_note: SignedNote,
+        inner_note: NostrNote,
+        outer_note: NostrNote,
     ) -> anyhow::Result<()> {
         let updated_order: OrderInvoiceState =
-            OrderInvoiceState::try_from(inner_note.get_content().to_string())?;
+            OrderInvoiceState::try_from(inner_note.content.to_string())?;
         // Check if order is part of live orders
         let mut orders = self.live_orders.clone().lock_owned().await;
         let live_order = orders
@@ -687,16 +707,16 @@ impl InvoicerBot {
             self.broadcast_order_update(live_order).await?;
         }
         // Check if the update s coing from asigned courier
-        if outer_note.get_pubkey() == live_order.get_courier().unwrap().get_pubkey() {
+        if outer_note.pubkey == live_order.get_courier().unwrap().pubkey {
             self.broadcast_order_update(&updated_order).await?;
             info!("Order updated by courier");
         }
         Err(anyhow!("Invalid courier update"))
     }
-    async fn handle_order_state_update(&self, signed_note: SignedNote) -> anyhow::Result<()> {
-        let mut order_state = OrderInvoiceState::try_from(signed_note.get_content())?;
+    async fn handle_order_state_update(&self, signed_note: NostrNote) -> anyhow::Result<()> {
+        let mut order_state = OrderInvoiceState::try_from(signed_note.content.clone())?;
         let commerce = order_state.get_order_request().commerce.clone();
-        if signed_note.get_pubkey() == commerce {
+        if signed_note.pubkey == commerce {
             if let Err(e) = self
                 .handle_commerce_updates(signed_note.clone(), signed_note.clone())
                 .await
@@ -704,7 +724,7 @@ impl InvoicerBot {
                 error!("{:?}", e);
             }
         }
-        if signed_note.get_pubkey() == order_state.get_order().get_pubkey() {
+        if signed_note.pubkey == order_state.get_order().pubkey {
             if order_state.get_order_status() == OrderStatus::Canceled {
                 let invoice = order_state
                     .get_commerce_invoice()
@@ -726,7 +746,7 @@ impl InvoicerBot {
             .clone()
             .lock_owned()
             .await
-            .check_couriers_whitelist(&signed_note.get_pubkey())
+            .check_couriers_whitelist(&signed_note.pubkey)
         {
             self.handle_courier_updates(signed_note.clone(), signed_note.clone())
                 .await?;
@@ -734,21 +754,21 @@ impl InvoicerBot {
         info!("Order state updated");
         Ok(())
     }
-    async fn update_admin_config(&self, signed_note: SignedNote) -> anyhow::Result<()> {
+    async fn update_admin_config(&self, signed_note: NostrNote) -> anyhow::Result<()> {
         self.admin_config
             .lock()
             .await
-            .check_admin_whitelist(&signed_note.get_pubkey())?;
+            .check_admin_whitelist(&signed_note.pubkey)?;
         let config_type: AdminConfigurationType = signed_note
-            .get_tags_by_id("d")
-            .ok_or(anyhow!("No config type found"))?
+            .tags
+            .find_tags(NostrTag::Parameterized)
             .get(2)
             .ok_or(anyhow!("No config type found"))?
             .clone()
             .try_into()?;
         match config_type {
             AdminConfigurationType::CommerceWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&signed_note.get_content())?;
+                let whitelist: Vec<String> = serde_json::from_str(&signed_note.content)?;
                 info!("Commerce whitelist update {:?}", whitelist);
                 let mut configs = self.admin_config.lock().await;
                 let mut registered_commerces = self.commerce_registries.lock().await;
@@ -763,7 +783,7 @@ impl InvoicerBot {
                 info!("Commerce whitelist updated");
             }
             AdminConfigurationType::CourierWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&signed_note.get_content())?;
+                let whitelist: Vec<String> = serde_json::from_str(&signed_note.content)?;
                 self.admin_config
                     .lock()
                     .await
@@ -786,7 +806,7 @@ impl InvoicerBot {
                     .set_user_registrations(registrations);
             }
             AdminConfigurationType::ExchangeRate => {
-                let rate: f64 = serde_json::from_str(&signed_note.get_content())?;
+                let rate: f64 = serde_json::from_str(&signed_note.content)?;
                 let mut configs = self.admin_config.lock().await;
                 configs.set_exchange_rate(rate);
                 info!("Exchange rate set to: {}", rate);

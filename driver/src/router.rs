@@ -2,7 +2,7 @@ use fuente::mass::{AppLink, HistoryIcon, HomeIcon, MenuBarsIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{HomePage, NewProfileForm};
+use crate::pages::{HomePage, NewProfileForm, HistoryPage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum DriverRoute {
@@ -24,7 +24,7 @@ pub fn consumer_pages() -> Html {
             <Switch<DriverRoute> render = { move |switch: DriverRoute| {
                     match switch {
                         DriverRoute::Home => html!{<HomePage />},
-                        DriverRoute::History => html!{<></>},
+                        DriverRoute::History => html!{<HistoryPage />},
                         DriverRoute::Profile => html!{<>
                             <NewProfileForm />
                             </>},

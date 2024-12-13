@@ -47,7 +47,7 @@ pub fn history_page(props: &CommercePageProps) -> Html {
             profile.clone().unwrap(),
             address.clone().unwrap(),
         );
-        sent_handle.set(Some(note.get_id().to_string()));
+        sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
         sender.emit(note);
     });
 

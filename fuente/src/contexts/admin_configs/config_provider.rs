@@ -1,5 +1,5 @@
 use nostr_minions::relay_pool::NostrProps;
-use nostro2::relays::EndOfSubscriptionEvent;
+use nostro2::{notes::NostrTag, relays::EndOfSubscriptionEvent};
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -103,42 +103,42 @@ fn admin_config_sync() -> Html {
     let ctx_handler = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
-            if note.get_kind() == NOSTR_KIND_SERVER_CONFIG {
-                if let Some(conf_type_tags) = note.get_tags_by_id("d") {
-                    if let Some(conf_type_str) = conf_type_tags.get(2) {
-                        let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
-                            .expect("Failed to parse conf type");
-                        match conf_type {
-                            AdminConfigurationType::ExchangeRate => {
-                                if let Ok(rate) = note.get_content().parse::<f64>() {
-                                    ctx_handler.dispatch(AdminConfigsAction::UpdateExchangeRate(
-                                        rate.to_string(),
-                                    ));
-                                    gloo::console::log!("Exchange rate updated");
-                                }
+            if note.kind == NOSTR_KIND_SERVER_CONFIG {
+                if let Some(conf_type_str) =
+                    note.tags.find_tags(NostrTag::Parameterized).get(2)
+                {
+                    let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
+                        .expect("Failed to parse conf type");
+                    match conf_type {
+                        AdminConfigurationType::ExchangeRate => {
+                            if let Ok(rate) = note.content.parse::<f64>() {
+                                ctx_handler.dispatch(AdminConfigsAction::UpdateExchangeRate(
+                                    rate.to_string(),
+                                ));
+                                gloo::console::log!("Exchange rate updated");
                             }
-                            AdminConfigurationType::CommerceWhitelist => {
-                                if let Ok(whitelist) =
-                                    serde_json::from_str::<Vec<String>>(&note.get_content())
-                                {
-                                    ctx_handler.dispatch(
-                                        AdminConfigsAction::UpdateCommerceWhitelist(whitelist),
-                                    );
-                                    gloo::console::log!("Commerce whitelist updated");
-                                }
-                            }
-                            AdminConfigurationType::CourierWhitelist => {
-                                if let Ok(whitelist) =
-                                    serde_json::from_str::<Vec<String>>(&note.get_content())
-                                {
-                                    ctx_handler.dispatch(
-                                        AdminConfigsAction::UpdateCourierWhitelist(whitelist),
-                                    );
-                                    gloo::console::log!("Courier whitelist updated");
-                                }
-                            }
-                            _ => {}
                         }
+                        AdminConfigurationType::CommerceWhitelist => {
+                            if let Ok(whitelist) =
+                                serde_json::from_str::<Vec<String>>(&note.content)
+                            {
+                                ctx_handler.dispatch(AdminConfigsAction::UpdateCommerceWhitelist(
+                                    whitelist,
+                                ));
+                                gloo::console::log!("Commerce whitelist updated");
+                            }
+                        }
+                        AdminConfigurationType::CourierWhitelist => {
+                            if let Ok(whitelist) =
+                                serde_json::from_str::<Vec<String>>(&note.content)
+                            {
+                                ctx_handler.dispatch(AdminConfigsAction::UpdateCourierWhitelist(
+                                    whitelist,
+                                ));
+                                gloo::console::log!("Courier whitelist updated");
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }

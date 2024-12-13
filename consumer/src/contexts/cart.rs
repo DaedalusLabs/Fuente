@@ -3,7 +3,7 @@ use std::rc::Rc;
 use fuente::models::{
     ConsumerAddress, ConsumerProfile, OrderRequest, ProductItem, ProductOrder, TEST_PUB_KEY,
 };
-use nostro2::{notes::SignedNote, userkeys::UserKeys};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -17,11 +17,11 @@ impl Cart {
     }
     pub fn sign_request(
         &self,
-        keys: &UserKeys,
+        keys: &NostrKeypair,
         commerce: String,
         profile: ConsumerProfile,
         address: ConsumerAddress,
-    ) -> SignedNote {
+    ) -> NostrNote {
         let new_request = OrderRequest::new(commerce, profile, address, self.cart_items.clone());
         new_request
             .giftwrapped_request(keys, TEST_PUB_KEY.to_string())

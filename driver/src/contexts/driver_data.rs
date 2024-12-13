@@ -1,7 +1,7 @@
 use fuente::models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE};
 use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
-    notes::SignedNote,
+    notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
@@ -24,7 +24,7 @@ impl DriverData {
             None => None,
         }
     }
-    pub fn get_profile_note(&self) -> Option<SignedNote> {
+    pub fn get_profile_note(&self) -> Option<NostrNote> {
         match &self.profile {
             Some(profile) => Some(profile.signed_note()),
             None => None,
@@ -104,7 +104,7 @@ pub fn key_handler(props: &DriverDataChildren) -> Html {
         if let Some(key) = key_ctx.get_nostr_key() {
             spawn_local(async move {
                 if let Ok(profile) =
-                    DriverProfileIdb::retrieve_from_store(&JsValue::from_str(&key.get_public_key()))
+                    DriverProfileIdb::retrieve_from_store(&JsValue::from_str(&key.public_key()))
                         .await
                 {
                     ctx_clone.dispatch(DriverDataAction::LoadProfile(profile));
@@ -136,7 +136,7 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(key_ctx.clone(), move |keys| {
         if let Some(keys) = keys.get_nostr_key() {
             if &(*id_handle) == "" {
-                let pubkey = keys.get_public_key();
+                let pubkey = keys.public_key();
                 spawn_local(async move {
                     let filter = NostrSubscription {
                         kinds: Some(vec![NOSTR_KIND_DRIVER_PROFILE]),
@@ -156,7 +156,7 @@ pub fn commerce_data_sync() -> Html {
     // let ctx_clone = ctx.clone();
     // use_effect_with(unique_notes, move |notes| {
     //     if let Some(note) = notes.last() {
-    //         match note.get_kind() {
+    //         match note.kind {
     //             _ => {}
     //         }
     //     }

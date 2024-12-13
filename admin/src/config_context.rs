@@ -6,15 +6,19 @@ use fuente::models::{
     NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY,
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{notes::SignedNote, relays::EndOfSubscriptionEvent, userkeys::UserKeys};
+use nostro2::{
+    keypair::NostrKeypair,
+    notes::{NostrNote, NostrTag},
+    relays::EndOfSubscriptionEvent,
+};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ServerConfigs {
     admin_whitelist: Vec<String>,
     commerce_whitelist: Vec<String>,
-    commerces: Vec<SignedNote>,
-    couriers: Vec<SignedNote>,
+    commerces: Vec<NostrNote>,
+    couriers: Vec<NostrNote>,
     couriers_whitelist: Vec<String>,
     consumer_blacklist: Vec<String>,
     user_registrations: Vec<String>,
@@ -29,28 +33,28 @@ impl ServerConfigs {
     pub fn set_exchange_rate(&mut self, rate: f64) {
         self.exchange_rate = rate;
     }
-    pub fn get_unregistered_commerces(&self) -> Vec<SignedNote> {
+    pub fn get_unregistered_commerces(&self) -> Vec<NostrNote> {
         let mut unregistered_users = vec![];
         for note in self.commerces.iter() {
-            if !self.commerce_whitelist.contains(&note.get_pubkey()) {
+            if !self.commerce_whitelist.contains(&note.pubkey) {
                 unregistered_users.push(note.clone());
             }
         }
         unregistered_users
     }
-    pub fn get_whitelisted_commerces(&self) -> Vec<SignedNote> {
+    pub fn get_whitelisted_commerces(&self) -> Vec<NostrNote> {
         let mut commerces = vec![];
         for note in self.commerces.iter() {
-            if self.commerce_whitelist.contains(&note.get_pubkey()) {
+            if self.commerce_whitelist.contains(&note.pubkey) {
                 commerces.push(note.clone());
             }
         }
         commerces
     }
-    pub fn get_whitelisted_couriers(&self) -> Vec<SignedNote> {
+    pub fn get_whitelisted_couriers(&self) -> Vec<NostrNote> {
         let mut couriers = vec![];
         for note in self.couriers.iter() {
-            if self.couriers_whitelist.contains(&note.get_pubkey()) {
+            if self.couriers_whitelist.contains(&note.pubkey) {
                 couriers.push(note.clone());
             }
         }
@@ -90,8 +94,8 @@ pub enum ServerConfigsAction {
     UpdateExchangeRate(f64),
     UpdateCommerceWhitelist(Vec<String>),
     UpdateCouriersWhitelist(Vec<String>),
-    AddCommerce(SignedNote),
-    AddCourier(SignedNote),
+    AddCommerce(NostrNote),
+    AddCourier(NostrNote),
 }
 
 impl Reducible for ServerConfigs {
@@ -121,17 +125,13 @@ impl Reducible for ServerConfigs {
             }
             ServerConfigsAction::AddCommerce(note) => {
                 let mut new_state = (*self).clone();
-                new_state
-                    .commerces
-                    .retain(|n| n.get_pubkey() != note.get_pubkey());
+                new_state.commerces.retain(|n| n.pubkey != note.pubkey);
                 new_state.commerces.push(note);
                 Rc::new(new_state)
             }
             ServerConfigsAction::AddCourier(note) => {
                 let mut new_state = (*self).clone();
-                new_state
-                    .couriers
-                    .retain(|n| n.get_pubkey() != note.get_pubkey());
+                new_state.couriers.retain(|n| n.pubkey != note.pubkey);
                 new_state.couriers.push(note);
                 Rc::new(new_state)
             }
@@ -194,60 +194,57 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         let driver_hub_key =
-            UserKeys::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
+            NostrKeypair::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
         if let (Some(note), Some(_key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
-            if note.get_kind() == NOSTR_KIND_COMMERCE_PROFILE {
+            if note.kind == NOSTR_KIND_COMMERCE_PROFILE {
                 if let Ok(_) = CommerceProfile::try_from(note.clone()) {
                     ctx_clone.dispatch(ServerConfigsAction::AddCommerce(note.clone()));
                 }
             }
-            if note.get_kind() == NOSTR_KIND_CONSUMER_GIFTWRAP {
+            if note.kind == NOSTR_KIND_CONSUMER_GIFTWRAP {
                 gloo::console::log!("Driver profile");
                 let cleartext = driver_hub_key
                     .decrypt_nip_04_content(&note)
                     .expect("Failed to decrypt");
-                let giftwrapped_note = SignedNote::try_from(cleartext).expect("Failed to parse");
+                let giftwrapped_note = NostrNote::try_from(cleartext).expect("Failed to parse");
 
                 if let Ok(_) = DriverProfile::try_from(giftwrapped_note.clone()) {
                     ctx_clone.dispatch(ServerConfigsAction::AddCourier(note.clone()));
                     gloo::console::log!("Courier added");
                 }
             }
-            if note.get_kind() == NOSTR_KIND_SERVER_CONFIG {
-                if let Some(conf_type_tags) = note.get_tags_by_id("d") {
-                    if let Some(conf_type_str) = conf_type_tags.get(2) {
-                        let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
-                            .expect("Failed to parse conf type");
-                        match conf_type {
-                            AdminConfigurationType::ExchangeRate => {
-                                if let Ok(rate) = note.get_content().parse::<f64>() {
-                                    ctx_clone
-                                        .dispatch(ServerConfigsAction::UpdateExchangeRate(rate));
-                                    gloo::console::log!("Exchange rate updated");
-                                }
+            if note.kind == NOSTR_KIND_SERVER_CONFIG {
+                if let Some(conf_type_str) = note.tags.find_tags(NostrTag::Parameterized).get(2) {
+                    let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
+                        .expect("Failed to parse conf type");
+                    match conf_type {
+                        AdminConfigurationType::ExchangeRate => {
+                            if let Ok(rate) = note.content.parse::<f64>() {
+                                ctx_clone.dispatch(ServerConfigsAction::UpdateExchangeRate(rate));
+                                gloo::console::log!("Exchange rate updated");
                             }
-                            AdminConfigurationType::CommerceWhitelist => {
-                                if let Ok(whitelist) =
-                                    serde_json::from_str::<Vec<String>>(&note.get_content())
-                                {
-                                    ctx_clone.dispatch(
-                                        ServerConfigsAction::UpdateCommerceWhitelist(whitelist),
-                                    );
-                                    gloo::console::log!("Commerce whitelist updated");
-                                }
-                            }
-                            AdminConfigurationType::CourierWhitelist => {
-                                if let Ok(whitelist) =
-                                    serde_json::from_str::<Vec<String>>(&note.get_content())
-                                {
-                                    ctx_clone.dispatch(
-                                        ServerConfigsAction::UpdateCouriersWhitelist(whitelist),
-                                    );
-                                    gloo::console::log!("Courier whitelist updated");
-                                }
-                            }
-                            _ => {}
                         }
+                        AdminConfigurationType::CommerceWhitelist => {
+                            if let Ok(whitelist) =
+                                serde_json::from_str::<Vec<String>>(&note.content)
+                            {
+                                ctx_clone.dispatch(ServerConfigsAction::UpdateCommerceWhitelist(
+                                    whitelist,
+                                ));
+                                gloo::console::log!("Commerce whitelist updated");
+                            }
+                        }
+                        AdminConfigurationType::CourierWhitelist => {
+                            if let Ok(whitelist) =
+                                serde_json::from_str::<Vec<String>>(&note.content)
+                            {
+                                ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(
+                                    whitelist,
+                                ));
+                                gloo::console::log!("Courier whitelist updated");
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }

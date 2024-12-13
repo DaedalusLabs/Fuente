@@ -1,7 +1,4 @@
-use nostro2::{
-    notes::{Note, SignedNote},
-    userkeys::UserKeys,
-};
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -249,13 +246,13 @@ impl ToString for ProductMenu {
         serde_json::to_string(self).unwrap()
     }
 }
-impl TryFrom<SignedNote> for ProductMenu {
+impl TryFrom<NostrNote> for ProductMenu {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_COMMERCE_PRODUCTS {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_COMMERCE_PRODUCTS {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let product_menu: ProductMenu = note.get_content().try_into()?;
+        let product_menu: ProductMenu = note.content.try_into()?;
         Ok(product_menu)
     }
 }
@@ -264,43 +261,43 @@ impl TryFrom<SignedNote> for ProductMenu {
 pub struct ProductMenuIdb {
     pubkey: String,
     menu: ProductMenu,
-    note: SignedNote,
+    note: NostrNote,
 }
 impl ProductMenuIdb {
-    pub fn new(menu: ProductMenu, user_keys: &UserKeys) -> Self {
+    pub fn new(menu: ProductMenu, user_keys: &NostrKeypair) -> Self {
         let content = menu.to_string();
-        let unsigned_note = Note::new(
-            &user_keys.get_public_key(),
-            NOSTR_KIND_COMMERCE_PRODUCTS,
-            &content,
-        );
-        let note = user_keys.sign_nostr_event(unsigned_note);
+        let mut new_note = NostrNote {
+            pubkey: user_keys.public_key().to_string(),
+            kind: NOSTR_KIND_COMMERCE_PRODUCTS,
+            content,
+            ..Default::default()
+        };
+        user_keys.sign_nostr_event(&mut new_note);
         Self {
-            pubkey: note.get_pubkey(),
+            pubkey: new_note.pubkey.clone(),
             menu,
-            note,
+            note: new_note,
         }
     }
     pub fn menu(&self) -> ProductMenu {
         self.menu.clone()
     }
-    pub fn note(&self) -> SignedNote {
+    pub fn note(&self) -> NostrNote {
         self.note.clone()
     }
     pub fn id(&self) -> String {
         self.pubkey.clone()
     }
 }
-impl TryFrom<SignedNote> for ProductMenuIdb {
+impl TryFrom<NostrNote> for ProductMenuIdb {
     type Error = anyhow::Error;
-    fn try_from(note: SignedNote) -> Result<Self, Self::Error> {
-        if note.get_kind() != NOSTR_KIND_COMMERCE_PRODUCTS {
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_COMMERCE_PRODUCTS {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
-        let content = note.get_content();
-        let menu: ProductMenu = serde_json::from_str(&content)?;
+        let menu: ProductMenu = serde_json::from_str(&note.content)?;
         Ok(Self {
-            pubkey: note.get_pubkey(),
+            pubkey: note.pubkey.clone(),
             menu,
             note,
         })
@@ -342,12 +339,12 @@ mod tests {
     #[wasm_bindgen_test]
     async fn _commerce_profile_idb() -> Result<(), JsValue> {
         init_consumer_db()?;
-        let key_1 = UserKeys::generate();
+        let key_1 = NostrKeypair::generate(false);
         let consumer_address = ProductMenu::default();
         let address_idb = ProductMenuIdb::new(consumer_address.clone(), &key_1);
         address_idb.clone().save_to_store().await.unwrap();
 
-        let key_2 = UserKeys::generate();
+        let key_2 = NostrKeypair::generate(false);
         let address_idb_2 = ProductMenuIdb::new(consumer_address, &key_2);
         address_idb_2.clone().save_to_store().await.unwrap();
 

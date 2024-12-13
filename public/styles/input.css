@@ -2,13 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    :root {
-        --color-primary: 59 17 151;
-    }
-    body {
-        @apply font-product;
-    }
+.container{
+    width: 95%;
+}
+
+.max-w-6xl{
+    width: 95%;
 }
 
 @font-face {

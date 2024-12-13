@@ -28,7 +28,7 @@ pub fn new_profile_form() -> Html {
         let user_profile = DriverProfile::new(nickname, telephone);
         let db = DriverProfileIdb::new(user_profile.clone(), &keys);
         let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.get_public_key())
+            .giftwrapped_data(&keys, keys.public_key())
             .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
         let pool_copy = user_profile
