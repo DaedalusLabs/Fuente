@@ -9,6 +9,7 @@ use fuente::{
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
+use std::rc::Rc;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct CommercePageProps {
@@ -19,12 +20,13 @@ pub struct CommercePageProps {
 pub fn history_page(props: &CommercePageProps) -> Html {
     let CommercePageProps { commerce_id } = props;
     let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
-    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let cart_ctx = Rc::new(use_context::<CartStore>().expect("No cart context found"));
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let live_ctx = use_context::<LiveOrderStore>().expect("LiveOrder context not found");
     let relay_ctx = use_context::<NostrProps>().expect("Consumer context not found");
     let sent_order_request = use_state(|| None::<String>);
+    let show_warning = use_state(|| false);
     let menu = commerce_ctx
         .products_lists()
         .iter()
@@ -38,26 +40,38 @@ pub fn history_page(props: &CommercePageProps) -> Html {
     let address = user_ctx.get_default_address();
     let sent_handle = sent_order_request.clone();
     let live_handle = live_ctx.clone();
-    let send_order_request = Callback::from(move |e: MouseEvent| {
-        e.prevent_default();
-        let keys = key_ctx.get_nostr_key();
-        let note = cart_ctx.sign_request(
-            &keys.unwrap(),
-            id.clone(),
-            profile.clone().unwrap(),
-            address.clone().unwrap(),
-        );
-        sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
-        sender.emit(note);
-    });
+    let send_order_request = {
+        let cart_ctx = Rc::clone(&cart_ctx);
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            let keys = key_ctx.get_nostr_key();
+            let note = cart_ctx.sign_request(
+                &keys.unwrap(),
+                id.clone(),
+                profile.clone().unwrap(),
+                address.clone().unwrap(),
+            );
+            sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
+            sender.emit(note);
+        })
+    };    
 
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
-        let form = HtmlForm::new(e).expect("Could not capture form");
-        let product_str = form.input_value("product").expect("Could not get product");
-        let product: ProductItem = product_str.try_into().expect("Could not parse product");
-        add_cart.dispatch(CartAction::AddProduct(product));
-    });
+    let commerce_id = commerce_id.clone();
+    let onsubmit = {
+        let cart_ctx = Rc::clone(&cart_ctx);
+        let show_warning = show_warning.clone();
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            let form = HtmlForm::new(e).expect("Could not capture form");
+            let product_str = form.input_value("product").expect("Could not get product");
+            let product: ProductItem = product_str.try_into().expect("Could not parse product");
+            if !cart_ctx.can_add_from_business(&commerce_id) {
+                show_warning.set(true);
+                return;
+            }
+            add_cart.dispatch(CartAction::AddProduct(product, commerce_id.clone()));
+        })
+    };
     if menu.is_none() {
         return html! {
             <div class="h-full w-full flex flex-col">
@@ -84,34 +98,50 @@ pub fn history_page(props: &CommercePageProps) -> Html {
     }
     html! {
         <div class="h-full w-full flex flex-col">
-            <PageHeader title={"Commerce".to_string()} />
-            <div class="flex flex-1 flex-col gap-4">
-                <button
-                    class="bg-fuente-light text-white p-2 rounded-md font-mplus m-4"
-                    onclick={send_order_request}>
-                    {"Send Order Request"}
-                </button>
-                <CartDetails />
-                {menu.iter().map(|category| {
-                   html! {
-                       <div class="flex flex-col gap-2 px-4">
-                           <h3 class="text-lg font-bold">{category.name().clone()}</h3>
-                           <div class="flex flex-col gap-4">
-                            {category.products().iter().map(|product| {
-                                let onsubmit = onsubmit.clone();
-                                let product_str = product.to_string();
-                                let name = "product";
-                                html! {
-                                    <form {onsubmit} >
-                                        <input class="hidden" {name} value={product_str} />
-                                        <button
-                                            type="submit">
-                                            <ProductCard product={product.clone()} />
-                                        </button>
-                                    </form>
-                                }
-                            }).collect::<Html>()}
-                            </div>
+        <PageHeader title={"Commerce".to_string()} />
+        <div class="flex flex-1 flex-col gap-4">
+            {if *show_warning {
+                html! {
+                    <div class="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded w-80">
+                        <span class="block sm:inline">{"You have items from another store in your cart. Please clear your cart first."}</span>
+                        <button 
+                            onclick={let show_warning = show_warning.clone(); 
+                                Callback::from(move |_| show_warning.set(false))}
+                            class="absolute top-0 right-0 px-4 py-3"
+                        >
+                            {"×"}
+                        </button>
+                    </div>
+                }
+            } else {
+                html! {}
+            }}
+            <button
+                class="bg-fuente-light text-white p-2 rounded-md font-mplus m-4"
+                onclick={send_order_request}>
+                {"Send Order Request"}
+            </button>
+            <CartDetails />
+            {menu.iter().map(|category| {
+               html! {
+                   <div class="flex flex-col gap-2 px-4">
+                       <h3 class="text-lg font-bold">{category.name().clone()}</h3>
+                       <div class="flex flex-col gap-4">
+                        {category.products().iter().map(|product| {
+                            let onsubmit = onsubmit.clone();
+                            let product_str = product.to_string();
+                            let name = "product";
+                            html! {
+                                <form {onsubmit} >
+                                    <input class="hidden" {name} value={product_str} />
+                                    <button
+                                        type="submit">
+                                        <ProductCard product={product.clone()} />
+                                    </button>
+                                </form>
+                            }
+                        }).collect::<Html>()}
+                        </div>
                        </div>
                    }
                 }).collect::<Html>()}
