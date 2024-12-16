@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{"Stores"}</title>
+    <title>{"Categories - Detail"}</title>
     <link rel="stylesheet" href="../../styles/output.css">
 </head>
 <body class="font-fuente">
@@ -63,174 +63,170 @@
         </div>
     </nav>
 
-    <div class="grid grid-cols-2 mt-10 gap-10 container mx-auto">
-        <div>
-            <div class="xl:relative flex items-center justify-between bg-fuente rounded-2xl h-60 pr-5">
-                <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="xl:absolute xl:-top-5 xl:left-0 xl:-translate-x-10 xl:-translate-y-10 block object-contain lg:max-w-56 xl:max-w-full">
-                <p class="lg:text-3xl 2xl:text-6xl lg:text-right xl:text-left text-white font-bold tracking-tighter text-wrap ml-auto xl:max-w-80">
-                    {"50% Off Only today!"}
-                    <span class="text-xl tracking-normal font-semibold block mt-3 uppercase">{"In evany store"}</span>
-                </p>
-            </div>
-        </div>
-        <div>
-            <div class="relative flex items-center justify-between bg-fuente rounded-2xl h-60 pr-5">
-                <img src="/templates/img/iphone.png" alt="iPhone Product" class="absolute top-10 left-10 -translate-x-10 -translate-y-10 block object-contain lg:max-w-40 xl:max-w-52 lg:p-3 xl:p-0">
-                <p class="lg:text-3xl 2xl:text-6xl lg:text-right xl:text-left text-white font-bold tracking-tighter text-wrap ml-auto lg:max-w-80 xl:max-w-[400px]">
-                    Shop today Receive today!
-                    <span class="text-xl tracking-normal font-semibold block mt-3 uppercase">{"In mytechy store"}</span>
-                </p>
-            </div>
+    <div class="bg-fuente rounded-2xl container mx-auto grid grid-cols-2 gap-10 max-h-64 mt-10">
+        <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="block w-96 ml-auto object-contain rotate-[20deg]">
+        <div class="text-left max-w-[390px] py-16">
+            <p class="text-white font-light">Clothings</p>
+            <h2 class="text-white text-5xl font-semibold tracking-tighter">Comfort Shoes</h2>
+            <p class="text-white font-light mt-3">Navigate on the stores with the best comfy shoes that brings you stability and comfort to your feet!</p>
         </div>
     </div>
 
-    <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
-        <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
+    <main class="mt-40 max-w-7xl mx-auto">
+        <h2 class="text-fuente text-5xl font-bold tracking-tighter">Clothings Category</h2>
 
-        <div class="flex justify-between items-center mt-10 px-10">
-            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
-                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M4.5-282.3-9.2-296l13.7-13.7 1.8 1.9L-5.4-296l11.7 11.8-1.8 1.9" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M-7.3-297.4h24v2.8h-24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
-            </svg>
+        <div class="grid grid-cols-2 mt-10 gap-5">
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="overflow-x-auto whitespace-nowrap">
-                <div class="grid grid-flow-col auto-cols-max gap-10">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
                 </div>
             </div>
 
-            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
-                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
-            </svg>
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                </div>
+            </div>
+
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                </div>
+            </div>
+
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                </div>
+            </div>
+
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                </div>
+            </div>
+
+            <div class="border-2 border-fuente rounded-2xl p-2 relative">
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
+                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
+                    <div class="space-y-2 flex flex-col items-center">
+                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
+                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
+                        <div class="flex items-center gap-2">
+                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
+                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
+                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
+                </div>
+            </div>
         </div>
-    </section>
 
-    <main class="container mx-auto mt-10">
-        <h1 class="text-fuente text-5xl font-bold tracking-tighter">{"All Stores"}</h1>
-
-        <div class="grid grid-cols-2 flex-1 gap-5 mt-10">
-            <div class="border-2 border-fuente rounded-2xl p-2 relative">
-                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
-                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
-                    <div class="space-y-2 flex flex-col items-center">
-                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
-                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
-                        <div class="flex items-center gap-2">
-                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
-                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
-                            </svg>
-                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
-                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                </div>
-            </div>
-            
-            <div class="border-2 border-fuente rounded-2xl p-2 relative">
-                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
-                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
-                    <div class="space-y-2 flex flex-col items-center">
-                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
-                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
-                        <div class="flex items-center gap-2">
-                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
-                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
-                            </svg>
-                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
-                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                </div>
-            </div>
-
-            <div class="border-2 border-fuente rounded-2xl p-2 relative">
-                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
-                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
-                    <div class="space-y-2 flex flex-col items-center">
-                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
-                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
-                        <div class="flex items-center gap-2">
-                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
-                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
-                            </svg>
-                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
-                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                </div>
-            </div>
-
-            <div class="border-2 border-fuente rounded-2xl p-2 relative">
-                <div class="flex flex-col xl:flex-row items-center justify-center gap-5">
-                    <img src="/templates/img/company.png" alt="Company Image" class="w-36">
-                    <div class="space-y-2 flex flex-col items-center">
-                        <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{"Evany Store"}</h3>
-                        <p class="text-gray-500 font-light text-md">{"Category: Shoes"}</p>
-                        <div class="flex items-center gap-2">
-                            <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7">
-                                <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
-                            </svg>
-                            <p class="text-gray-500 font-light">{"5.0 Deliver on time"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 place-items-center py-5">
-                    <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                    <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-32 bg-gray-100 rounded-2xl block object-contain">
-                </div>
-            </div>
-        </div>
-
-        <div class="flex justify-end mt-5">
-            <div class="flex gap-4">
-                <button class="bg-gray-200 p-3 rounded-xl">
-                    <svg viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
-                        <path d="M351.1 448a32.075 32.075 0 0 1-14.28-3.375l-320-160C6.844 279.2 0 268.1 0 256c0-12.13 6.844-23.18 17.69-28.62l320-160c15.88-7.875 35.05-1.5 42.94 14.31 7.906 15.81 1.5 35.03-14.31 42.94L103.5 256l262.8 131.4c15.81 7.906 22.22 27.12 14.31 42.94C375 441.5 363.7 448 351.1 448z" fill="#6b7280" class="fill-000000"></path>
-                    </svg>
-                </button>
-
-                <button class="text-xl text-white bg-fuente py-3 px-5 rounded-xl font-bold">{"1"}</button>
-                <button class="text-xl text-gray-500 bg-gray-200 py-3 px-5 rounded-xl font-bold">{"2"}</button>
-                <button class="text-xl text-gray-500 bg-gray-200 py-3 px-5 rounded-xl font-bold">{"3"}</button>
-
-                <button class="bg-gray-200 p-3 rounded-xl">
-                    <svg viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
-                        <path d="M32.03 448c-11.75 0-23.05-6.469-28.66-17.69-7.906-15.81-1.5-35.03 14.31-42.94l262.8-131.4L17.69 124.6C1.875 116.7-4.531 97.51 3.375 81.7c7.891-15.81 27.06-22.19 42.94-14.31l320 160C377.2 232.8 384 243.9 384 256c0 12.12-6.844 23.19-17.69 28.63l-320 160c-4.59 2.27-9.48 3.37-14.28 3.37z" fill="#6b7280" class="fill-000000"></path>
-                    </svg>
-                </button>
-            </div>
+        <div class="flex justify-end gap-4 mt-5">
+            <button class="bg-gray-200 p-3 rounded-xl">
+                <svg viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
+                    <path d="M351.1 448a32.075 32.075 0 0 1-14.28-3.375l-320-160C6.844 279.2 0 268.1 0 256c0-12.13 6.844-23.18 17.69-28.62l320-160c15.88-7.875 35.05-1.5 42.94 14.31 7.906 15.81 1.5 35.03-14.31 42.94L103.5 256l262.8 131.4c15.81 7.906 22.22 27.12 14.31 42.94C375 441.5 363.7 448 351.1 448z" fill="#6b7280" class="fill-000000"></path>
+                </svg>
+            </button>
+        
+            <button class="text-xl text-white bg-fuente py-3 px-5 rounded-xl font-bold">{"1"}</button>
+            <button class="text-xl text-gray-500 bg-gray-200 py-3 px-5 rounded-xl font-bold">{"2"}</button>
+            <button class="text-xl text-gray-500 bg-gray-200 py-3 px-5 rounded-xl font-bold">{"3"}</button>
+        
+            <button class="bg-gray-200 p-3 rounded-xl">
+                <svg viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
+                    <path d="M32.03 448c-11.75 0-23.05-6.469-28.66-17.69-7.906-15.81-1.5-35.03 14.31-42.94l262.8-131.4L17.69 124.6C1.875 116.7-4.531 97.51 3.375 81.7c7.891-15.81 27.06-22.19 42.94-14.31l320 160C377.2 232.8 384 243.9 384 256c0 12.12-6.844 23.19-17.69 28.63l-320 160c-4.59 2.27-9.48 3.37-14.28 3.37z" fill="#6b7280" class="fill-000000"></path>
+                </svg>
+            </button>
         </div>
     </main>
-
-    <div class="flex justify-between items-center relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-14">
-        <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="absolute object-contain lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10">
-        <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="absolute object-contain lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20">
-        <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="absolute object-contain lg:w-40 mt-10 xl:mt-4 xl:w-64 top-0 left-56 z-30">
-
-        <div class="ml-auto">
-            <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px]">{"Are you looking for sale your products?"}</h2>
-            <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{"Get more info"}</button>
-        </div>
-    </div>
 
     <section class="mt-20 container mx-auto">
         <div class="grid grid-cols-3 gap-5 bg-gray-100 p-12 rounded-2xl place-items-center">
@@ -267,7 +263,7 @@
             </div>
         </div>
     </section>
-
+    
     <footer class="bg-fuente p-20 mt-40">
         <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
             <a href="/templates//views/app/home.html">
