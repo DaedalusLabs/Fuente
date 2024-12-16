@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"Checkout"}</title>
+    <link rel="stylesheet" href="../../styles/output.css">
+</head>
+<body class="font-fuente">
+    <header class="container mx-auto py-10 flex justify-between">
+        <a href="/templates/views/app/home.html">
+            <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex justify-between items-center w-full">
+                <input type="text" class="w-96 ml-auto pl-10 pr-4 py-3 border-2 border-fuente rounded-xl">
+                <svg class="feather feather-search absolute right-3 h-8 w-8 text-fuente" fill="none" height="24"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                </svg>
+            </div>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+    
+            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                <rect fill="none" height="256" width="256" />
+                <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="16" />
+                <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+            </svg>
+    
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+        </div>
+    </header>
+
+    <div class="bg-gray-100 py-5 flex items-center gap-16">
+        <div class="container mx-auto flex items-center justify-end gap-4">
+            <p class="text-white bg-fuente w-16 h-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"1"}</p>
+            <p class="text-fuente font-bold text-xl">{"Payment"}</p>
+        </div>
+    
+        <div class="container mx-auto flex items-center gap-5">
+            <p class="text-white bg-gray-300 h-16 w-16 rounded-full font-bold text-lg text-center flex items-center justify-center">{"2"}</p>
+            <p class="text-gray-300 font-bold text-xl">{"Confirmation"}</p>
+        </div>
+    </div>
+
+    <main class="container mx-auto mt-10">
+        <h1 class="text-fuente text-6xl tracking-tighter font-bold">{"Checkout"}</h1>
+
+        <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5">
+            <div>
+                <div class="border border-fuente rounded-2xl py-5 px-10">
+                    <h2 class="text-fuente text-3xl font-semibold">{"Client Information"}</h2>
+                    <div class="flex items-center justify-between mt-5 flex-wrap gap-5">
+                        <div>
+                            <h3 class="text-gray-400 font-bold text-lg">{"Clients Name"}</h3>
+                            <p class="font-light text-gray-400 text-md">{"Christine Amador Rossen"}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 font-bold text-lg">{"Email"}</h3>
+                            <p class="font-light text-gray-400 text-md">{"christineam@gmail.com"}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 font-bold text-lg">{"Phone Number"}</h3>
+                            <p class="font-light text-gray-400 text-md">{"+507 7656559012"}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 font-bold text-lg">{"Driver Location"}</h3>
+                            <p class="font-light text-gray-400 text-md">{"Cali Street, New York, United States, 11232"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-fuente mt-7 px-16 rounded-3xl">
+                    <h2 class="text-2xl text-fuente font-bold pt-5">{"Products Details"}</h2>
+                    
+                    <table class="table-auto w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class=" py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</th>
+                                <th class=" py-3 text-center text-md leading-4 font-semibold text-fuente text-lg">{"Quantity"}</th>
+                                <th class=" py-3 text-center text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-8 pt-4 whitespace-nowrap">
+                                    <img src="/templates/img/sneaker_2.png" alt="Product Image" class="w-32 bg-gray-200 rounded-2xl">
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap">
+                                    <p class="font-bold text-gray-500 mt-8">{"Brand of shoes"}</p>
+                                    <p class="font-thin text-gray-500 mt-3">{"Woman Rainbow shoes"}</p>
+                                    <p class="font-bold text-gray-500">{"CODE: 001212"}</p>
+                                </td>
+                                <td class="px-6 py-8">
+                                    <div class="border border-fuente flex justify-center gap-8 rounded-xl py-3 px-2 mt-20">
+                                        <button class="text-gray-600">{"-"}</button>
+                                        <span class="text-gray-600">{"1"}</span>
+                                        <button class="text-gray-600">{"+"}</button>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap text-right text-4xl text-fuente font-semibold">
+                                    <p class="mt-20">{"$99.99"}</p>
+                                </td>
+                                <td class="whitespace-nowrap text-center py-8 px-6">
+                                    <button class="w-10 h-10 mt-24">
+                                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill="none" d="M0 0h256v256H0z"></path><path fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="M216 56H40M104 104v64M152 104v64M200 56v152a8 8 0 0 1-8 8H64a8 8 0 0 1-8-8V56M168 56V40a16 16 0 0 0-16-16h-48a16 16 0 0 0-16 16v16" class="stroke-000000"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr class="border-t border-t-fuente">
+                                <td class="py-8 pt-4 whitespace-nowrap">
+                                    <img src="/templates/img/sneaker_1.png" alt="Product Image" class="w-32 bg-gray-200 rounded-2xl">
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap">
+                                    <p class="font-bold text-gray-500 mt-8">{"Brand of shoes"}</p>
+                                    <p class="font-thin text-gray-500 mt-3">{"Woman Rainbow shoes"}</p>
+                                    <p class="font-bold text-gray-500">{"CODE: 001212"}</p>
+                                </td>
+                                <td class="px-6 py-8">
+                                    <div class="border border-fuente flex justify-center gap-8 rounded-xl py-3 px-2 mt-20">
+                                        <button class="text-gray-600">{"-"}</button>
+                                        <span class="text-gray-600">{"1"}</span>
+                                        <button class="text-gray-600">{"+"}</button>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap text-right text-4xl text-fuente font-semibold">
+                                    <p class="mt-20">{"$99.99"}</p>
+                                </td>
+                                <td class="whitespace-nowrap text-center py-8 px-6">
+                                    <button class="w-10 h-10 mt-24">
+                                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill="none" d="M0 0h256v256H0z"></path><path fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="M216 56H40M104 104v64M152 104v64M200 56v152a8 8 0 0 1-8 8H64a8 8 0 0 1-8-8V56M168 56V40a16 16 0 0 0-16-16h-48a16 16 0 0 0-16 16v16" class="stroke-000000"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr class="border-t border-t-fuente">
+                                <td class="py-8 pt-4 whitespace-nowrap">
+                                    <img src="/templates/img/sneaker_3.png" alt="Product Image" class="w-32 bg-gray-200 rounded-2xl">
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap">
+                                    <p class="font-bold text-gray-500 mt-8">{"Brand of shoes"}</p>
+                                    <p class="font-thin text-gray-500 mt-3">{"Woman Rainbow shoes"}</p>
+                                    <p class="font-bold text-gray-500">{"CODE: 001212"}</p>
+                                </td>
+                                <td class="px-6 py-8">
+                                    <div class="border border-fuente flex justify-center gap-8 rounded-xl py-3 px-2 mt-20">
+                                        <button class="text-gray-600">{"-"}</button>
+                                        <span class="text-gray-600">{"1"}</span>
+                                        <button class="text-gray-600">{"+"}</button>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-8 whitespace-nowrap text-right text-4xl text-fuente font-semibold">
+                                    <p class="mt-20">{"$99.99"}</p>
+                                </td>
+                                <td class="whitespace-nowrap text-center py-8 px-6">
+                                    <button class="w-10 h-10 mt-24">
+                                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill="none" d="M0 0h256v256H0z"></path><path fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="M216 56H40M104 104v64M152 104v64M200 56v152a8 8 0 0 1-8 8H64a8 8 0 0 1-8-8V56M168 56V40a16 16 0 0 0-16-16h-48a16 16 0 0 0-16 16v16" class="stroke-000000"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-zinc-100 py-7 px-10 rounded-2xl">
+                    <h2 class="text-fuente text-3xl font-bold">{"Summary"}</h2>
+
+                    <div class="border-y border-y-fuente py-5 mt-7 space-y-5">
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Total Products"}</h3>
+                            <p class="text-gray-400 text-lg font-light">{"3 products"}</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Pickup location"}</h3>
+                            <p class="text-gray-400 text-lg font-light">{"Maddison Garden, New York United Statesm 11231"}</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Pickup date"}</h3>
+                            <p class="text-gray-400 text-lg font-light">{"12/12/24"}</p>
+                        </div>
+                    </div>
+
+                    <h2 class="text-fuente text-3xl font-bold mt-7">{"Price Details"}</h2>
+
+                    <div class="mt-7 space-y-5">
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Pre Total"}</h3>
+                            <p class="text-gray-400 text-lg font-light">{"$299.97"}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Delivery Fee"}</h3>
+                            <p class="text-gray-400 text-lg font-light">Free</p>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-gray-500 font-bold text-lg">{"Taxes"}</h3>
+                            <p class="text-gray-400 text-lg font-light">{"$13.00"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-100 py-5 px-10 rounded-2xl mt-7 flex flex-col gap-3">
+                    <div class="flex justify-between">
+                        <h3 class="text-fuente text-xl font-bold">{"Total Amount"}</h3>
+                        <p class="text-gray-400 text-lg">{"$312.97"}</p>
+                    </div>
+                    <div class="flex justify-between">
+                        <h3 class="text-fuente text-xl font-bold">{"Bitcoin"}</h3>
+                        <p class="text-gray-400 text-lg">{"00034971.10"}</p>
+                    </div>
+
+                    <img src="/templates/img/QR.png" alt="QR Code" class="w-40 mx-auto my-5">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-fuente p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+            <a href="/templates//views/app/home.html">
+                <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+            </a>
+    
+            <div>
+                <h3 class="text-xl text-white">{"About Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"How to sale?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Why is secure?"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Shipping and collections of orders"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Payment methods"}</p>
+                </div>
+            </div>
+    
+            <div>
+                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"General policies"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Privacy Policy"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Return and exchanges"}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
