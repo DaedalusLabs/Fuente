@@ -60,6 +60,21 @@ impl InvoicerStateLock {
             .admin_config
             .check_couriers_whitelist(pubkey)
     }
+    pub async fn is_commerce_whitelisted(&self, pubkey: &str) -> bool {
+        self.lock_owned()
+            .await
+            .admin_config
+            .check_commerce_whitelist(pubkey)
+            .is_ok()
+    }
+    pub async fn is_consumer_registered(&self, pubkey: &str) -> bool {
+        let profiles = self.lock_owned().await;
+        profiles
+            .admin_config
+            .check_consumer_blacklist(pubkey)
+            .is_ok()
+            && profiles.consumer_profiles.is_registered(pubkey)
+    }
     pub async fn exchange_rate(&self) -> f64 {
         self.lock().await.admin_config.get_exchange_rate()
     }

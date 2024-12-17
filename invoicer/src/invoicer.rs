@@ -20,6 +20,31 @@ pub struct Invoicer {
     keys: NostrKeypair,
 }
 impl Invoicer {
+    pub async fn new(
+        broadcaster: PoolRelayBroadcaster,
+        keys: NostrKeypair,
+    ) -> anyhow::Result<Self> {
+        let rest_client = reqwest::Client::new();
+        let lightning_wallet = bright_lightning::LightningClient::new(
+            Box::leak(
+                std::env::var("LND_ADDRESS")
+                    .expect("LND_ADDRESS not set")
+                    .into_boxed_str(),
+            ),
+            Box::leak(
+                std::env::var("LND_MACAROON")
+                    .expect("LND_MACAROON not set")
+                    .into_boxed_str(),
+            ),
+        )
+        .await?;
+        Ok(Self {
+            rest_client,
+            lightning_wallet,
+            broadcaster,
+            keys,
+        })
+    }
     async fn update_order_status(
         &self,
         state: &mut OrderInvoiceState,
@@ -49,31 +74,6 @@ impl Invoicer {
             }
         }
         Ok(())
-    }
-    pub async fn new(
-        broadcaster: PoolRelayBroadcaster,
-        keys: NostrKeypair,
-    ) -> anyhow::Result<Self> {
-        let rest_client = reqwest::Client::new();
-        let lightning_wallet = bright_lightning::LightningClient::new(
-            Box::leak(
-                std::env::var("LND_ADDRESS")
-                    .expect("LND_ADDRESS not set")
-                    .into_boxed_str(),
-            ),
-            Box::leak(
-                std::env::var("LND_MACAROON")
-                    .expect("LND_MACAROON not set")
-                    .into_boxed_str(),
-            ),
-        )
-        .await?;
-        Ok(Self {
-            rest_client,
-            lightning_wallet,
-            broadcaster,
-            keys,
-        })
     }
     pub async fn create_order_invoice(
         &self,

@@ -12,9 +12,10 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct ConsumerProfile {
-    nickname: String,
-    telephone: String,
-    email: String,
+    pub nickname: String,
+    pub telephone: String,
+    pub email: String,
+    pub avatar_url: Option<String>,
 }
 impl Default for ConsumerProfile {
     fn default() -> Self {
@@ -22,6 +23,7 @@ impl Default for ConsumerProfile {
             nickname: "John Doe".to_string(),
             telephone: "11111111".to_string(),
             email: "custom@email.com".to_string(),
+            avatar_url: None,
         }
     }
 }
@@ -63,11 +65,12 @@ impl TryFrom<NostrNote> for ConsumerProfile {
     }
 }
 impl ConsumerProfile {
-    pub fn new(nickname: String, email: String, telephone: String) -> Self {
+    pub fn new(nickname: String, email: String, telephone: String, avatar: Option<String>) -> Self {
         Self {
             nickname,
             telephone,
             email,
+            avatar_url: avatar,
         }
     }
     pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
@@ -127,15 +130,6 @@ impl ConsumerProfile {
         keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
             .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
         Ok(giftwrap)
-    }
-    pub fn nickname(&self) -> String {
-        self.nickname.clone()
-    }
-    pub fn telephone(&self) -> String {
-        self.telephone.clone()
-    }
-    pub fn email(&self) -> String {
-        self.email.clone()
     }
 }
 

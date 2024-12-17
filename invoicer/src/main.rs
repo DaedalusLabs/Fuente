@@ -1,6 +1,7 @@
 mod invoicer;
 mod registries;
 mod state;
+mod uploads;
 
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
 
@@ -11,8 +12,8 @@ use fuente::models::{
     OrderRequest, OrderStatus, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
     NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
     NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE,
-    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY,
-    TEST_PUB_KEY,
+    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP,
+    NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY, TEST_PUB_KEY,
 };
 use invoicer::Invoicer;
 use nostro2::{
@@ -22,6 +23,8 @@ use nostro2::{
 };
 use state::InvoicerStateLock;
 use tracing::{error, info, warn, Level};
+use upload_things::UtRecord;
+use uploads::UtSigner;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
@@ -79,6 +82,7 @@ pub struct InvoicerBot {
     keys: NostrKeypair,
     invoicer: Invoicer,
     broadcaster: PoolRelayBroadcaster,
+    uploader: UtSigner,
     bot_state: InvoicerStateLock,
     public_notes_channel: Receiver<(u32, NostrNote)>,
     private_notes_channel: Receiver<(u32, NostrNote)>,
@@ -100,6 +104,7 @@ impl InvoicerBot {
             invoicer: Invoicer::new(broadcaster.clone(), server_keys.clone()).await?,
             keys: server_keys,
             broadcaster,
+            uploader: UtSigner::default(),
             bot_state: InvoicerStateLock::default(),
             public_notes_channel,
             private_notes_channel,
@@ -353,6 +358,41 @@ impl InvoicerBot {
             if let Ok((note_kind, signed_note)) = note_channel.recv().await {
                 let process: anyhow::Result<()> = {
                     match note_kind {
+                        NOSTR_KIND_PRESIGNED_URL_REQ => {
+                            if !self
+                                .bot_state
+                                .is_consumer_registered(&signed_note.pubkey)
+                                .await
+                                && !self
+                                    .bot_state
+                                    .is_commerce_whitelisted(&signed_note.pubkey)
+                                    .await
+                            {
+                                error!("Unauthorized request");
+                                continue;
+                            }
+                            if let Ok(presigned_url) =
+                                self.uploader.sign_url(signed_note.content.try_into()?)
+                            {
+                                let ut_record = UtRecord {
+                                    file_keys: vec![presigned_url.file_key.clone()],
+                                    ..Default::default()
+                                };
+                                if let Ok(_) = self.uploader.register_url(ut_record).await {
+                                    let mut new_url_note = NostrNote {
+                                        kind: NOSTR_KIND_PRESIGNED_URL_RESP,
+                                        content: serde_json::to_string(&presigned_url)?,
+                                        pubkey: self.keys.public_key(),
+                                        ..Default::default()
+                                    };
+                                    self.keys.sign_nip_04_encrypted(
+                                        &mut new_url_note,
+                                        signed_note.pubkey,
+                                    )?;
+                                    self.broadcaster.broadcast_note(new_url_note).await?;
+                                }
+                            }
+                        }
                         NOSTR_KIND_CONSUMER_REGISTRY => {
                             if let Err(e) = self.bot_state.add_consumer_profile(signed_note).await {
                                 error!("{:?}", e);

@@ -122,7 +122,7 @@ pub fn history_page() -> Html {
                         >
                         <div class="flex justify-between items-center mb-2">
                         <div>
-                            <h4 class="font-semibold">{profile.nickname()}</h4>
+                            <h4 class="font-semibold">{profile.nickname}</h4>
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-medium">
@@ -201,9 +201,9 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                 <div class="space-y-2">
                 <h3 class="font-medium text-gray-500">{"Customer Information"}</h3>
                     <div class="space-y-1">
-                        <p>{"Name: "}{profile.nickname()}</p>
-                        <p>{"Phone: "}{profile.telephone()}</p>
-                        <p>{"Email: "}{profile.email()}</p>
+                        <p>{"Name: "}{profile.nickname}</p>
+                        <p>{"Phone: "}{profile.telephone}</p>
+                        <p>{"Email: "}{profile.email}</p>
                     </div>
             </div>
 
