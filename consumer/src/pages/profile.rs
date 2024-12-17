@@ -3,8 +3,8 @@ use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
 use super::PageHeader;
 use fuente::{
     mass::{
-        AddressLookupDetails, BackArrowIcon, CardComponent, ConsumerProfileDetails, LookupIcon,
-        NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
+        AddressLookupDetails, BackArrowIcon, CardComponent, ConsumerProfileDetails,
+        ImageUploadInput, LookupIcon, NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
     },
     models::{
         ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
@@ -275,7 +275,9 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
     let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = handle.clone();
-    let avatar_url = profile.avatar_url.clone();
+    let avatar_url = use_state(|| profile.avatar_url.clone());
+    let url_handle = avatar_url.clone();
+    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         let form = HtmlForm::new(e).expect("Failed to get form");
         let nickname = form
@@ -289,7 +291,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
         let handle = handle.clone();
         let sender = sender.clone();
         let user_ctx = user_ctx.clone();
-        let user_profile = ConsumerProfile::new(nickname, email, telephone, avatar_url.clone());
+        let user_profile = ConsumerProfile::new(nickname, email, telephone, (*avatar_url).clone());
         let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
         let giftwrapped_note = user_profile
             .giftwrapped_data(&user_keys, user_keys.public_key())
@@ -314,6 +316,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
                 </button>
             </div>
             <EditProfileForm {profile} />
+            <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} />
         </form>
     }
 }
