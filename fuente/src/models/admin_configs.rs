@@ -95,7 +95,7 @@ impl Into<String> for AdminConfigurationType {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AdminConfiguration {
     admin_whitelist: Vec<String>,
     commerce_whitelist: Vec<String>,

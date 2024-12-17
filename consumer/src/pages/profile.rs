@@ -6,7 +6,9 @@ use fuente::{
         AddressLookupDetails, BackArrowIcon, CardComponent, ConsumerProfileDetails, LookupIcon,
         NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
     },
-    models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb},
+    models::{
+        ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
+    },
 };
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
@@ -272,6 +274,10 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
             let giftwrapped_note = user_profile
                 .giftwrapped_data(&user_keys, user_keys.public_key())
                 .expect("Failed to giftwrap data");
+            let server_registry = user_profile
+                .registry_data(&user_keys, TEST_PUB_KEY.to_string())
+                .expect("Failed to giftwrap data");
+            sender.emit(server_registry);
             sender.emit(giftwrapped_note);
             user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
             handle.set(ProfilePageMenu::None);

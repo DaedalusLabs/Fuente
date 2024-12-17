@@ -1,6 +1,6 @@
 use fuente::{
     mass::{SimpleFormButton, SimpleInput},
-    models::{ConsumerProfile, ConsumerProfileIdb},
+    models::{ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
@@ -33,7 +33,11 @@ pub fn new_profile() -> Html {
         let giftwrap = user_profile
             .giftwrapped_data(&keys, keys.public_key())
             .expect("Failed to giftwrap data");
+        let server_registry = user_profile
+            .registry_data(&keys, TEST_PUB_KEY.to_string())
+            .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
+        sender.emit(server_registry);
         user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
     });
 

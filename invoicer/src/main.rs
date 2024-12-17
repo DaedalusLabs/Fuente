@@ -1,72 +1,27 @@
+mod invoicer;
+mod registries;
+mod state;
+
 const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
-use std::{collections::HashMap, sync::Arc};
 
 use anyhow::anyhow;
 use async_channel::{Receiver, Sender};
-use bright_lightning::{
-    HodlState, InvoicePaymentState, LightningAddress, LightningClient, LnAddressPaymentRequest,
-    LndHodlInvoice, LndPaymentRequest,
-};
 use fuente::models::{
-    CommerceProfile, DriverProfile, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
-    TEST_PRIV_KEY, TEST_PUB_KEY, {AdminConfiguration, AdminConfigurationType, AdminServerRequest},
-    {OrderInvoiceState, OrderPaymentStatus, OrderRequest, OrderStatus},
-    {
-        NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
-        NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_ORDER_STATE,
-        NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
-    },
+    AdminServerRequest, CommerceProfile, DriverProfile, OrderInvoiceState, OrderPaymentStatus,
+    OrderRequest, OrderStatus, ProductMenu, DRIVER_HUB_PRIV_KEY, DRIVER_HUB_PUB_KEY,
+    NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
+    NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE,
+    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY,
+    TEST_PUB_KEY,
 };
+use invoicer::Invoicer;
 use nostro2::{
     keypair::NostrKeypair,
-    notes::{NostrNote, NostrTag},
+    notes::NostrNote,
     relays::{NostrRelayPool, NostrSubscription, NoteEvent, PoolRelayBroadcaster, RelayEvent},
 };
-use tokio::sync::Mutex;
+use state::InvoicerStateLock;
 use tracing::{error, info, warn, Level};
-pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
-pub const MILISATOSHIS_IN_ONE_SATOSHI: u64 = 1000;
-pub const ILLUMINODES_FEES: u64 = 20;
-pub const FUENTE_FEES: u64 = 0;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct CommerceRegistryEntry {
-    profile: Option<NostrNote>,
-    menu: Option<NostrNote>,
-    whitelisted: bool,
-}
-impl CommerceRegistryEntry {
-    pub fn new(profile: Option<NostrNote>, menu: Option<NostrNote>) -> Self {
-        Self {
-            profile,
-            menu,
-            whitelisted: false,
-        }
-    }
-    pub fn set_whitelisted(&mut self, whitelisted: bool) {
-        self.whitelisted = whitelisted;
-    }
-    pub fn is_whitelisted(&self) -> bool {
-        self.whitelisted
-    }
-    pub fn get_profile(&self) -> Option<NostrNote> {
-        self.profile.clone()
-    }
-    pub fn get_menu(&self) -> Option<NostrNote> {
-        self.menu.clone()
-    }
-    pub fn set_profile(&mut self, profile: NostrNote) {
-        self.profile = Some(profile);
-    }
-    pub fn set_menu(&mut self, menu: NostrNote) {
-        self.menu = Some(menu);
-    }
-    pub fn ln_address(&self) -> anyhow::Result<LightningAddress> {
-        let profile = self.profile.clone().ok_or(anyhow!("No profile found"))?;
-        let commerce_profile = CommerceProfile::try_from(profile)?;
-        Ok(commerce_profile.ln_address())
-    }
-}
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
@@ -122,13 +77,9 @@ pub async fn main() -> anyhow::Result<()> {
 #[derive(Clone)]
 pub struct InvoicerBot {
     keys: NostrKeypair,
-    ln_address_client: reqwest::Client,
-    lightning_wallet: LightningClient,
+    invoicer: Invoicer,
     broadcaster: PoolRelayBroadcaster,
-    admin_config: Arc<Mutex<AdminConfiguration>>,
-    live_orders: Arc<Mutex<HashMap<String, OrderInvoiceState>>>,
-    courier_profiles: Arc<Mutex<HashMap<String, NostrNote>>>,
-    commerce_registries: Arc<Mutex<HashMap<String, CommerceRegistryEntry>>>,
+    bot_state: InvoicerStateLock,
     public_notes_channel: Receiver<(u32, NostrNote)>,
     private_notes_channel: Receiver<(u32, NostrNote)>,
     live_order_channel: Receiver<OrderInvoiceState>,
@@ -141,21 +92,15 @@ impl InvoicerBot {
         private_notes_channel: Receiver<(u32, NostrNote)>,
         live_order_channel: Receiver<OrderInvoiceState>,
     ) -> anyhow::Result<Self> {
-        let lightning_wallet =
-            LightningClient::new("lnd.illuminodes.com", "./invoices.macaroon").await?;
+        // TODO
+        // make this env variable
         let server_keys = NostrKeypair::new(TEST_PRIV_KEY)?;
         info!("Relay pool started");
-        let mut admin_config = AdminConfiguration::default();
-        admin_config.set_admin_whitelist(vec![TEST_PUB_KEY.to_string()]);
         Ok(Self {
+            invoicer: Invoicer::new(broadcaster.clone(), server_keys.clone()).await?,
             keys: server_keys,
             broadcaster,
-            ln_address_client: reqwest::Client::new(),
-            admin_config: Arc::new(Mutex::new(admin_config)),
-            courier_profiles: Arc::new(Mutex::new(HashMap::new())),
-            commerce_registries: Arc::new(Mutex::new(HashMap::new())),
-            live_orders: Arc::new(Mutex::new(HashMap::new())),
-            lightning_wallet,
+            bot_state: InvoicerStateLock::default(),
             public_notes_channel,
             private_notes_channel,
             live_order_channel,
@@ -181,6 +126,16 @@ impl InvoicerBot {
                 }
             }
             NOSTR_KIND_ADMIN_REQUEST => {
+                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = NostrNote::try_from(decrypted)?;
+                if let Err(e) = private_notes_channel
+                    .send((signed_note.kind, inner_note))
+                    .await
+                {
+                    error!("{:?}", e);
+                };
+            }
+            NOSTR_KIND_CONSUMER_REGISTRY => {
                 let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 if let Err(e) = private_notes_channel
@@ -261,6 +216,7 @@ impl InvoicerBot {
                 NOSTR_KIND_COMMERCE_PROFILE,
                 NOSTR_KIND_COMMERCE_PRODUCTS,
                 NOSTR_KIND_COURIER_PROFILE,
+                NOSTR_KIND_CONSUMER_REGISTRY,
             ]),
             ..Default::default()
         };
@@ -308,45 +264,75 @@ impl InvoicerBot {
     ) -> anyhow::Result<()> {
         loop {
             if note_channel.is_closed() {
+                error!("Public notes channel closed");
                 break;
             }
             if let Ok((note_kind, signed_note)) = note_channel.recv().await {
                 match note_kind {
                     NOSTR_KIND_COMMERCE_PROFILE => {
-                        if let Ok(_) = CommerceProfile::try_from(signed_note.clone()) {
-                            let mut profiles = self.commerce_registries.lock().await;
-                            let entry = profiles.entry(signed_note.pubkey.to_string()).or_insert(
-                                CommerceRegistryEntry {
-                                    profile: None,
-                                    menu: None,
-                                    whitelisted: false,
-                                },
-                            );
-                            entry.set_profile(signed_note.clone());
-                            info!("Added commerce profile");
+                        match CommerceProfile::try_from(signed_note.clone()) {
+                            Ok(_) => {
+                                if let Err(e) =
+                                    self.bot_state.add_commerce_profile(signed_note).await
+                                {
+                                    error!("{:?}", e);
+                                }
+                                info!("Added commerce profile");
+                            }
+                            Err(e) => {
+                                error!("{:?}", e);
+                                continue;
+                            }
                         }
                     }
                     NOSTR_KIND_COMMERCE_PRODUCTS => {
-                        ProductMenu::try_from(signed_note.clone())?;
-                        let mut profiles = self.commerce_registries.lock().await;
-                        let entry = profiles.entry(signed_note.pubkey.to_string()).or_insert(
-                            CommerceRegistryEntry {
-                                profile: None,
-                                menu: None,
-                                whitelisted: false,
-                            },
-                        );
-                        entry.set_menu(signed_note.clone());
-                        info!("Added menu");
+                        match ProductMenu::try_from(signed_note.clone()) {
+                            Ok(_) => {
+                                if let Err(e) = self.bot_state.add_commerce_menu(signed_note).await
+                                {
+                                    error!("{:?}", e);
+                                }
+                                info!("Added menu");
+                            }
+                            Err(e) => {
+                                error!("{:?}", e);
+                                continue;
+                            }
+                        }
                     }
                     NOSTR_KIND_COURIER_PROFILE => {
-                        let _ = DriverProfile::try_from(signed_note.clone())?;
-                        let mut profiles = self.courier_profiles.lock().await;
-                        profiles.insert(signed_note.pubkey.to_string(), signed_note);
-                        info!("Added courier profile");
+                        match DriverProfile::try_from(signed_note.clone()) {
+                            Ok(_) => {
+                                if let Err(e) = self
+                                    .bot_state
+                                    .check_courier_whitelist(signed_note.pubkey.as_str())
+                                    .await
+                                {
+                                    error!("{:?}", e);
+                                }
+                                if let Err(e) =
+                                    self.bot_state.add_courier_profile(signed_note).await
+                                {
+                                    error!("{:?}", e);
+                                }
+                                info!("Added courier profile");
+                            }
+                            Err(e) => {
+                                error!("{:?}", e);
+                                continue;
+                            }
+                        }
                     }
                     NOSTR_KIND_SERVER_CONFIG => {
-                        if let Err(e) = self.update_admin_config(signed_note.clone()).await {
+                        let decrypted = match self.keys.decrypt_nip_04_content(&signed_note) {
+                            Ok(decrypted) => Some(decrypted),
+                            Err(_e) => None,
+                        };
+                        if let Err(e) = self
+                            .bot_state
+                            .update_admin_config(signed_note.clone(), decrypted)
+                            .await
+                        {
                             error!("{:?}", e);
                         }
                     }
@@ -367,10 +353,39 @@ impl InvoicerBot {
             if let Ok((note_kind, signed_note)) = note_channel.recv().await {
                 let process: anyhow::Result<()> = {
                     match note_kind {
+                        NOSTR_KIND_CONSUMER_REGISTRY => {
+                            if let Err(e) = self.bot_state.add_consumer_profile(signed_note).await {
+                                error!("{:?}", e);
+                            }
+                            info!("Added consumer profile");
+                        }
                         NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-                            info!("ORDER REQUEST RECEIVED");
-                            if let Err(e) = self.handle_order_request(signed_note).await {
-                                error!("ORDER REQUEST ERROR {:?}", e);
+                            if let Ok(order_req) = OrderRequest::try_from(&signed_note) {
+                                match self
+                                    .bot_state
+                                    .find_commerce(order_req.commerce.as_str())
+                                    .await
+                                {
+                                    Ok(registered_commerce) => {
+                                        if let Ok(update) = self
+                                            .invoicer
+                                            .handle_order_request(
+                                                order_req,
+                                                signed_note,
+                                                registered_commerce.0,
+                                                self.bot_state.exchange_rate().await,
+                                                &self.keys,
+                                            )
+                                            .await
+                                        {
+                                            self.broadcaster.broadcast_note(update).await?;
+                                        }
+                                    }
+                                    Err(e) => {
+                                        error!("{:?}", e);
+                                        continue;
+                                    }
+                                }
                             }
                         }
                         NOSTR_KIND_ORDER_STATE => {
@@ -380,37 +395,11 @@ impl InvoicerBot {
                         }
                         NOSTR_KIND_ADMIN_REQUEST => {
                             if let Ok(admin_req) = AdminServerRequest::try_from(&signed_note) {
-                                let mut admin_confs = self.admin_config.lock().await;
-                                match admin_req.config_type {
-                                    AdminConfigurationType::ExchangeRate => {
-                                        admin_confs
-                                            .set_exchange_rate(admin_req.config_str.parse()?);
-                                        let update = admin_confs.sign_exchange_rate(&self.keys)?;
-                                        self.broadcaster.broadcast_note(update).await?;
-                                        info!("Exchange rate updated {}", admin_req.config_str);
-                                    }
-                                    AdminConfigurationType::CommerceWhitelist => {
-                                        let whitelist: Vec<String> =
-                                            serde_json::from_str(&admin_req.config_str)?;
-                                        admin_confs.set_commerce_whitelist(whitelist);
-                                        let update =
-                                            admin_confs.sign_commerce_whitelist(&self.keys)?;
-                                        info!("New commerce whitelist: {}", &update);
-                                        self.broadcaster.broadcast_note(update).await?;
-                                        info!("Commerce whitelist updated");
-                                    }
-                                    AdminConfigurationType::CourierWhitelist => {
-                                        let whitelist: Vec<String> =
-                                            serde_json::from_str(&admin_req.config_str)?;
-                                        info!("Courier whitelist updated to: {:?}", &whitelist);
-                                        admin_confs.set_couriers_whitelist(whitelist);
-                                        let update =
-                                            admin_confs.sign_couriers_whitelist(&self.keys)?;
-                                        self.broadcaster.broadcast_note(update).await?;
-                                        info!("Courier whitelist updated");
-                                    }
-                                    _ => {}
-                                }
+                                let update_note = self
+                                    .bot_state
+                                    .sign_updated_config(admin_req, &self.keys)
+                                    .await?;
+                                self.broadcaster.broadcast_note(update_note).await?;
                             }
                         }
                         _ => {}
@@ -424,40 +413,6 @@ impl InvoicerBot {
         }
         Err(anyhow!("Private notes channel closed"))
     }
-    async fn create_order_invoice(
-        &self,
-        order: &OrderRequest,
-    ) -> anyhow::Result<(LnAddressPaymentRequest, LndHodlInvoice)> {
-        let commerce_profiles = self.commerce_registries.lock().await;
-        let commerce = commerce_profiles
-            .get(&order.commerce)
-            .ok_or(anyhow!("Commerce not found"))?;
-        let invoice_total_srd = order.products.total();
-        let exchange_rate = self.admin_config.lock().await.get_exchange_rate();
-        let invoice_amount = ((invoice_total_srd / exchange_rate) * SATOSHIS_IN_ONE_BTC) as u64;
-        let invoice = match commerce
-            .ln_address()?
-            .get_invoice(
-                &self.ln_address_client,
-                invoice_amount * MILISATOSHIS_IN_ONE_SATOSHI,
-            )
-            .await
-        {
-            Ok(invoice) => invoice,
-            Err(e) => {
-                error!("{:?}", e);
-                return Err(anyhow!("Could not create invoice"));
-            }
-        };
-        info!("commerce Invoice created");
-        let hodl_amount = invoice_amount + ILLUMINODES_FEES + FUENTE_FEES;
-        let hodl_invoice = self
-            .lightning_wallet
-            .get_hodl_invoice(invoice.r_hash()?, hodl_amount)
-            .await?;
-        info!("Hodl invoice created");
-        Ok((invoice, hodl_invoice))
-    }
     async fn update_order_status(
         &self,
         state: &mut OrderInvoiceState,
@@ -467,154 +422,6 @@ impl InvoicerBot {
         state.update_payment_status(payment_status.clone());
         state.update_order_status(order_status.clone());
         self.broadcast_order_update(&state).await?;
-        Ok(())
-    }
-    async fn handle_courier_order_update(
-        &self,
-        order_state: Receiver<OrderInvoiceState>,
-    ) -> anyhow::Result<()> {
-        loop {
-            if order_state.is_closed() {
-                break;
-            }
-            if let Ok(order_state) = order_state.recv().await {
-                match (
-                    order_state.get_payment_status(),
-                    order_state.get_order_status(),
-                ) {
-                    (_, OrderStatus::Completed) => {}
-                    (_, OrderStatus::Canceled) => {}
-                    (OrderPaymentStatus::PaymentFailed, _) => {}
-                    _ => {
-                        let mut live_orders = self.live_orders.lock().await;
-                        if !live_orders.contains_key(&order_state.id()) {
-                            info!(
-                                "Order added to live orders {:?}",
-                                order_state.get_order_status()
-                            );
-                            live_orders.insert(order_state.id(), order_state);
-                        }
-                    }
-                }
-            }
-        }
-        Err(anyhow!("Order state channel closed"))
-    }
-    async fn order_payment_notifier(self, mut state: OrderInvoiceState) -> anyhow::Result<bool> {
-        let invoice = state
-            .get_commerce_invoice()
-            .ok_or(anyhow!("No commerce invoice found"))?;
-        let mut subscriber = self
-            .lightning_wallet
-            .subscribe_to_invoice(invoice.r_hash_url_safe()?)
-            .await?;
-        let mut success = false;
-        loop {
-            if subscriber.receiver.is_closed() {
-                self.lightning_wallet
-                    .cancel_htlc(invoice.r_hash_url_safe()?)
-                    .await?;
-                warn!("Canceled HTLC due to inactivity");
-                self.update_order_status(
-                    &mut state,
-                    OrderPaymentStatus::PaymentFailed,
-                    OrderStatus::Canceled,
-                )
-                .await?;
-                break;
-            }
-            if let Some(status) = subscriber.receiver.recv().await {
-                match status.state() {
-                    HodlState::ACCEPTED => {
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentReceived,
-                            OrderStatus::Pending,
-                        )
-                        .await?;
-                        info!("Payment received");
-                    }
-                    HodlState::CANCELED => {
-                        self.lightning_wallet
-                            .cancel_htlc(invoice.r_hash_url_safe()?)
-                            .await?;
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentFailed,
-                            OrderStatus::Canceled,
-                        )
-                        .await?;
-                        warn!("Payment canceled");
-                        break;
-                    }
-                    HodlState::SETTLED => {
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentSuccess,
-                            OrderStatus::Preparing,
-                        )
-                        .await?;
-                        success = true;
-                        info!("Order successfully paid");
-                        break;
-                    }
-                    HodlState::OPEN => {
-                        continue;
-                    }
-                }
-            }
-        }
-        Ok(success)
-    }
-    async fn handle_order_request(&self, signed_note: NostrNote) -> anyhow::Result<()> {
-        match OrderRequest::try_from(signed_note.clone()) {
-            Ok(order) => {
-                info!("Order request received");
-                let invoice = self.create_order_invoice(&order).await?;
-                info!("Order invoice created");
-                let state_update = OrderInvoiceState::new(
-                    signed_note.clone(),
-                    Some(invoice.1),
-                    Some(invoice.0.clone()),
-                );
-                info!("Order state created");
-                let state_update_note = state_update.sign_customer_update(&self.keys)?;
-                info!("Order state update signed");
-                self.broadcaster.broadcast_note(state_update_note).await?;
-                let self_clone = self.clone();
-                tokio::spawn(async move {
-                    if let Err(e) = self_clone.order_payment_notifier(state_update).await {
-                        error!("NOTIFIER ERROR {:?}", e);
-                    }
-                });
-                Ok(())
-            }
-            Err(e) => {
-                error!("{:?}", e);
-                Err(e)
-            }
-        }
-    }
-    async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
-        let payment_req = LndPaymentRequest::new(invoice.pr, 10, 150.to_string(), false);
-        let mut lnd_ws = self.lightning_wallet.invoice_channel().await?;
-        lnd_ws.sender.send(payment_req)?;
-        loop {
-            if lnd_ws.receiver.is_closed() && lnd_ws.receiver.is_empty() {
-                return Err(anyhow!("Payment channel closed"));
-            }
-            if let Some(payment_status) = lnd_ws.receiver.recv().await {
-                info!("{:?}", payment_status);
-                if payment_status.status() == InvoicePaymentState::Succeeded {
-                    let settled = self
-                        .lightning_wallet
-                        .settle_htlc(payment_status.preimage())
-                        .await;
-                    info!("{:?}", settled);
-                    break;
-                }
-            }
-        }
         Ok(())
     }
     async fn broadcast_order_update(&self, state: &OrderInvoiceState) -> anyhow::Result<()> {
@@ -651,7 +458,7 @@ impl InvoicerBot {
                 let invoice = order
                     .get_commerce_invoice()
                     .ok_or(anyhow!("No invoice found"))?;
-                let _ = self.settle_htlc(invoice).await?;
+                let _ = self.invoicer.settle_htlc(invoice).await?;
             }
             OrderStatus::ReadyForDelivery => {
                 let _ = self
@@ -662,15 +469,11 @@ impl InvoicerBot {
                     )
                     .await?;
                 self.broadcast_order_update(&order).await?;
-                self.live_orders.lock().await.insert(order.id(), order);
+                self.bot_state.add_live_order(order).await?;
             }
             OrderStatus::Canceled => {
                 if let Some(invoice) = order.get_commerce_invoice() {
-                    if let Err(e) = self
-                        .lightning_wallet
-                        .cancel_htlc(invoice.r_hash_url_safe()?)
-                        .await
-                    {
+                    if let Err(e) = self.invoicer.cancel_htlc(invoice).await {
                         warn!("{:?}", e);
                     }
                 }
@@ -686,32 +489,31 @@ impl InvoicerBot {
         }
         Ok(())
     }
-    async fn handle_courier_updates(
+    async fn handle_courier_order_update(
         &self,
-        inner_note: NostrNote,
-        outer_note: NostrNote,
+        order_state: Receiver<OrderInvoiceState>,
     ) -> anyhow::Result<()> {
-        let updated_order: OrderInvoiceState =
-            OrderInvoiceState::try_from(inner_note.content.to_string())?;
-        // Check if order is part of live orders
-        let mut orders = self.live_orders.clone().lock_owned().await;
-        let live_order = orders
-            .get_mut(&updated_order.id())
-            .ok_or(anyhow!("Order not found"))?;
-        // Check if the courier is already assigned
-        if live_order.get_courier().is_none() {
-            let new_courier = updated_order
-                .get_courier()
-                .ok_or(anyhow!("No courier found"))?;
-            live_order.update_courier(new_courier);
-            self.broadcast_order_update(live_order).await?;
+        loop {
+            if order_state.is_closed() {
+                break;
+            }
+            if let Ok(order_state) = order_state.recv().await {
+                match (
+                    order_state.get_payment_status(),
+                    order_state.get_order_status(),
+                ) {
+                    (_, OrderStatus::Completed) => {}
+                    (_, OrderStatus::Canceled) => {}
+                    (OrderPaymentStatus::PaymentFailed, _) => {}
+                    _ => {
+                        if let Err(e) = self.bot_state.add_live_order(order_state).await {
+                            error!("{:?}", e);
+                        }
+                    }
+                }
+            }
         }
-        // Check if the update s coing from asigned courier
-        if outer_note.pubkey == live_order.get_courier().unwrap().pubkey {
-            self.broadcast_order_update(&updated_order).await?;
-            info!("Order updated by courier");
-        }
-        Err(anyhow!("Invalid courier update"))
+        Err(anyhow!("Order state channel closed"))
     }
     async fn handle_order_state_update(&self, signed_note: NostrNote) -> anyhow::Result<()> {
         let mut order_state = OrderInvoiceState::try_from(signed_note.content.clone())?;
@@ -729,9 +531,7 @@ impl InvoicerBot {
                 let invoice = order_state
                     .get_commerce_invoice()
                     .ok_or(anyhow!("No commerce invoice found"))?;
-                self.lightning_wallet
-                    .cancel_htlc(invoice.r_hash_url_safe()?)
-                    .await?;
+                self.invoicer.cancel_htlc(invoice).await?;
                 warn!("Canceled HTLC due to inactivity");
                 self.update_order_status(
                     &mut order_state,
@@ -741,85 +541,53 @@ impl InvoicerBot {
                 .await?;
             }
         }
-        if let Ok(_) = self
-            .admin_config
-            .clone()
-            .lock_owned()
-            .await
-            .check_couriers_whitelist(&signed_note.pubkey)
-        {
-            self.handle_courier_updates(signed_note.clone(), signed_note.clone())
-                .await?;
-        }
-        info!("Order state updated");
-        Ok(())
-    }
-    async fn update_admin_config(&self, signed_note: NostrNote) -> anyhow::Result<()> {
-        self.admin_config
-            .lock()
-            .await
-            .check_admin_whitelist(&signed_note.pubkey)?;
-        let config_type: AdminConfigurationType = signed_note
-            .tags
-            .find_tags(NostrTag::Parameterized)
-            .get(2)
-            .ok_or(anyhow!("No config type found"))?
-            .clone()
-            .try_into()?;
-        match config_type {
-            AdminConfigurationType::CommerceWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&signed_note.content)?;
-                info!("Commerce whitelist update {:?}", whitelist);
-                let mut configs = self.admin_config.lock().await;
-                let mut registered_commerces = self.commerce_registries.lock().await;
-                for (key, entry) in registered_commerces.iter_mut() {
-                    if whitelist.contains(&key) {
-                        entry.set_whitelisted(true);
-                    } else {
-                        entry.set_whitelisted(false);
+        match order_state.get_courier() {
+            Some(courier_note) => {
+                info!("Courier assigned");
+                if signed_note.pubkey == courier_note.pubkey {
+                    info!("Courier update received");
+                    let mut new_state = self
+                        .bot_state
+                        .handle_courier_updates(signed_note.clone(), signed_note.clone())
+                        .await?;
+                    let payment_status = new_state.get_payment_status();
+                    let order_status = new_state.get_order_status();
+                    if let Err(e) = self
+                        .update_order_status(
+                            &mut new_state,
+                            payment_status.clone(),
+                            order_status.clone(),
+                        )
+                        .await
+                    {
+                        error!("{:?}", e);
                     }
                 }
-                configs.set_commerce_whitelist(whitelist);
-                info!("Commerce whitelist updated");
             }
-            AdminConfigurationType::CourierWhitelist => {
-                let whitelist: Vec<String> = serde_json::from_str(&signed_note.content)?;
-                self.admin_config
-                    .lock()
-                    .await
-                    .set_couriers_whitelist(whitelist);
-            }
-            AdminConfigurationType::ConsumerBlacklist => {
-                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
-                let blacklist: Vec<String> = serde_json::from_str(&decrypted)?;
-                self.admin_config
-                    .lock()
-                    .await
-                    .set_consumer_blacklist(blacklist);
-            }
-            AdminConfigurationType::UserRegistrations => {
-                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
-                let registrations: Vec<String> = serde_json::from_str(&decrypted)?;
-                self.admin_config
-                    .lock()
-                    .await
-                    .set_user_registrations(registrations);
-            }
-            AdminConfigurationType::ExchangeRate => {
-                let rate: f64 = serde_json::from_str(&signed_note.content)?;
-                let mut configs = self.admin_config.lock().await;
-                configs.set_exchange_rate(rate);
-                info!("Exchange rate set to: {}", rate);
-            }
-            AdminConfigurationType::AdminWhitelist => {
-                let decrypted = self.keys.decrypt_nip_04_content(&signed_note)?;
-                let whitelist: Vec<String> = serde_json::from_str(&decrypted)?;
-                self.admin_config
-                    .lock()
-                    .await
-                    .set_admin_whitelist(whitelist);
+            None => {
+                if order_state.get_order_status() == OrderStatus::ReadyForDelivery {
+                    info!("Order ready for delivery");
+                    let mut new_state = self
+                        .bot_state
+                        .handle_courier_updates(signed_note.clone(), signed_note.clone())
+                        .await?;
+                    info!("Courier assigned");
+                    let payment_status = new_state.get_payment_status();
+                    let order_status = new_state.get_order_status();
+                    if let Err(e) = self
+                        .update_order_status(
+                            &mut new_state,
+                            payment_status.clone(),
+                            order_status.clone(),
+                        )
+                        .await
+                    {
+                        error!("{:?}", e);
+                    }
+                }
             }
         }
+        info!("Order state updated");
         Ok(())
     }
 }
