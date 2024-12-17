@@ -13,6 +13,7 @@ tokio.workspace = true
 yew.workspace = true
 yew-router.workspace = true
 nostr-minions.workspace = true
+upload-things.workspace = true
 
 # WASM stuff
 js-sys.workspace = true
