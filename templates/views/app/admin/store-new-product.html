@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"Store - New Product"}</title>
+    <link rel="stylesheet" href="../../../styles/output.css">
+</head>
+<body class="font-fuente backdrop-blur-[16px] backdrop-saturate-[180%] bg-gray-400/75 rounded-[12px] border border-gray-300/30">
+    <main class="bg-white rounded-2xl p-5 max-w-6xl mx-auto">
+        <form class="grid grid-cols-2 gap-20">
+            <div>
+                <div class="space-y-2">
+                    <label for="product" class="text-gray-400 font-light block text-md">Name of product</label>
+                    <input type="text" id="product" class="border border-fuente rounded-xl p-2 w-full">
+                </div>
+
+                <p class="text-gray-400 font-light mt-5 text-sm">Product information</p>
+
+                <div class="mt-5 space-y-4">
+                    <div class="grid grid-cols-2 items-center gap-4">
+                        <label for="brand" class="text-gray-400 font-semibold">Brand of your product</label>
+                        <select id="brand" class="border border-fuente rounded-xl p-2 w-full"></select>
+                    </div>
+
+                    <div class="grid grid-cols-2 items-center gap-4">
+                        <label for="code" class="text-gray-400 font-semibold">CODE of your product</label>
+                        <input type="number" id="code" class="border border-fuente rounded-xl p-2 w-full">
+                    </div>
+
+                    <div class="grid grid-cols-2 items-center gap-4">
+                        <label for="type" class="text-gray-400 font-semibold">Type of product</label>
+                        <select id="type" class="border border-fuente rounded-xl p-2 w-full"></select>
+                    </div>
+
+                    <div class="space-y-4">
+                        <p for="size" class="text-gray-400 font-semibold">Size available</p>
+                        <div class="flex gap-3 relative">
+                            <input type="checkbox" id="5" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="6" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="7" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="8" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="9" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="10" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="11" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="12" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                            <input type="checkbox" id="13" class="appearance-none text-white checked:bg-fuente border border-fuente rounded-md p-4 block">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 items-center gap-4">
+                        <label for="colors" class="text-gray-400 font-semibold">Colors available</label>
+                        <select id="colors" class="border border-fuente rounded-xl p-2 w-full"></select>
+                    </div>
+
+                    <div class="grid grid-cols-2 items-center gap-4">
+                        <label for="quantity" class="text-gray-400 font-semibold">Quantity available</label>
+                        <select id="quantity" class="border border-fuente rounded-xl p-2 w-full"></select>
+                    </div>
+
+                    <div class="space-y-4">
+                        <label for="description" class="text-gray-400 font-semibold block">Description of your product</label>
+                        <textarea id="description" class="border border-fuente rounded-xl p-2 w-full min-h-40"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-gray-400 text-sm font-light">Add photos of your product</p>
+                <div class="grid grid-cols-2 mt-2 gap-5">
+                    <div class="border-2 border-fuente border-dashed rounded-2xl bg-gray-100">
+                        <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-10 h-full mx-auto py-20">
+                            <path d="M417.4 224H288V94.6c0-16.9-14.3-30.6-32-30.6s-32 13.7-32 30.6V224H94.6C77.7 224 64 238.3 64 256s13.7 32 30.6 32H224v129.4c0 16.9 14.3 30.6 32 30.6s32-13.7 32-30.6V288h129.4c16.9 0 30.6-14.3 30.6-32s-13.7-32-30.6-32z" fill="#4167e8" class="fill-000000"></path>
+                        </svg>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="border-2 border-fuente border-dashed rounded-2xl bg-gray-100">
+                            <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-6 h-full mx-auto py-5">
+                                <path d="M417.4 224H288V94.6c0-16.9-14.3-30.6-32-30.6s-32 13.7-32 30.6V224H94.6C77.7 224 64 238.3 64 256s13.7 32 30.6 32H224v129.4c0 16.9 14.3 30.6 32 30.6s32-13.7 32-30.6V288h129.4c16.9 0 30.6-14.3 30.6-32s-13.7-32-30.6-32z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                        </div>
+
+                        <div class="border-2 border-fuente border-dashed rounded-2xl bg-gray-100">
+                            <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-6 h-full mx-auto py-5">
+                                <path d="M417.4 224H288V94.6c0-16.9-14.3-30.6-32-30.6s-32 13.7-32 30.6V224H94.6C77.7 224 64 238.3 64 256s13.7 32 30.6 32H224v129.4c0 16.9 14.3 30.6 32 30.6s32-13.7 32-30.6V288h129.4c16.9 0 30.6-14.3 30.6-32s-13.7-32-30.6-32z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                        </div>
+
+                        <div class="border-2 border-fuente border-dashed rounded-2xl bg-gray-100">
+                            <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 512 512" class="w-6 h-full mx-auto py-5">
+                                <path d="M417.4 224H288V94.6c0-16.9-14.3-30.6-32-30.6s-32 13.7-32 30.6V224H94.6C77.7 224 64 238.3 64 256s13.7 32 30.6 32H224v129.4c0 16.9 14.3 30.6 32 30.6s32-13.7 32-30.6V288h129.4c16.9 0 30.6-14.3 30.6-32s-13.7-32-30.6-32z" fill="#4167e8" class="fill-000000"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="rounded-full bg-fuente-buttons text-fuente-forms font-semibold text-lg py-4 w-full mt-5">Upload from my computer</button>
+
+                <div class="mt-5">
+                    <p class="text-gray-400 font-light text-md">Product information</p>
+                    <div class="space-y-2 mt-2">
+                        <div class="w-full flex justify-between">
+                            <label for="price" class="text-gray-400 font-semibold">Original price</label>
+                            <input type="text" id="price" class="border border-fuente rounded-xl p-2">
+                        </div>
+
+                        <div class="w-full flex justify-between">
+                            <label for="discount" class="text-gray-400 font-semibold">Discount</label>
+                            <input type="text" id="discount" class="border border-fuente rounded-xl p-2">
+                        </div>
+
+                        <div class="w-full flex justify-between">
+                            <label for="total" class="text-gray-400 font-semibold">Total Price</label>
+                            <input type="text" id="total" class="border border-fuente rounded-xl p-2">
+                        </div>
+
+                        <div class="space-y-4">
+                            <label for="description" class="text-gray-400 font-semibold block">Description of your product</label>
+                            <textarea id="description" class="border border-fuente rounded-xl p-2 w-full min-h-40"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="flex justify-center mt-5">
+            <button class="bg-fuente-orange text-white font-semibold rounded-full py-3 px-10">Save your product</button>
+        </div>
+    </main>
+</body>
+</html>
