@@ -183,6 +183,7 @@ where
 pub struct ImageUploadInputProps {
     pub url_handle: UseStateHandle<Option<String>>,
     pub nostr_keys: NostrKeypair,
+    pub classes: Classes,
 }
 
 use nostr_minions::{browser_api::HtmlDocument, relay_pool::NostrProps};
@@ -196,10 +197,13 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let ImageUploadInputProps {
         url_handle,
         nostr_keys,
+        classes,
     } = props.clone();
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let user_keys = nostr_keys.clone();
     let url_clone = url_handle.clone();
+    let is_loading_new = use_state(|| false);
+    let loading_handle = is_loading_new.clone();
     use_effect_with(relay_pool.unique_notes.clone(), move |notes| {
         if let Some(last_note) = notes.last() {
             if last_note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
@@ -226,6 +230,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                             let url = presigned_url.clone();
                             let form_data = form_data.clone();
                             let url_handle = url_handle.clone();
+                            let loading_handle = loading_handle.clone();
                             spawn_local(async move {
                                 let url_req =
                                     url.try_into_request(form_data).expect("Failed to convert");
@@ -236,6 +241,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                                     .await
                                     .expect("Failed to fetch");
                                 url_handle.set(Some(upload_url.url.clone()));
+                                loading_handle.set(false);
                             });
                         }
                     },
@@ -251,7 +257,9 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     });
     let user_keys = nostr_keys.clone();
     let sender = relay_pool.send_note.clone();
+    let loading_handle = is_loading_new.clone();
     let onchange = Callback::from(move |e: yew::Event| {
+        loading_handle.set(true);
         let input = e
             .target()
             .unwrap()
@@ -277,24 +285,53 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
             .unwrap();
         sender.emit(giftwrap);
     });
+    let mut default_classes = classes!(
+        "flex",
+        "items-center",
+        "justify-center",
+        "cursor-pointer",
+        "border-4",
+        "border-dashed",
+        "border-blue-500",
+        "rounded-xl"
+    );
+    default_classes.extend(classes.clone());
+    let mut with_url = default_classes.clone();
+    with_url.extend(classes!("bg-transparent", "absolute"));
+    let mut image_classes = classes!("rounded-xl", "absolute");
+    image_classes.extend(classes);
     html! {
         <div class="flex justify-center items-center">
         {match url_clone.as_ref() {
             Some(url) => {
                 html! {
                      <div class="relative">
-                    <img src={url.clone()} class="min-w-64 min-h-64 rounded-xl absolute" />
-                    <label for="imageUpload" class="w-64 h-64 flex items-center justify-center cursor-pointer border-4 border-dashed border-blue-500 rounded-xl bg-transparent absolute">
+                    <img src={url.clone()} class={image_classes} />
+                    <label for="imageUpload" class={with_url}>
                         <input {onchange} id="imageUpload" type="file" accept="image/*" class="hidden" />
-                        <span class="text-gray-500">{"CHANGE"}</span>
+                        {match *is_loading_new {
+                            true => html! {
+                                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                            },
+                            false => html! {
+                                <span class="text-gray-500">{"CHANGE"}</span>
+                            }
+                        }}
                     </label>
                     </div>
                 }
             }
             None => html! {
-                <label for="imageUpload" class="w-64 h-64 flex items-center justify-center cursor-pointer border-4 border-dashed border-blue-500 rounded-xl">
+                <label for="imageUpload" class={default_classes}>
                     <input {onchange} id="imageUpload" type="file" accept="image/*" class="hidden" />
-                    <span class="text-gray-500">{"IMAGE UPLOAD"}</span>
+                    {match *is_loading_new {
+                        true => html! {
+                            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        },
+                        false => html! {
+                            <span class="text-gray-500">{"IMAGE UPLOAD"}</span>
+                        }
+                    }}
                 </label>
             }
         }}
