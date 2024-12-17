@@ -98,7 +98,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-4 w-full h-full rounded-lg">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname())}
+                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row flex-1 ">
@@ -162,7 +162,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-2 w-fit h-fit">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname())}
+                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row">
