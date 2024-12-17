@@ -2,7 +2,7 @@ use fuente::mass::{AppLink, HistoryIcon, HomeIcon, MenuBarsIcon, UserBadgeIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{HomePage, NewProfileForm, HistoryPage};
+use crate::pages::{HomePage, SettingsPageComponent, HistoryPage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum DriverRoute {
@@ -10,8 +10,6 @@ pub enum DriverRoute {
     Home,
     #[at("/history")]
     History,
-    #[at("/profile")]
-    Profile,
     #[at("/settings")]
     Settings,
 }
@@ -25,10 +23,7 @@ pub fn consumer_pages() -> Html {
                     match switch {
                         DriverRoute::Home => html!{<HomePage />},
                         DriverRoute::History => html!{<HistoryPage />},
-                        DriverRoute::Profile => html!{<>
-                            <NewProfileForm />
-                            </>},
-                        DriverRoute::Settings => html!{<></>},
+                        DriverRoute::Settings => html!{<SettingsPageComponent />},
                     }
                 }}
             />
@@ -40,11 +35,7 @@ pub fn consumer_pages() -> Html {
 pub fn home_header() -> Html {
     html! {
         <div class="w-full flex flex-row justify-between p-4 ">
-            <AppLink<DriverRoute>
-                class="" selected_class=""
-                route={DriverRoute::Settings}>
-                <MenuBarsIcon class="w-8 h-8 stroke-neutral-900" />
-            </AppLink<DriverRoute>>
+            <SettingsToggleLink />
         </div>
     }
 }
@@ -54,7 +45,7 @@ pub fn home_footer() -> Html {
         <div class="w-full p-4 flex flex-row justify-around">
             <AppLink<DriverRoute>
                 class="" selected_class=""
-                route={DriverRoute::Profile}>
+                route={DriverRoute::Settings}>
                 <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<DriverRoute>>
             <AppLink<DriverRoute>
@@ -68,5 +59,24 @@ pub fn home_footer() -> Html {
                 <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<DriverRoute>>
         </div>
+    }
+}
+#[function_component(SettingsToggleLink)]
+pub fn settings_toggle() -> Html {
+    let navigator = use_navigator().unwrap();
+    let current_route = use_route::<DriverRoute>().unwrap();
+    
+    let onclick = Callback::from(move |_| {
+        if current_route == DriverRoute::Settings {
+            navigator.push(&DriverRoute::Home)
+        } else {
+            navigator.push(&DriverRoute::Settings)
+        }
+    });
+
+    html! {
+        <button {onclick}>
+            <MenuBarsIcon class="w-8 h-8 stroke-neutral-400" />
+        </button>
     }
 }

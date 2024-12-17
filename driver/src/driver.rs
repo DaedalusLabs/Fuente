@@ -1,6 +1,6 @@
 use driver::{
     contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider},
-    pages::NewProfileForm,
+    pages::SettingsPageComponent,
     router::DriverPages,
 };
 use fuente::{
@@ -132,7 +132,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if user_ctx.get_profile().is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
-                <NewProfileForm />
+                <SettingsPageComponent />
             </div>
         };
     }

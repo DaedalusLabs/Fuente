@@ -1,5 +1,7 @@
-use fuente::models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_DRIVER_PROFILE};
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use fuente::models::{DriverProfile, DriverProfileIdb, NOSTR_KIND_COURIER_PROFILE};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
 use nostro2::{
     notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
@@ -139,7 +141,7 @@ pub fn commerce_data_sync() -> Html {
                 let pubkey = keys.public_key();
                 spawn_local(async move {
                     let filter = NostrSubscription {
-                        kinds: Some(vec![NOSTR_KIND_DRIVER_PROFILE]),
+                        kinds: Some(vec![NOSTR_KIND_COURIER_PROFILE]),
                         authors: Some(vec![pubkey.clone()]),
                         ..Default::default()
                     }

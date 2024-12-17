@@ -1,6 +1,6 @@
-mod driver_profile;
 mod home;
 mod history;
-pub use driver_profile::*;
+mod settings;
 pub use home::*;
 pub use history::*;
+pub use settings::*;

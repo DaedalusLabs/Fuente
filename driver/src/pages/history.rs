@@ -38,10 +38,10 @@ pub fn history_page() -> Html {
                                     
                                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&state_note) {
                                     if let Ok(order_state) = OrderInvoiceState::try_from(decrypted) {
-                                        if let Some(courier) = order_state.get_courier() {
+                                        if let Some(courier) = order_state.courier.as_ref() {
                                             if courier.pubkey == keys.public_key() {
-                                                let status = order_state.get_order_status();
-                                                if status == OrderStatus::Completed || status == OrderStatus::Canceled {
+                                                let status = &order_state.order_status;
+                                                if status == &OrderStatus::Completed || status == &OrderStatus::Canceled {
                                                     gloo::console::log!("Added to history with status:", status.display());
                                                     history_orders.push(order_state);
                                                 }
@@ -66,17 +66,17 @@ pub fn history_page() -> Html {
 
     let filtered_orders = (*orders).iter()
         .filter(|order| {
-            let status = order.get_order_status();
+            let status = &order.order_status;
             let matches = match *filter_state {
-                HistoryFilter::Completed => status == OrderStatus::Completed,
-                HistoryFilter::Canceled => status == OrderStatus::Canceled,
+                HistoryFilter::Completed => status == &OrderStatus::Completed,
+                HistoryFilter::Canceled => status == &OrderStatus::Canceled,
             };
             matches
         })
         .collect::<Vec<_>>();
 
     if let Some(order_id) = (*selected_order).clone() {
-        if let Some(order) = orders.iter().find(|o| o.id() == order_id) {
+        if let Some(order) = orders.iter().find(|o| o.order_id() == order_id) {
             return html! {
                 <OrderDetails 
                     order={order.clone()} 
@@ -149,7 +149,7 @@ pub fn history_page() -> Html {
                         {filtered_orders.iter().map(|order| {
                             let order_req = order.get_order_request();
                             let profile = order_req.profile;
-                            let order_id = order.id();
+                            let order_id = order.order_id();
                             let selected = selected_order.clone();
                             
                             html! {
@@ -161,7 +161,7 @@ pub fn history_page() -> Html {
                                         <div>
                                             <h4 class="font-semibold">{profile.nickname}</h4>
                                             <p class="text-sm text-gray-500">
-                                                {format!("Order #{}", &order.id()[..8])}
+                                                {format!("Order #{}", &order.order_id()[..8])}
                                             </p>
                                             <p class="text-sm text-gray-500">
                                                 {order_req.address.lookup().display_name()}
@@ -173,13 +173,13 @@ pub fn history_page() -> Html {
                                             </p>
                                             <p class={classes!(
                                                 "text-sm",
-                                                if order.get_order_status() == OrderStatus::Completed {
+                                                if order.order_status == OrderStatus::Completed {
                                                     "text-green-600"
                                                 } else {
                                                     "text-red-600"
                                                 }
                                             )}>
-                                                {order.get_order_status().display()}
+                                                {order.order_status.display()}
                                             </p>
                                         </div>
                                     </div>
@@ -214,7 +214,7 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                     {"← Back"}
                 </button>
                 <h2 class="text-2xl font-semibold text-fuente-dark">
-                    {format!("Delivery Details #{}", &props.order.id()[..8])}
+                    {format!("Delivery Details #{}", &props.order.order_id()[..8])}
                 </h2>
             </div>
 
@@ -237,13 +237,13 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                         <h3 class="font-medium text-gray-500">{"Delivery Status"}</h3>
                         <p class={classes!(
                             "font-medium",
-                            if props.order.get_order_status() == OrderStatus::Completed {
+                            if props.order.order_status == OrderStatus::Completed {
                                 "text-green-600"
                             } else {
                                 "text-red-600"
                             }
                         )}>
-                            {props.order.get_order_status().display()}
+                            {props.order.order_status.display()}
                         </p>
                     </div>
                 </div>

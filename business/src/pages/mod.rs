@@ -3,13 +3,13 @@ mod home;
 mod new_user;
 mod orders;
 mod products;
-mod profile;
+mod settings;
 pub use history::*;
 pub use home::*;
 pub use new_user::*;
 pub use orders::*;
 pub use products::*;
-pub use profile::*;
+pub use settings::*;
 
 use fuente::mass::{AppLink, BackArrowIcon};
 use yew::prelude::*;

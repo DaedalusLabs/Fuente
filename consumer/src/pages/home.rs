@@ -221,7 +221,7 @@ pub fn home_footer() -> Html {
             </AppLink<ConsumerRoute>>
             <AppLink<ConsumerRoute>
                 class="" selected_class=""
-                route={ConsumerRoute::Profile}>
+                route={ConsumerRoute::Settings}>
                 <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<ConsumerRoute>>
             <AppLink<ConsumerRoute>

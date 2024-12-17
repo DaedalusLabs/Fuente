@@ -1,9 +1,9 @@
 use crate::contexts::{
-    CommerceDataStore, DriverDataStore, {OrderHubAction, OrderHubStore},
+    CommerceDataStore, {OrderHubAction, OrderHubStore},
 };
 use fuente::{
     mass::LoadingScreen,
-    models::{OrderInvoiceState, OrderStatus},
+    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COURIER_UPDATE},
 };
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
@@ -11,6 +11,7 @@ use nostr_minions::{
     relay_pool::NostrProps,
     widgets::leaflet::{IconOptions, LeafletComponent, LeafletMap, Marker},
 };
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 
 #[function_component(HomePage)]
@@ -29,19 +30,19 @@ pub fn home_page() -> Html {
             </div>
         };
     };
-    if let Some(live_order) = order_ctx.get_live_order() {
+    if let Some((order, order_note)) = order_ctx.get_live_order() {
         return html! {
             <div class="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
                 <h2>{"Live Order!"}</h2>
-                <LiveOrderDetails order={live_order} />
+                <LiveOrderDetails {order} {order_note} />
             </div>
         };
     }
     html! {
             <div class="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
-            {{orders.iter().map(|order| {
+            {{orders.iter().map(|(order, order_note)| {
                 html! {
-                    <OrderPickupDetails order={order.clone()} />
+                    <OrderPickupDetails order={order.clone()} order_note={order_note.clone()}/>
                 }
             }).collect::<Html>()}}
             </div>
@@ -51,6 +52,7 @@ pub fn home_page() -> Html {
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderPickupProps {
     pub order: OrderInvoiceState,
+    pub order_note: NostrNote,
 }
 
 #[function_component(LiveOrderDetails)]
@@ -61,7 +63,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("Failed to get order context");
     let live_order_ctx = use_context::<OrderHubStore>().expect("Failed to get live order context");
     let sender = relay_ctx.send_note.clone();
-    let OrderPickupProps { order } = props;
+    let OrderPickupProps { order, order_note } = props;
     let order_req = order.get_order_request();
     let commerce = commerce_ctx
         .find_commerce(&order_req.commerce)
@@ -75,20 +77,24 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
         let order_clone = order.clone();
         let keys_clone = keys.clone();
         let order_ctx = live_order_ctx.clone();
+        let order_note = order_note.clone();
         Callback::from(move |_| {
-            let mut order_clone = order_clone.clone();
-            match order_clone.get_order_status() {
-                OrderStatus::ReadyForDelivery => {
-                    order_clone.update_order_status(OrderStatus::InDelivery);
-                }
+            let new_status = match order_clone.order_status {
+                OrderStatus::ReadyForDelivery => OrderStatus::InDelivery,
                 OrderStatus::InDelivery => {
-                    order_clone.update_order_status(OrderStatus::Completed);
-                    order_ctx.dispatch(OrderHubAction::OrderCompleted(order_clone.id()));
+                    order_ctx.dispatch(OrderHubAction::OrderCompleted(order_clone.order_id()));
+                    OrderStatus::Completed
                 }
-                _ => {}
-            }
-            let signed_order = order_clone
-                .sign_server_request(&keys_clone)
+                _ => {
+                    return;
+                }
+            };
+            let update_req = OrderUpdateRequest {
+                order: order_note.clone(),
+                status_update: new_status,
+            };
+            let signed_order = update_req
+                .sign_update(&keys_clone, NOSTR_KIND_COURIER_UPDATE)
                 .expect("Failed to sign order");
             sender.emit(signed_order);
         })
@@ -98,12 +104,12 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-4 w-full h-full rounded-lg">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
+                    {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row flex-1 ">
                 <OrderPickupMapPreview
-                    order_id={order.id()}
+                    order_id={order.order_id()}
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
@@ -111,7 +117,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
                 />
                 <div class="flex flex-col gap-4 p-4">
                     <button {onclick} class="w-fit bg-fuente text-white rounded-3xl p-2 w-1/2">
-                        {{match order.get_order_status() {
+                        {{match order.order_status {
                             OrderStatus::ReadyForDelivery => "Picked up Package",
                             OrderStatus::InDelivery => "Delivered Package",
                             _ => "No Action"
@@ -129,12 +135,8 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("Failed to get key context");
     let keys = key_ctx.get_nostr_key().expect("Failed to get keys");
     let relay_ctx = use_context::<NostrProps>().expect("Failed to get order context");
-    let driver_ctx = use_context::<DriverDataStore>().expect("Failed to get driver context");
-    let driver_profile = driver_ctx
-        .get_profile_note()
-        .expect("Failed to get driver profile");
     let sender = relay_ctx.send_note.clone();
-    let OrderPickupProps { order } = props;
+    let OrderPickupProps { order, order_note } = props;
     let order_req = order.get_order_request();
     let commerce = commerce_ctx
         .find_commerce(&order_req.commerce)
@@ -147,12 +149,32 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
     let onclick = {
         let order_clone = order.clone();
         let keys_clone = keys.clone();
-        let driver_note = driver_profile.clone();
+        let order_note = order_note.clone();
         Callback::from(move |_| {
-            let mut order_clone = order_clone.clone();
-            order_clone.update_courier(driver_note.clone());
-            let signed_order = order_clone
-                .sign_server_request(&keys_clone)
+            if order_clone.courier.is_none() {
+                let update_req = OrderUpdateRequest {
+                    order: order_note.clone(),
+                    status_update: OrderStatus::ReadyForDelivery,
+                };
+                let signed_order = update_req
+                    .sign_update(&keys_clone, NOSTR_KIND_COURIER_UPDATE)
+                    .expect("Failed to sign order");
+                sender.emit(signed_order);
+                return;
+            }
+            let new_status = match order_clone.order_status {
+                OrderStatus::ReadyForDelivery => OrderStatus::InDelivery,
+                OrderStatus::InDelivery => OrderStatus::Completed,
+                _ => {
+                    return;
+                }
+            };
+            let update_req = OrderUpdateRequest {
+                order: order_note.clone(),
+                status_update: new_status,
+            };
+            let signed_order = update_req
+                .sign_update(&keys_clone, NOSTR_KIND_COURIER_UPDATE)
                 .expect("Failed to sign order");
             sender.emit(signed_order);
         })
@@ -162,12 +184,12 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-2 w-fit h-fit">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
+                    {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row">
                 <OrderPickupMapPreview
-                    order_id={order.id()}
+                    order_id={order.order_id()}
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}

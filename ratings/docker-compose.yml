@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  fuente-ratings:
+    build:
+      context: .
+    volumes:
+      - /home/illuminodes/fuente/ratings:/app
+    working_dir: /app
+    restart: unless-stopped
+    environment:
+      - FUENTE_KEY=${FUENTE_KEY}
+    networks:
+      - illuminodes
+
+networks:
+  illuminodes:
+    external: true
+    name: nginx_illuminodes

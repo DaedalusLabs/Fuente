@@ -15,19 +15,21 @@ impl Default for LiveOrders {
     }
 }
 impl LiveOrders {
-    pub fn get_order(&self, commerce_id: &str) -> Option<OrderInvoiceState> {
-        self.orders.get(commerce_id).cloned()
+    pub fn get_order(&self, order_id: &str) -> Option<OrderInvoiceState> {
+        self.orders.get(order_id).cloned()
     }
-    pub fn new_order(
+    pub fn update_order_record(
         &mut self,
-        commerce_id: String,
+        order_id: String,
         order: OrderInvoiceState,
     ) -> anyhow::Result<()> {
-        if let Some(old_order) = self.orders.get_mut(&commerce_id) {
-            return Err(anyhow!("Order already exists: {:?}", old_order));
-        } else {
-            self.orders.insert(commerce_id, order);
-        }
+        self.orders.insert(order_id, order);
+        Ok(())
+    }
+    pub fn remove_order(&mut self, order_id: &str) -> anyhow::Result<()> {
+        self.orders
+            .remove(order_id)
+            .ok_or_else(|| anyhow!("Order not found"))?;
         Ok(())
     }
 }

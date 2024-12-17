@@ -1,5 +1,5 @@
 [package]
-name = "invoicer"
+name = "fuente-invoicer"
 version = "0.1.0"
 edition = "2021"
 
@@ -22,9 +22,7 @@ tracing-subscriber = "0.3.19"
 tracing-test = "0.2.5"
 
 # I/O
-async-channel.workspace = true
-futures-util = { version = "0.3.30", features = ["sink", "std"] }
-tokio.workspace = true
+tokio = { version = "1.42.0", features = ["macros", "sync", "io-util", "rt-multi-thread"] }
 
 
 # REST requests
@@ -32,5 +30,6 @@ reqwest = { version = "0.12.9", features = ["json"] }
 httparse = "1.9.5"
 url = "2.5.2"
 upload-things.workspace = true
+tokio-stream = "0.1.17"
 
 

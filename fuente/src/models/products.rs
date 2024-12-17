@@ -37,10 +37,20 @@ impl TryFrom<String> for ProductSide {
 pub struct ProductItem {
     id: String,
     name: String,
+    #[serde(default)]
+    sku: Option<String>,
     price: String,
+    #[serde(default)]
+    discount: Option<String>,
     order: usize,
     category: String,
+    #[serde(default)]
+    details: String,
     description: String,
+    #[serde(default)]
+    image_url: Option<String>,
+    #[serde(default)]
+    thumbnail_url: Option<String>,
     sides: Vec<ProductSide>,
 }
 impl ProductItem {
@@ -53,21 +63,58 @@ impl ProductItem {
     ) -> Self {
         let mut hasher = DefaultHasher::new();
         format!("{}{}", name, category).hash(&mut hasher);
-        ProductItem {
-            id: hasher.finish().to_string(),
+        let id = hasher.finish().to_string();
+        let sku = Some(format!("SKU-{}", id[..6].to_uppercase()));
+        Self {
+            id,
             name,
+            sku,
             price,
             order,
+            discount: None,
             category,
             description,
+            details: String::new(),
+            image_url: None,
+            thumbnail_url: None,
             sides: vec![],
         }
+    }
+    // Add new getter methods
+    pub fn category_id(&self) -> String {  // Add this getter method
+        self.category.clone()
+    }
+    pub fn details(&self) -> String {
+        self.details.clone()
+    }
+    pub fn sku(&self) -> String {
+        self.sku.clone().unwrap_or_default()
+    }
+    pub fn image_url(&self) -> String {
+        self.image_url.clone().unwrap_or_else(|| "/public/assets/img/logo.png".to_string())
+    }
+    pub fn thumbnail_url(&self) -> String {
+        // added debug loggins
+        let url = self.thumbnail_url.clone()
+            .unwrap_or_else(|| "/public/assets/img/logo.png".to_string());
+        url
     }
     pub fn name(&self) -> String {
         self.name.clone()
     }
     pub fn price(&self) -> String {
-        self.price.clone()
+        let base = self.price.parse::<f64>().unwrap_or(0.0);
+    
+        if let Some(discount) = &self.discount {
+            let disc = discount.parse::<f64>().unwrap_or(0.0);
+            return format!("{:.2}", base - disc);
+        }
+        
+        // Return original base price if no discount
+        format!("{:.2}", base)
+    }
+    pub fn discount(&self) -> Option<String> {
+        self.discount.clone()
     }
     pub fn id(&self) -> String {
         self.id.clone()
@@ -80,6 +127,30 @@ impl ProductItem {
     }
     pub fn add_side(&mut self, side: ProductSide) {
         self.sides.push(side);
+    }
+    pub fn set_image_url(&mut self, url: String) {
+        self.image_url = Some(url);
+    }
+    pub fn set_thumbnail_url(&mut self, url: String) {
+        self.thumbnail_url = Some(url);
+    }
+    pub fn set_sku(&mut self, sku: String) {
+        self.sku = Some(sku);
+    }
+    pub fn set_details(&mut self, details: String) {
+        self.details = details;
+    }
+    pub fn set_discount(&mut self, discount: Option<String>) {
+        self.discount = discount;
+    }
+    pub fn set_price(&mut self, price: String) {
+        self.price = price;
+    }
+    pub fn set_description(&mut self, description: String) {
+        self.description = description;
+    }
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
     }
 }
 impl TryFrom<String> for ProductItem {
@@ -184,7 +255,7 @@ impl ProductOrder {
     pub fn total(&self) -> f64 {
         self.products
             .iter()
-            .map(|p| p.price.parse::<f64>().unwrap())
+            .map(|p| p.price().parse::<f64>().unwrap_or(0.0))
             .sum()
     }
     pub fn is_empty(&self) -> bool {
@@ -229,6 +300,11 @@ impl ProductMenu {
             self.categories[i] = updated;
         } else {
             self.categories.push(category);
+        }
+    }
+    pub fn remove_product(&mut self, category_id: &str, product_id: &str) {
+        if let Some(category) = self.categories.iter_mut().find(|c| c.id == category_id) {
+            category.remove_product(product_id.to_string());
         }
     }
     pub fn new() -> Self {
