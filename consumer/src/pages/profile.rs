@@ -15,7 +15,7 @@ use nostr_minions::{
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
 };
-use yew::{platform::spawn_local, prelude::*, props};
+use yew::{prelude::*, props};
 
 #[function_component(ProfilePage)]
 pub fn profile_page() -> Html {
@@ -26,6 +26,7 @@ pub fn profile_page() -> Html {
                 ProfilePageMenu::None => html! {<>
                     <PageHeader title={"My Profile".to_string()} />
                     <div class="flex flex-col w-full h-full gap-8 px-4">
+                        <MyAvatar handle={menu_state.clone()} />
                         <MyContactDetails handle={menu_state.clone()} />
                         <MyAddressDetails handle={menu_state.clone()} />
                     </div>
@@ -72,6 +73,25 @@ pub fn page_header(props: &MenuHeaderProps) -> Html {
     }
 }
 
+#[function_component(MyAvatar)]
+pub fn my_avatar(props: &MenuProps) -> Html {
+    let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
+    let profile = user_ctx.get_profile().expect("No user profile found");
+    let handle = props.handle.clone();
+    html! {
+        <div class="w-full flex flex-col gap-2">
+            <div class="flex flex-row justify-between items-center pr-4">
+                <h3 class="font-bold">{"Avatar"}</h3>
+                <button
+                    onclick={Callback::from(move |_| handle.set(ProfilePageMenu::EditProfile))}
+                    class="text-sm text-fuente">{"Edit"}</button>
+            </div>
+            <CardComponent>
+                <img class="w-24 h-24 rounded-lg" src={profile.avatar_url.clone()} />
+            </CardComponent>
+        </div>
+    }
+}
 #[derive(Clone, PartialEq)]
 pub enum ProfilePageMenu {
     None,
@@ -255,6 +275,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
     let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = handle.clone();
+    let avatar_url = profile.avatar_url.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         let form = HtmlForm::new(e).expect("Failed to get form");
         let nickname = form
@@ -268,20 +289,18 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
         let handle = handle.clone();
         let sender = sender.clone();
         let user_ctx = user_ctx.clone();
-        spawn_local(async move {
-            let user_profile = ConsumerProfile::new(nickname, email, telephone);
-            let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
-            let giftwrapped_note = user_profile
-                .giftwrapped_data(&user_keys, user_keys.public_key())
-                .expect("Failed to giftwrap data");
-            let server_registry = user_profile
-                .registry_data(&user_keys, TEST_PUB_KEY.to_string())
-                .expect("Failed to giftwrap data");
-            sender.emit(server_registry);
-            sender.emit(giftwrapped_note);
-            user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
-            handle.set(ProfilePageMenu::None);
-        });
+        let user_profile = ConsumerProfile::new(nickname, email, telephone, avatar_url.clone());
+        let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
+        let giftwrapped_note = user_profile
+            .giftwrapped_data(&user_keys, user_keys.public_key())
+            .expect("Failed to giftwrap data");
+        let server_registry = user_profile
+            .registry_data(&user_keys, TEST_PUB_KEY.to_string())
+            .expect("Failed to giftwrap data");
+        sender.emit(server_registry);
+        sender.emit(giftwrapped_note);
+        user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
+        handle.set(ProfilePageMenu::None);
     });
     html! {
         <form {onsubmit}
@@ -310,15 +329,15 @@ pub fn edit_profile_form(props: &EditProfileFormProps) -> Html {
     html! {
         <div class="w-full flex flex-col gap-2">
             <SimpleInput
-                label={"Nickname"} value={profile.nickname()}
+                label={"Nickname"} value={profile.nickname.clone()}
                 id={"nickname"} name={"nickname"}
                 input_type={"text"} required={true} />
             <SimpleInput
-                label={"Email"} value={profile.email()}
+                label={"Email"} value={profile.email.clone()}
                 id={"email"} name={"email"}
                 input_type={"email"} required={true} />
             <SimpleInput
-                label={"Telephone"} value={profile.telephone()}
+                label={"Telephone"} value={profile.telephone.clone()}
                 id={"telephone"} name={"telephone"}
                 input_type={"tel"} required={true} />
         </div>

@@ -1,10 +1,12 @@
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb,
-    NOSTR_KIND_CONSUMER_PROFILE,
+    NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
 };
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
 use nostro2::{
-    notes::NostrNote,
+    notes::{NostrNote, NostrTag},
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
@@ -182,10 +184,9 @@ pub fn key_handler(props: &ConsumerDataChildren) -> Html {
     use_effect_with(key_ctx, |key_ctx| {
         if let Some(key) = key_ctx.get_nostr_key() {
             spawn_local(async move {
-                if let Ok(profile) = ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(
-                    &key.public_key(),
-                ))
-                .await
+                if let Ok(profile) =
+                    ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(&key.public_key()))
+                        .await
                 {
                     ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile));
                 }
@@ -221,16 +222,21 @@ pub fn commerce_data_sync() -> Html {
         if let Some(keys) = keys.get_nostr_key() {
             if &(*id_handle) == "" {
                 let pubkey = keys.public_key();
-                spawn_local(async move {
-                    let filter = NostrSubscription {
-                        kinds: Some(vec![NOSTR_KIND_CONSUMER_PROFILE]),
-                        authors: Some(vec![pubkey.clone()]),
-                        ..Default::default()
-                    }
-                    .relay_subscription();
-                    id_handle.set(filter.1.clone());
-                    subscriber.emit(filter);
-                });
+                let filter = NostrSubscription {
+                    kinds: Some(vec![NOSTR_KIND_CONSUMER_PROFILE]),
+                    authors: Some(vec![pubkey.clone()]),
+                    ..Default::default()
+                }
+                .relay_subscription();
+                id_handle.set(filter.1.clone());
+                subscriber.emit(filter);
+                let mut image_url_filter = NostrSubscription {
+                    kinds: Some(vec![NOSTR_KIND_PRESIGNED_URL_RESP]),
+                    authors: Some(vec![TEST_PUB_KEY.to_string()]),
+                    ..Default::default()
+                };
+                image_url_filter.add_tag("#p", &pubkey);
+                subscriber.emit(image_url_filter.relay_subscription());
             }
         }
         || {}

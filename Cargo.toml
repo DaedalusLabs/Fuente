@@ -6,9 +6,11 @@ resolver = "2"
 fuente = { path = "fuente" }
 
 # ILLUMINODES stack
-nostr-minions = "0.1.4"
+nostr-minions = "0.1.5"
 bright-lightning = "0.1.1"
 nostro2 = "0.2.2"
+upload-things = "0.1.2"
+#upload-things = { path = "../o2-thing/upload-things" }
 
 anyhow = "1.0.94"
 async-channel = "2.2.0"
