@@ -7,7 +7,7 @@ use nostr_minions::browser_api::IdbStoreManager;
 
 use super::{
     nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
-    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, NOSTR_KIND_CONSUMER_REGISTRY, STORE_NAME_CONSUMER_PROFILES,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -79,6 +79,30 @@ impl ConsumerProfile {
         };
         keys.sign_nostr_event(&mut unsigned_note);
         unsigned_note
+    }
+    pub fn registry_data(
+        &self,
+        keys: &NostrKeypair,
+        recipient: String,
+    ) -> Result<NostrNote, JsValue> {
+        let inner_note = self.signed_data(keys);
+        let mut giftwrap = NostrNote {
+            pubkey: keys.public_key(),
+            kind: NOSTR_KIND_CONSUMER_REGISTRY,
+            content: inner_note.to_string(),
+            ..Default::default()
+        };
+        let mut hasher = Sha256::new();
+        hasher.update("profile".as_bytes());
+        let d_tag = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<String>();
+        giftwrap.tags.add_parameter_tag(&d_tag);
+        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
+            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
+        Ok(giftwrap)
     }
     pub fn giftwrapped_data(
         &self,
