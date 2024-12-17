@@ -242,6 +242,21 @@
     "stores_store_category": "Category: Shoes",
     "stores_store_delivery": "Delivery on time",
 
+    "admin_store_new_products_title": "Store - New Products",
+    "admin_store_new_products_heading": "My Store",
+
+    "admin_store_add_product_button": "Add new product",
+    "admin_store_new_products_button": "New products",
+    "admin_store_all_products_button": "All products",
+    "admin_store_sale_products_button": "On Sale",
+    "admin_store_discontinued_products_button": "Discontinued",
+    "admin_store_table_detail_heading": "Product Details",
+    "admin_store_table_products_heading": "Products availble",
+    "admin_store_table_price_heading": "Price",
+    "admin_store_table_brand": "Brand of shoes",
+    "admin_store_table_description": "Woman Rainbow shoes",
+    "admin_store_table_code": "CODE: 001212",
+
     "product_woman_description": "Woman Rainbow shoes",
     "product_man_description": "Man Black shoes for run",
     "product_man_description_2": "Man gray shoes for run",
