@@ -77,7 +77,7 @@ pub fn new_profile() -> Html {
                     input_type="tel"
                     required={true}
                     />
-                <ImageUploadInput {url_handle} {nostr_keys}/>
+                <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} />
                 <SimpleFormButton>
                     {"Save"}
                 </SimpleFormButton>
