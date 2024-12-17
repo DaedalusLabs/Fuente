@@ -74,7 +74,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
     let id = props.order.get_order();
     let order = props.order.get_order_request();
     let order_status = props.order.get_order_status();
-    let customer_name = order.profile.nickname();
+    let customer_name = order.profile.nickname;
     let products = order.products.counted_products();
     let value = order.products.total();
     let accept_order = {
