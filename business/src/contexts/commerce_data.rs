@@ -1,6 +1,6 @@
 use fuente::models::{
     CommerceProfile, CommerceProfileIdb, ProductMenu, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
-    NOSTR_KIND_COMMERCE_PROFILE,
+    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP,
 };
 use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
@@ -169,6 +169,8 @@ pub fn commerce_data_sync() -> Html {
                 kinds: Some(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
+                    NOSTR_KIND_PRESIGNED_URL_REQ,  // Add this
+                    NOSTR_KIND_PRESIGNED_URL_RESP, // And this
                 ]),
                 authors: Some(vec![key.public_key()]),
                 ..Default::default()
@@ -193,6 +195,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
+            gloo::console::log!("Note kind received:", note.kind);
             match note.kind {
                 NOSTR_KIND_COMMERCE_PROFILE => {
                     if let Ok(profile) = note.clone().try_into() {
