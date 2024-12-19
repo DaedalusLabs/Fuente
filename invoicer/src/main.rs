@@ -221,7 +221,7 @@ impl InvoicerBot {
                 NOSTR_KIND_SERVER_REQUEST,
                 NOSTR_KIND_SERVER_CONFIG,
                 NOSTR_KIND_ADMIN_REQUEST,
-                NOSTR_KIND_PRESIGNED_URL_REQ, // Check if this is here
+                NOSTR_KIND_PRESIGNED_URL_REQ,
             ]),
             ..Default::default()
         };
