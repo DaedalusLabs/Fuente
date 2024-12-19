@@ -272,7 +272,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let sender = relay_pool.send_note.clone();
     let loading_handle = is_loading_new.clone();
     let onchange = Callback::from(move |e: yew::Event| {
-        // Add at start of onchange callback
+
         gloo::console::log!("Starting file upload process");
         loading_handle.set(true);
         let input = e
@@ -282,7 +282,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
             .expect("Failed to get input element");
         let file = input.files().unwrap().get(0).unwrap();
         let file_req = upload_things::UtRequest::from(&file);
-        // Add after file request creation
+
         gloo::console::log!("Created file request:", &file_req.to_string());
         let mut req_note = NostrNote {
             content: file_req.to_string(),

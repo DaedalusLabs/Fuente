@@ -169,8 +169,8 @@ pub fn commerce_data_sync() -> Html {
                 kinds: Some(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
-                    NOSTR_KIND_PRESIGNED_URL_REQ,  // Add this
-                    NOSTR_KIND_PRESIGNED_URL_RESP, // And this
+                    NOSTR_KIND_PRESIGNED_URL_REQ,
+                    NOSTR_KIND_PRESIGNED_URL_RESP,
                 ]),
                 authors: Some(vec![key.public_key()]),
                 ..Default::default()
