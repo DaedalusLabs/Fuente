@@ -21,13 +21,13 @@ pub fn history_page() -> Html {
     let filtered_orders = orders
         .iter()
         .filter(|order| match *filter_state {
-            HistoryFilter::Completed => order.get_order_status() == OrderStatus::Completed,
-            HistoryFilter::Canceled => order.get_order_status() == OrderStatus::Canceled,
+            HistoryFilter::Completed => order.order_status == OrderStatus::Completed,
+            HistoryFilter::Canceled => order.order_status == OrderStatus::Canceled,
         })
         .collect::<Vec<_>>();
 
     if let Some(order_id) = (*selected_order).clone() {
-        if let Some(order) = orders.iter().find(|o| o.id() == order_id) {
+        if let Some(order) = orders.iter().find(|o| o.order_id() == order_id) {
             return html! {
                 <OrderDetails 
                     order={order.clone()} 
@@ -92,7 +92,7 @@ pub fn history_page() -> Html {
                         {filtered_orders.iter().map(|order| {
                             let order_req = order.get_order_request();
                             let profile = order_req.profile;
-                            let order_id = order.id();
+                            let order_id = order.order_id();
                             let selected = selected_order.clone();
                             
                             html! {
@@ -104,7 +104,7 @@ pub fn history_page() -> Html {
                                         <div>
                                             <h4 class="font-semibold">{profile.nickname}</h4>
                                             <p class="text-sm text-gray-500">
-                                                {format!("Order #{}", &order.id()[..8])}
+                                                {format!("Order #{}", &order.order_id()[..8])}
                                             </p>
                                         </div>
                                         <div class="text-right">
@@ -113,13 +113,13 @@ pub fn history_page() -> Html {
                                             </p>
                                             <p class={classes!(
                                                 "text-sm",
-                                                if order.get_order_status() == OrderStatus::Completed {
+                                                if order.order_status == OrderStatus::Completed {
                                                     "text-green-600"
                                                 } else {
                                                     "text-red-600"
                                                 }
                                             )}>
-                                                {order.get_order_status().display()}
+                                                {order.order_status.display()}
                                             </p>
                                         </div>
                                     </div>
@@ -154,7 +154,7 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                     {"← Back"}
                 </button>
                 <h2 class="text-2xl font-semibold">
-                    {format!("Order Details #{}", &props.order.id()[..8])}
+                    {format!("Order Details #{}", &props.order.order_id()[..8])}
                 </h2>
             </div>
 
@@ -176,13 +176,13 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                         <h3 class="font-medium text-gray-500">{"Order Status"}</h3>
                         <p class={classes!(
                             "font-medium",
-                            if props.order.get_order_status() == OrderStatus::Completed {
+                            if props.order.order_status == OrderStatus::Completed {
                                 "text-green-600"
                             } else {
                                 "text-red-600"
                             }
                         )}>
-                            {props.order.get_order_status().display()}
+                            {props.order.order_status.display()}
                         </p>
                     </div>
                 </div>

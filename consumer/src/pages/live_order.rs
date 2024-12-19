@@ -1,10 +1,12 @@
+use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{DriverProfileIdb, OrderPaymentStatus, OrderStatus},
 };
-use bright_lightning::LndHodlInvoice;
-use nostr_minions::{browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{
+    browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
 use yew::prelude::*;
 
 use crate::contexts::{LiveOrderAction, LiveOrderStore};
@@ -17,11 +19,11 @@ pub fn live_order_check() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let exchange_rate = admin_ctx.get_exchange_rate();
     let inside_html = if let Some(order) = &order_ctx.order {
-        match order.1.get_payment_status() {
+        match order.1.payment_status {
             OrderPaymentStatus::PaymentPending => Ok(html! {
                 <>
                     <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
-                    <OrderInvoiceComponent invoice={order.1.get_consumer_invoice().unwrap()} {exchange_rate} />
+                    <OrderInvoiceComponent invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()} {exchange_rate} />
                 </>
             }),
             OrderPaymentStatus::PaymentReceived => Ok(html! {
@@ -30,18 +32,18 @@ pub fn live_order_check() -> Html {
                         <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
                     </div>
                     <div class="flex flex-col gap-4 text-wrap max-w-md">
-                        <p>{"Order ID: "}{order.1.id()[..12].to_string()}</p>
+                        <p>{"Order ID: "}{order.1.order_id()[..12].to_string()}</p>
                         <p>{"Waiting for confirmation..."}</p>
                     </div>
                 </>
             }),
             OrderPaymentStatus::PaymentSuccess => {
                 let order = order.1.clone();
-                let status = order.get_order_status();
-                if status == OrderStatus::Completed || status == OrderStatus::Canceled {
+                let status = &order.order_status;
+                if status == &OrderStatus::Completed || status == &OrderStatus::Canceled {
                     Err(html! {<></>})
                 } else {
-                    if let Some(courier_note) = order.get_courier() {
+                    if let Some(courier_note) = order.courier.as_ref().cloned() {
                         let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
                         let driver = driver_db.profile();
                         let pubkey = driver_db.pubkey();
@@ -50,8 +52,8 @@ pub fn live_order_check() -> Html {
                             <>
                                 <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
                                 <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                    <p>{"Order ID: "}{order.id()[..12].to_string()}</p>
-                                    <p>{"Order Status: "}{order.get_order_status()}</p>
+                                    <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
+                                    <p>{"Order Status: "}{order.order_status}</p>
                                     <DriverDetailsComponent {pubkey} {driver} />
                                 </div>
                             </>
@@ -61,8 +63,8 @@ pub fn live_order_check() -> Html {
                             <>
                                 <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
                                 <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                    <p>{"Order ID: "}{order.id()[..12].to_string()}</p>
-                                    <p>{"Order Status: "}{order.get_order_status()}</p>
+                                    <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
+                                    <p>{"Order Status: "}{order.order_status}</p>
                                 </div>
                             </>
                         })
@@ -81,13 +83,13 @@ pub fn live_order_check() -> Html {
         Callback::from(move |_| {
             let keys = keys.clone().expect("Nostr keys not found");
             let mut order = order_ctx.order.clone().expect("Order not found").1;
-            if order.get_payment_status() == OrderPaymentStatus::PaymentPending {
-                order.update_order_status(OrderStatus::Canceled);
+            if order.payment_status == OrderPaymentStatus::PaymentPending {
+                order.order_status = OrderStatus::Canceled;
                 let signed_note = order
                     .sign_server_request(&keys)
                     .expect("Could not sign order");
                 sender.emit(signed_note);
-                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order.id()));
+                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order.order_id()));
             }
         })
     };

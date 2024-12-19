@@ -44,7 +44,7 @@ impl Default for UtSigner {
                 .build()
                 .expect("Failed to build reqwest client"),
             api_key,
-            app_id: std::env::var("MY_APP_ID").expect("MY_APP_ID has not been set"),
+            app_id: std::env::var("UT_APP_ID").expect("UT_APP_ID has not been set"),
         }
     }
 }

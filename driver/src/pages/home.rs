@@ -77,13 +77,13 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
         let order_ctx = live_order_ctx.clone();
         Callback::from(move |_| {
             let mut order_clone = order_clone.clone();
-            match order_clone.get_order_status() {
+            match order_clone.order_status {
                 OrderStatus::ReadyForDelivery => {
-                    order_clone.update_order_status(OrderStatus::InDelivery);
+                    order_clone.order_status = OrderStatus::InDelivery;
                 }
                 OrderStatus::InDelivery => {
-                    order_clone.update_order_status(OrderStatus::Completed);
-                    order_ctx.dispatch(OrderHubAction::OrderCompleted(order_clone.id()));
+                    order_clone.order_status = OrderStatus::Completed;
+                    order_ctx.dispatch(OrderHubAction::OrderCompleted(order_clone.order_id()));
                 }
                 _ => {}
             }
@@ -98,12 +98,12 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-4 w-full h-full rounded-lg">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
+                    {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row flex-1 ">
                 <OrderPickupMapPreview
-                    order_id={order.id()}
+                    order_id={order.order_id()}
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
@@ -111,7 +111,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
                 />
                 <div class="flex flex-col gap-4 p-4">
                     <button {onclick} class="w-fit bg-fuente text-white rounded-3xl p-2 w-1/2">
-                        {{match order.get_order_status() {
+                        {{match order.order_status {
                             OrderStatus::ReadyForDelivery => "Picked up Package",
                             OrderStatus::InDelivery => "Delivered Package",
                             _ => "No Action"
@@ -150,7 +150,7 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
         let driver_note = driver_profile.clone();
         Callback::from(move |_| {
             let mut order_clone = order_clone.clone();
-            order_clone.update_courier(driver_note.clone());
+            order_clone.courier = Some(driver_note.clone());
             let signed_order = order_clone
                 .sign_server_request(&keys_clone)
                 .expect("Failed to sign order");
@@ -162,12 +162,12 @@ pub fn order_pickup_details(props: &OrderPickupProps) -> Html {
         <div class="flex flex-col gap-2 shadow-xl p-2 w-fit h-fit">
             <div class="flex flex-row">
                 <p class="text-2xl font-mplus text-fuente-dark">
-                    {format!("Order #{} - for {}", order.id()[..12].to_string(), profile.nickname)}
+                    {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
             <div class="flex flex-row">
                 <OrderPickupMapPreview
-                    order_id={order.id()}
+                    order_id={order.order_id()}
                     commerce_location={commerce_address}
                     consumer_location={address}
                     own_location={location_state.clone()}
