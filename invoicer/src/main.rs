@@ -191,6 +191,15 @@ impl InvoicerBot {
                     error!("{:?}", e);
                 };
             }
+            NOSTR_KIND_PRESIGNED_URL_REQ => {
+                info!("Received presigned URL request");
+                if let Err(e) = private_notes_channel
+                    .send((signed_note.kind, signed_note))
+                    .await
+                {
+                    error!("Failed to process presigned URL request: {:?}", e);
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -212,6 +221,7 @@ impl InvoicerBot {
                 NOSTR_KIND_SERVER_REQUEST,
                 NOSTR_KIND_SERVER_CONFIG,
                 NOSTR_KIND_ADMIN_REQUEST,
+                NOSTR_KIND_PRESIGNED_URL_REQ, // Check if this is here
             ]),
             ..Default::default()
         };

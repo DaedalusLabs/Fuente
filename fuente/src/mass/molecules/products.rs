@@ -12,11 +12,17 @@ pub fn product_card(props: &ProductCardProps) -> Html {
     html! {
         <div class="p-4 shadow-xl rounded-xl w-fit h-fit">
             <div class="w-fit flex flex-row gap-4">
-               <div class="w-12 h-12 min-w-12 min-h-12 bg-neutral-300 rounded-full"></div>
-               <div class="flex flex-col">
-                   <h3 class="text-lg font-bold">{format!("{} - SRD {}", product.name(), product.price())}</h3>
-                   <p class="text-neutral-400">{product.description()}</p>
-               </div>
+                // Add image 
+                <img 
+                    src={product.image_url()} 
+                    alt={product.name()}
+                    class="w-12 h-12 min-w-12 min-h-12 bg-neutral-300 rounded-full object-cover"
+                />
+                <div class="flex flex-col">
+                    <h3 class="text-lg font-bold">{format!("{} - SRD {}", product.name(), product.price())}</h3>
+                    <p class="text-sm text-gray-500">{format!("SKU: {}", product.sku())}</p>
+                    <p class="text-neutral-400">{product.description()}</p>
+                </div>
             </div>
         </div>
     }

@@ -37,10 +37,14 @@ impl TryFrom<String> for ProductSide {
 pub struct ProductItem {
     id: String,
     name: String,
+    #[serde(default)]  // This makes it optional during deserialization
+    sku: Option<String>,
     price: String,
     order: usize,
     category: String,
     description: String,
+    #[serde(default)]  // This makes it optional during deserialization
+    image_url: Option<String>,
     sides: Vec<ProductSide>,
 }
 impl ProductItem {
@@ -53,15 +57,26 @@ impl ProductItem {
     ) -> Self {
         let mut hasher = DefaultHasher::new();
         format!("{}{}", name, category).hash(&mut hasher);
-        ProductItem {
-            id: hasher.finish().to_string(),
+        let id = hasher.finish().to_string();
+        let sku = Some(format!("SKU-{}", id[..6].to_uppercase()));
+        Self {
+            id,
             name,
+            sku,
             price,
             order,
             category,
             description,
+            image_url: None,
             sides: vec![],
         }
+    }
+    // Add new getter methods
+    pub fn sku(&self) -> String {
+        self.sku.clone().unwrap_or_default()
+    }
+    pub fn image_url(&self) -> String {
+        self.image_url.clone().unwrap_or_else(|| "/public/assets/img/logo.png".to_string())
     }
     pub fn name(&self) -> String {
         self.name.clone()
@@ -80,6 +95,13 @@ impl ProductItem {
     }
     pub fn add_side(&mut self, side: ProductSide) {
         self.sides.push(side);
+    }
+    // New setter for image URL
+    pub fn set_image_url(&mut self, url: String) {
+        self.image_url = Some(url);
+    }
+    pub fn set_sku(&mut self, sku: String) {
+        self.sku = Some(sku);
     }
 }
 impl TryFrom<String> for ProductItem {

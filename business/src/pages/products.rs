@@ -4,11 +4,12 @@ use fuente::{
         CardComponent, DrawerSection, LoadingScreen, MoneyInput, ProductMenuCard, SimpleFormButton,
         SimpleInput, SimpleSelect, SimpleTextArea,
     },
-    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
+    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb, NOSTR_KIND_PRESIGNED_URL_RESP},
 };
 
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
+use fuente::mass::ImageUploadInput;
 
 #[function_component(ProductsPage)]
 pub fn home_page() -> Html {
@@ -133,49 +134,95 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
     let NewMenuProps { menu } = props;
     let handle = menu.clone();
     let menu_copy = menu.clone();
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
-        let form = HtmlForm::new(e).expect("Failed to get form");
-        let product_category = form
-            .select_value("product_category")
-            .expect("Failed to get category");
-        let product_name = form
-            .input_value("product_name")
-            .expect("Failed to get name");
-        let product_price = form
-            .input_value("product_price")
-            .expect("Failed to get price");
-        let description = form
-            .textarea_value("description")
-            .expect("Failed to get description");
-        let menu = menu_copy.clone();
-        match (*menu).clone() {
-            Some(mut menu) => {
-                let categories = menu.categories();
-                let category = categories
-                    .iter()
-                    .find(|category| category.name() == product_category)
-                    .expect("Category not found");
-                let product = ProductItem::new(
-                    category.products().len(),
-                    product_name,
-                    product_price,
-                    description,
-                    category.id(),
-                );
-                menu.add_product(category.id(), product);
-                handle.set(Some(menu));
+
+    let image_url = use_state(|| None::<String>);
+    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
+    let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
+    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+
+    // Add effect to monitor image_url changes
+    {
+        let image_url = image_url.clone();
+        use_effect_with((*image_url).clone(), move |url| {
+            gloo::console::log!("Image URL state changed:", format!("{:?}", url));
+            || {}
+        });
+    }
+
+    // Add an effect to monitor Nostr events
+    {
+        use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
+            if let Some(note) = notes.last() {
+                gloo::console::log!("Received note kind:", note.kind);
+                if note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
+                    gloo::console::log!("Got presigned URL response");
+                }
             }
-            None => {}
-        }
-    });
+            || {}
+        });
+    }
+
+    let onsubmit = {
+        let image_url = image_url.clone();
+        
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            gloo::console::log!("Form submitting with image URL:", format!("{:?}", *image_url));
+            let form = HtmlForm::new(e).expect("Failed to get form element");
+            let product_category = form
+                .select_value("product_category")
+                .expect("Failed to get category");
+            let product_name = form
+                .input_value("product_name")
+                .expect("Failed to get name");
+            let product_price = form
+                .input_value("product_price")
+                .expect("Failed to get price");
+            let description = form
+                .textarea_value("description")
+                .expect("Failed to get description");
+
+            let menu = menu_copy.clone();
+            match (*menu).clone() {
+                Some(mut menu) => {
+                    let categories = menu.categories();
+                    let category = categories
+                        .iter()
+                        .find(|category| category.name() == product_category)
+                        .expect("Category not found");
+
+                    let mut product = ProductItem::new(
+                        category.products().len(),
+                        product_name,
+                        product_price, 
+                        description,
+                        category.id(),
+                    );
+
+                    // Set image URL if available, log the process
+                    if let Some(url) = (*image_url).clone() {
+                        gloo::console::log!("Setting product image URL:", url.clone());
+                        product.set_image_url(url);
+                    } else {
+                        gloo::console::log!("No image URL available");
+                    }
+                    gloo::console::log!("Final product image:", product.image_url());
+
+                    menu.add_product(category.id(), product);
+                    handle.set(Some(menu));
+                }
+                None => {}
+            }
+        })
+    };
+
     html! {
         <DrawerSection title={"Add Product"} open={close_handle.clone()}>
             <CardComponent>
                 <form
                     class="flex flex-col gap-2 items-center"
                     {onsubmit}>
-                    <SimpleSelect label="Categoria" name="product_category" id="product_category">
+                    <SimpleSelect label="Category" name="product_category" id="product_category">
                         {if let Some(menu) = (*props.menu).clone() {
                             menu.categories().iter().map(|category| {
                                 html! {
@@ -186,9 +233,40 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
                             html! {}
                         }}
                     </SimpleSelect>
-                    <SimpleInput label="Product" name="product_name" value="" input_type="text" id="product_name" required={true} />
-                    <MoneyInput label="Price" name="product_price" value="" id="product_price" required={true} input_type="number" />
-                    <SimpleTextArea label="Description" name="description" value="" input_type="text" id="description" required={true} />
+                    <SimpleInput 
+                        label="Product"
+                        name="product_name" 
+                        value="" 
+                        input_type="text" 
+                        id="product_name" 
+                        required={true} 
+                    />
+                    <MoneyInput 
+                        label="Price" 
+                        name="product_price" 
+                        value="" 
+                        id="product_price" 
+                        required={true} 
+                        input_type="number" 
+                    />
+                    <div class="w-full">
+                        <label class="text-xs font-bold text-neutral-400">
+                            {"Product Image"}
+                        </label>
+                        <ImageUploadInput
+                            url_handle={image_url.clone()}
+                            nostr_keys={nostr_keys}  
+                            classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                        />
+                    </div>
+                    <SimpleTextArea 
+                        label="Description" 
+                        name="description" 
+                        value="" 
+                        input_type="text" 
+                        id="description" 
+                        required={true} 
+                    />
                     <SimpleFormButton>{"Add Product"}</SimpleFormButton>
                 </form>
             </CardComponent>

@@ -206,13 +206,26 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let loading_handle = is_loading_new.clone();
     use_effect_with(relay_pool.unique_notes.clone(), move |notes| {
         if let Some(last_note) = notes.last() {
+            gloo::console::log!("Received note kind:", last_note.kind);
             if last_note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
-                let decrypted_note = user_keys
-                    .decrypt_nip_04_content(&last_note)
-                    .expect("Failed to decrypt note");
-                let presigned_url: UtPreSignedUrl = (&decrypted_note)
-                    .try_into()
-                    .expect("Failed to parse presigned url");
+                gloo::console::log!("Processing presigned URL response");
+    
+                let decrypted_note = match user_keys.decrypt_nip_04_content(&last_note) {
+                    Ok(note) => note,
+                    Err(e) => {
+                        gloo::console::error!("Failed to decrypt note:", e.to_string());
+                        return ();  // Changed from return;
+                    }
+                };
+    
+                let presigned_url: UtPreSignedUrl = match (&decrypted_note).try_into() {
+                    Ok(url) => url,
+                    Err(e) => {
+                        gloo::console::error!("Failed to parse presigned url:", e.to_string());
+                        return ();  // Changed from return;
+                    }
+                };
+    
                 let document = HtmlDocument::new().expect("Failed to get document");
                 let input: HtmlInputElement = document
                     .find_element_by_id("imageUpload")
@@ -245,20 +258,22 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                             });
                         }
                     },
-                )
-                    as Box<dyn FnMut(web_sys::ProgressEvent)>);
-
+                ) as Box<dyn FnMut(web_sys::ProgressEvent)>);
+    
                 reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
                 reader.read_as_array_buffer(&file).unwrap();
                 closure.forget(); // Forget the closure to keep it alive
             }
         }
-        || {}
+        // Changed this line to return unit type
+        ()
     });
     let user_keys = nostr_keys.clone();
     let sender = relay_pool.send_note.clone();
     let loading_handle = is_loading_new.clone();
     let onchange = Callback::from(move |e: yew::Event| {
+        // Add at start of onchange callback
+        gloo::console::log!("Starting file upload process");
         loading_handle.set(true);
         let input = e
             .target()
@@ -267,6 +282,8 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
             .expect("Failed to get input element");
         let file = input.files().unwrap().get(0).unwrap();
         let file_req = upload_things::UtRequest::from(&file);
+        // Add after file request creation
+        gloo::console::log!("Created file request:", &file_req.to_string());
         let mut req_note = NostrNote {
             content: file_req.to_string(),
             kind: NOSTR_KIND_PRESIGNED_URL_REQ,
@@ -284,6 +301,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
             .sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())
             .unwrap();
         sender.emit(giftwrap);
+        gloo::console::log!("Sent request for presigned URL");
     });
     let mut default_classes = classes!(
         "flex",
