@@ -150,6 +150,22 @@ impl ToString for OrderPaymentStatus {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, Serialize, Deserialize)]
+pub enum OrderParticipant {
+    Consumer,
+    Commerce,
+    Courier,
+}
+impl Into<&str> for OrderParticipant {
+    fn into(self) -> &'static str {
+        match self {
+            Self::Consumer => "consumer",
+            Self::Commerce => "commerce",
+            Self::Courier => "courier",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct OrderInvoiceState {
     order: NostrNote,
@@ -227,27 +243,18 @@ impl OrderInvoiceState {
     pub fn update_courier(&mut self, courier: NostrNote) {
         self.courier = Some(courier);
     }
-    pub fn sign_customer_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
-        let content = self.to_string();
-        let receiver_pubkey = self.order.pubkey.clone();
-        let mut note = NostrNote {
-            pubkey: keys.public_key(),
-            kind: NOSTR_KIND_ORDER_STATE,
-            content,
-            ..Default::default()
-        };
-        note.tags.add_parameter_tag(&format!(
-            "{}{}",
-            "consumer",
-            self.order.id.as_ref().unwrap()
-        ));
-        keys.sign_nip_04_encrypted(&mut note, receiver_pubkey)?;
-        Ok(note)
-    }
-    pub fn sign_commerce_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
+    pub fn sign_update_for(
+        &self,
+        receiver: OrderParticipant,
+        keys: &NostrKeypair,
+    ) -> anyhow::Result<NostrNote> {
         let content = self.to_string();
         let order: OrderRequest = self.order.clone().try_into()?;
-        let commerce = order.commerce;
+        let encrypted_to = match receiver {
+            OrderParticipant::Consumer => self.order.pubkey.clone(),
+            OrderParticipant::Commerce => order.commerce,
+            OrderParticipant::Courier => DRIVER_HUB_PUB_KEY.to_string(),
+        };
 
         let mut note = NostrNote {
             pubkey: keys.public_key(),
@@ -255,25 +262,21 @@ impl OrderInvoiceState {
             content,
             ..Default::default()
         };
+        let participant_str: &str = receiver.into();
         note.tags.add_parameter_tag(&format!(
-            "{}{}",
-            "business",
+            "{}-{}",
+            participant_str,
             self.order.id.as_ref().unwrap()
         ));
-        keys.sign_nip_04_encrypted(&mut note, commerce)?;
-        Ok(note)
-    }
-    pub fn sign_courier_update(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
-        let content = self.to_string();
-        let mut note = NostrNote {
-            pubkey: keys.public_key(),
-            kind: NOSTR_KIND_ORDER_STATE,
-            content,
-            ..Default::default()
-        };
-        note.tags
-            .add_parameter_tag(&format!("{}{}", "courier", self.order.id.as_ref().unwrap()));
-        keys.sign_nip_04_encrypted(&mut note, DRIVER_HUB_PUB_KEY.to_string())?;
+        note.tags.add_custom_tag(
+            nostro2::notes::NostrTag::Custom("status"),
+            self.order_status.to_string().as_str(),
+        );
+        note.tags.add_custom_tag(
+            nostro2::notes::NostrTag::Custom("status"),
+            self.payment_status.to_string().as_str(),
+        );
+        keys.sign_nip_04_encrypted(&mut note, encrypted_to)?;
         Ok(note)
     }
     pub fn sign_server_request(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
@@ -315,6 +318,10 @@ impl OrderInvoiceState {
     pub fn get_courier(&self) -> Option<NostrNote> {
         self.courier.clone()
     }
+    pub fn get_commerce_pubkey(&self) -> String {
+        let order: OrderRequest = self.order.clone().try_into().unwrap();
+        order.commerce
+    }
     pub fn get_order_request(&self) -> OrderRequest {
         let order: OrderRequest = self.order.clone().try_into().unwrap();
         order
@@ -354,10 +361,7 @@ impl TryFrom<JsValue> for OrderStateIdb {
 }
 impl OrderStateIdb {
     pub fn new(order: NostrNote) -> Result<Self, JsValue> {
-        if let Some(order_id) = order
-            .tags
-            .find_first_parameter()
-        {
+        if let Some(order_id) = order.tags.find_first_parameter() {
             Ok(Self {
                 order_id: order_id.clone(),
                 timestamp: order.created_at,

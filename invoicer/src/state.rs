@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use fuente::models::{
-    AdminConfiguration, AdminConfigurationType, AdminServerRequest, CommerceProfile,
+    AdminConfiguration, AdminConfigurationType, AdminServerRequest, CommerceProfile, DriverProfile,
     OrderInvoiceState, ProductMenu, TEST_PUB_KEY,
 };
 use nostro2::{
@@ -54,11 +54,13 @@ impl InvoicerStateLock {
     async fn lock_owned(&self) -> InvoicerState {
         self.0.read().await.clone()
     }
-    pub async fn check_courier_whitelist(&self, pubkey: &str) -> anyhow::Result<()> {
+    pub async fn check_courier_whitelist(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
         self.lock()
             .await
             .admin_config
-            .check_couriers_whitelist(pubkey)
+            .check_couriers_whitelist(pubkey)?;
+        let courier = self.lock().await.courier_profiles.find_courier(pubkey);
+        courier.ok_or(anyhow!("Courier not found"))
     }
     pub async fn is_commerce_whitelisted(&self, pubkey: &str) -> bool {
         self.lock_owned()
@@ -147,6 +149,18 @@ impl InvoicerStateLock {
     pub async fn add_live_order(&self, order: OrderInvoiceState) -> anyhow::Result<()> {
         let mut orders = self.lock().await;
         orders.live_orders.new_order(order.id(), order)?;
+        Ok(())
+    }
+    pub async fn find_live_order(&self, order_id: &str) -> Option<OrderInvoiceState> {
+        self.lock_owned().await.live_orders.get_order(order_id)
+    }
+    pub async fn update_live_order(&self, order_update: OrderInvoiceState) -> anyhow::Result<()> {
+        let mut orders = self.lock().await;
+        let order = orders
+            .live_orders
+            .get_mut_order(&order_update.id())
+            .ok_or(anyhow!("Order not found"))?;
+        *order = order.to_owned();
         Ok(())
     }
     pub async fn handle_courier_updates(
