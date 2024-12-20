@@ -81,7 +81,9 @@ impl ProductItem {
         }
     }
     // Add new getter methods
-
+    pub fn category_id(&self) -> String {  // Add this getter method
+        self.category.clone()
+    }
     pub fn details(&self) -> String {
         self.details.clone()
     }
@@ -142,6 +144,15 @@ impl ProductItem {
     }
     pub fn set_discount(&mut self, discount: Option<String>) {
         self.discount = discount;
+    }
+    pub fn set_price(&mut self, price: String) {
+        self.price = price;
+    }
+    pub fn set_description(&mut self, description: String) {
+        self.description = description;
+    }
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
     }
 }
 impl TryFrom<String> for ProductItem {
@@ -291,6 +302,11 @@ impl ProductMenu {
             self.categories[i] = updated;
         } else {
             self.categories.push(category);
+        }
+    }
+    pub fn remove_product(&mut self, category_id: &str, product_id: &str) {
+        if let Some(category) = self.categories.iter_mut().find(|c| c.id == category_id) {
+            category.remove_product(product_id.to_string());
         }
     }
     pub fn new() -> Self {

@@ -5,10 +5,14 @@ use crate::models::{ProductItem, ProductMenu, ProductOrder};
 #[derive(Properties, Clone, PartialEq)]
 pub struct ProductCardProps {
     pub product: ProductItem,
+    #[prop_or_default]
+    pub on_edit: Callback<MouseEvent>,
+    #[prop_or_default]
+    pub on_delete: Callback<MouseEvent>,
 }
 #[function_component(ProductCard)]
 pub fn product_card(props: &ProductCardProps) -> Html {
-    let ProductCardProps { product } = props;
+    let ProductCardProps { product, on_edit, on_delete } = props;
     gloo::console::log!("ProductCard - thumbnail URL:", product.thumbnail_url());
     html! {
         <div class="p-4 shadow-xl rounded-xl w-fit h-fit">
@@ -37,6 +41,18 @@ pub fn product_card(props: &ProductCardProps) -> Html {
                         <summary class="text-sm font-semibold">{"Product Details"}</summary>
                         <p class="text-sm text-neutral-600 mt-1">{product.details()}</p>
                     </details>
+                    <div class="flex gap-2 mt-2">
+                    <button 
+                        onclick={on_edit.clone()}
+                        class="text-sm text-blue-500 hover:text-blue-700">
+                        {"Edit"}
+                    </button>
+                    <button 
+                        onclick={on_delete.clone()}
+                        class="text-sm text-red-500 hover:text-red-700">
+                        {"Delete"}
+                    </button>
+               </div>
                 </div>
             </div>
         </div>
