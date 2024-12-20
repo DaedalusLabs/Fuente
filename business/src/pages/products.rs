@@ -139,12 +139,22 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
     let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let thumbnail_url = use_state(|| None::<String>);
+    let discount_enabled = use_state(|| false);
 
     // Add effect to monitor image_url changes
     {
         let image_url = image_url.clone();
         use_effect_with((*image_url).clone(), move |url| {
             gloo::console::log!("Image URL state changed:", format!("{:?}", url));
+            || {}
+        });
+    }
+
+    {
+        let thumbnail_image_url = thumbnail_url.clone();
+        use_effect_with((*thumbnail_image_url).clone(), move |url| {
+            gloo::console::log!("Thumbnail URL state changed:", format!("{:?}", url));
             || {}
         });
     }
@@ -164,10 +174,16 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
 
     let onsubmit = {
         let image_url = image_url.clone();
+        let thumbnail_url = thumbnail_url.clone();
+        let discount_enabled = discount_enabled.clone();
         
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            gloo::console::log!("Form submitting with image URL:", format!("{:?}", *image_url));
+
+            gloo::console::log!("Form submitting with:");
+            gloo::console::log!("Image URL:", format!("{:?}", *image_url));
+            gloo::console::log!("Thumbnail URL:", format!("{:?}", *thumbnail_url));
+
             let form = HtmlForm::new(e).expect("Failed to get form element");
             let product_category = form
                 .select_value("product_category")
@@ -181,6 +197,12 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
             let description = form
                 .textarea_value("description")
                 .expect("Failed to get description");
+            let details = form
+                .textarea_value("details")
+                .expect("Failed to get details");
+            let discount = form
+                .input_value("discount").ok()
+                .filter(|_| *discount_enabled);
 
             let menu = menu_copy.clone();
             match (*menu).clone() {
@@ -201,12 +223,19 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
 
                     // Set image URL if available, log the process
                     if let Some(url) = (*image_url).clone() {
-                        gloo::console::log!("Setting product image URL:", url.clone());
+                        gloo::console::log!("Setting main image URL:", url.clone());
                         product.set_image_url(url);
-                    } else {
-                        gloo::console::log!("No image URL available");
                     }
-                    gloo::console::log!("Final product image:", product.image_url());
+                    // Set thumbnail
+                    if let Some(url) = (*thumbnail_url).clone() {
+                        gloo::console::log!("Setting thumbnail URL:", url.clone());
+                        product.set_thumbnail_url(url);
+                    } else {
+                        gloo::console::warn!("No image URL found for product");
+                    }
+                    product.set_details(details);
+                    product.set_discount(discount);
+                    gloo::console::log!("Final product:", format!("{:?}", product));
 
                     menu.add_product(category.id(), product);
                     handle.set(Some(menu));
@@ -249,24 +278,85 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
                         required={true} 
                         input_type="number" 
                     />
-                    <div class="w-full">
-                        <label class="text-xs font-bold text-neutral-400">
-                            {"Product Image"}
-                        </label>
-                        <ImageUploadInput
-                            url_handle={image_url.clone()}
-                            nostr_keys={nostr_keys}  
-                            classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                        />
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        // Large Image Upload
+                        <div class="w-full flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400">
+                                {"Product Image (Large)"}
+                            </label>
+                            <ImageUploadInput
+                                url_handle={image_url.clone()}
+                                nostr_keys={nostr_keys.clone()}
+                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                            />
+                            // can be removed
+                            {if let Some(_url) = (*image_url).clone() {
+                                html! {
+                                    <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
+                                }
+                            } else {
+                                html! {}
+                            }}
+                        </div>
+                    
+                        // Thumbnail Image Upload
+                        <div class="w-full flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400">
+                                {"Product Thumbnail"}
+                            </label>
+                            <ImageUploadInput
+                                url_handle={thumbnail_url.clone()}
+                                nostr_keys={nostr_keys}
+                                classes={classes!("min-w-16", "min-h-16", "h-16", "w-16")}
+                            />
+                        </div>
                     </div>
                     <SimpleTextArea 
-                        label="Description" 
+                        label="Description (Short summary)" 
                         name="description" 
                         value="" 
                         input_type="text" 
                         id="description" 
                         required={true} 
                     />
+
+                    <SimpleTextArea 
+                        label="Details (Full product details)" 
+                        name="details" 
+                        value="" 
+                        input_type="text" 
+                        id="details" 
+                        required={true} 
+                    />
+                    <div class="w-full flex items-center gap-2">
+                    <input 
+                        type="checkbox"
+                        id="enable_discount"
+                        checked={*discount_enabled}
+                        onclick={{
+                            let discount_enabled = discount_enabled.clone();
+                            Callback::from(move |_| {
+                                discount_enabled.set(!*discount_enabled);
+                            })
+                        }}
+                    />
+                    <label for="enable_discount">{"Enable Discount"}</label>
+                </div>
+                
+                { if *discount_enabled {
+                    html! {
+                        <MoneyInput 
+                            label="Discount Amount" 
+                            name="discount" 
+                            value="" 
+                            id="discount" 
+                            required={true} 
+                            input_type="number" 
+                        />
+                    }
+                } else {
+                    html! {}
+                }}
                     <SimpleFormButton>{"Add Product"}</SimpleFormButton>
                 </form>
             </CardComponent>

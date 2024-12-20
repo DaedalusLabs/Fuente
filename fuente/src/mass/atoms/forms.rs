@@ -247,19 +247,22 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                             spawn_local(async move {
                                 let url_req =
                                     url.try_into_request(form_data).expect("Failed to convert");
-                                let upload_url =
-                                    nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(
-                                        &url_req,
-                                    )
-                                    .await
-                                    .expect("Failed to fetch");
-                                url_handle.set(Some(upload_url.url.clone()));
-                                loading_handle.set(false);
+                                match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(&url_req).await {
+                                    Ok(upload_url) => {
+                                        url_handle.set(Some(upload_url.url.clone()));
+                                        loading_handle.set(false);
+                                    }
+                                    Err(e) => {
+                                        let error_message = e.as_string().unwrap_or_else(|| "Unknown error".to_string());
+                                        gloo::console::error!("Failed to fetch:", error_message);
+                                        loading_handle.set(false);
+                                    }
+                                }
                             });
                         }
                     },
                 ) as Box<dyn FnMut(web_sys::ProgressEvent)>);
-    
+                
                 reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
                 reader.read_as_array_buffer(&file).unwrap();
                 closure.forget(); // Forget the closure to keep it alive

@@ -37,14 +37,20 @@ impl TryFrom<String> for ProductSide {
 pub struct ProductItem {
     id: String,
     name: String,
-    #[serde(default)]  // This makes it optional during deserialization
+    #[serde(default)]
     sku: Option<String>,
     price: String,
+    #[serde(default)]
+    discount: Option<String>,
     order: usize,
     category: String,
+    #[serde(default)]
+    details: String,
     description: String,
-    #[serde(default)]  // This makes it optional during deserialization
+    #[serde(default)]
     image_url: Option<String>,
+    #[serde(default)]
+    thumbnail_url: Option<String>,
     sides: Vec<ProductSide>,
 }
 impl ProductItem {
@@ -65,24 +71,49 @@ impl ProductItem {
             sku,
             price,
             order,
+            discount: None,
             category,
             description,
+            details: String::new(),
             image_url: None,
+            thumbnail_url: None,
             sides: vec![],
         }
     }
     // Add new getter methods
+
+    pub fn details(&self) -> String {
+        self.details.clone()
+    }
     pub fn sku(&self) -> String {
         self.sku.clone().unwrap_or_default()
     }
     pub fn image_url(&self) -> String {
         self.image_url.clone().unwrap_or_else(|| "/public/assets/img/logo.png".to_string())
     }
+    pub fn thumbnail_url(&self) -> String {
+        // added debug loggins
+        let url = self.thumbnail_url.clone()
+            .unwrap_or_else(|| "/public/assets/img/logo.png".to_string());
+        gloo::console::log!("Getting thumbnail URL:", url.clone());
+        url
+    }
     pub fn name(&self) -> String {
         self.name.clone()
     }
     pub fn price(&self) -> String {
-        self.price.clone()
+        let base = self.price.parse::<f64>().unwrap_or(0.0);
+    
+        if let Some(discount) = &self.discount {
+            let disc = discount.parse::<f64>().unwrap_or(0.0);
+            return format!("{:.2}", base - disc);
+        }
+        
+        // Return original base price if no discount
+        format!("{:.2}", base)
+    }
+    pub fn discount(&self) -> Option<String> {
+        self.discount.clone()
     }
     pub fn id(&self) -> String {
         self.id.clone()
@@ -96,12 +127,21 @@ impl ProductItem {
     pub fn add_side(&mut self, side: ProductSide) {
         self.sides.push(side);
     }
-    // New setter for image URL
     pub fn set_image_url(&mut self, url: String) {
         self.image_url = Some(url);
     }
+    pub fn set_thumbnail_url(&mut self, url: String) {
+        gloo::console::log!("Setting thumbnail URL to:", url.clone());
+        self.thumbnail_url = Some(url);
+    }
     pub fn set_sku(&mut self, sku: String) {
         self.sku = Some(sku);
+    }
+    pub fn set_details(&mut self, details: String) {
+        self.details = details;
+    }
+    pub fn set_discount(&mut self, discount: Option<String>) {
+        self.discount = discount;
     }
 }
 impl TryFrom<String> for ProductItem {
