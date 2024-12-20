@@ -71,9 +71,9 @@ pub struct OrderCardProps {
 pub fn order_card(props: &OrderCardProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No user context found");
     let relay_ctx = use_context::<NostrProps>().expect("No relay context found");
-    let id = props.order.get_order();
+    let id = &props.order.order;
     let order = props.order.get_order_request();
-    let order_status = props.order.get_order_status();
+    let order_status = &props.order.order_status;
     let customer_name = order.profile.nickname;
     let products = order.products.counted_products();
     let value = order.products.total();
@@ -83,13 +83,11 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         let order_confirmation = props.order.clone();
         Callback::from(move |_: MouseEvent| {
             let mut order_confirmation = order_confirmation.clone();
-            let old_status = order_confirmation.get_order_status();
+            let old_status = &order_confirmation.order_status;
             match old_status {
-                OrderStatus::Pending => {
-                    order_confirmation.update_order_status(OrderStatus::Preparing)
-                }
+                OrderStatus::Pending => order_confirmation.order_status = OrderStatus::Preparing,
                 OrderStatus::Preparing => {
-                    order_confirmation.update_order_status(OrderStatus::ReadyForDelivery)
+                    order_confirmation.order_status = OrderStatus::ReadyForDelivery
                 }
                 _ => {}
             }
@@ -105,7 +103,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         let order_confirmation = props.order.clone();
         Callback::from(move |_| {
             let mut order_confirmation = order_confirmation.clone();
-            order_confirmation.update_order_status(OrderStatus::Canceled);
+            order_confirmation.order_status = OrderStatus::Canceled;
             let signed_confirmation = order_confirmation
                 .sign_server_request(&user_keys)
                 .expect("Failed to sign order confirmation");

@@ -86,7 +86,8 @@ impl Invoicer {
         broadcaster: PoolRelayBroadcaster,
     ) -> anyhow::Result<()> {
         let invoice = order_invoice
-            .get_commerce_invoice()
+            .commerce_invoice
+            .as_ref()
             .ok_or(anyhow!("No invoice"))?;
         let mut subscriber = self
             .lightning_wallet
@@ -105,10 +106,10 @@ impl Invoicer {
                     }
                     HodlState::ACCEPTED => {
                         if let Some(mut live_order) = state_clone
-                            .find_live_order(order_invoice.id().as_str())
+                            .find_live_order(order_invoice.order_id().as_str())
                             .await
                         {
-                            live_order.update_payment_status(OrderPaymentStatus::PaymentReceived);
+                            live_order.payment_status = OrderPaymentStatus::PaymentReceived;
                             state_clone.update_live_order(live_order.clone()).await?;
                             InvoicerBot::broadcast_order_update(
                                 broadcaster.clone(),
@@ -120,11 +121,11 @@ impl Invoicer {
                     }
                     HodlState::SETTLED => {
                         if let Some(mut live_order) = state_clone
-                            .find_live_order(order_invoice.id().as_str())
+                            .find_live_order(order_invoice.order_id().as_str())
                             .await
                         {
-                            live_order.update_payment_status(OrderPaymentStatus::PaymentSuccess);
-                            live_order.update_order_status(OrderStatus::Preparing);
+                            live_order.payment_status = OrderPaymentStatus::PaymentSuccess;
+                            live_order.order_status = OrderStatus::Preparing;
                             state_clone.update_live_order(live_order.clone()).await?;
                             InvoicerBot::broadcast_order_update(
                                 broadcaster.clone(),
@@ -136,11 +137,11 @@ impl Invoicer {
                     }
                     HodlState::CANCELED => {
                         if let Some(mut live_order) = state_clone
-                            .find_live_order(order_invoice.id().as_str())
+                            .find_live_order(order_invoice.order_id().as_str())
                             .await
                         {
-                            live_order.update_payment_status(OrderPaymentStatus::PaymentFailed);
-                            live_order.update_order_status(OrderStatus::Canceled);
+                            live_order.payment_status = OrderPaymentStatus::PaymentFailed;
+                            live_order.order_status = OrderStatus::Canceled;
                             state_clone.update_live_order(live_order.clone()).await?;
                             InvoicerBot::broadcast_order_update(
                                 broadcaster.clone(),
