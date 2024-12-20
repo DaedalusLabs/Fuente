@@ -1,12 +1,17 @@
 use anyhow::anyhow;
 use bright_lightning::{
-    HodlState, InvoicePaymentState, LnAddressPaymentRequest, LndHodlInvoice, LndPaymentRequest,
+    HodlState, InvoicePaymentState, LnAddressPaymentRequest, LndHodlInvoice, LndHodlInvoiceState,
+    LndPaymentRequest, LndPaymentResponse, LndWebsocketMessage,
 };
 use fuente::models::{
-    CommerceProfile, OrderInvoiceState, OrderPaymentStatus, OrderRequest, OrderStatus,
+    CommerceProfile, OrderInvoiceState, OrderParticipant, OrderPaymentStatus, OrderRequest,
+    OrderStatus,
 };
 use nostro2::{keypair::NostrKeypair, notes::NostrNote, relays::PoolRelayBroadcaster};
+use tokio_stream::StreamExt;
 use tracing::{error, info, warn};
+
+use crate::{state::InvoicerStateLock, InvoicerBot};
 pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
 pub const MILISATOSHIS_IN_ONE_SATOSHI: u64 = 1000;
 pub const ILLUMINODES_FEES: u64 = 20;
@@ -16,14 +21,9 @@ pub const FUENTE_FEES: u64 = 0;
 pub struct Invoicer {
     rest_client: reqwest::Client,
     lightning_wallet: bright_lightning::LightningClient,
-    broadcaster: PoolRelayBroadcaster,
-    keys: NostrKeypair,
 }
 impl Invoicer {
-    pub async fn new(
-        broadcaster: PoolRelayBroadcaster,
-        keys: NostrKeypair,
-    ) -> anyhow::Result<Self> {
+    pub async fn new() -> anyhow::Result<Self> {
         let rest_client = reqwest::Client::new();
         let lightning_wallet = bright_lightning::LightningClient::new(
             Box::leak(
@@ -41,39 +41,7 @@ impl Invoicer {
         Ok(Self {
             rest_client,
             lightning_wallet,
-            broadcaster,
-            keys,
         })
-    }
-    async fn update_order_status(
-        &self,
-        state: &mut OrderInvoiceState,
-        payment_status: OrderPaymentStatus,
-        order_status: OrderStatus,
-    ) -> anyhow::Result<()> {
-        state.update_payment_status(payment_status.clone());
-        state.update_order_status(order_status.clone());
-        self.broadcast_order_update(&state).await?;
-        Ok(())
-    }
-    async fn broadcast_order_update(&self, state: &OrderInvoiceState) -> anyhow::Result<()> {
-        let user_note = state.sign_customer_update(&self.keys)?;
-        let commerce_note = state.sign_commerce_update(&self.keys)?;
-        self.broadcaster.broadcast_note(user_note).await?;
-        self.broadcaster.broadcast_note(commerce_note).await?;
-        match state.get_courier() {
-            Some(_) => {
-                let courier_note = state.sign_courier_update(&self.keys)?;
-                self.broadcaster.broadcast_note(courier_note).await?;
-            }
-            None => {
-                if state.get_order_status() == OrderStatus::ReadyForDelivery {
-                    let courier_note = state.sign_courier_update(&self.keys)?;
-                    self.broadcaster.broadcast_note(courier_note).await?;
-                }
-            }
-        }
-        Ok(())
     }
     pub async fn create_order_invoice(
         &self,
@@ -110,80 +78,107 @@ impl Invoicer {
         info!("Hodl invoice created");
         Ok((invoice, hodl_invoice))
     }
-    async fn order_payment_notifier(self, mut state: OrderInvoiceState) -> anyhow::Result<bool> {
-        let invoice = state
-            .get_commerce_invoice()
-            .ok_or(anyhow!("No commerce invoice found"))?;
+    pub async fn order_payment_notifier(
+        self,
+        order_invoice: OrderInvoiceState,
+        keys: NostrKeypair,
+        state_clone: InvoicerStateLock,
+        broadcaster: PoolRelayBroadcaster,
+    ) -> anyhow::Result<()> {
+        let invoice = order_invoice
+            .commerce_invoice
+            .as_ref()
+            .ok_or(anyhow!("No invoice"))?;
         let mut subscriber = self
             .lightning_wallet
             .subscribe_to_invoice(invoice.r_hash_url_safe()?)
             .await?;
-        let mut success = false;
-        loop {
-            if subscriber.receiver.is_closed() {
-                self.lightning_wallet
-                    .cancel_htlc(invoice.r_hash_url_safe()?)
-                    .await?;
-                warn!("Canceled HTLC due to inactivity");
-                self.update_order_status(
-                    &mut state,
-                    OrderPaymentStatus::PaymentFailed,
-                    OrderStatus::Canceled,
-                )
-                .await?;
-                break;
-            }
-            if let Some(status) = subscriber.receiver.recv().await {
-                match status.state() {
-                    HodlState::ACCEPTED => {
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentReceived,
-                            OrderStatus::Pending,
-                        )
-                        .await?;
-                        info!("Payment received");
+        let mut iter = subscriber.event_stream::<LndHodlInvoiceState>();
+        let mut ping_counter = 0;
+        while let Some(payment_response) = iter.next().await {
+            match payment_response {
+                LndWebsocketMessage::Response(invoice_state) => match invoice_state.state() {
+                    HodlState::OPEN => {
+                        let signed_order =
+                            order_invoice.sign_update_for(OrderParticipant::Consumer, &keys)?;
+                        broadcaster.broadcast_note(signed_order).await?;
+                        state_clone.add_live_order(order_invoice.clone()).await?;
                     }
-                    HodlState::CANCELED => {
-                        self.lightning_wallet
-                            .cancel_htlc(invoice.r_hash_url_safe()?)
+                    HodlState::ACCEPTED => {
+                        if let Some(mut live_order) = state_clone
+                            .find_live_order(order_invoice.order_id().as_str())
+                            .await
+                        {
+                            live_order.payment_status = OrderPaymentStatus::PaymentReceived;
+                            state_clone.update_live_order(live_order.clone()).await?;
+                            InvoicerBot::broadcast_order_update(
+                                broadcaster.clone(),
+                                keys.clone(),
+                                &live_order,
+                            )
                             .await?;
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentFailed,
-                            OrderStatus::Canceled,
-                        )
-                        .await?;
-                        warn!("Payment canceled");
-                        break;
+                        }
                     }
                     HodlState::SETTLED => {
-                        self.update_order_status(
-                            &mut state,
-                            OrderPaymentStatus::PaymentSuccess,
-                            OrderStatus::Preparing,
-                        )
-                        .await?;
-                        success = true;
-                        info!("Order successfully paid");
-                        break;
+                        if let Some(mut live_order) = state_clone
+                            .find_live_order(order_invoice.order_id().as_str())
+                            .await
+                        {
+                            live_order.payment_status = OrderPaymentStatus::PaymentSuccess;
+                            live_order.order_status = OrderStatus::Preparing;
+                            state_clone.update_live_order(live_order.clone()).await?;
+                            InvoicerBot::broadcast_order_update(
+                                broadcaster.clone(),
+                                keys.clone(),
+                                &live_order,
+                            )
+                            .await?;
+                        }
                     }
-                    HodlState::OPEN => {
-                        continue;
+                    HodlState::CANCELED => {
+                        if let Some(mut live_order) = state_clone
+                            .find_live_order(order_invoice.order_id().as_str())
+                            .await
+                        {
+                            live_order.payment_status = OrderPaymentStatus::PaymentFailed;
+                            live_order.order_status = OrderStatus::Canceled;
+                            state_clone.update_live_order(live_order.clone()).await?;
+                            InvoicerBot::broadcast_order_update(
+                                broadcaster.clone(),
+                                keys.clone(),
+                                &live_order,
+                            )
+                            .await?;
+                        }
+                    }
+                },
+                LndWebsocketMessage::Error(e) => {
+                    error!("{:?}", e);
+                    self.cancel_htlc(invoice.clone()).await?;
+                    break;
+                }
+                _ => {
+                    ping_counter += 1;
+                    if ping_counter > 5 {
+                        warn!("Canceling HTLC due to inactivity");
+                        self.cancel_htlc(invoice.clone()).await?;
+                        break;
                     }
                 }
             }
         }
-        Ok(success)
+        Ok(())
     }
-    pub async fn handle_order_request(
+    pub async fn new_order_invoice(
         &self,
         order: OrderRequest,
         signed_note: NostrNote,
         commerce: CommerceProfile,
         exchange_rate: f64,
-        keys: &NostrKeypair,
-    ) -> anyhow::Result<NostrNote> {
+        keys: NostrKeypair,
+        state_clone: InvoicerStateLock,
+        broadcaster: PoolRelayBroadcaster,
+    ) -> anyhow::Result<OrderInvoiceState> {
         info!("Order request received");
         let invoice = self
             .create_order_invoice(&order, &commerce, exchange_rate)
@@ -195,15 +190,14 @@ impl Invoicer {
             Some(invoice.0.clone()),
         );
         info!("Order state created");
-        let state_update_note = state_update.sign_customer_update(keys)?;
-        info!("Order state update signed");
-        let self_clone = self.clone();
-        tokio::spawn(async move {
-            if let Err(e) = self_clone.order_payment_notifier(state_update).await {
-                error!("NOTIFIER ERROR {:?}", e);
-            }
-        });
-        Ok(state_update_note)
+        let task = self.clone().order_payment_notifier(
+            state_update.clone(),
+            keys,
+            state_clone,
+            broadcaster,
+        );
+        tokio::task::spawn(task);
+        Ok(state_update)
     }
     pub async fn cancel_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
         self.lightning_wallet
@@ -214,21 +208,17 @@ impl Invoicer {
     pub async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
         let payment_req = LndPaymentRequest::new(invoice.pr, 10, 150.to_string(), false);
         let mut lnd_ws = self.lightning_wallet.invoice_channel().await?;
-        lnd_ws.sender.send(payment_req)?;
-        loop {
-            if lnd_ws.receiver.is_closed() && lnd_ws.receiver.is_empty() {
-                return Err(anyhow!("Payment channel closed"));
-            }
-            if let Some(payment_status) = lnd_ws.receiver.recv().await {
-                info!("{:?}", payment_status);
-                if payment_status.status() == InvoicePaymentState::Succeeded {
-                    let settled = self
-                        .lightning_wallet
-                        .settle_htlc(payment_status.preimage())
-                        .await;
-                    info!("{:?}", settled);
-                    break;
-                }
+        lnd_ws.sender.send(payment_req).await?;
+        let mut event_stream = lnd_ws.event_stream::<LndPaymentResponse>();
+        while let Some(LndWebsocketMessage::Response(payment_status)) = event_stream.next().await {
+            info!("{:?}", payment_status);
+            if payment_status.status() == InvoicePaymentState::Succeeded {
+                let settled = self
+                    .lightning_wallet
+                    .settle_htlc(payment_status.preimage())
+                    .await;
+                info!("{:?}", settled);
+                break;
             }
         }
         Ok(())

@@ -7,7 +7,8 @@ fuente = { path = "fuente" }
 
 # ILLUMINODES stack
 nostr-minions = "0.1.5"
-bright-lightning = "0.1.1"
+bright-lightning = "0.1.3"
+# bright-lightning = { path = "../bright-lightning" }
 nostro2 = "0.2.2"
 upload-things = "0.1.2"
 #upload-things = { path = "../o2-thing/upload-things" }
