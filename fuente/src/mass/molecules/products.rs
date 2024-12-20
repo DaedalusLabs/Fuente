@@ -9,6 +9,7 @@ pub struct ProductCardProps {
 #[function_component(ProductCard)]
 pub fn product_card(props: &ProductCardProps) -> Html {
     let ProductCardProps { product } = props;
+    gloo::console::log!("ProductCard - thumbnail URL:", product.thumbnail_url());
     html! {
         <div class="p-4 shadow-xl rounded-xl w-fit h-fit">
             <div class="w-fit flex flex-row gap-4">
@@ -18,10 +19,24 @@ pub fn product_card(props: &ProductCardProps) -> Html {
                     alt={product.name()}
                     class="w-12 h-12 min-w-12 min-h-12 bg-neutral-300 rounded-full object-cover"
                 />
+                <img 
+                    src={product.thumbnail_url()} 
+                    alt={product.name()}
+                    class="w-12 h-12 min-w-12 min-h-12 bg-neutral-300 rounded-full object-cover"
+                />
                 <div class="flex flex-col">
                     <h3 class="text-lg font-bold">{format!("{} - SRD {}", product.name(), product.price())}</h3>
+                    if let Some(discount) = product.discount() {
+                        <p class="text-sm text-green-500">
+                            {format!("Discount: SRD {}", discount)}
+                        </p>
+                    }
                     <p class="text-sm text-gray-500">{format!("SKU: {}", product.sku())}</p>
                     <p class="text-neutral-400">{product.description()}</p>
+                    <details class="mt-2">
+                        <summary class="text-sm font-semibold">{"Product Details"}</summary>
+                        <p class="text-sm text-neutral-600 mt-1">{product.details()}</p>
+                    </details>
                 </div>
             </div>
         </div>

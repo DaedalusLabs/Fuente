@@ -1,6 +1,6 @@
 use fuente::models::{
     CommerceProfile, CommerceProfileIdb, ProductMenu, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
-    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
+    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
 };
 use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
