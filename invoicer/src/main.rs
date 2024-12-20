@@ -8,12 +8,12 @@ const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrak
 use anyhow::anyhow;
 use fuente::models::{
     AdminServerRequest, CommerceProfile, DriverProfile, OrderInvoiceState, OrderParticipant,
-    OrderPaymentStatus, OrderRequest, OrderStatus, ProductMenu, DRIVER_HUB_PUB_KEY,
-    NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
-    NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_CONSUMER_REGISTRY,
-    NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_COURIER_UPDATE, NOSTR_KIND_ORDER_STATE,
-    NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_CONFIG,
-    NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY, TEST_PUB_KEY,
+    OrderPaymentStatus, OrderRequest, OrderStatus, OrderUpdateRequest, ProductMenu,
+    DRIVER_HUB_PUB_KEY, NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS,
+    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_ORDER_REQUEST,
+    NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_COURIER_UPDATE,
+    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP,
+    NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY, TEST_PUB_KEY,
 };
 use invoicer::Invoicer;
 use nostro2::{
@@ -21,46 +21,10 @@ use nostro2::{
     notes::NostrNote,
     relays::{NostrRelayPool, NostrSubscription, NoteEvent, PoolRelayBroadcaster, RelayEvent},
 };
-use serde::{Deserialize, Serialize};
 use state::InvoicerStateLock;
 use tracing::{error, info, Level};
 use upload_things::UtRecord;
 use uploads::UtSigner;
-
-pub type InvoicerInternalChannelReceiver<T> =
-    std::sync::Arc<tokio::sync::RwLock<tokio::sync::mpsc::UnboundedReceiver<T>>>;
-
-#[derive(Clone)]
-pub struct NostrNoteChannel(InvoicerInternalChannelReceiver<(u32, NostrNote)>);
-impl NostrNoteChannel {
-    pub fn new(receiver: tokio::sync::mpsc::UnboundedReceiver<(u32, NostrNote)>) -> Self {
-        Self(std::sync::Arc::new(tokio::sync::RwLock::new(receiver)))
-    }
-    pub async fn recv(&self) -> Option<(u32, NostrNote)> {
-        let mut lock = self.0.write().await;
-        lock.recv().await
-    }
-    pub async fn is_closed(&self) -> bool {
-        let lock = self.0.read().await;
-        lock.is_closed()
-    }
-}
-
-#[derive(Clone)]
-pub struct OrderStateChannel(InvoicerInternalChannelReceiver<OrderInvoiceState>);
-impl OrderStateChannel {
-    pub fn new(receiver: tokio::sync::mpsc::UnboundedReceiver<OrderInvoiceState>) -> Self {
-        Self(std::sync::Arc::new(tokio::sync::RwLock::new(receiver)))
-    }
-    pub async fn recv(&self) -> Option<OrderInvoiceState> {
-        let mut lock = self.0.write().await;
-        lock.recv().await
-    }
-    pub async fn is_closed(&self) -> bool {
-        let lock = self.0.read().await;
-        lock.is_closed()
-    }
-}
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
@@ -115,13 +79,13 @@ impl InvoicerBot {
         let commerce_note = state.sign_update_for(OrderParticipant::Commerce, &keys)?;
         broadcaster.broadcast_note(user_note).await?;
         broadcaster.broadcast_note(commerce_note).await?;
-        match state.get_courier() {
+        match state.courier {
             Some(_) => {
                 let courier_note = state.sign_update_for(OrderParticipant::Courier, &keys)?;
                 broadcaster.broadcast_note(courier_note).await?;
             }
             None => {
-                if state.get_order_status() == OrderStatus::ReadyForDelivery {
+                if state.order_status == OrderStatus::ReadyForDelivery {
                     let courier_note = state.sign_update_for(OrderParticipant::Courier, &keys)?;
                     broadcaster.broadcast_note(courier_note).await?;
                 }
@@ -178,7 +142,6 @@ impl InvoicerBot {
         let server_keys = keys.clone();
         while let Some(signed_note) = relays.listener.recv().await {
             if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
-                info!("Received note");
                 if let Err(e) = self.note_processor(server_keys.clone(), note).await {
                     error!("{:?}", e);
                 }
@@ -195,7 +158,6 @@ impl InvoicerBot {
             NOSTR_KIND_SERVER_REQUEST => {
                 let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
-                info!("Received server request");
                 if let Err(e) = self.handle_private_notes(inner_note.kind, inner_note).await {
                     error!("{:?}", e);
                 }
@@ -370,7 +332,7 @@ impl InvoicerBot {
         inner_note: NostrNote,
         outer_note: NostrNote,
     ) -> anyhow::Result<()> {
-        let commerce_update = CommerceOrderUpdate::try_from(inner_note)?;
+        let commerce_update = OrderUpdateRequest::try_from(inner_note)?;
         let mut live_order = self
             .bot_state
             .find_live_order(commerce_update.order_id.as_str())
@@ -382,11 +344,13 @@ impl InvoicerBot {
         }
         match commerce_update.status_update {
             OrderStatus::Preparing => {
-                live_order.update_order_status(OrderStatus::Preparing);
+                live_order.order_status = OrderStatus::Preparing;
                 self.invoicer
                     .settle_htlc(
                         live_order
-                            .get_commerce_invoice()
+                            .commerce_invoice
+                            .as_ref()
+                            .cloned()
                             .ok_or(anyhow!("No commerce invoice"))?,
                     )
                     .await?;
@@ -400,7 +364,7 @@ impl InvoicerBot {
                 Ok(())
             }
             OrderStatus::ReadyForDelivery => {
-                live_order.update_order_status(OrderStatus::ReadyForDelivery);
+                live_order.order_status = OrderStatus::ReadyForDelivery;
                 self.bot_state.update_live_order(live_order.clone()).await?;
                 InvoicerBot::broadcast_order_update(
                     self.broadcaster.clone(),
@@ -418,7 +382,7 @@ impl InvoicerBot {
         inner_note: NostrNote,
         outer_note: NostrNote,
     ) -> anyhow::Result<()> {
-        let order_state = CommerceOrderUpdate::try_from(inner_note)?;
+        let order_state = OrderUpdateRequest::try_from(inner_note)?;
         let mut live_order = self
             .bot_state
             .find_live_order(order_state.order_id.as_str())
@@ -428,9 +392,9 @@ impl InvoicerBot {
             .bot_state
             .check_courier_whitelist(outer_note.pubkey.as_str())
             .await?;
-        let has_driver_assigned = live_order.get_courier().is_some();
+        let has_driver_assigned = live_order.courier.is_some();
         if !has_driver_assigned {
-            live_order.update_courier(courier_profile);
+            live_order.courier = Some(courier_profile);
             self.bot_state.update_live_order(live_order.clone()).await?;
             InvoicerBot::broadcast_order_update(
                 self.broadcaster.clone(),
@@ -440,15 +404,12 @@ impl InvoicerBot {
             .await?;
             return Ok(());
         }
-        match (
-            live_order.get_payment_status(),
-            live_order.get_order_status(),
-        ) {
+        match (&live_order.payment_status, &live_order.order_status) {
             (_, OrderStatus::Completed) => {}
             (_, OrderStatus::Canceled) => {}
             (OrderPaymentStatus::PaymentFailed, _) => {}
             _ => {
-                live_order.update_order_status(order_state.status_update);
+                live_order.order_status = order_state.status_update;
                 self.bot_state.update_live_order(live_order.clone()).await?;
                 InvoicerBot::broadcast_order_update(
                     self.broadcaster.clone(),
@@ -460,18 +421,5 @@ impl InvoicerBot {
             }
         }
         Err(anyhow!("Order state channel closed"))
-    }
-}
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CommerceOrderUpdate {
-    pub order_id: String,
-    pub status_update: OrderStatus,
-}
-impl TryFrom<NostrNote> for CommerceOrderUpdate {
-    type Error = anyhow::Error;
-    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
-        let content = note.content;
-        let update: CommerceOrderUpdate = serde_json::from_str(content.as_str())?;
-        Ok(update)
     }
 }

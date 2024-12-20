@@ -31,7 +31,7 @@ impl Reducible for LiveOrder {
             LiveOrderAction::ClearOrder => Rc::new(LiveOrder { order: None }),
             LiveOrderAction::CompleteOrder(order_id) => {
                 if let Some(order) = &self.order {
-                    if order.1.id() == order_id {
+                    if order.1.order_id() == order_id {
                         Rc::new(LiveOrder { order: None })
                     } else {
                         self
@@ -107,14 +107,13 @@ pub fn commerce_data_sync() -> Html {
             if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        match (
-                            order_status.get_payment_status(),
-                            order_status.get_order_status(),
-                        ) {
+                        match (&order_status.payment_status, &order_status.order_status) {
                             (OrderPaymentStatus::PaymentFailed, _) => {}
                             (_, OrderStatus::Canceled) => {}
                             (_, OrderStatus::Completed) => {
-                                ctx.dispatch(LiveOrderAction::CompleteOrder(order_status.id()));
+                                ctx.dispatch(LiveOrderAction::CompleteOrder(
+                                    order_status.order_id(),
+                                ));
                             }
                             _ => {
                                 ctx.dispatch(LiveOrderAction::SetOrder(note.clone(), order_status));
