@@ -54,11 +54,13 @@ impl InvoicerStateLock {
     async fn lock_owned(&self) -> InvoicerState {
         self.0.read().await.clone()
     }
-    pub async fn check_courier_whitelist(&self, pubkey: &str) -> anyhow::Result<()> {
+    pub async fn check_courier_whitelist(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
         self.lock()
             .await
             .admin_config
-            .check_couriers_whitelist(pubkey)
+            .check_couriers_whitelist(pubkey)?;
+        let courier = self.lock().await.courier_profiles.find_courier(pubkey);
+        courier.ok_or(anyhow!("Courier not found"))
     }
     pub async fn is_commerce_whitelisted(&self, pubkey: &str) -> bool {
         self.lock_owned()
@@ -146,39 +148,20 @@ impl InvoicerStateLock {
     }
     pub async fn add_live_order(&self, order: OrderInvoiceState) -> anyhow::Result<()> {
         let mut orders = self.lock().await;
-        orders.live_orders.new_order(order.id(), order)?;
+        orders.live_orders.new_order(order.order_id(), order)?;
         Ok(())
     }
-    pub async fn handle_courier_updates(
-        &self,
-        inner_note: NostrNote,
-        outer_note: NostrNote,
-    ) -> anyhow::Result<OrderInvoiceState> {
-        let bot_state = self.lock_owned().await;
-        bot_state
-            .admin_config
-            .check_couriers_whitelist(&inner_note.pubkey)?;
-        let updated_order: OrderInvoiceState =
-            OrderInvoiceState::try_from(inner_note.content.to_string())?;
-        // Check if order is part of live orders
-        let mut live_order = bot_state
+    pub async fn find_live_order(&self, order_id: &str) -> Option<OrderInvoiceState> {
+        self.lock_owned().await.live_orders.get_order(order_id)
+    }
+    pub async fn update_live_order(&self, order_update: OrderInvoiceState) -> anyhow::Result<()> {
+        let mut orders = self.lock().await;
+        let order = orders
             .live_orders
-            .get_order(&updated_order.id())
+            .get_mut_order(&order_update.order_id())
             .ok_or(anyhow!("Order not found"))?;
-        // Check if the courier is already assigned
-        if live_order.get_courier().is_none() {
-            let new_courier = updated_order
-                .get_courier()
-                .ok_or(anyhow!("No courier found"))?;
-            live_order.update_courier(new_courier);
-            return Ok(live_order.to_owned());
-        }
-        // Check if the update s coing from asigned courier
-        if outer_note.pubkey == live_order.get_courier().unwrap().pubkey {
-            info!("Order updated by courier");
-            return Ok(updated_order.to_owned());
-        }
-        Err(anyhow!("Invalid courier update"))
+        *order = order.to_owned();
+        Ok(())
     }
     pub async fn sign_updated_config(
         &self,

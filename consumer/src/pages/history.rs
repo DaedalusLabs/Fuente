@@ -1,10 +1,10 @@
 use super::PageHeader;
 use fuente::{
     mass::{HistoryIcon, SimpleFormButton},
-    models::{OrderInvoiceState, OrderStatus, OrderStateIdb},
+    models::{OrderInvoiceState, OrderStateIdb, OrderStatus},
 };
-use yew::prelude::*;
 use nostr_minions::key_manager::NostrIdStore;
+use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
 enum HistoryFilter {
@@ -18,7 +18,7 @@ pub fn history_page() -> Html {
     let orders_state = use_state(|| Vec::<OrderInvoiceState>::new());
     let filter_state = use_state(|| HistoryFilter::Completed);
     let selected_order = use_state(|| None::<String>);
-    
+
     // (Loading orders from IndexedDB)
     let orders = orders_state.clone();
     use_effect_with((), move |_| {
@@ -41,19 +41,16 @@ pub fn history_page() -> Html {
     let filtered_orders = (*orders_state)
         .iter()
         .filter(|order| match *filter_state {
-            HistoryFilter::Completed => order.get_order_status() == OrderStatus::Completed,
-            HistoryFilter::Canceled => order.get_order_status() == OrderStatus::Canceled,
+            HistoryFilter::Completed => order.order_status == OrderStatus::Completed,
+            HistoryFilter::Canceled => order.order_status == OrderStatus::Canceled,
         })
         .collect::<Vec<_>>();
 
     if let Some(order_id) = (*selected_order).clone() {
-        if let Some(order) = (*orders_state)
-            .iter()
-            .find(|o| o.id() == order_id) 
-        {
+        if let Some(order) = (*orders_state).iter().find(|o| o.order_id() == order_id) {
             return html! {
-                <OrderDetails 
-                    order={order.clone()} 
+                <OrderDetails
+                    order={order.clone()}
                     on_back={Callback::from({
                         let selected = selected_order.clone();
                         move |_| selected.set(None)
@@ -69,16 +66,16 @@ pub fn history_page() -> Html {
                 <div class="flex flex-row justify-between items-center mb-4 p-7">
                     <h2 class="text-4xl font-mplus text-fuente-dark">{"Order History"}</h2>
                     <div class="flex gap-2">
-                        <button 
+                        <button
                             onclick={Callback::from({
                                 let filter = filter_state.clone();
                                 move |_| filter.set(HistoryFilter::Completed)
                             })}
                             class={classes!(
-                                if *filter_state == HistoryFilter::Completed { 
-                                    "bg-fuente text-white" 
-                                } else { 
-                                    "bg-gray-200" 
+                                if *filter_state == HistoryFilter::Completed {
+                                    "bg-fuente text-white"
+                                } else {
+                                    "bg-gray-200"
                                 },
                                 "px-4",
                                 "py-2",
@@ -87,23 +84,23 @@ pub fn history_page() -> Html {
                         >
                             {"Completed"}
                         </button>
-                        <button 
+                        <button
                             onclick={Callback::from({
                                 let filter = filter_state.clone();
                                 move |_| filter.set(HistoryFilter::Canceled)
                             })}
                             class={classes!(
-                                if *filter_state == HistoryFilter::Canceled { 
-                                    "bg-fuente text-white" 
-                                } else { 
-                                    "bg-gray-200" 
+                                if *filter_state == HistoryFilter::Canceled {
+                                    "bg-fuente text-white"
+                                } else {
+                                    "bg-gray-200"
                                 },
                                 "px-4",
                                 "py-2",
                                 "rounded-lg"
                             )}
                         >
-                            {"Canceled"}  
+                            {"Canceled"}
                         </button>
                     </div>
                 </div>
@@ -111,12 +108,12 @@ pub fn history_page() -> Html {
                 <div class="flex flex-col gap-4 p-4 overflow-y-auto">
                 {for filtered_orders.iter().map(|order| {
                     let order_req = order.get_order_request();
-                    let order_id = order.id();
+                    let order_id = order.order_id();
                     let selected = selected_order.clone();
                     let profile = order_req.profile;
-                    
+
                     html! {
-                        <div 
+                        <div
                             onclick={Callback::from(move |_| selected.set(Some(order_id.clone())))}
                             class="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
                         >
@@ -132,17 +129,17 @@ pub fn history_page() -> Html {
                     </div>
                     <div class="flex justify-between items-center">
                         <p class="text-sm text-gray-500">
-                            {format!("Order #{}", &order.id()[..8])}
+                            {format!("Order #{}", &order.order_id()[..8])}
                         </p>
                         <p class={classes!(
                             "text-sm",
-                            if order.get_order_status() == OrderStatus::Completed {
+                            if order.order_status == OrderStatus::Completed {
                                 "text-green-600"
                             } else {
                                 "text-red-600"
                             }
                         )}>
-                            {order.get_order_status().display()}
+                            {order.order_status.display()}
                                 </p>
                             </div>
                         </div>
@@ -181,18 +178,18 @@ fn order_details(props: &OrderDetailsProps) -> Html {
     let order_req = props.order.get_order_request();
     let products = order_req.products.counted_products();
     let profile = order_req.profile;
-    
+
     html! {
         <div class="flex flex-col w-full h-full">
             <div class="flex items-center gap-4 mb-6 p-6">
-                <button 
+                <button
                     onclick={props.on_back.clone()}
                     class="p-2 rounded-lg hover:bg-gray-100"
                 >
                     {"← Back"}
                 </button>
                 <h2 class="text-2xl font-semibold text-fuente-dark">
-                    {format!("Order Details #{}", &props.order.id()[..8])}
+                    {format!("Order Details #{}", &props.order.order_id()[..8])}
                 </h2>
             </div>
 
@@ -216,13 +213,13 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                         <h3 class="font-medium text-gray-500">{"Order Status"}</h3>
                         <p class={classes!(
                             "font-medium",
-                            if props.order.get_order_status() == OrderStatus::Completed {
+                            if props.order.order_status == OrderStatus::Completed {
                                 "text-green-600"
                             } else {
                                 "text-red-600"
                             }
                         )}>
-                            {props.order.get_order_status().display()}
+                            {props.order.order_status.display()}
                         </p>
                     </div>
                 </div>

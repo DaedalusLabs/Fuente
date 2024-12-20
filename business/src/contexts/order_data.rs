@@ -28,14 +28,14 @@ impl OrderData {
     pub fn filter_by_payment_status(&self, status: OrderPaymentStatus) -> Vec<OrderInvoiceState> {
         self.live_orders
             .iter()
-            .filter(|o| o.get_payment_status() == status)
+            .filter(|o| o.payment_status == status)
             .cloned()
             .collect()
     }
     pub fn filter_by_order_status(&self, status: OrderStatus) -> Vec<OrderInvoiceState> {
         self.live_orders
             .iter()
-            .filter(|o| o.get_order_status() == status)
+            .filter(|o| o.order_status == status)
             .cloned()
             .collect()
     }
@@ -74,7 +74,7 @@ impl Reducible for OrderData {
                 order_history: self.order_history.clone(),
                 live_orders: {
                     let mut orders = self.live_orders.clone();
-                    orders.retain(|o| o.id() != order.id());
+                    orders.retain(|o| o.order_id() != order.order_id());
                     orders.push(order);
                     orders
                 },

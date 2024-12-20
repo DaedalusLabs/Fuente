@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  fuente-invoicer:
+    build:
+      context: .
+    volumes:
+      - /home/illuminodes/.lnd/data/chain/bitcoin/mainnet/invoices.macaroon:/app/invoices.macaroon
+      - /home/illuminodes/fuente/invoicer:/app
+    working_dir: /app
+    restart: unless-stopped
+    environment:
+      - LND_ADDRESS=${LND_ADDRESS}
+      - LND_MACAROON=${LND_MACAROON}
+      - UT_API_KEY=${UT_API_KEY}
+      - UT_APP_ID=${UT_APP_ID}
+      - UT_CALLBACK_DOMAIN=${UT_CALLBACK_DOMAIN}
+    networks:
+      - illuminodes
+
+networks:
+  illuminodes:
+    external: true
+    name: nginx_illuminodes
