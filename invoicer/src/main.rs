@@ -10,10 +10,11 @@ use fuente::models::{
     AdminServerRequest, CommerceProfile, DriverProfile, OrderInvoiceState, OrderParticipant,
     OrderPaymentStatus, OrderRequest, OrderStatus, OrderUpdateRequest, ProductMenu,
     DRIVER_HUB_PUB_KEY, NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS,
-    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_ORDER_REQUEST,
-    NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_COURIER_UPDATE,
-    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP,
-    NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PRIV_KEY, TEST_PUB_KEY,
+    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_CANCEL,
+    NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE,
+    NOSTR_KIND_COURIER_UPDATE, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ,
+    NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
+    TEST_PRIV_KEY, TEST_PUB_KEY,
 };
 use invoicer::Invoicer;
 use nostro2::{
@@ -35,7 +36,7 @@ pub async fn main() -> anyhow::Result<()> {
     let relay_pool = NostrRelayPool::new(vec_strings).await?;
     let bot = InvoicerBot::new(relay_pool.writer.clone()).await?;
     info!("Bot created");
-    let relay_future = bot.read_relay_pool(relay_pool, bot.keys.clone());
+    let relay_future = bot.read_relay_pool(relay_pool);
     loop {
         tokio::select! {
             _ = relay_future => {
@@ -49,7 +50,8 @@ pub async fn main() -> anyhow::Result<()> {
 
 #[derive(Clone)]
 pub struct InvoicerBot {
-    keys: NostrKeypair,
+    server_keys: NostrKeypair,
+    driver_hub_keys: NostrKeypair,
     bot_state: InvoicerStateLock,
     broadcaster: PoolRelayBroadcaster,
     invoicer: Invoicer,
@@ -61,43 +63,18 @@ impl InvoicerBot {
         // TODO
         // make this env variable
         let server_keys = NostrKeypair::new(TEST_PRIV_KEY)?;
+        let driver_hub_keys = NostrKeypair::new(DRIVER_HUB_PUB_KEY)?;
         info!("Relay pool started");
         Ok(Self {
             invoicer: Invoicer::new().await?,
-            keys: server_keys,
+            server_keys,
+            driver_hub_keys,
             broadcaster,
             uploader: UtSigner::default(),
             bot_state: InvoicerStateLock::default(),
         })
     }
-    async fn broadcast_order_update(
-        broadcaster: PoolRelayBroadcaster,
-        keys: NostrKeypair,
-        state: &OrderInvoiceState,
-    ) -> anyhow::Result<()> {
-        let user_note = state.sign_update_for(OrderParticipant::Consumer, &keys)?;
-        let commerce_note = state.sign_update_for(OrderParticipant::Commerce, &keys)?;
-        broadcaster.broadcast_note(user_note).await?;
-        broadcaster.broadcast_note(commerce_note).await?;
-        match state.courier {
-            Some(_) => {
-                let courier_note = state.sign_update_for(OrderParticipant::Courier, &keys)?;
-                broadcaster.broadcast_note(courier_note).await?;
-            }
-            None => {
-                if state.order_status == OrderStatus::ReadyForDelivery {
-                    let courier_note = state.sign_update_for(OrderParticipant::Courier, &keys)?;
-                    broadcaster.broadcast_note(courier_note).await?;
-                }
-            }
-        }
-        Ok(())
-    }
-    pub async fn read_relay_pool(
-        &self,
-        mut relays: NostrRelayPool,
-        keys: NostrKeypair,
-    ) -> anyhow::Result<()> {
+    pub async fn read_relay_pool(&self, mut relays: NostrRelayPool) -> anyhow::Result<()> {
         let mut live_filter = NostrSubscription {
             kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
             ..Default::default()
@@ -109,6 +86,7 @@ impl InvoicerBot {
                 NOSTR_KIND_SERVER_CONFIG,
                 NOSTR_KIND_ADMIN_REQUEST,
                 NOSTR_KIND_PRESIGNED_URL_REQ,
+                NOSTR_KIND_COURIER_PROFILE,
             ]),
             ..Default::default()
         };
@@ -117,7 +95,6 @@ impl InvoicerBot {
             kinds: Some(vec![
                 NOSTR_KIND_COMMERCE_PROFILE,
                 NOSTR_KIND_COMMERCE_PRODUCTS,
-                NOSTR_KIND_COURIER_PROFILE,
                 NOSTR_KIND_CONSUMER_REGISTRY,
             ]),
             ..Default::default()
@@ -140,44 +117,48 @@ impl InvoicerBot {
             .writer
             .subscribe(config_filter.relay_subscription())
             .await?;
-        let server_keys = keys.clone();
         while let Some(signed_note) = relays.listener.recv().await {
             if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
-                if let Err(e) = self.note_processor(server_keys.clone(), note).await {
+                if let Err(e) = self.note_processor(note).await {
                     error!("{:?}", e);
                 }
             }
         }
         Err(anyhow!("Relay pool closed"))
     }
-    async fn note_processor(
-        &self,
-        server_keys: NostrKeypair,
-        signed_note: NostrNote,
-    ) -> anyhow::Result<()> {
+    async fn note_processor(&self, signed_note: NostrNote) -> anyhow::Result<()> {
         match signed_note.kind {
             NOSTR_KIND_SERVER_REQUEST => {
-                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
-                if let Err(e) = self.handle_private_notes(inner_note.kind, inner_note).await {
+                if let Err(e) = self.handle_server_requests(inner_note, signed_note).await {
                     error!("{:?}", e);
                 }
             }
             NOSTR_KIND_ADMIN_REQUEST => {
-                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
-                if let Err(e) = self.handle_private_notes(inner_note.kind, inner_note).await {
-                    error!("{:?}", e);
+                if let Ok(admin_req) = AdminServerRequest::try_from(&inner_note) {
+                    let update_note = self
+                        .bot_state
+                        .sign_updated_config(admin_req, &self.server_keys)
+                        .await?;
+                    self.broadcaster.broadcast_note(update_note).await?;
                 }
             }
             NOSTR_KIND_CONSUMER_REGISTRY => {
-                let decrypted = server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
-                if let Err(e) = self.handle_private_notes(inner_note.kind, inner_note).await {
-                    error!("{:?}", e);
-                }
+                self.bot_state.add_consumer_profile(inner_note).await?
             }
-            NOSTR_KIND_SERVER_CONFIG => {
+            NOSTR_KIND_ORDER_STATE => {
+                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = NostrNote::try_from(decrypted)?;
+                let _ = OrderInvoiceState::try_from(&inner_note)?;
+                self.bot_state.update_live_order(inner_note).await?;
+                info!("Order state updated");
+            }
+            _ => {
                 if let Err(e) = self
                     .handle_public_notes(signed_note.kind, signed_note)
                     .await
@@ -185,31 +166,6 @@ impl InvoicerBot {
                     error!("{:?}", e);
                 }
             }
-            NOSTR_KIND_COMMERCE_PROFILE => {
-                if let Err(e) = self
-                    .handle_public_notes(signed_note.kind, signed_note)
-                    .await
-                {
-                    error!("{:?}", e);
-                }
-            }
-            NOSTR_KIND_COMMERCE_PRODUCTS => {
-                if let Err(e) = self
-                    .handle_public_notes(signed_note.kind, signed_note)
-                    .await
-                {
-                    error!("{:?}", e);
-                }
-            }
-            NOSTR_KIND_COURIER_PROFILE => {
-                if let Err(e) = self
-                    .handle_public_notes(signed_note.kind, signed_note)
-                    .await
-                {
-                    error!("{:?}", e);
-                }
-            }
-            _ => {}
         }
         Ok(())
     }
@@ -230,15 +186,14 @@ impl InvoicerBot {
                 info!("Added menu");
             }
             NOSTR_KIND_COURIER_PROFILE => {
-                DriverProfile::try_from(signed_note.clone())?;
-                self.bot_state
-                    .check_courier_whitelist(signed_note.pubkey.as_str())
-                    .await?;
-                self.bot_state.add_courier_profile(signed_note).await?;
+                let inner_note = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let driver_note = NostrNote::try_from(inner_note)?;
+                DriverProfile::try_from(&driver_note)?;
+                self.bot_state.add_courier_profile(driver_note).await?;
                 info!("Added courier profile");
             }
             NOSTR_KIND_SERVER_CONFIG => {
-                let decrypted = match self.keys.decrypt_nip_04_content(&signed_note) {
+                let decrypted = match self.server_keys.decrypt_nip_04_content(&signed_note) {
                     Ok(decrypted) => Some(decrypted),
                     Err(_e) => None,
                 };
@@ -250,25 +205,74 @@ impl InvoicerBot {
         }
         Ok(())
     }
-    async fn handle_private_notes(
+    async fn handle_server_requests(
         &self,
-        note_kind: u32,
-        signed_note: NostrNote,
+        inner_note: NostrNote,
+        outer_note: NostrNote,
     ) -> anyhow::Result<()> {
-        match note_kind {
+        match inner_note.kind {
+            NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
+                let order_req = OrderRequest::try_from(&inner_note)?;
+                let registered_commerce = self
+                    .bot_state
+                    .find_commerce(order_req.commerce.as_str())
+                    .await?;
+                self.invoicer
+                    .new_order_invoice(
+                        order_req,
+                        inner_note,
+                        registered_commerce.0,
+                        self.bot_state.exchange_rate().await,
+                        self.server_keys.clone(),
+                        self.bot_state.clone(),
+                        self.broadcaster.clone(),
+                    )
+                    .await?;
+            }
+            NOSTR_KIND_CONSUMER_CANCEL => {
+                info!("Consumer cancel request");
+                let update_req = OrderUpdateRequest::try_from(inner_note)?;
+                let mut invoice_state = update_req.invoice_state()?;
+                if invoice_state.order.pubkey != outer_note.pubkey {
+                    return Err(anyhow!("Unauthorized"));
+                }
+                let invoice = invoice_state
+                    .commerce_invoice
+                    .as_ref()
+                    .cloned()
+                    .ok_or(anyhow!("No invoice"))?;
+                if let Err(e) = self.invoicer.cancel_htlc(invoice).await {
+                    error!("{:?}", e);
+                }
+                invoice_state.order_status = OrderStatus::Canceled;
+                let (update, giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
+                self.bot_state.update_live_order(update).await?;
+                self.broadcaster.broadcast_note(giftwrap).await?;
+                let (_, commerce_giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
+                self.broadcaster.broadcast_note(commerce_giftwrap).await?;
+            }
+            NOSTR_KIND_COMMERCE_UPDATE => {
+                self.handle_commerce_updates(inner_note, outer_note).await?;
+            }
+            NOSTR_KIND_COURIER_UPDATE => {
+                self.handle_courier_order_update(inner_note, outer_note)
+                    .await?;
+            }
             NOSTR_KIND_PRESIGNED_URL_REQ => {
                 if !self
                     .bot_state
-                    .is_consumer_registered(&signed_note.pubkey)
+                    .is_consumer_registered(&outer_note.pubkey)
                     .await
                     && !self
                         .bot_state
-                        .is_commerce_whitelisted(&signed_note.pubkey)
+                        .is_commerce_whitelisted(&outer_note.pubkey)
                         .await
                 {
                     error!("Unauthorized request");
                 }
-                if let Ok(presigned_url) = self.uploader.sign_url(signed_note.content.try_into()?) {
+                if let Ok(presigned_url) = self.uploader.sign_url(inner_note.content.try_into()?) {
                     let ut_record = UtRecord {
                         file_keys: vec![presigned_url.file_key.clone()],
                         ..Default::default()
@@ -277,51 +281,13 @@ impl InvoicerBot {
                         let mut new_url_note = NostrNote {
                             kind: NOSTR_KIND_PRESIGNED_URL_RESP,
                             content: serde_json::to_string(&presigned_url)?,
-                            pubkey: self.keys.public_key(),
+                            pubkey: self.server_keys.public_key(),
                             ..Default::default()
                         };
-                        self.keys
-                            .sign_nip_04_encrypted(&mut new_url_note, signed_note.pubkey)?;
+                        self.server_keys
+                            .sign_nip_04_encrypted(&mut new_url_note, outer_note.pubkey)?;
                         self.broadcaster.broadcast_note(new_url_note).await?;
                     }
-                }
-            }
-            NOSTR_KIND_CONSUMER_REGISTRY => {
-                self.bot_state.add_consumer_profile(signed_note).await?
-            }
-            NOSTR_KIND_CONSUMER_ORDER_REQUEST => {
-                let order_req = OrderRequest::try_from(&signed_note)?;
-                let registered_commerce = self
-                    .bot_state
-                    .find_commerce(order_req.commerce.as_str())
-                    .await?;
-                self.invoicer
-                    .new_order_invoice(
-                        order_req,
-                        signed_note,
-                        registered_commerce.0,
-                        self.bot_state.exchange_rate().await,
-                        self.keys.clone(),
-                        self.bot_state.clone(),
-                        self.broadcaster.clone(),
-                    )
-                    .await?;
-            }
-            NOSTR_KIND_COMMERCE_UPDATE => {
-                self.handle_commerce_updates(signed_note.clone(), signed_note.clone())
-                    .await?;
-            }
-            NOSTR_KIND_COURIER_UPDATE => {
-                self.handle_courier_order_update(signed_note.clone(), signed_note.clone())
-                    .await?;
-            }
-            NOSTR_KIND_ADMIN_REQUEST => {
-                if let Ok(admin_req) = AdminServerRequest::try_from(&signed_note) {
-                    let update_note = self
-                        .bot_state
-                        .sign_updated_config(admin_req, &self.keys)
-                        .await?;
-                    self.broadcaster.broadcast_note(update_note).await?;
                 }
             }
             _ => {}
@@ -334,49 +300,51 @@ impl InvoicerBot {
         outer_note: NostrNote,
     ) -> anyhow::Result<()> {
         let commerce_update = OrderUpdateRequest::try_from(inner_note)?;
-        let mut live_order = self
-            .bot_state
-            .find_live_order(commerce_update.order_id.as_str())
-            .await
-            .ok_or(anyhow!("Order not found"))?;
-        let commerce_pubkey = live_order.get_commerce_pubkey();
-        if commerce_pubkey != outer_note.pubkey {
+        let mut invoice_state = commerce_update.invoice_state()?;
+        if commerce_update.order.pubkey != TEST_PUB_KEY {
+            return Err(anyhow!("Not real order"));
+        }
+        if invoice_state.get_commerce_pubkey() != outer_note.pubkey {
             return Err(anyhow!("Unauthorized"));
         }
         match commerce_update.status_update {
             OrderStatus::Preparing => {
-                live_order.order_status = OrderStatus::Preparing;
-                self.invoicer
-                    .settle_htlc(
-                        live_order
-                            .commerce_invoice
-                            .as_ref()
-                            .cloned()
-                            .ok_or(anyhow!("No commerce invoice"))?,
-                    )
-                    .await?;
-                self.bot_state.update_live_order(live_order.clone()).await?;
-                InvoicerBot::broadcast_order_update(
-                    self.broadcaster.clone(),
-                    self.keys.clone(),
-                    &live_order,
-                )
-                .await?;
-                Ok(())
+                let invoice = invoice_state
+                    .commerce_invoice
+                    .as_ref()
+                    .cloned()
+                    .ok_or(anyhow!("No invoice"))?;
+                self.invoicer.settle_htlc(invoice).await?;
             }
             OrderStatus::ReadyForDelivery => {
-                live_order.order_status = OrderStatus::ReadyForDelivery;
-                self.bot_state.update_live_order(live_order.clone()).await?;
-                InvoicerBot::broadcast_order_update(
-                    self.broadcaster.clone(),
-                    self.keys.clone(),
-                    &live_order,
-                )
-                .await?;
-                Ok(())
+                invoice_state.order_status = OrderStatus::ReadyForDelivery;
+                let (update, giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
+                let (_, consumer_giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
+                let (_, courier_giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
+                self.bot_state.update_live_order(update).await?;
+                self.broadcaster.broadcast_note(giftwrap).await?;
+                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+                self.broadcaster.broadcast_note(courier_giftwrap).await?;
             }
-            _ => Err(anyhow!("Invalid order status")),
+            OrderStatus::Canceled => {
+                invoice_state.order_status = OrderStatus::Canceled;
+                let (update, giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
+                let (_, consumer_giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
+                let (_, courier_giftwrap) = invoice_state
+                    .giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
+                self.bot_state.update_live_order(update).await?;
+                self.broadcaster.broadcast_note(giftwrap).await?;
+                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+                self.broadcaster.broadcast_note(courier_giftwrap).await?;
+            }
+            _ => return Err(anyhow!("Invalid order status")),
         }
+        Ok(())
     }
     async fn handle_courier_order_update(
         &self,
@@ -384,25 +352,32 @@ impl InvoicerBot {
         outer_note: NostrNote,
     ) -> anyhow::Result<()> {
         let order_state = OrderUpdateRequest::try_from(inner_note)?;
+        let invoice_state = order_state.invoice_state()?;
+        if order_state.order.pubkey != TEST_PUB_KEY {
+            return Err(anyhow!("Not real order"));
+        }
         let mut live_order = self
             .bot_state
-            .find_live_order(order_state.order_id.as_str())
+            .find_live_order(invoice_state.order_id().as_str())
             .await
             .ok_or(anyhow!("Order not found"))?;
         let courier_profile = self
             .bot_state
-            .check_courier_whitelist(outer_note.pubkey.as_str())
+            .find_whitelsited_courier(outer_note.pubkey.as_str())
             .await?;
         let has_driver_assigned = live_order.courier.is_some();
         if !has_driver_assigned {
             live_order.courier = Some(courier_profile);
-            self.bot_state.update_live_order(live_order.clone()).await?;
-            InvoicerBot::broadcast_order_update(
-                self.broadcaster.clone(),
-                self.keys.clone(),
-                &live_order,
-            )
-            .await?;
+            let (update, giftwrap) =
+                live_order.giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
+            self.bot_state.update_live_order(update).await?;
+            self.broadcaster.broadcast_note(giftwrap).await?;
+            let (_, consumer_giftwrap) =
+                live_order.giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
+            self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+            let (_, commerce_giftwrap) =
+                live_order.giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
+            self.broadcaster.broadcast_note(commerce_giftwrap).await?;
             return Ok(());
         }
         match (&live_order.payment_status, &live_order.order_status) {
@@ -411,13 +386,16 @@ impl InvoicerBot {
             (OrderPaymentStatus::PaymentFailed, _) => {}
             _ => {
                 live_order.order_status = order_state.status_update;
-                self.bot_state.update_live_order(live_order.clone()).await?;
-                InvoicerBot::broadcast_order_update(
-                    self.broadcaster.clone(),
-                    self.keys.clone(),
-                    &live_order,
-                )
-                .await?;
+                let (update, giftwrap) =
+                    live_order.giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
+                self.bot_state.update_live_order(update).await?;
+                self.broadcaster.broadcast_note(giftwrap).await?;
+                let (_, consumer_giftwrap) =
+                    live_order.giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
+                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+                let (_, commerce_giftwrap) =
+                    live_order.giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
+                self.broadcaster.broadcast_note(commerce_giftwrap).await?;
                 return Ok(());
             }
         }

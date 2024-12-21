@@ -1,6 +1,6 @@
 use fuente::{
     mass::{SimpleFormButton, SimpleInput},
-    models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
+    models::{DriverProfile, DriverProfileIdb, TEST_PUB_KEY},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
@@ -28,11 +28,11 @@ pub fn new_profile_form() -> Html {
         let user_profile = DriverProfile::new(nickname, telephone);
         let db = DriverProfileIdb::new(user_profile.clone(), &keys);
         let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.public_key())
+            .giftwrapped_data(&keys, keys.public_key(), "personal".to_string())
             .expect("Failed to giftwrap data");
         sender.emit(giftwrap);
         let pool_copy = user_profile
-            .giftwrapped_data(&keys, DRIVER_HUB_PUB_KEY.to_string())
+            .giftwrapped_data(&keys, TEST_PUB_KEY.to_string(), "server".to_string())
             .expect("Failed to giftwrap data");
         sender.emit(pool_copy);
         user_ctx.dispatch(DriverDataAction::NewProfile(db));

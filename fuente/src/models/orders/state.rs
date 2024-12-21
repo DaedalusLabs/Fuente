@@ -2,10 +2,7 @@ use bright_lightning::{LnAddressPaymentRequest, LndHodlInvoice};
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 
-use crate::models::{
-    DRIVER_HUB_PUB_KEY, NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_ORDER_STATE,
-    NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY,
-};
+use crate::models::{DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE};
 
 use super::request::OrderRequest;
 
@@ -27,6 +24,12 @@ impl TryFrom<String> for OrderStatus {
     type Error = anyhow::Error;
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Ok(serde_json::from_str(&s).map_err(|e| anyhow::anyhow!(e))?)
+    }
+}
+impl TryFrom<&String> for OrderStatus {
+    type Error = anyhow::Error;
+    fn try_from(s: &String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(s).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
 impl OrderStatus {
@@ -52,6 +55,18 @@ pub enum OrderPaymentStatus {
 impl ToString for OrderPaymentStatus {
     fn to_string(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+}
+impl TryFrom<String> for OrderPaymentStatus {
+    type Error = anyhow::Error;
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(&s).map_err(|e| anyhow::anyhow!(e))?)
+    }
+}
+impl TryFrom<&String> for OrderPaymentStatus {
+    type Error = anyhow::Error;
+    fn try_from(s: &String) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_str(s).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
 
@@ -108,62 +123,47 @@ impl OrderInvoiceState {
             courier: None,
         }
     }
-    pub fn sign_update_for(
+    pub fn signed_order_state(&self, keypair: &NostrKeypair) -> NostrNote {
+        let mut new_note = NostrNote {
+            kind: NOSTR_KIND_ORDER_STATE,
+            content: self.to_string(),
+            pubkey: keypair.public_key(),
+            ..Default::default()
+        };
+        keypair.sign_nostr_event(&mut new_note);
+        new_note
+    }
+    pub fn giftwrapped_order(
         &self,
-        receiver: OrderParticipant,
-        keys: &NostrKeypair,
-    ) -> anyhow::Result<NostrNote> {
-        let content = self.to_string();
-        let order: OrderRequest = self.order.clone().try_into()?;
-        let encrypted_to = match receiver {
+        participant_type: OrderParticipant,
+        keypair: &NostrKeypair,
+    ) -> anyhow::Result<(NostrNote, NostrNote)> {
+        let signed_order = self.signed_order_state(keypair);
+        let mut new_note = NostrNote {
+            kind: NOSTR_KIND_ORDER_STATE,
+            content: signed_order.to_string(),
+            pubkey: keypair.public_key(),
+            ..Default::default()
+        };
+        let participant_str: &str = participant_type.into();
+        new_note
+            .tags
+            .add_parameter_tag(&format!("{}-{}", participant_str, self.order_id()));
+        new_note.tags.add_custom_tag(
+            nostro2::notes::NostrTag::Custom("status"),
+            &self.order_status.to_string(),
+        );
+        new_note.tags.add_custom_tag(
+            nostro2::notes::NostrTag::Custom("status"),
+            &self.payment_status.to_string(),
+        );
+        let receiver = match participant_type {
             OrderParticipant::Consumer => self.order.pubkey.clone(),
-            OrderParticipant::Commerce => order.commerce,
+            OrderParticipant::Commerce => self.get_commerce_pubkey(),
             OrderParticipant::Courier => DRIVER_HUB_PUB_KEY.to_string(),
         };
-
-        let mut note = NostrNote {
-            pubkey: keys.public_key(),
-            kind: NOSTR_KIND_ORDER_STATE,
-            content,
-            ..Default::default()
-        };
-        let participant_str: &str = receiver.into();
-        note.tags.add_parameter_tag(&format!(
-            "{}-{}",
-            participant_str,
-            self.order.id.as_ref().unwrap()
-        ));
-        note.tags.add_custom_tag(
-            nostro2::notes::NostrTag::Custom("status"),
-            self.order_status.to_string().as_str(),
-        );
-        note.tags.add_custom_tag(
-            nostro2::notes::NostrTag::Custom("status"),
-            self.payment_status.to_string().as_str(),
-        );
-        keys.sign_nip_04_encrypted(&mut note, encrypted_to)?;
-        Ok(note)
-    }
-    pub fn sign_server_request(&self, keys: &NostrKeypair) -> anyhow::Result<NostrNote> {
-        let content = self.to_string();
-        let mut note = NostrNote {
-            pubkey: keys.public_key(),
-            kind: NOSTR_KIND_ORDER_STATE,
-            content,
-            ..Default::default()
-        };
-        note.tags
-            .add_parameter_tag(&self.order.id.as_ref().unwrap());
-        keys.sign_nostr_event(&mut note);
-
-        let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
-            kind: NOSTR_KIND_SERVER_REQUEST,
-            content: note.to_string(),
-            ..Default::default()
-        };
-        keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
-        Ok(giftwrap)
+        keypair.sign_nip_04_encrypted(&mut new_note, receiver)?;
+        Ok((signed_order, new_note))
     }
     pub fn get_commerce_pubkey(&self) -> String {
         let order: OrderRequest = self.order.clone().try_into().unwrap();
@@ -191,7 +191,7 @@ impl TryFrom<String> for OrderInvoiceState {
 impl TryFrom<NostrNote> for OrderInvoiceState {
     type Error = anyhow::Error;
     fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
-        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+        if note.kind != NOSTR_KIND_ORDER_STATE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
         let order: OrderInvoiceState = note.content.try_into()?;
@@ -201,7 +201,7 @@ impl TryFrom<NostrNote> for OrderInvoiceState {
 impl TryFrom<&NostrNote> for OrderInvoiceState {
     type Error = anyhow::Error;
     fn try_from(note: &NostrNote) -> Result<Self, Self::Error> {
-        if note.kind != NOSTR_KIND_CONSUMER_ORDER_REQUEST {
+        if note.kind != NOSTR_KIND_ORDER_STATE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
         let order: OrderInvoiceState = note.content.clone().try_into()?;
