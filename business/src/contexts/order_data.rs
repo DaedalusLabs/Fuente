@@ -2,8 +2,13 @@ use fuente::models::{
     OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
     TEST_PUB_KEY,
 };
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
+use nostro2::{
+    notes::NostrNote,
+    relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
+};
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -11,7 +16,7 @@ use yew::{platform::spawn_local, prelude::*};
 pub struct OrderData {
     checked_db: bool,
     checked_relay: bool,
-    live_orders: Vec<OrderInvoiceState>,
+    live_orders: Vec<(OrderInvoiceState, NostrNote)>,
     order_history: Vec<OrderInvoiceState>,
 }
 
@@ -22,20 +27,23 @@ impl OrderData {
     pub fn checked_relay(&self) -> bool {
         self.checked_relay
     }
-    pub fn live_orders(&self) -> Vec<OrderInvoiceState> {
+    pub fn live_orders(&self) -> Vec<(OrderInvoiceState, NostrNote)> {
         self.live_orders.clone()
     }
     pub fn filter_by_payment_status(&self, status: OrderPaymentStatus) -> Vec<OrderInvoiceState> {
-        self.live_orders
+        self.live_orders()
             .iter()
-            .filter(|o| o.payment_status == status)
-            .cloned()
+            .filter(|o| o.0.payment_status == status)
+            .map(|o| o.0.clone())
             .collect()
     }
-    pub fn filter_by_order_status(&self, status: OrderStatus) -> Vec<OrderInvoiceState> {
+    pub fn filter_by_order_status(
+        &self,
+        status: OrderStatus,
+    ) -> Vec<(OrderInvoiceState, NostrNote)> {
         self.live_orders
             .iter()
-            .filter(|o| o.order_status == status)
+            .filter(|o| o.0.order_status == status)
             .cloned()
             .collect()
     }
@@ -47,7 +55,7 @@ impl OrderData {
 pub enum OrderDataAction {
     CheckedDb,
     CheckedRelay,
-    UpdateCommerceOrder(OrderInvoiceState),
+    UpdateCommerceOrder(NostrNote),
     LoadOrderHistory(Vec<OrderInvoiceState>),
 }
 
@@ -74,8 +82,10 @@ impl Reducible for OrderData {
                 order_history: self.order_history.clone(),
                 live_orders: {
                     let mut orders = self.live_orders.clone();
-                    orders.retain(|o| o.order_id() != order.order_id());
-                    orders.push(order);
+                    if let Ok(state) = OrderInvoiceState::try_from(&order) {
+                        orders.retain(|o| o.0.order_id() != state.order_id());
+                        orders.push((state, order));
+                    }
                     orders
                 },
             }),

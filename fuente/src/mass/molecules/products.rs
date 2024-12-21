@@ -62,7 +62,7 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
             html! {
                     <div class="flex flex-row gap-2">
                         <p>{format!("{} x {}", count, item.name())}</p>
-                        <p>{format!("SRD {}", item.price().parse::<u32>().unwrap() * count)}</p>
+                        <p>{format!("SRD {}", item.price().parse::<f32>().unwrap() * *count as f32)}</p>
                     </div>
             }
         }).collect::<Html>()}
