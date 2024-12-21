@@ -97,7 +97,6 @@ impl ProductItem {
         // added debug loggins
         let url = self.thumbnail_url.clone()
             .unwrap_or_else(|| "/public/assets/img/logo.png".to_string());
-        gloo::console::log!("Getting thumbnail URL:", url.clone());
         url
     }
     pub fn name(&self) -> String {
@@ -257,7 +256,7 @@ impl ProductOrder {
     pub fn total(&self) -> f64 {
         self.products
             .iter()
-            .map(|p| p.price.parse::<f64>().unwrap())
+            .map(|p| p.price().parse::<f64>().unwrap_or(0.0))
             .sum()
     }
     pub fn is_empty(&self) -> bool {

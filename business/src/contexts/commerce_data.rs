@@ -202,7 +202,6 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            gloo::console::log!("Note kind received:", note.kind);
             match note.kind {
                 NOSTR_KIND_COMMERCE_PROFILE => {
                     if let Ok(profile) = note.clone().try_into() {
