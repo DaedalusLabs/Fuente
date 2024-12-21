@@ -288,7 +288,6 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                 };
 
                 let reader_handle = reader.clone();
-                let url_clone = url_handle.clone();
                 let loading_handle = loading_handle.clone();
                 let url_handle_clone = url_handle.clone();
                 let loading_handle_clone = loading_handle.clone();
