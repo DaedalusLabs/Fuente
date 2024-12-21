@@ -12,6 +12,7 @@
 *.pem
 *.key
 *.macaroon
+*.env
 
 
 # Ignore text scripts

@@ -6,7 +6,7 @@ use nostr_minions::{
     browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
 };
 use nostro2::{
-    notes::{NostrNote, NostrTag},
+    notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
