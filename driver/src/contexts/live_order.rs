@@ -6,24 +6,25 @@ use fuente::models::{
 };
 use nostr_minions::browser_api::IdbStoreManager;
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::notes::NostrNote;
 use nostro2::{keypair::NostrKeypair, relays::NostrSubscription};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderHub {
     hub_keys: NostrKeypair,
-    orders: Vec<OrderInvoiceState>,
-    live_order: Option<OrderInvoiceState>,
+    orders: Vec<(OrderInvoiceState, NostrNote)>,
+    live_order: Option<(OrderInvoiceState, NostrNote)>,
 }
 
 impl OrderHub {
-    pub fn get_orders(&self) -> Vec<OrderInvoiceState> {
+    pub fn get_orders(&self) -> Vec<(OrderInvoiceState, NostrNote)> {
         self.orders.clone()
     }
     pub fn has_live_order(&self) -> bool {
         self.live_order.is_some()
     }
-    pub fn get_live_order(&self) -> Option<OrderInvoiceState> {
+    pub fn get_live_order(&self) -> Option<(OrderInvoiceState, NostrNote)> {
         self.live_order.clone()
     }
 }
@@ -31,9 +32,9 @@ impl OrderHub {
 pub enum OrderHubAction {
     FinishedLoadingDb,
     FinishedLoadingRelays,
-    LoadOrders(Vec<OrderInvoiceState>),
-    NewOrder(OrderInvoiceState),
-    LiveOrder(OrderInvoiceState),
+    LoadOrders(Vec<(OrderInvoiceState, NostrNote)>),
+    NewOrder((OrderInvoiceState, NostrNote)),
+    LiveOrder((OrderInvoiceState, NostrNote)),
     DeleteOrder(String),
     OrderCompleted(String),
 }
@@ -60,7 +61,7 @@ impl Reducible for OrderHub {
             }),
             OrderHubAction::NewOrder(order) => {
                 let mut orders = self.orders.clone();
-                orders.retain(|o| o.order_id() != order.order_id());
+                orders.retain(|o| o.0.order_id() != order.0.order_id());
                 orders.push(order);
                 Rc::new(OrderHub {
                     hub_keys: self.hub_keys.clone(),
@@ -70,7 +71,7 @@ impl Reducible for OrderHub {
             }
             OrderHubAction::LiveOrder(order) => {
                 let mut orders = self.orders.clone();
-                orders.retain(|o| o.order_id() != order.order_id());
+                orders.retain(|o| o.0.order_id() != order.0.order_id());
                 Rc::new(OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders,
@@ -79,7 +80,7 @@ impl Reducible for OrderHub {
             }
             OrderHubAction::OrderCompleted(completed_id) => {
                 let mut orders = self.orders.clone();
-                orders.retain(|o| o.order_id() != completed_id);
+                orders.retain(|o| o.0.order_id() != completed_id);
                 Rc::new(OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders: self.orders.clone(),
@@ -88,7 +89,7 @@ impl Reducible for OrderHub {
             }
             OrderHubAction::DeleteOrder(order) => {
                 let mut orders = self.orders.clone();
-                orders.retain(|o| o.order_id() != order);
+                orders.retain(|o| o.0.order_id() != order);
                 Rc::new(OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders,
@@ -156,62 +157,68 @@ pub fn commerce_data_sync() -> Html {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
-                    if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        if let Some(signed_note) = order_status.courier.as_ref() {
-                            if signed_note.pubkey == my_keys.public_key() {
-                                // First save to IndexedDB for any order belonging to this driver
-                                let db_entry = OrderStateIdb::new(note.clone());
-                                if let Ok(entry) = db_entry {
-                                    spawn_local(async move {
-                                        if let Err(e) = entry.save_to_store().await {
-                                            gloo::console::error!(
-                                                "Failed to save order to IndexedDB:",
-                                                e
-                                            );
-                                        } else {
-                                            gloo::console::log!("Order saved to IndexedDB");
-                                        }
-                                    });
-                                }
+                    if let Ok(order_note) = NostrNote::try_from(decrypted) {
+                        if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
+                            if let Some(signed_note) = order_status.courier.as_ref() {
+                                if signed_note.pubkey == my_keys.public_key() {
+                                    // First save to IndexedDB for any order belonging to this driver
+                                    let db_entry = OrderStateIdb::new(order_note.clone());
+                                    if let Ok(entry) = db_entry {
+                                        spawn_local(async move {
+                                            if let Err(e) = entry.save_to_store().await {
+                                                gloo::console::error!(
+                                                    "Failed to save order to IndexedDB:",
+                                                    e
+                                                );
+                                            } else {
+                                                gloo::console::log!("Order saved to IndexedDB");
+                                            }
+                                        });
+                                    }
 
-                                match order_status.order_status {
-                                    OrderStatus::Canceled => {
-                                        gloo::console::info!(
-                                            "Order Canceled: ",
-                                            format!("{:?}", order_status.order_status)
-                                        );
-                                        ctx.dispatch(OrderHubAction::DeleteOrder(
-                                            order_status.order_id(),
-                                        ));
-                                    }
-                                    OrderStatus::Completed => {
-                                        gloo::console::info!(
-                                            "Order Completed: ",
-                                            format!("{:?}", order_status.order_status)
-                                        );
-                                        ctx.dispatch(OrderHubAction::OrderCompleted(
-                                            order_status.order_id(),
-                                        ));
-                                    }
-                                    _ => {
-                                        gloo::console::info!(
-                                            "New LIVE Order: ",
-                                            format!("{:?}", order_status.order_status)
-                                        );
-                                        ctx.dispatch(OrderHubAction::NewOrder(
-                                            order_status.clone(),
-                                        ));
-                                        ctx.dispatch(OrderHubAction::LiveOrder(order_status));
+                                    match order_status.order_status {
+                                        OrderStatus::Canceled => {
+                                            gloo::console::info!(
+                                                "Order Canceled: ",
+                                                format!("{:?}", order_status.order_status)
+                                            );
+                                            ctx.dispatch(OrderHubAction::DeleteOrder(
+                                                order_status.order_id(),
+                                            ));
+                                        }
+                                        OrderStatus::Completed => {
+                                            gloo::console::info!(
+                                                "Order Completed: ",
+                                                format!("{:?}", order_status.order_status)
+                                            );
+                                            ctx.dispatch(OrderHubAction::OrderCompleted(
+                                                order_status.order_id(),
+                                            ));
+                                        }
+                                        _ => {
+                                            gloo::console::info!(
+                                                "New LIVE Order: ",
+                                                format!("{:?}", order_status.order_status)
+                                            );
+                                            ctx.dispatch(OrderHubAction::NewOrder((
+                                                order_status.clone(),
+                                                order_note.clone(),
+                                            )));
+                                            ctx.dispatch(OrderHubAction::LiveOrder((
+                                                order_status,
+                                                order_note,
+                                            )));
+                                        }
                                     }
                                 }
+                            } else {
+                                // No courier assigned means we can add it to pool
+                                gloo::console::info!(
+                                    "New Order: ",
+                                    format!("{:?}", order_status.order_id())
+                                );
+                                ctx.dispatch(OrderHubAction::NewOrder((order_status, order_note)));
                             }
-                        } else {
-                            // No courier assigned means we can add it to pool
-                            gloo::console::info!(
-                                "New Order: ",
-                                format!("{:?}", order_status.order_id())
-                            );
-                            ctx.dispatch(OrderHubAction::NewOrder(order_status));
                         }
                     }
                 }

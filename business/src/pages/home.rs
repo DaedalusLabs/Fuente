@@ -2,9 +2,10 @@ use crate::contexts::{CommerceDataStore, OrderDataStore};
 use fuente::{
     // js::draggable::Droppable,
     mass::LoadingScreen,
-    models::{OrderInvoiceState, OrderStatus},
+    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 
 #[function_component(HomePage)]
@@ -40,7 +41,7 @@ pub fn order_dashboard() -> Html {
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderListProps {
     pub title: OrderStatus,
-    pub orders: Vec<OrderInvoiceState>,
+    pub orders: Vec<(OrderInvoiceState, NostrNote)>,
 }
 
 #[function_component(OrderList)]
@@ -54,7 +55,7 @@ pub fn order_list(props: &OrderListProps) -> Html {
                 class="draggable-col h-full flex flex-col gap-4 overflow-y-scroll no-scrollbar p-2">
                 {props.orders.iter().map(|order| {
                     html! {
-                        <OrderCard order={order.clone()} />
+                        <OrderCard order={order.0.clone()} order_note={order.1.clone()} />
                     }
                 }).collect::<Html>()}
             </div>
@@ -65,6 +66,7 @@ pub fn order_list(props: &OrderListProps) -> Html {
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderCardProps {
     pub order: OrderInvoiceState,
+    pub order_note: NostrNote,
 }
 
 #[function_component(OrderCard)]
@@ -81,33 +83,37 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();
         let order_confirmation = props.order.clone();
+        let order = props.order_note.clone();
         Callback::from(move |_: MouseEvent| {
-            let mut order_confirmation = order_confirmation.clone();
-            let old_status = &order_confirmation.order_status;
-            match old_status {
-                OrderStatus::Pending => order_confirmation.order_status = OrderStatus::Preparing,
-                OrderStatus::Preparing => {
-                    order_confirmation.order_status = OrderStatus::ReadyForDelivery
-                }
-                _ => {}
-            }
-            let signed_confirmation = order_confirmation
-                .sign_server_request(&user_keys)
-                .expect("Failed to sign order confirmation");
-            send_note.emit(signed_confirmation);
+            let status_update = match &order_confirmation.order_status {
+                OrderStatus::Pending => OrderStatus::Preparing,
+                OrderStatus::Preparing => OrderStatus::ReadyForDelivery,
+                _ => return,
+            };
+            let new_request = OrderUpdateRequest {
+                order: order.clone(),
+                status_update,
+            };
+            let signed_req = new_request
+                .sign_update(&user_keys, NOSTR_KIND_COMMERCE_UPDATE)
+                .expect("Could not sign order");
+            send_note.emit(signed_req);
         })
     };
     let cancel_order = {
         let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();
-        let order_confirmation = props.order.clone();
+        let order = props.order_note.clone();
         Callback::from(move |_| {
-            let mut order_confirmation = order_confirmation.clone();
-            order_confirmation.order_status = OrderStatus::Canceled;
-            let signed_confirmation = order_confirmation
-                .sign_server_request(&user_keys)
-                .expect("Failed to sign order confirmation");
-            send_note.emit(signed_confirmation);
+            let status_update = OrderStatus::Canceled;
+            let new_request = OrderUpdateRequest {
+                order: order.clone(),
+                status_update,
+            };
+            let signed_req = new_request
+                .sign_update(&user_keys, NOSTR_KIND_COMMERCE_UPDATE)
+                .expect("Could not sign order");
+            send_note.emit(signed_req);
         })
     };
     html! {

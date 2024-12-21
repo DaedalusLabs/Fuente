@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY};
 
-use super::state::OrderStatus;
+use super::{state::OrderStatus, OrderInvoiceState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrderUpdateRequest {
-    pub order_id: String,
+    pub order: NostrNote,
     pub status_update: OrderStatus,
 }
 impl TryFrom<NostrNote> for OrderUpdateRequest {
@@ -19,11 +19,15 @@ impl TryFrom<NostrNote> for OrderUpdateRequest {
     }
 }
 impl OrderUpdateRequest {
-    pub fn new(order_id: String, status_update: OrderStatus) -> Self {
+    pub fn new(order: NostrNote, status_update: OrderStatus) -> Self {
         Self {
-            order_id,
+            order,
             status_update,
         }
+    }
+    pub fn invoice_state(&self) -> anyhow::Result<OrderInvoiceState> {
+        let invoice_state = OrderInvoiceState::try_from(&self.order)?;
+        Ok(invoice_state)
     }
     pub fn sign_update(&self, keys: &NostrKeypair, kind: u32) -> anyhow::Result<NostrNote> {
         let mut note = NostrNote {
@@ -35,11 +39,11 @@ impl OrderUpdateRequest {
         keys.sign_nostr_event(&mut note);
         let mut giftwrap = NostrNote {
             kind: NOSTR_KIND_SERVER_REQUEST,
+            content: note.to_string(),
             pubkey: keys.public_key(),
-            content: serde_json::to_string(&self)?,
             ..Default::default()
         };
         keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
-        Ok(note)
+        Ok(giftwrap)
     }
 }

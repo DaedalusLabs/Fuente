@@ -54,13 +54,35 @@ impl InvoicerStateLock {
     async fn lock_owned(&self) -> InvoicerState {
         self.0.read().await.clone()
     }
-    pub async fn check_courier_whitelist(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
-        self.lock()
+    pub async fn find_whitelsited_courier(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
+        let profiles = self.lock().await;
+        profiles.admin_config.check_couriers_whitelist(pubkey)?;
+        let courier = profiles
+            .courier_profiles
+            .find_courier(pubkey)
+            .ok_or(anyhow!("Courier not found"))?;
+        Ok(courier)
+    }
+    pub async fn add_courier(&self, pubkey: NostrNote) -> anyhow::Result<()> {
+        let mut profiles = self.lock().await;
+        profiles
+            .admin_config
+            .check_couriers_whitelist(&pubkey.pubkey)?;
+        profiles.courier_profiles.insert_courier(
+            pubkey.pubkey.clone(),
+            CourierRegistryEntry {
+                profile: pubkey,
+                ..Default::default()
+            },
+        );
+        Ok(())
+    }
+    pub async fn is_courier_whitelisted(&self, pubkey: &str) -> bool {
+        self.lock_owned()
             .await
             .admin_config
-            .check_couriers_whitelist(pubkey)?;
-        let courier = self.lock().await.courier_profiles.find_courier(pubkey);
-        courier.ok_or(anyhow!("Courier not found"))
+            .check_couriers_whitelist(pubkey)
+            .is_ok()
     }
     pub async fn is_commerce_whitelisted(&self, pubkey: &str) -> bool {
         self.lock_owned()
@@ -146,22 +168,19 @@ impl InvoicerStateLock {
         );
         Ok(())
     }
-    pub async fn add_live_order(&self, order: OrderInvoiceState) -> anyhow::Result<()> {
+    pub async fn update_live_order(&self, order: NostrNote) -> anyhow::Result<()> {
         let mut orders = self.lock().await;
-        orders.live_orders.new_order(order.order_id(), order)?;
+        let invoice_state = OrderInvoiceState::try_from(order)?;
+        orders
+            .live_orders
+            .update_order_record(invoice_state.order_id(), invoice_state)?;
         Ok(())
+    }
+    pub async fn remove_live_order(&self, order_id: &str) -> anyhow::Result<()> {
+        self.lock().await.live_orders.remove_order(order_id)
     }
     pub async fn find_live_order(&self, order_id: &str) -> Option<OrderInvoiceState> {
         self.lock_owned().await.live_orders.get_order(order_id)
-    }
-    pub async fn update_live_order(&self, order_update: OrderInvoiceState) -> anyhow::Result<()> {
-        let mut orders = self.lock().await;
-        let order = orders
-            .live_orders
-            .get_mut_order(&order_update.order_id())
-            .ok_or(anyhow!("Order not found"))?;
-        *order = order.to_owned();
-        Ok(())
     }
     pub async fn sign_updated_config(
         &self,
