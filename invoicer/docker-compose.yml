@@ -5,7 +5,7 @@ services:
     build:
       context: .
     volumes:
-      - /home/illuminodes/.lnd/data/chain/bitcoin/mainnet/invoices.macaroon:/app/invoices.macaroon
+      - /home/illuminodes/.lnd/data/chain/bitcoin/mainnet/admin.macaroon:/app/admin.macaroon
       - /home/illuminodes/fuente/invoicer:/app
     working_dir: /app
     restart: unless-stopped

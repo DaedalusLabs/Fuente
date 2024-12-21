@@ -86,6 +86,7 @@ pub fn live_order_check() -> Html {
         Callback::from(move |_| {
             let keys = keys.clone().expect("Nostr keys not found");
             let order = order_ctx.order.clone().expect("Order not found").0;
+            gloo::console::log!("Cancelling order: ", format!("{:?}", order));
             let update_req = OrderUpdateRequest {
                 order,
                 status_update: OrderStatus::Canceled,

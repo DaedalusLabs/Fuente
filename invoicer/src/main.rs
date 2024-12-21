@@ -229,7 +229,6 @@ impl InvoicerBot {
                     .await?;
             }
             NOSTR_KIND_CONSUMER_CANCEL => {
-                info!("Consumer cancel request");
                 let update_req = OrderUpdateRequest::try_from(inner_note)?;
                 let mut invoice_state = update_req.invoice_state()?;
                 if invoice_state.order.pubkey != outer_note.pubkey {
@@ -251,6 +250,7 @@ impl InvoicerBot {
                 let (_, commerce_giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
                 self.broadcaster.broadcast_note(commerce_giftwrap).await?;
+                info!("Order canceled");
             }
             NOSTR_KIND_COMMERCE_UPDATE => {
                 self.handle_commerce_updates(inner_note, outer_note).await?;
