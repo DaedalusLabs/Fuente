@@ -102,11 +102,7 @@ pub fn product_list_section() -> Html {
                     <AddProductForm menu={menu_state.clone()} />
                 }
             }}
-            {if let Some(menu) = menu_state.as_ref() {
-                html!{<ProductMenuCard menu={menu.clone()} />}
-            } else {
-                html! {}
-            }}
+
             {if let Some(menu) = menu_state.as_ref() {
                 html!{
                     <div class="mt-4">
