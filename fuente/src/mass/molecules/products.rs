@@ -6,14 +6,20 @@ use crate::models::{ProductItem, ProductMenu, ProductOrder};
 pub struct ProductCardProps {
     pub product: ProductItem,
     #[prop_or_default]
-    pub on_edit: Callback<MouseEvent>,
+    pub on_edit: Option<Callback<MouseEvent>>,  // Changed from Callback to Option<Callback>
     #[prop_or_default]
-    pub on_delete: Callback<MouseEvent>,
+    pub on_delete: Option<Callback<MouseEvent>>, // Changed from Callback to Option<Callback>
+    #[prop_or_default]
+    pub show_admin_controls: bool,  // New prop
 }
 #[function_component(ProductCard)]
 pub fn product_card(props: &ProductCardProps) -> Html {
-    let ProductCardProps { product, on_edit, on_delete } = props;
-    gloo::console::log!("ProductCard - thumbnail URL:", product.thumbnail_url());
+    let ProductCardProps { 
+        product, 
+        on_edit, 
+        on_delete,
+        show_admin_controls 
+    } = props;
     html! {
         <div class="p-4 shadow-xl rounded-xl w-fit h-fit">
             <div class="w-fit flex flex-row gap-4">
@@ -41,18 +47,24 @@ pub fn product_card(props: &ProductCardProps) -> Html {
                         <summary class="text-sm font-semibold">{"Product Details"}</summary>
                         <p class="text-sm text-neutral-600 mt-1">{product.details()}</p>
                     </details>
-                    <div class="flex gap-2 mt-2">
-                    <button 
-                        onclick={on_edit.clone()}
-                        class="text-sm text-blue-500 hover:text-blue-700">
-                        {"Edit"}
-                    </button>
-                    <button 
-                        onclick={on_delete.clone()}
-                        class="text-sm text-red-500 hover:text-red-700">
-                        {"Delete"}
-                    </button>
-               </div>
+                    if *show_admin_controls {
+                        <div class="flex gap-2 mt-2">
+                            if let Some(edit_cb) = on_edit.clone() {
+                                <button 
+                                    onclick={edit_cb}
+                                    class="text-sm text-blue-500 hover:text-blue-700">
+                                    {"Edit"}
+                                </button>
+                            }
+                            if let Some(delete_cb) = on_delete.clone() {
+                                <button 
+                                    onclick={delete_cb}
+                                    class="text-sm text-red-500 hover:text-red-700">
+                                    {"Delete"}
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -96,10 +108,11 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
     let total_srd = order.total();
     let products_html = html! {
         {counted.iter().map(|(item, count)| {
+            let price = item.price().parse::<f64>().unwrap_or(0.0);
             html! {
                     <div class="flex flex-row gap-2">
                         <p>{format!("{} x {}", count, item.name())}</p>
-                        <p>{format!("SRD {}", item.price().parse::<u32>().unwrap() * count)}</p>
+                        <p>{format!("SRD {:.2}", price * (*count as f64))}</p>
                     </div>
             }
         }).collect::<Html>()}
@@ -109,8 +122,9 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
             {products_html}
             <div class="flex flex-row justify-between">
                 <p class="text-lg font-bold">{"Total"}</p>
-                <p class="text-lg font-bold">{format!("SRD {}", total_srd)}</p>
+                <p class="text-lg font-bold">{format!("SRD {:.2}", total_srd)}</p>
             </div>
         </div>
     }
 }
+

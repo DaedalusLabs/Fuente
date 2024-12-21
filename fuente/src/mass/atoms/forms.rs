@@ -184,6 +184,7 @@ pub struct ImageUploadInputProps {
     pub url_handle: UseStateHandle<Option<String>>,
     pub nostr_keys: NostrKeypair,
     pub classes: Classes,
+    pub input_id: String,
 }
 
 use nostr_minions::{browser_api::HtmlDocument, relay_pool::NostrProps};
@@ -198,78 +199,142 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
         url_handle,
         nostr_keys,
         classes,
+        input_id,
     } = props.clone();
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let user_keys = nostr_keys.clone();
     let url_clone = url_handle.clone();
     let is_loading_new = use_state(|| false);
     let loading_handle = is_loading_new.clone();
+
+    // Clone input_id for use in the effect
+    let input_id_for_effect = input_id.clone();
+
     use_effect_with(relay_pool.unique_notes.clone(), move |notes| {
         if let Some(last_note) = notes.last() {
-            gloo::console::log!("Received note kind:", last_note.kind);
             if last_note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
                 gloo::console::log!("Processing presigned URL response");
-    
+
                 let decrypted_note = match user_keys.decrypt_nip_04_content(&last_note) {
                     Ok(note) => note,
                     Err(e) => {
                         gloo::console::error!("Failed to decrypt note:", e.to_string());
-                        return ();  // Changed from return;
+                        return;
                     }
                 };
-    
+
                 let presigned_url: UtPreSignedUrl = match (&decrypted_note).try_into() {
                     Ok(url) => url,
                     Err(e) => {
                         gloo::console::error!("Failed to parse presigned url:", e.to_string());
-                        return ();  // Changed from return;
+                        return;
                     }
                 };
-    
-                let document = HtmlDocument::new().expect("Failed to get document");
-                let input: HtmlInputElement = document
-                    .find_element_by_id("imageUpload")
-                    .expect("Failed to get file input");
-                let files = input.files().expect("Failed to get files");
-                let file = files.get(0).expect("Failed to get file");
-                let form_data = FormData::new().expect("Failed to create form data");
-                form_data.append_with_blob("file", &file).unwrap();
 
-                let reader = FileReader::new().expect("Failed to create reader");
+                // Get document and input safely
+                let document = match HtmlDocument::new() {
+                    Ok(doc) => doc,
+                    Err(e) => {
+                        gloo::console::error!("Failed to get document:", e);
+                        return;
+                    }
+                };
+
+                let input: HtmlInputElement = match document.find_element_by_id(&input_id_for_effect) {
+                    Ok(input) => input,
+                    Err(e) => {
+                        gloo::console::error!("Failed to find input element:", e);
+                        return;
+                    }
+                };
+
+                let files = match input.files() {
+                    Some(files) => files,
+                    None => {
+                        gloo::console::error!("No files found");
+                        return;
+                    }
+                };
+
+                let file = match files.get(0) {
+                    Some(file) => file,
+                    None => {
+                        gloo::console::error!("No file selected");
+                        return;
+                    }
+                };
+
+                // Create form data
+                let form_data = match FormData::new() {
+                    Ok(form) => form,
+                    Err(e) => {
+                        gloo::console::error!("Failed to create form data:", e);
+                        return;
+                    }
+                };
+
+                if let Err(e) = form_data.append_with_blob("file", &file) {
+                    gloo::console::error!("Failed to append file to form data:", e);
+                    return;
+                }
+
+                // Create reader and set up upload
+                let reader = match FileReader::new() {
+                    Ok(reader) => reader,
+                    Err(e) => {
+                        gloo::console::error!("Failed to create file reader:", e);
+                        return;
+                    }
+                };
+
                 let reader_handle = reader.clone();
-                let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(
-                    move |_: web_sys::ProgressEvent| {
-                        if let Ok(_) = reader_handle.result() {
-                            let url = presigned_url.clone();
-                            let form_data = form_data.clone();
-                            let url_handle = url_handle.clone();
-                            let loading_handle = loading_handle.clone();
-                            spawn_local(async move {
-                                let url_req =
-                                    url.try_into_request(form_data).expect("Failed to convert");
-                                match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(&url_req).await {
-                                    Ok(upload_url) => {
-                                        url_handle.set(Some(upload_url.url.clone()));
-                                        loading_handle.set(false);
-                                    }
-                                    Err(e) => {
-                                        let error_message = e.as_string().unwrap_or_else(|| "Unknown error".to_string());
-                                        gloo::console::error!("Failed to fetch:", error_message);
-                                        loading_handle.set(false);
-                                    }
+                let url_clone = url_handle.clone();
+                let loading_handle = loading_handle.clone();
+                let url_handle_clone = url_handle.clone();
+                let loading_handle_clone = loading_handle.clone();
+                let presigned_url_clone = presigned_url.clone();
+                let form_data_clone = form_data.clone();
+
+
+                let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(move |_: web_sys::ProgressEvent| {
+                    if let Ok(_) = reader_handle.result() {
+                        let url_setter = url_handle_clone.clone();
+                        let loading_setter = loading_handle_clone.clone();
+                        let url = presigned_url_clone.clone();
+                        let form_data = form_data_clone.clone();
+                        
+                        spawn_local(async move {
+                            let url_req = match url.try_into_request(form_data) {
+                                Ok(req) => req,
+                                Err(e) => {
+                                    gloo::console::error!("Failed to create request:", e);
+                                    loading_setter.set(false);
+                                    return;
                                 }
-                            });
-                        }
-                    },
-                ) as Box<dyn FnMut(web_sys::ProgressEvent)>);
+                            };
                 
+                            match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(&url_req).await {
+                                Ok(upload_url) => {
+                                    gloo::console::log!("Upload successful, setting URL:", &upload_url.url);
+                                    url_setter.set(Some(upload_url.url));
+                                }
+                                Err(e) => {
+                                    gloo::console::error!("Upload failed:", e);
+                                }
+                            }
+                            loading_setter.set(false);
+                        });
+                    }
+                }) as Box<dyn FnMut(web_sys::ProgressEvent)>);
+
                 reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
-                reader.read_as_array_buffer(&file).unwrap();
-                closure.forget(); // Forget the closure to keep it alive
+                if let Err(e) = reader.read_as_array_buffer(&file) {
+                    gloo::console::error!("Failed to read file:", e);
+                    return;
+                }
+                closure.forget();
             }
         }
-        // Changed this line to return unit type
-        ()
     });
     let user_keys = nostr_keys.clone();
     let sender = relay_pool.send_note.clone();
@@ -328,8 +393,8 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                 html! {
                      <div class="relative">
                     <img src={url.clone()} class={image_classes} />
-                    <label for="imageUpload" class={with_url}>
-                        <input {onchange} id="imageUpload" type="file" accept="image/*" class="hidden" />
+                    <label for={input_id.clone()} class={with_url}>
+                        <input {onchange} id={input_id.clone()} type="file" accept="image/*" class="hidden" />
                         {match *is_loading_new {
                             true => html! {
                                 <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -343,8 +408,8 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                 }
             }
             None => html! {
-                <label for="imageUpload" class={default_classes}>
-                    <input {onchange} id="imageUpload" type="file" accept="image/*" class="hidden" />
+                <label for={input_id.clone()} class={default_classes}>
+                    <input {onchange} id={input_id.clone()} type="file" accept="image/*" class="hidden" />
                     {match *is_loading_new {
                         true => html! {
                             <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>

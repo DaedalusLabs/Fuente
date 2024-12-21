@@ -152,6 +152,7 @@ pub fn product_list_section() -> Html {
                                                 product={product.clone()}
                                                 {on_edit}
                                                 {on_delete}
+                                                show_admin_controls={true}
                                             />
                                         }
                                     }).collect::<Html>()}
@@ -240,7 +241,6 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
     {
         use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
             if let Some(note) = notes.last() {
-                gloo::console::log!("Received note kind:", note.kind);
                 if note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
                     gloo::console::log!("Got presigned URL response");
                 }
@@ -365,6 +365,7 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
                                 url_handle={image_url.clone()}
                                 nostr_keys={nostr_keys.clone()}
                                 classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                                input_id="large-image-upload"  // Unique ID for large image
                             />
                             // can be removed
                             {if let Some(_url) = (*image_url).clone() {
@@ -385,6 +386,7 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
                                 url_handle={thumbnail_url.clone()}
                                 nostr_keys={nostr_keys}
                                 classes={classes!("min-w-16", "min-h-16", "h-16", "w-16")}
+                                input_id="thumbnail-image-upload"  // Unique ID for thumbnail image
                             />
                         </div>
                     </div>
@@ -580,7 +582,8 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
                             <ImageUploadInput 
                                 url_handle={image_url.clone()} 
                                 nostr_keys={nostr_keys.clone()} 
-                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} 
+                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                                input_id="edit-large-image-upload"  // Unique ID for edit form large image
                             />
                         </div>
                         <div class="w-full flex flex-col gap-2">
@@ -591,6 +594,7 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
                                 url_handle={thumbnail_url.clone()} 
                                 nostr_keys={nostr_keys} 
                                 classes={classes!("min-w-16", "min-h-16", "h-16", "w-16")} 
+                                input_id="edit-thumbnail-upload"  // Unique ID for edit form thumbnail
                             />
                         </div>
                     </div>
