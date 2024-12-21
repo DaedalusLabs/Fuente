@@ -132,7 +132,6 @@ impl ProductItem {
         self.image_url = Some(url);
     }
     pub fn set_thumbnail_url(&mut self, url: String) {
-        gloo::console::log!("Setting thumbnail URL to:", url.clone());
         self.thumbnail_url = Some(url);
     }
     pub fn set_sku(&mut self, sku: String) {

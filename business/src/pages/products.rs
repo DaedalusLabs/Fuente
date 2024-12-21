@@ -4,7 +4,7 @@ use fuente::{
         CardComponent, DrawerSection, LoadingScreen, MoneyInput, ProductMenuCard, SimpleFormButton,
         SimpleInput, SimpleSelect, SimpleTextArea,
     },
-    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb, NOSTR_KIND_PRESIGNED_URL_RESP},
+    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
 
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
@@ -220,34 +220,6 @@ pub fn add_product_form(props: &NewMenuProps) -> Html {
     let thumbnail_url = use_state(|| None::<String>);
     let discount_enabled = use_state(|| false);
 
-    // Add effect to monitor image_url changes
-    {
-        let image_url = image_url.clone();
-        use_effect_with((*image_url).clone(), move |url| {
-            gloo::console::log!("Image URL state changed:", format!("{:?}", url));
-            || {}
-        });
-    }
-
-    {
-        let thumbnail_image_url = thumbnail_url.clone();
-        use_effect_with((*thumbnail_image_url).clone(), move |url| {
-            gloo::console::log!("Thumbnail URL state changed:", format!("{:?}", url));
-            || {}
-        });
-    }
-
-    // Add an effect to monitor Nostr events
-    {
-        use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
-            if let Some(note) = notes.last() {
-                if note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
-                    gloo::console::log!("Got presigned URL response");
-                }
-            }
-            || {}
-        });
-    }
 
     let onsubmit = {
         let image_url = image_url.clone();
@@ -545,7 +517,6 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
                 menu.add_product(updated_product.category_id(), updated_product);
                 
                 let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys);
-                gloo::console::log!("Sending updated menu to server");
                 sender.emit(db_entry.note());
                 handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
                 menu_handle.set(Some(menu.clone()));
