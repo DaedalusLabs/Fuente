@@ -1,4 +1,4 @@
-use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon,UserBadgeIcon, MenuBarsIcon};
+use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon, MenuBarsIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 

@@ -2,11 +2,11 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::mass::{
     CardComponent, CommerceProfileAddressDetails, CommerceProfileDetails,
     DrawerSection, NewAddressForm, NewAddressProps, SimpleInput,
-    SimpleTextArea, ImageUploadInput,
+    SimpleTextArea,
 };
 use fuente::models::{CommerceProfile, CommerceProfileIdb};
 use nostr_minions::{
-    browser_api::{GeolocationCoordinates, HtmlForm},
+    browser_api::HtmlForm,
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
 };
@@ -251,7 +251,7 @@ fn my_business_address(props: &MenuProps) -> Html {
 
 #[function_component(EditProfileMenu)]
 pub fn edit_profile_menu(props: &MenuProps) -> Html {
-    let MenuProps { handle, profile } = props;
+    let MenuProps { handle, profile: _ } = props;
     let user_ctx = use_context::<CommerceDataStore>().expect("No user context found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
@@ -375,9 +375,7 @@ pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
 #[function_component(EditAddressMenu)]
 pub fn edit_address_menu(props: &MenuProps) -> Html {
     let MenuProps { handle, .. } = props;
-    let data_ctx = use_context::<CommerceDataStore>().expect("No user context found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
-    let relay_ctx = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let coordinate_state = use_state(|| None);
     let nominatim_state = use_state(|| None);
@@ -389,7 +387,7 @@ pub fn edit_address_menu(props: &MenuProps) -> Html {
     let onclick = {
         let handle = handle.clone();
         Callback::from(move |_| {
-            if let (Some(address), Some(coords), Some(keys)) = (
+            if let (Some(_address), Some(_coords), Some(_keys)) = (
                 address.clone(),
                 coords.clone(),
                 key_ctx.get_nostr_key(),
