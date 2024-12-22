@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 
 use super::{
-    nostr_kinds::{
-        NOSTR_KIND_CONSUMER_GIFTWRAP, NOSTR_KIND_DRIVER_PROFILE, NOSTR_KIND_DRIVER_STATE,
-    },
+    nostr_kinds::{NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_DRIVER_STATE},
     DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
 use nostr_minions::browser_api::{GeolocationPosition, IdbStoreManager};
@@ -50,10 +48,20 @@ impl TryFrom<String> for DriverProfile {
         Ok(serde_json::from_str(&value).map_err(|e| anyhow::anyhow!(e))?)
     }
 }
+impl TryFrom<&NostrNote> for DriverProfile {
+    type Error = anyhow::Error;
+    fn try_from(note: &NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != NOSTR_KIND_COURIER_PROFILE {
+            return Err(anyhow::anyhow!("Wrong Kind"));
+        }
+        let profile: DriverProfile = note.content.as_str().try_into()?;
+        Ok(profile)
+    }
+}
 impl TryFrom<NostrNote> for DriverProfile {
     type Error = anyhow::Error;
     fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
-        if note.kind != NOSTR_KIND_DRIVER_PROFILE {
+        if note.kind != NOSTR_KIND_COURIER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
         let profile: DriverProfile = note.content.try_into()?;
@@ -70,7 +78,7 @@ impl DriverProfile {
     pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
         let mut new_note = NostrNote {
             pubkey: keys.public_key(),
-            kind: NOSTR_KIND_DRIVER_PROFILE,
+            kind: NOSTR_KIND_COURIER_PROFILE,
             content: self.to_string(),
             ..Default::default()
         };
@@ -81,20 +89,22 @@ impl DriverProfile {
         &self,
         keys: &NostrKeypair,
         receiver: String,
+        tag: String,
     ) -> anyhow::Result<NostrNote> {
         let mut unsigned_note = NostrNote {
             pubkey: keys.public_key(),
-            kind: NOSTR_KIND_DRIVER_PROFILE,
+            kind: NOSTR_KIND_COURIER_PROFILE,
             content: self.to_string(),
             ..Default::default()
         };
         keys.sign_nostr_event(&mut unsigned_note);
         let mut giftwrap = NostrNote {
             pubkey: keys.public_key(),
-            kind: NOSTR_KIND_CONSUMER_GIFTWRAP,
+            kind: NOSTR_KIND_COURIER_PROFILE,
             content: unsigned_note.to_string(),
             ..Default::default()
         };
+    giftwrap.tags.add_parameter_tag(&tag);
         keys.sign_nip_04_encrypted(&mut giftwrap, receiver)?;
         Ok(giftwrap)
     }
@@ -213,7 +223,7 @@ impl TryFrom<JsValue> for DriverProfileIdb {
 impl TryFrom<NostrNote> for DriverProfileIdb {
     type Error = anyhow::Error;
     fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
-        if note.kind != NOSTR_KIND_DRIVER_PROFILE {
+        if note.kind != NOSTR_KIND_COURIER_PROFILE {
             return Err(anyhow::anyhow!("Wrong Kind"));
         }
         let pubkey = note.pubkey.to_string();

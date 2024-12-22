@@ -2,7 +2,10 @@ use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
-    models::{DriverProfileIdb, OrderPaymentStatus, OrderStatus},
+    models::{
+        DriverProfileIdb, OrderPaymentStatus, OrderStatus, OrderUpdateRequest,
+        NOSTR_KIND_CONSUMER_CANCEL,
+    },
 };
 use nostr_minions::{
     browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps,
@@ -82,15 +85,16 @@ pub fn live_order_check() -> Html {
         let sender = relay_ctx.send_note.clone();
         Callback::from(move |_| {
             let keys = keys.clone().expect("Nostr keys not found");
-            let mut order = order_ctx.order.clone().expect("Order not found").1;
-            if order.payment_status == OrderPaymentStatus::PaymentPending {
-                order.order_status = OrderStatus::Canceled;
-                let signed_note = order
-                    .sign_server_request(&keys)
-                    .expect("Could not sign order");
-                sender.emit(signed_note);
-                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order.order_id()));
-            }
+            let order = order_ctx.order.clone().expect("Order not found").0;
+            gloo::console::log!("Cancelling order: ", format!("{:?}", order));
+            let update_req = OrderUpdateRequest {
+                order,
+                status_update: OrderStatus::Canceled,
+            };
+            let signed_req = update_req
+                .sign_update(&keys, NOSTR_KIND_CONSUMER_CANCEL)
+                .expect("Failed to sign order update");
+            sender.emit(signed_req);
         })
     };
     match inside_html {

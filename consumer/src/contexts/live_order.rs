@@ -97,7 +97,6 @@ pub fn commerce_data_sync() -> Html {
             let sub = filter.relay_subscription();
             id_handle.set(sub.1.clone());
             subscriber.emit(sub);
-            gloo::console::log!("Subscribed to order state");
         }
         || {}
     });
@@ -106,17 +105,26 @@ pub fn commerce_data_sync() -> Html {
         if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_nostr_key()) {
             if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
-                    if let Ok(order_status) = OrderInvoiceState::try_from(decrypted) {
-                        match (&order_status.payment_status, &order_status.order_status) {
-                            (OrderPaymentStatus::PaymentFailed, _) => {}
-                            (_, OrderStatus::Canceled) => {}
-                            (_, OrderStatus::Completed) => {
-                                ctx.dispatch(LiveOrderAction::CompleteOrder(
-                                    order_status.order_id(),
-                                ));
-                            }
-                            _ => {
-                                ctx.dispatch(LiveOrderAction::SetOrder(note.clone(), order_status));
+                    if let Ok(order_note) = NostrNote::try_from(decrypted) {
+                        if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
+                            match (&order_status.payment_status, &order_status.order_status) {
+                                (OrderPaymentStatus::PaymentFailed, _) => {}
+                                (_, OrderStatus::Canceled) => {
+                                    ctx.dispatch(LiveOrderAction::CompleteOrder(
+                                        order_status.order_id(),
+                                    ));
+                                }
+                                (_, OrderStatus::Completed) => {
+                                    ctx.dispatch(LiveOrderAction::CompleteOrder(
+                                        order_status.order_id(),
+                                    ));
+                                }
+                                _ => {
+                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                        order_note,
+                                        order_status,
+                                    ));
+                                }
                             }
                         }
                     }
