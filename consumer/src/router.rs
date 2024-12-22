@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, ProfilePage};
+use crate::pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, SettingsPageComponent};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -9,8 +9,6 @@ pub enum ConsumerRoute {
     Home,
     #[at("/history")]
     History,
-    #[at("/profile")]
-    Profile,
     #[at("/settings")]
     Settings,
     #[at("/favorites")]
@@ -28,8 +26,7 @@ pub fn consumer_pages() -> Html {
                 match switch {
                     ConsumerRoute::Home => html!{<HomePage />},
                     ConsumerRoute::History => html!{<HistoryPage />},
-                    ConsumerRoute::Profile => html!{<ProfilePage />},
-                    ConsumerRoute::Settings => html!{<></>},
+                    ConsumerRoute::Settings => html!{<SettingsPageComponent />},
                     ConsumerRoute::Favorites => html!{<FavoritesPage />},
                     ConsumerRoute::Cart => html!{<CartPage />},
                     ConsumerRoute::Commerce { commerce_id } => html!{
