@@ -316,7 +316,7 @@ pub fn edit_profile_menu(props: &MenuProps) -> Html {
                 </button>
             </div>
             <EditProfileForm {profile} />
-            <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} />
+            <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} input_id="user-profile-upload" />
         </form>
     }
 }
