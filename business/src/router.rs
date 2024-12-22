@@ -1,8 +1,8 @@
-use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon, UserBadgeIcon};
+use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon,UserBadgeIcon, MenuBarsIcon};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{HistoryPage, HomePage, ProductsPage, ProfilePage};
+use crate::pages::{HistoryPage, HomePage, ProductsPage, SettingsPageComponent};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum CommerceRoute {
@@ -10,8 +10,6 @@ pub enum CommerceRoute {
     Home,
     #[at("/history")]
     History,
-    #[at("/profile")]
-    Profile,
     #[at("/settings")]
     Settings,
     #[at("/products")]
@@ -38,8 +36,7 @@ pub fn consumer_pages() -> Html {
                         match switch {
                             CommerceRoute::Home => html!{<HomePage />},
                             CommerceRoute::History => html!{<HistoryPage />},
-                            CommerceRoute::Profile => html!{<ProfilePage />},
-                            CommerceRoute::Settings => html!{<></>},
+                            CommerceRoute::Settings => html!{<SettingsPageComponent />},
                             CommerceRoute::Products => html!{<ProductsPage />},
                             CommerceRoute::Orders => html!{<></>},
                         }
@@ -68,10 +65,11 @@ pub fn home_footer() -> Html {
                 route={CommerceRoute::History}>
                 <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<CommerceRoute>>
+            // Add settings link (using MenuBarsIcon)
             <AppLink<CommerceRoute>
                 class="" selected_class=""
-                route={CommerceRoute::Profile}>
-                <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
+                route={CommerceRoute::Settings}>
+                <MenuBarsIcon class="w-8 h-8 stroke-neutral-400" />
             </AppLink<CommerceRoute>>
         </div>
     }
