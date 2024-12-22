@@ -5,7 +5,7 @@ mod history;
 mod home;
 mod live_order;
 mod new_user;
-mod profile;
+mod settings;
 pub use cart::*;
 pub use commerce::*;
 pub use favorites::*;
@@ -13,7 +13,7 @@ pub use history::*;
 pub use home::*;
 pub use live_order::*;
 pub use new_user::*;
-pub use profile::*;
+pub use settings::*;
 
 use fuente::mass::{AppLink, BackArrowIcon};
 use yew::prelude::*;
