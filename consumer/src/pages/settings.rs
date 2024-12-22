@@ -124,10 +124,6 @@ pub fn settings_page() -> Html {
     }
 }
 
-// Move all the components from profile.rs
-// MyAvatar, MyContactDetails, MyAddressDetails, EditProfileMenu, NewAddressMenu, etc.
-// Copy them exactly as they are in profile.rs
-// -------------------------
 #[function_component(MyAvatar)]
 pub fn my_avatar(props: &MenuProps) -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
@@ -389,9 +385,6 @@ pub fn edit_profile_form(props: &EditProfileFormProps) -> Html {
         </div>
     }
 }
-
-// -------------------------
-// Add new sections
 #[function_component(KeyRecoverySection)]
 fn key_recovery_section() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
