@@ -1,51 +1,37 @@
-use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
-
+use yew::prelude::*;
+use yew::props;
 use super::PageHeader;
-use fuente::{
-    mass::{
-        AddressLookupDetails, BackArrowIcon, CardComponent, ConsumerProfileDetails,
-        ImageUploadInput, LookupIcon, NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
-    },
-    models::{
-        ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
-    },
+use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
+use fuente::mass::{
+    AddressLookupDetails, CardComponent, ConsumerProfileDetails,
+    ImageUploadInput, NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
 };
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
 };
-use yew::{prelude::*, props};
+use fuente::models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY};
+use fuente::mass::LookupIcon;
 
-#[function_component(ProfilePage)]
-pub fn profile_page() -> Html {
-    let menu_state = use_state(|| ProfilePageMenu::None);
-    html! {
-        <div class="h-full w-full flex flex-col justify-between items-center">
-            {match &(*menu_state) {
-                ProfilePageMenu::None => html! {<>
-                    <PageHeader title={"My Profile".to_string()} />
-                    <div class="flex flex-col w-full h-full gap-8 px-4">
-                        <MyAvatar handle={menu_state.clone()} />
-                        <MyContactDetails handle={menu_state.clone()} />
-                        <MyAddressDetails handle={menu_state.clone()} />
-                    </div>
-                </>},
-                ProfilePageMenu::EditProfile => html! {<>
-                    <MenuHeader title={"Edit Profile".to_string()} handle={menu_state.clone()} />
-                    <div class="flex flex-col w-full h-full gap-8">
-                        <EditProfileMenu handle={menu_state.clone()} />
-                    </div>
-                </>},
-                ProfilePageMenu::AddAddress => html! {<>
-                    <MenuHeader title={"Add Address".to_string()} handle={menu_state.clone()} />
-                    <div class="flex flex-col w-full flex-1 gap-8">
-                        <NewAddressMenu handle={menu_state.clone()} />
-                    </div>
-                </>},
-            }}
-        </div>
-    }
+#[derive(Clone, PartialEq)]
+pub enum SettingsPage {
+    Profile,
+    KeyRecovery,
+    FAQ,
+    Legal,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum ProfilePageMenu {
+    None,
+    EditProfile,
+    AddAddress,
+}
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct MenuProps {
+    pub handle: UseStateHandle<ProfilePageMenu>,
 }
 
 #[derive(Clone, PartialEq, Properties)]
@@ -55,20 +41,85 @@ pub struct MenuHeaderProps {
 }
 
 #[derive(Clone, PartialEq, Properties)]
-pub struct MenuProps {
-    pub handle: UseStateHandle<ProfilePageMenu>,
+pub struct AddressListItemProps {
+    pub consumer_address: ConsumerAddressIdb,
 }
 
-#[function_component(MenuHeader)]
-pub fn page_header(props: &MenuHeaderProps) -> Html {
-    let handle = props.handle.clone();
+
+#[function_component(SettingsPageComponent)]
+pub fn settings_page() -> Html {
+    let current_page = use_state(|| SettingsPage::Profile);
+    let profile_menu_state = use_state(|| ProfilePageMenu::None);
+
     html! {
-        <div class="w-full flex flex-row items-center justify-between p-4">
-            <button class="" onclick={Callback::from(move |_|{ handle.set(ProfilePageMenu::None)})}>
-                <BackArrowIcon class="w-8 h-8 stroke-black" />
-            </button>
-            <h3 class="flex-1 text-center text-lg font-semibold">{&props.title}</h3>
-            <div class="h-8 w-8"></div>
+        <div class="h-full w-full flex flex-col">
+            <PageHeader title={"Settings".to_string()} />
+            
+            <div class="flex flex-row h-full">
+                // Settings Menu
+                <div class="w-64 border-r p-4">
+                    <div class="flex flex-col gap-4">
+                        <button 
+                            onclick={let page = current_page.clone(); 
+                                Callback::from(move |_| page.set(SettingsPage::Profile))}
+                            class="text-left p-2 hover:bg-gray-100 rounded">
+                            {"Profile Settings"}
+                        </button>
+                        <button 
+                            onclick={let page = current_page.clone();
+                                Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
+                            class="text-left p-2 hover:bg-gray-100 rounded">
+                            {"Key Recovery"}
+                        </button>
+                        <button 
+                            onclick={let page = current_page.clone();
+                                Callback::from(move |_| page.set(SettingsPage::FAQ))}
+                            class="text-left p-2 hover:bg-gray-100 rounded">
+                            {"FAQ"}
+                        </button>
+                        <button 
+                            onclick={let page = current_page.clone();
+                                Callback::from(move |_| page.set(SettingsPage::Legal))}
+                            class="text-left p-2 hover:bg-gray-100 rounded">
+                            {"Legal"}
+                        </button>
+                    </div>
+                </div>
+
+                // Content Area
+                <div class="flex-1 p-4">
+                    {match *current_page {
+                        SettingsPage::Profile => match *profile_menu_state {
+                            ProfilePageMenu::None => html! {
+                                <div class="flex flex-col w-full h-full gap-8 px-4">
+                                    <MyAvatar handle={profile_menu_state.clone()} />
+                                    <MyContactDetails handle={profile_menu_state.clone()} />
+                                    <MyAddressDetails handle={profile_menu_state.clone()} />
+                                </div>
+                            },
+                            ProfilePageMenu::EditProfile => html! {
+                                <div class="flex flex-col w-full h-full gap-8">
+                                    <EditProfileMenu handle={profile_menu_state.clone()} />
+                                </div>
+                            },
+                            ProfilePageMenu::AddAddress => html! {
+                                <div class="flex flex-col w-full flex-1 gap-8">
+                                    <NewAddressMenu handle={profile_menu_state.clone()} />
+                                </div>
+                            },
+                        },
+                        SettingsPage::KeyRecovery => html! {
+                            <KeyRecoverySection />
+                        },
+                        SettingsPage::FAQ => html! {
+                            <FAQSection />
+                        },
+                        SettingsPage::Legal => html! {
+                            <LegalSection />
+                        },
+                    }}
+                </div>
+            </div>
         </div>
     }
 }
@@ -92,13 +143,6 @@ pub fn my_avatar(props: &MenuProps) -> Html {
         </div>
     }
 }
-#[derive(Clone, PartialEq)]
-pub enum ProfilePageMenu {
-    None,
-    EditProfile,
-    AddAddress,
-}
-
 #[function_component(MyContactDetails)]
 pub fn my_contact_details(props: &MenuProps) -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
@@ -157,11 +201,6 @@ pub fn my_address_details(props: &MenuProps) -> Html {
             </div>
         </div>
     }
-}
-
-#[derive(Clone, PartialEq, Properties)]
-pub struct AddressListItemProps {
-    pub consumer_address: ConsumerAddressIdb,
 }
 
 #[function_component(AddressListItem)]
@@ -343,6 +382,71 @@ pub fn edit_profile_form(props: &EditProfileFormProps) -> Html {
                 label={"Telephone"} value={profile.telephone.clone()}
                 id={"telephone"} name={"telephone"}
                 input_type={"tel"} required={true} />
+        </div>
+    }
+}
+#[function_component(KeyRecoverySection)]
+fn key_recovery_section() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
+    let keys = key_ctx.get_nostr_key().expect("No keys found");
+    
+    // Convert secret key bytes to hex string
+    let secret_key_bytes = keys.get_secret_key();
+    let secret_key_hex: String = secret_key_bytes.iter()
+        .map(|b| format!("{:02x}", b))
+        .collect();
+
+    html! {
+        <div class="flex flex-col gap-4">
+            <h2 class="text-2xl font-bold">{"Key Recovery"}</h2>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="mb-4">{"Your private key is very important. Store it safely:"}</p>
+                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
+                    {secret_key_hex}
+                </div>
+                <p class="mt-4 text-sm text-gray-600">
+                    {"Save this key somewhere safe. You'll need it to recover your account."}
+                </p>
+            </div>
+        </div>
+    }
+}
+
+#[function_component(FAQSection)]
+fn faq_section() -> Html {
+    html! {
+        <div class="flex flex-col gap-4">
+            <h2 class="text-2xl font-bold">{"Frequently Asked Questions"}</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-bold mb-2">{"How do I place an order?"}</h3>
+                    <p>{"Browse businesses, select items, add to cart, and checkout with Lightning payment."}</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-bold mb-2">{"How do payments work?"}</h3>
+                    <p>{"We use Lightning Network for instant, low-fee payments."}</p>
+                </div>
+                // Add more FAQs as needed
+            </div>
+        </div>
+    }
+}
+
+#[function_component(LegalSection)]
+fn legal_section() -> Html {
+    html! {
+        <div class="flex flex-col gap-4">
+            <h2 class="text-2xl font-bold">{"Legal Information"}</h2>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-bold mb-2">{"Terms of Service"}</h3>
+                <p class="mb-4">{"By using our service, you agree to these terms..."}</p>
+                
+                <h3 class="font-bold mb-2">{"Privacy Policy"}</h3>
+                <p class="mb-4">{"We respect your privacy and protect your data..."}</p>
+                
+                <h3 class="font-bold mb-2">{"Refund Policy"}</h3>
+                <p>{"Our refund policy details..."}</p>
+            </div>
         </div>
     }
 }
