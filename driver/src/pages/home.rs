@@ -229,7 +229,6 @@ pub struct OrderPickupMapPreviewProps {
 }
 #[function_component(OrderPickupMapPreview)]
 pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
-    let map_id = format!("order-map-{}", props.order_id);
     let OrderPickupMapPreviewProps {
         order_id,
         commerce_location,
@@ -305,7 +304,9 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
     let driver_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
+    let order_ctx = use_context::<OrderHubStore>().expect("OrderHub context not found");
 
+    // Clone the data we need before the effect
     let order_id = props.order_id.clone();
     let location_state = props.location_state.clone();
 
@@ -314,6 +315,7 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
         let sender = relay_ctx.send_note.clone();
         let driver_profile = driver_ctx.get_profile_note()
             .expect("No driver profile found");
+        let location_state = location_state.clone();
 
         let interval = {
             Interval::new(5000, move || {
@@ -321,22 +323,25 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
                 let sender = sender.clone();
                 let driver_profile = driver_profile.clone();
                 let location_state = location_state.clone();
-
-                spawn_local(async move {  // Using Yew's spawn_local
+                let order_ctx = order_ctx.clone();
+                
+                spawn_local(async move {
                     match DriverStateUpdate::new(driver_profile.clone()).await {
                         Ok(state_update) => {
-                            let location = state_update.get_location();
-                            gloo::console::log!("Location update:", 
-                                format!("Lat: {}, Lng: {}", 
-                                    location.latitude, 
-                                    location.longitude
-                                )
-                            );
-                            location_state.set(Some(location));
+                            location_state.set(Some(state_update.get_location()));
                             
-                            if let Ok(update_note) = state_update.sign_update(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
-                                gloo::console::log!("Sending location update to relay");
-                                sender.emit(update_note);
+                            if let Some((_order_state, order_note)) = order_ctx.get_live_order() {
+                                // Send to driver hub
+                                if let Ok(hub_note) = state_update.sign_update(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
+                                    gloo::console::log!("Sending location update to driver hub:", DRIVER_HUB_PUB_KEY);
+                                    sender.emit(hub_note);
+                                }
+                                // Send to customer
+                                let customer_pubkey = order_note.pubkey.clone();
+                                gloo::console::log!("Sending location update to customer:", &customer_pubkey);
+                                if let Ok(customer_note) = state_update.sign_update(&keys, customer_pubkey.clone()) {
+                                    sender.emit(customer_note);
+                                }
                             }
                         }
                         Err(e) => {
