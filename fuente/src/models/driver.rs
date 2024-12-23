@@ -6,7 +6,7 @@ use super::{
     nostr_kinds::{NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_DRIVER_STATE},
     DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
-use nostr_minions::browser_api::{GeolocationPosition, IdbStoreManager};
+use nostr_minions::browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
@@ -154,6 +154,9 @@ impl DriverStateUpdate {
         let note = user_keys.decrypt_nip_04_content(&signed_note)?;
         let update: DriverStateUpdate = note.try_into()?;
         Ok(update)
+    }
+    pub fn get_location(&self) -> GeolocationCoordinates {
+        self.geolocation.coords.clone()
     }
 }
 impl ToString for DriverStateUpdate {
