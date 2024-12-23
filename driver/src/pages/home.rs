@@ -1,9 +1,9 @@
 use crate::contexts::{
-    CommerceDataStore, {OrderHubAction, OrderHubStore},
+    CommerceDataStore, DriverDataStore, OrderHubAction, OrderHubStore
 };
 use fuente::{
     mass::LoadingScreen,
-    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COURIER_UPDATE},
+    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COURIER_UPDATE},
 };
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
@@ -13,6 +13,10 @@ use nostr_minions::{
 };
 use nostro2::notes::NostrNote;
 use yew::prelude::*;
+
+use fuente::models::DriverStateUpdate;
+use gloo::timers::callback::Interval;
+use yew::platform::spawn_local; 
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
@@ -107,6 +111,16 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
                     {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
+            {if order.order_status == OrderStatus::InDelivery {
+                html! {
+                    <LocationTracker 
+                        order_id={order.order_id()} 
+                        location_state={location_state.clone()}
+                    />
+                }
+            } else {
+                html! {}
+            }}
             <div class="flex flex-row flex-1 ">
                 <OrderPickupMapPreview
                     order_id={order.order_id()}
@@ -215,6 +229,7 @@ pub struct OrderPickupMapPreviewProps {
 }
 #[function_component(OrderPickupMapPreview)]
 pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
+    let map_id = format!("order-map-{}", props.order_id);
     let OrderPickupMapPreviewProps {
         order_id,
         commerce_location,
@@ -277,4 +292,65 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
             class={classes}
         />
     }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct LocationTrackerProps {
+    pub order_id: String,
+    pub location_state: UseStateHandle<Option<GeolocationCoordinates>>,
+}
+
+#[function_component(LocationTracker)]
+pub fn location_tracker(props: &LocationTrackerProps) -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
+    let driver_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
+
+    let order_id = props.order_id.clone();
+    let location_state = props.location_state.clone();
+
+    use_effect_with(order_id.clone(), move |_| {
+        let keys = key_ctx.get_nostr_key().expect("No keys found");
+        let sender = relay_ctx.send_note.clone();
+        let driver_profile = driver_ctx.get_profile_note()
+            .expect("No driver profile found");
+
+        let interval = {
+            Interval::new(5000, move || {
+                let keys = keys.clone();
+                let sender = sender.clone();
+                let driver_profile = driver_profile.clone();
+                let location_state = location_state.clone();
+
+                spawn_local(async move {  // Using Yew's spawn_local
+                    match DriverStateUpdate::new(driver_profile.clone()).await {
+                        Ok(state_update) => {
+                            let location = state_update.get_location();
+                            gloo::console::log!("Location update:", 
+                                format!("Lat: {}, Lng: {}", 
+                                    location.latitude, 
+                                    location.longitude
+                                )
+                            );
+                            location_state.set(Some(location));
+                            
+                            if let Ok(update_note) = state_update.sign_update(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
+                                gloo::console::log!("Sending location update to relay");
+                                sender.emit(update_note);
+                            }
+                        }
+                        Err(e) => {
+                            gloo::console::error!("Failed to create state update:", e.to_string());
+                        }
+                    }
+                });
+            })
+        };
+
+        move || {
+            interval.cancel();
+        }
+    });
+
+    html! { <></> }
 }
