@@ -3,16 +3,15 @@ use fuente::{
     contexts::AdminConfigsStore,
     mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{
-        DriverProfileIdb, OrderPaymentStatus, OrderStatus, OrderUpdateRequest,
-        NOSTR_KIND_CONSUMER_CANCEL,
+        DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE
     },
 };
 use nostr_minions::{
-    browser_api::clipboard_copy, key_manager::NostrIdStore, relay_pool::NostrProps,
+    browser_api::{clipboard_copy, GeolocationCoordinates}, key_manager::NostrIdStore, relay_pool::NostrProps, widgets::leaflet::{IconOptions, LatLng, LeafletComponent, LeafletMap, LeafletMapOptions, Marker},
 };
 use yew::prelude::*;
 
-use crate::contexts::{LiveOrderAction, LiveOrderStore};
+use crate::contexts::{CommerceDataStore, LiveOrderStore, CommerceDataExt};
 
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check() -> Html {
@@ -46,31 +45,40 @@ pub fn live_order_check() -> Html {
                 if status == &OrderStatus::Completed || status == &OrderStatus::Canceled {
                     Err(html! {<></>})
                 } else {
-                    if let Some(courier_note) = order.courier.as_ref().cloned() {
-                        let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
-                        let driver = driver_db.profile();
-                        let pubkey = driver_db.pubkey();
-
+                    if status == &OrderStatus::InDelivery {
                         Ok(html! {
                             <>
-                                <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                                <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                    <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
-                                    <p>{"Order Status: "}{order.order_status}</p>
-                                    <DriverDetailsComponent {pubkey} {driver} />
-                                </div>
+                                <h2 class="text-2xl font-bold">{"Order in Delivery!"}</h2>
+                                <LiveOrderTracking order={order.clone()} />
                             </>
                         })
                     } else {
-                        Ok(html! {
-                            <>
-                                <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                                <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                    <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
-                                    <p>{"Order Status: "}{order.order_status}</p>
-                                </div>
-                            </>
-                        })
+                        if let Some(courier_note) = order.courier.as_ref().cloned() {
+                            let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
+                            let driver = driver_db.profile();
+                            let pubkey = driver_db.pubkey();
+            
+                            Ok(html! {
+                                <>
+                                    <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+                                    <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                        <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
+                                        <p>{"Order Status: "}{order.order_status}</p>
+                                        <DriverDetailsComponent {pubkey} {driver} />
+                                    </div>
+                                </>
+                            })
+                        } else {
+                            Ok(html! {
+                                <>
+                                    <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+                                    <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                        <p>{"Order ID: "}{order.order_id()[..12].to_string()}</p>
+                                        <p>{"Order Status: "}{order.order_status}</p>
+                                    </div>
+                                </>
+                            })
+                        }
                     }
                 }
             }
@@ -164,6 +172,112 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
                 onclick={onclick_copy}>
                 {"Copy Invoice"}
             </button>
+        </div>
+    }
+}
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct LiveOrderTrackingProps {
+    pub order: OrderInvoiceState,
+}
+
+#[function_component(LiveOrderTracking)]
+pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
+    let LiveOrderTrackingProps { order } = props;
+    let order_req = order.get_order_request();
+    let delivery_location: GeolocationCoordinates = order_req.address.coordinates().into();
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    
+    let commerce = commerce_ctx.find_commerce_by_id(&order_req.commerce)
+        .expect("Commerce not found");
+    let pickup_location = commerce.geolocation();
+    let driver_location = use_state(|| None::<GeolocationCoordinates>);
+    let map_handle = use_state(|| None::<LeafletMap>);
+    let marker_handle = use_state(|| None::<Marker>);
+
+    let location_icon_options = IconOptions {
+        icon_url: "/public/assets/img/rider2.png".to_string(),
+        icon_size: Some(vec![32, 32]),
+        icon_anchor: Some(vec![16, 32]),
+    };
+
+    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+
+    let driver_marker = marker_handle.clone();
+    let map = map_handle.clone();
+    use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
+        if let Some(note) = notes.last() {
+            if note.kind == NOSTR_KIND_DRIVER_STATE {
+                if let Some(keys) = key_ctx.get_nostr_key() {
+                    if let Ok(decrypted) = keys.decrypt_nip_04_content(note) {
+                        if let Ok(driver_state) = DriverStateUpdate::try_from(decrypted) {
+                            let coords = driver_state.get_location();
+                            driver_location.set(Some(coords.clone()));
+
+                            if let (Some(marker), Some(map)) = (driver_marker.as_ref(), map.as_ref()) {
+                                let latlng: LatLng = coords.into();
+                                let js_value = serde_wasm_bindgen::to_value(&latlng).unwrap();
+                                marker.set_lat_lng(&js_value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        || {}
+    });
+
+    let map_options = LeafletMapOptions {
+        zoom: 13,
+        zoom_control: true,
+        scroll_wheel_zoom: true,
+        double_click_zoom: true,
+        dragging: true,
+        min_zoom: Some(3),
+        max_zoom: Some(18),
+        ..Default::default()
+    };
+    html! {
+        <div class="w-full h-96">
+            <LeafletComponent
+                map_id="tracking-map"
+                {map_options} 
+                location_icon_options={Some(location_icon_options)}
+                markers={vec![]}
+                on_map_created={Callback::from({
+                    let map = map_handle.clone();
+                    move |map_instance: LeafletMap| {
+                        let pickup_icon = IconOptions {
+                            icon_url: "/public/assets/img/pay_pickup.png".to_string(),
+                            icon_size: Some(vec![32, 32]),
+                            icon_anchor: Some(vec![16, 16]),
+                        };
+                        let _ = map_instance.add_marker_with_icon(&pickup_location, pickup_icon);
+
+                        let delivery_icon = IconOptions {
+                            icon_url: "/public/assets/img/my_marker.png".to_string(),
+                            icon_size: Some(vec![32, 32]),
+                            icon_anchor: Some(vec![16, 16]),
+                        };
+                        let _ = map_instance.add_marker_with_icon(&delivery_location, delivery_icon);
+
+                        let bounds = vec![
+                            vec![pickup_location.latitude, pickup_location.longitude],
+                            vec![delivery_location.latitude, delivery_location.longitude],
+                        ];
+                        let js_value_bounds = serde_wasm_bindgen::to_value(&bounds).unwrap();
+                        let _ = map_instance.fitBounds(&js_value_bounds);
+
+                        map.set(Some(map_instance));
+                    }
+                })}
+                on_marker_created={Callback::from({
+                    let marker = marker_handle.clone();
+                    move |m: Marker| marker.set(Some(m))
+                })}
+                class="w-full h-full rounded-lg shadow-lg"
+            />
         </div>
     }
 }
