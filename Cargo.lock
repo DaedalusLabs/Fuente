@@ -2084,6 +2084,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratings"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fuente",
+ "nostro2",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+]
+
+[[package]]
 name = "regex"
 version = "1.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -12,6 +12,7 @@ mod nostr_kinds;
 mod orders;
 mod products;
 mod favorites;
+mod ratings;
 pub use address::*;
 pub use admin_configs::*;
 pub use commerce::*;
@@ -22,6 +23,7 @@ pub use nostr_kinds::*;
 pub use orders::*;
 pub use products::*;
 pub use favorites::*;
+pub use ratings::*;
 
 // pub mod sync;
 // // TODO 
