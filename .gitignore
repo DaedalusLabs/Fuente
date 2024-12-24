@@ -4,6 +4,7 @@
 **/node_modules/
 **/.DS_Store
 /test
+/templates/css
 
 # Ignore output.css files
 **/output*.css

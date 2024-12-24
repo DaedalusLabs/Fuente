@@ -1,104 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{"Store - Orders"}</title>
-    <link rel="stylesheet" href="../styles/output.css">
-</head>
-<body class="font-fuente bg-black/50">
-    <main class="bg-white rounded-2xl py-5 px-10 max-w-xl ml-auto">
-        <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
+<main class="bg-white rounded-2xl py-5 px-10 max-w-xl ml-auto">
+    <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
+        <div>
+            <p class="text-fuente-dark font-bold text-2xl">{"#1234567"}</p>
+            <p class="text-gray-500 font-light text-lg">{"Order details"}</p>
+        </div>
+
+        <button
+            class="border-2 border-gray-400 text-gray-400 bg-white rounded-2xl py-3 px-4 text-center font-semibold">{"Pending"}</button>
+    </div>
+
+    <h3 class="text-gray-500 mt-5 font-light">{"Products"}</h3>
+
+    <div class="mt-5 space-y-3 flex items-center justify-between">
+        <div class="flex items-center gap-5">
+            <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-20 block object-contain">
             <div>
-                <p class="text-fuente-dark font-bold text-2xl">{"#1234567"}</p>
-                <p class="text-gray-500 font-light text-lg">{"Order details"}</p>
-            </div>
-
-            <button class="border-2 border-gray-400 text-gray-400 bg-white rounded-2xl py-3 px-4 text-center font-semibold">{"Pending"}</button>
-        </div>
-        
-        <h3 class="text-gray-500 mt-5 font-light">{"Products"}</h3>
-
-        <div class="mt-5 space-y-3 flex items-center justify-between">
-            <div class="flex items-center gap-5">
-                <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="w-20 block object-contain">
-                <div>
-                    <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
-                    <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                    <p class="text-gray-500 font-bold text-md uppercase">{"Code: 001212"}</p>
-                </div>
-            </div>
-
-            <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
-        </div>
-
-        <div class="mt-5 space-y-3 flex items-center justify-between">
-            <div class="flex items-center gap-5">
-                <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-20 block object-contain">
-                <div>
-                    <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
-                    <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                    <p class="text-gray-500 font-bold text-md uppercase">{"Code: 001212"}</p>
-                </div>
-            </div>
-
-            <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
-        </div>
-
-        <div class="mt-5 space-y-3 flex items-center justify-between">
-            <div class="flex items-center gap-5">
-                <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-20 block object-contain">
-                <div>
-                    <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
-                    <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                    <p class="text-gray-500 font-bold text-md uppercase">Code: 001212</p>
-                </div>
-            </div>
-
-            <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
-        </div>
-
-        <div class="mt-5 bg-gray-200 flex justify-end p-3">
-            <div class="space-y-2">
-                <p class="text-gray-500 font-light text-right">{"Subtotal: $299.98"}</p>
-                <p class="text-gray-500 font-light text-right">{"Shipping fee: $0.00"}</p>
-                <p class="text-fuente font-bold text-lg text-right">{"Total: $299.98"}</p>
+                <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
+                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                <p class="text-gray-500 font-bold text-md uppercase">{"Code: 001212"}</p>
             </div>
         </div>
 
-        <section class="mt-5 space-y-3 border-y border-y-gray-400 py-3">
-            <h3 class="text-gray-500 font-light text-lg">{"Customer information"}</h3>
-            <p class="text-gray-500 font-bold text-lg">{"Christine Amador Russel"}</p>
-            <div class="w-96 space-y-2">
-                <div class="flex justify-between">
-                    <p class="text-gray-500 font-bold text-lg">{"Email"}</p>
-                    <p class="text-gray-500">{"christineam@gmail.com"}</p>
-                </div>
+        <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
+    </div>
 
-                <div class="flex justify-between">
-                    <p class="text-gray-500 font-bold text-lg">{"Phone Number"}</p>
-                    <p class="text-gray-500">{"+507 76565590012"}</p>
-                </div>
+    <div class="mt-5 space-y-3 flex items-center justify-between">
+        <div class="flex items-center gap-5">
+            <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="w-20 block object-contain">
+            <div>
+                <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
+                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                <p class="text-gray-500 font-bold text-md uppercase">{"Code: 001212"}</p>
             </div>
-        </section>
+        </div>
 
-        <form class="mt-5">
-            <div class="flex justify-between items-center">
-                <label for="status" class="text-gray-500 font-light text-lg w-full">{"Status order"}</label>
-                <select id="status" class="py-3 px-5 rounded-xl border border-gray-500 w-full text-gray-500">
-                    <option value="">{"Select status"}</option>
-                    <option value="">{"Cancel"}</option>
-                </select>
+        <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
+    </div>
+
+    <div class="mt-5 space-y-3 flex items-center justify-between">
+        <div class="flex items-center gap-5">
+            <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="w-20 block object-contain">
+            <div>
+                <p class="text-gray-500 font-bold text-md">{"Brand of shoes"}</p>
+                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                <p class="text-gray-500 font-bold text-md uppercase">Code: 001212</p>
+            </div>
+        </div>
+
+        <p class="text-fuente font-bold text-xl">{"$99.99"}</p>
+    </div>
+
+    <div class="mt-5 bg-gray-200 flex justify-end p-3">
+        <div class="space-y-2">
+            <p class="text-gray-500 font-light text-right">{"Subtotal: $299.98"}</p>
+            <p class="text-gray-500 font-light text-right">{"Shipping fee: $0.00"}</p>
+            <p class="text-fuente font-bold text-lg text-right">{"Total: $299.98"}</p>
+        </div>
+    </div>
+
+    <section class="mt-5 space-y-3 border-y border-y-gray-400 py-3">
+        <h3 class="text-gray-500 font-light text-lg">{"Customer information"}</h3>
+        <p class="text-gray-500 font-bold text-lg">{"Christine Amador Russel"}</p>
+        <div class="w-96 space-y-2">
+            <div class="flex justify-between">
+                <p class="text-gray-500 font-bold text-lg">{"Email"}</p>
+                <p class="text-gray-500">{"christineam@gmail.com"}</p>
             </div>
 
-            <textarea class="min-h-40 text-gray-500 p-4 border border-gray-500 w-full rounded-xl mt-3" placeholder="Comment why this order was canceled"></textarea>
+            <div class="flex justify-between">
+                <p class="text-gray-500 font-bold text-lg">{"Phone Number"}</p>
+                <p class="text-gray-500">{"+507 76565590012"}</p>
+            </div>
+        </div>
+    </section>
 
-            <input
-                type="submit"
-                value="Save"
-                class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5"
-            >
-        </form>
-    </main>
-</body>
-</html>
+    <form class="mt-5">
+        <div class="flex justify-between items-center">
+            <label for="status" class="text-gray-500 font-light text-lg w-full">{"Status order"}</label>
+            <select id="status" class="py-3 px-5 rounded-xl border border-gray-500 w-full text-gray-500">
+                <option value="">{"Select status"}</option>
+                <option value="">{"Cancel"}</option>
+            </select>
+        </div>
+
+        <textarea class="min-h-40 text-gray-500 p-4 border border-gray-500 w-full rounded-xl mt-3"
+            placeholder="Comment why this order was canceled"></textarea>
+
+        <input type="submit" value="Save"
+            class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5">
+    </form>
+</main>

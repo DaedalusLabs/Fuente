@@ -1,0 +1,3 @@
+wss://relay.illuminodes.com
+wss://relay.arrakis.lat
+
