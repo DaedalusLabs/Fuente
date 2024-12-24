@@ -3,8 +3,7 @@ use std::rc::Rc;
 use fuente::{
     contexts::AdminConfigsStore,
     models::{
-        CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
-        NOSTR_KIND_COMMERCE_PROFILE,
+        CommerceProfile, CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE
     },
 };
 use nostr_minions::relay_pool::NostrProps;
@@ -27,6 +26,19 @@ impl CommerceData {
     }
     pub fn products_lists(&self) -> Vec<ProductMenuIdb> {
         self.products_lists.clone()
+    }
+}
+
+pub trait CommerceDataExt {
+    fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile>;
+}
+
+impl CommerceDataExt for UseReducerHandle<CommerceData> {
+    fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile> {
+        (**self).commerces.iter()
+            .find(|p| p.id() == id)
+            .map(|p| p.profile())
+            .cloned()
     }
 }
 
