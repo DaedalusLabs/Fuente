@@ -9,7 +9,7 @@ use nostr_minions::{
     browser_api::GeolocationCoordinates,
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
-    widgets::leaflet::{IconOptions, LeafletComponent, LeafletMap, Marker},
+    widgets::leaflet::{IconOptions, LeafletComponent, LeafletMap, Marker, LeafletMapOptions},
 };
 use nostro2::notes::NostrNote;
 use yew::prelude::*;
@@ -236,10 +236,23 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         own_location,
         classes,
     } = props.clone();
+
     let map_state: UseStateHandle<Option<LeafletMap>> = use_state(|| None);
     let markers: UseStateHandle<Vec<(f64, f64)>> = use_state(|| vec![]);
     let map_id = format!("order-map-{}", order_id);
     let own_marker_state = use_state(|| None::<Marker>);
+
+    let map_options = LeafletMapOptions {
+        zoom: 13,
+        zoom_control: true,
+        scroll_wheel_zoom: true,
+        double_click_zoom: true,
+        dragging: true,
+        min_zoom: Some(3),
+        max_zoom: Some(18),
+        ..Default::default()
+    };
+
     use_effect_with(map_state.clone(), move |map_state| {
         if let Some(map) = map_state.as_ref() {
             let commerce_icon = IconOptions {
@@ -271,6 +284,7 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
     html! {
         <LeafletComponent
             {map_id}
+            {map_options}
             {location_icon_options}
             markers={(*markers).clone()}
             on_location_changed={Callback::from({
