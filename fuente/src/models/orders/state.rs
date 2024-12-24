@@ -85,6 +85,22 @@ impl Into<&str> for OrderParticipant {
         }
     }
 }
+impl TryFrom<&str> for OrderParticipant {
+    type Error = anyhow::Error;
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "consumer" => Ok(Self::Consumer),
+            "commerce" => Ok(Self::Commerce),
+            "courier" => Ok(Self::Courier),
+            _ => Err(anyhow::anyhow!("Invalid OrderParticipant")),
+        }
+    }
+}
+impl Default for OrderParticipant {
+    fn default() -> Self {
+        Self::Consumer
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct OrderInvoiceState {
