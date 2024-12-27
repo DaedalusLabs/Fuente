@@ -1,13 +1,13 @@
 use consumer::{
     contexts::{
         CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
-        ConsumerDataStore, LiveOrderProvider, FavoritesProvider,
+        ConsumerDataStore, FavoritesProvider, LiveOrderProvider,
     },
     pages::NewProfilePage,
     router::ConsumerPages,
 };
 use fuente::{
-    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
     mass::{LoadingScreen, MainLayout, NewAddressForm, NewAddressProps, NewUserPage},
     models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
 };
@@ -85,6 +85,7 @@ fn app_context(props: &ChildrenProps) -> Html {
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
+        <LanguageConfigsProvider>
        <ConsumerDataProvider>
            <CommerceDataProvider>
                <CartProvider>
@@ -96,6 +97,7 @@ fn app_context(props: &ChildrenProps) -> Html {
                </CartProvider>
            </CommerceDataProvider>
        </ConsumerDataProvider>
+       </LanguageConfigsProvider>
     }
 }
 #[function_component(LoginCheck)]

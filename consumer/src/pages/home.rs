@@ -1,30 +1,28 @@
-use crate::{contexts::CommerceDataStore, router::ConsumerRoute, contexts::FavoritesStore};
-use fuente::mass::{
-    AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LoadingScreen, LookupIcon,
-    MenuBarsIcon, ShoppingCartIcon, UserBadgeIcon,
-};
-use yew::prelude::*;
-use fuente::models::FavoriteStore;
-use nostr_minions::key_manager::NostrIdStore;
 use crate::contexts::FavoritesAction;
+use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
+use fuente::models::FavoriteStore;
+use fuente::{
+    contexts::LanguageConfigsStore,
+    mass::{
+        AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LookupIcon, MenuBarsIcon,
+        ShoppingCartIcon, UserBadgeIcon,
+    },
+};
+use nostr_minions::key_manager::NostrIdStore;
+use yew::prelude::*;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
-    let commerce_ctx = use_context::<CommerceDataStore>();
-    if commerce_ctx.is_none() {
-        return html! {<LoadingScreen />};
-    }
-    let commerce_ctx = commerce_ctx.unwrap();
-    if !commerce_ctx.finished_loading() {
-        return html! {<LoadingScreen />};
-    }
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     let businesses = commerce_ctx.commerces();
     let filter_state = use_state(|| CommerceFilter::All);
     html! {
         <div class="h-full w-full flex flex-col">
             <HomeHeader />
             <div class="flex flex-col flex-1 gap-8">
-                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4">{"Find your favorite stores!"}</h2>
+                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4">{&translations["home_title"]}</h2>
 
                 <div class="relative w-full max-w-sm mx-auto px-4">
                     <input
@@ -48,9 +46,9 @@ pub fn home_page() -> Html {
                                 route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
                                 <div class="relative">
                                 <CommerceProfileCard commerce_data={commerce_data.clone()} />
-                                <FavoriteButton 
+                                <FavoriteButton
                                     commerce_id={profile.id().to_string()}
-                                    commerce_data={commerce_data} 
+                                    commerce_data={commerce_data}
                                 />
                             </div>
                             </AppLink<ConsumerRoute>>
@@ -73,14 +71,14 @@ pub struct HomeFavoriteButtonProps {
 fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    
+
     let is_favorite = favorites_ctx.is_favorite(&props.commerce_id);
-    
+
     let onclick = {
         let commerce_id = props.commerce_id.clone();
         let favorites = favorites_ctx.clone();
         let user_id = key_ctx.get_nostr_key().unwrap().public_key();
-        
+
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
             if favorites.is_favorite(&commerce_id) {
@@ -93,7 +91,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     };
 
     html! {
-        <button 
+        <button
             {onclick}
             class={classes!(
                 "absolute",
@@ -151,7 +149,6 @@ impl ToString for CommerceFilter {
             CommerceFilter::Pharmacy => "Pharmacy".to_string(),
             CommerceFilter::Music => "Music".to_string(),
             CommerceFilter::Movies => "Movies".to_string(),
-
         }
     }
 }
