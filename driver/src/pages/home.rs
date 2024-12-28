@@ -3,7 +3,7 @@ use crate::contexts::{
 };
 use fuente::{
     mass::LoadingScreen,
-    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COURIER_UPDATE},
+    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COURIER_UPDATE, NOSTR_KIND_DRIVER_STATE},
 };
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
@@ -340,26 +340,30 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
                 let order_ctx = order_ctx.clone();
                 
                 spawn_local(async move {
-                    match DriverStateUpdate::new(driver_profile.clone()).await {
-                        Ok(state_update) => {
-                            location_state.set(Some(state_update.get_location()));
-                            
-                            if let Some((_order_state, order_note)) = order_ctx.get_live_order() {
+                    if let Some((order_state, _order_note)) = order_ctx.get_live_order() {
+                        // Get the customer's pubkey from the original order
+                        let customer_pubkey = order_state.order.pubkey.clone();
+                        
+                        match DriverStateUpdate::new(driver_profile.clone()).await {
+                            Ok(state_update) => {
+                                let coords = state_update.get_location();
+                                gloo::console::log!("Created state update with coords:", format!("{:?}", coords));
+                                
                                 // Send to driver hub
-                                if let Ok(hub_note) = state_update.sign_update(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
-                                    gloo::console::log!("Sending location update to driver hub:", DRIVER_HUB_PUB_KEY);
-                                    sender.emit(hub_note);
+                                if let Ok(final_note) = state_update.to_encrypted_note(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
+                                    gloo::console::log!("Sending to hub, kind:", final_note.kind);
+                                    gloo::console::log!("Hub encrypted content length:", final_note.content.len());
+                                    sender.emit(final_note);
                                 }
+                                
                                 // Send to customer
-                                let customer_pubkey = order_note.pubkey.clone();
-                                gloo::console::log!("Sending location update to customer:", &customer_pubkey);
-                                if let Ok(customer_note) = state_update.sign_update(&keys, customer_pubkey.clone()) {
-                                    sender.emit(customer_note);
+                                if let Ok(final_note) = state_update.to_encrypted_note(&keys, customer_pubkey) {
+                                    gloo::console::log!("Sending to customer, kind:", final_note.kind);
+                                    gloo::console::log!("Customer encrypted content length:", final_note.content.len());
+                                    sender.emit(final_note);
                                 }
-                            }
-                        }
-                        Err(e) => {
-                            gloo::console::error!("Failed to create state update:", e.to_string());
+                            },
+                            Err(e) => gloo::console::error!("Failed to create state update:", e.to_string()),
                         }
                     }
                 });
