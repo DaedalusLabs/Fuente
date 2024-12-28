@@ -9,6 +9,7 @@ use fuente::{
 use nostr_minions::{
     browser_api::{clipboard_copy, GeolocationCoordinates}, key_manager::NostrIdStore, relay_pool::NostrProps, widgets::leaflet::{IconOptions, LatLng, LeafletComponent, LeafletMap, LeafletMapOptions, Marker},
 };
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 
 use crate::contexts::{CommerceDataStore, LiveOrderStore, CommerceDataExt};
@@ -208,19 +209,40 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     let map = map_handle.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
+            gloo::console::log!("Received note kind:", note.kind);
+            
+            // Only process driver state notes
             if note.kind == NOSTR_KIND_DRIVER_STATE {
                 if let Some(keys) = key_ctx.get_nostr_key() {
-                    if let Ok(decrypted) = keys.decrypt_nip_04_content(note) {
-                        if let Ok(driver_state) = DriverStateUpdate::try_from(decrypted) {
-                            let coords = driver_state.get_location();
-                            driver_location.set(Some(coords.clone()));
-
-                            if let (Some(marker), Some(map)) = (driver_marker.as_ref(), map.as_ref()) {
-                                let latlng: LatLng = coords.into();
-                                let js_value = serde_wasm_bindgen::to_value(&latlng).unwrap();
-                                marker.set_lat_lng(&js_value);
+                    match keys.decrypt_nip_04_content(note) {
+                        Ok(decrypted) => {
+                            gloo::console::log!("Decrypted content:", &decrypted);
+                            
+                            // Parse directly as DriverStateUpdate
+                            match serde_json::from_str::<DriverStateUpdate>(&decrypted) {
+                                Ok(state_update) => {
+                                    let coords = state_update.get_location();
+                                    gloo::console::log!("Got driver coordinates:", format!("{:?}", coords));
+                                    
+                                    driver_location.set(Some(coords.clone()));
+                                    
+                                    if let (Some(marker), Some(_map)) = (driver_marker.as_ref(), map.as_ref()) {
+                                        let latlng: LatLng = coords.clone().into();
+                                        if let Ok(js_value) = serde_wasm_bindgen::to_value(&latlng) {
+                                            marker.set_lat_lng(&js_value);
+                                            gloo::console::log!("Updated marker position:", format!("{:?}", coords));
+                                        }
+                                    } else {
+                                        gloo::console::warn!("Marker or map not initialized");
+                                    }
+                                },
+                                Err(e) => {
+                                    gloo::console::error!("Failed to parse driver state:", e.to_string());
+                                    gloo::console::log!("Raw decrypted content:", &decrypted);
+                                }
                             }
-                        }
+                        },
+                        Err(e) => gloo::console::error!("Failed to decrypt note:", e.to_string()),
                     }
                 }
             }
@@ -248,6 +270,7 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                 on_map_created={Callback::from({
                     let map = map_handle.clone();
                     move |map_instance: LeafletMap| {
+                        gloo::console::log!("Map created");
                         let pickup_icon = IconOptions {
                             icon_url: "/public/assets/img/pay_pickup.png".to_string(),
                             icon_size: Some(vec![32, 32]),
@@ -274,7 +297,10 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                 })}
                 on_marker_created={Callback::from({
                     let marker = marker_handle.clone();
-                    move |m: Marker| marker.set(Some(m))
+                    move |m: Marker| {
+                        gloo::console::log!("Driver marker created");
+                        marker.set(Some(m))
+                    }
                 })}
                 class="w-full h-full rounded-lg shadow-lg"
             />
