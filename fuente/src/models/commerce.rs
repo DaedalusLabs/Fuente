@@ -14,13 +14,15 @@ use wasm_bindgen::JsValue;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommerceProfile {
-    name: String,
-    description: String,
-    telephone: String,
-    web: String,
-    lookup: NominatimLookup,
-    geolocation: CoordinateStrings,
-    ln_address: String,
+    pub name: String,
+    pub description: String,
+    pub telephone: String,
+    pub web: String,
+    pub lookup: NominatimLookup,
+    pub geolocation: CoordinateStrings,
+    pub ln_address: String,
+    pub logo_url: String,
+    pub banner_url: String,
 }
 impl Default for CommerceProfile {
     fn default() -> Self {
@@ -32,6 +34,8 @@ impl Default for CommerceProfile {
             lookup: NominatimLookup::default(),
             geolocation: CoordinateStrings::default(),
             ln_address: "".to_string(),
+            logo_url: "".to_string(),
+            banner_url: "".to_string(),
         }
     }
 }
@@ -44,6 +48,8 @@ impl CommerceProfile {
         lookup: NominatimLookup,
         geo: GeolocationCoordinates,
         ln_address: String,
+        logo_url: String,
+        banner_url: String,
     ) -> Self {
         Self {
             name,
@@ -53,6 +59,8 @@ impl CommerceProfile {
             lookup,
             geolocation: geo.into(),
             ln_address,
+            logo_url,
+            banner_url,
         }
     }
     pub fn signed_data(&self, user_keys: &NostrKeypair) -> NostrNote {
@@ -66,27 +74,12 @@ impl CommerceProfile {
         user_keys.sign_nostr_event(&mut new_note);
         new_note
     }
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-    pub fn description(&self) -> &str {
-        &self.description
-    }
-    pub fn telephone(&self) -> &str {
-        &self.telephone
-    }
-    pub fn web(&self) -> &str {
-        &self.web
-    }
     pub fn geolocation(&self) -> GeolocationCoordinates {
         self.geolocation.clone().into()
     }
     pub fn ln_address(&self) -> LightningAddress {
         let address = Box::leak(self.ln_address.clone().into_boxed_str());
         LightningAddress(address)
-    }
-    pub fn lookup(&self) -> &NominatimLookup {
-        &self.lookup
     }
 }
 impl TryFrom<String> for CommerceProfile {

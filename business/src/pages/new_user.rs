@@ -1,5 +1,5 @@
 use fuente::{
-    mass::{NewAddressForm, NewAddressProps, SimpleInput, SimpleTextArea},
+    mass::{ImageUploadInput, NewAddressForm, NewAddressProps, SimpleInput, SimpleTextArea},
     models::{CommerceProfile, CommerceProfileIdb},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
@@ -12,6 +12,12 @@ pub fn edit_profile_menu() -> Html {
     let user_ctx = use_context::<CommerceDataStore>().expect("No user context found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
+
+    let logo_url = use_state(|| None);
+    let logo_handle = logo_url.clone();
+
+    let banner_url = use_state(|| None);
+    let banner_handle = banner_url.clone();
 
     let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
@@ -47,6 +53,8 @@ pub fn edit_profile_menu() -> Html {
             coords.clone().expect("No coordinates found"),
             form.input_value("ln_address")
                 .expect("Failed to get lightning address"),
+            logo_url.as_ref().cloned().expect("No profile pic found"),
+            banner_url.as_ref().cloned().expect("No banner found"),
         );
         let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
             .expect("Failed to create profile");
@@ -54,6 +62,7 @@ pub fn edit_profile_menu() -> Html {
         sender.emit(note.clone());
         user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
     });
+    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
     html! {
         <form {onsubmit}
             class="w-full h-full flex flex-col gap-4 px-8 py-4">
@@ -65,6 +74,14 @@ pub fn edit_profile_menu() -> Html {
                         >{"Save"}</button>
                 </div>
                 <ProfileInputs />
+                <ImageUploadInput
+                    url_handle={logo_handle} nostr_keys={nostr_keys.clone()}
+                    classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                    input_id="logo-image-upload"/>
+                <ImageUploadInput
+                    url_handle={banner_handle} nostr_keys={nostr_keys}
+                    classes={classes!("min-w-64", "min-h-32", "h-32", "w-64")}
+                    input_id="banner-image-upload"/>
             <NewAddressForm ..props />
         </form>
     }
