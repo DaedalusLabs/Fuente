@@ -1,7 +1,7 @@
 use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
+    mass::{CancelIcon, DriverDetailsComponent, LoadingScreen, OrderRequestDetailsComponent, SpinnerIcon},
     models::{
         DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE
     },
@@ -21,6 +21,17 @@ pub fn live_order_check() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let exchange_rate = admin_ctx.get_exchange_rate();
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+
+    // Early return if commerce data is still loading
+    if commerce_ctx.is_loading() {
+        return html! {
+            <div class="h-full w-full flex items-center justify-center">
+                <LoadingScreen />
+            </div>
+        };
+    }
+
     let inside_html = if let Some(order) = &order_ctx.order {
         match order.1.payment_status {
             OrderPaymentStatus::PaymentPending => Ok(html! {
@@ -188,9 +199,24 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     let order_req = order.get_order_request();
     let delivery_location: GeolocationCoordinates = order_req.address.coordinates().into();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
-    
-    let commerce = commerce_ctx.find_commerce_by_id(&order_req.commerce)
-        .expect("Commerce not found");
+
+    if !commerce_ctx.finished_loading() {
+        return html! {<LoadingScreen />};
+    }
+
+    let commerce = match commerce_ctx.find_commerce_by_id(&order_req.commerce) {
+        Some(commerce) => commerce,
+        None => {
+            gloo::console::error!("Commerce not found, ID:", &order_req.commerce);
+            return html! {
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-red-500">
+                        {"Unable to load business details. Please try refreshing."}
+                    </div>
+                </div>
+            };
+        }
+    };
     let pickup_location = commerce.geolocation();
     let driver_location = use_state(|| None::<GeolocationCoordinates>);
     let map_handle = use_state(|| None::<LeafletMap>);

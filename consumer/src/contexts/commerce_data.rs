@@ -31,14 +31,24 @@ impl CommerceData {
 
 pub trait CommerceDataExt {
     fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile>;
+    fn is_loading(&self) -> bool;
 }
 
 impl CommerceDataExt for UseReducerHandle<CommerceData> {
     fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile> {
-        (**self).commerces.iter()
+        if !self.finished_loading() {
+            gloo::console::warn!("Attempting to find commerce while data is still loading");
+            return None;
+        }
+        
+        self.commerces.iter()
             .find(|p| p.id() == id)
             .map(|p| p.profile())
             .cloned()
+    }
+
+    fn is_loading(&self) -> bool {
+        !self.finished_loading()
     }
 }
 
