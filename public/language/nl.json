@@ -48,6 +48,9 @@
     "profile_personal_information_phone_number": "+507 7656559012",
     "profile_personal_information_edit_button": "Edit",
 
+    "profile_settings_key": "Key Recovery",
+    "profile_settings_language": "Language",
+
     "cart_title": "Cart",
     "cart_heading": "My Cart",
     "cart_text": "Products Details",

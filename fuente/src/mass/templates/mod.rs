@@ -1,4 +1,4 @@
-use lucide_yew::{ScrollText, SquarePen};
+use lucide_yew::SquarePen;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]

@@ -41,13 +41,16 @@
     "profile_personal_information_heading": "My Profile",
     "profile_personal_information_orders_button": "My Orders",
     "profile_personal_information_packages_button": "Track Packages",
-    "profile_personal_information_delete_account_button": "Delete my account",
+    "profile_personal_information_delete_account_button": "Delete my key",
     "profile_personal_information_button": "Personal Information",
     "profile_personal_information_address_button": "Address",
     "profile_personal_information_name": "Christine Amador Russel",
     "profile_personal_information_email": "christineam@gmail.com",
     "profile_personal_information_phone_number": "+507 7656559012",
     "profile_personal_information_edit_button": "Edit",
+
+    "profile_settings_key": "Key Recovery",
+    "profile_settings_language": "Language",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",

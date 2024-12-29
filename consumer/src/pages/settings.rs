@@ -1,14 +1,14 @@
-use super::PageHeader;
 use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
-use fuente::mass::LookupIcon;
+use fuente::contexts::LanguageConfigsStore;
+use fuente::mass::LanguageToggle;
 use fuente::mass::{
-    AddressLookupDetails, CardComponent, ConsumerProfileDetails, ImageUploadInput, NewAddressForm,
-    NewAddressProps, PopupSection, SimpleInput, templates::SettingsPageTemplate,
+    templates::SettingsPageTemplate, AddressLookupDetails, CardComponent, ImageUploadInput,
+    NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
 };
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::ScrollText;
+use lucide_yew::{ScrollText, SquarePen, X};
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
@@ -22,6 +22,7 @@ pub enum SettingsPage {
     Profile,
     Address,
     KeyRecovery,
+    Language,
 }
 
 #[derive(Clone, PartialEq)]
@@ -49,6 +50,8 @@ pub struct AddressListItemProps {
 
 #[function_component(SettingsPageComponent)]
 pub fn settings_page() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let translations = language_ctx.translations();
     let current_page = use_state(|| SettingsPage::Profile);
     let go_to_profile = {
         let page = current_page.clone();
@@ -62,6 +65,10 @@ pub fn settings_page() -> Html {
         let page = current_page.clone();
         Callback::from(move |_| page.set(SettingsPage::KeyRecovery))
     };
+    let go_to_language = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Language))
+    };
     let my_orders_button = {
         html! {
             <>
@@ -74,6 +81,33 @@ pub fn settings_page() -> Html {
         let page = current_page.clone();
         Callback::noop()
     };
+    let edit_button = {
+        match *current_page {
+            SettingsPage::KeyRecovery => {
+                html! {
+                    <button type="button" class="flex gap-4 tracking-wide">
+                        <span class="text-red-600 font-bold text-sm">
+                            {&translations["profile_personal_information_delete_account_button"]}
+                        </span>
+                        <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
+                    </button>
+                }
+            }
+            SettingsPage::Language => {
+                html! {}
+            }
+            _ => {
+                html! {
+                    <button type="button" class="flex gap-4 tracking-wide">
+                        <span class="text-fuente font-bold text-xl">
+                            {&translations["profile_personal_information_edit_button"]}
+                        </span>
+                        <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
+                    </button>
+                }
+            }
+        }
+    };
     html! {
         <SettingsPageTemplate
             heading={"My Profile".to_string()}
@@ -81,169 +115,87 @@ pub fn settings_page() -> Html {
                 (my_orders_button, my_orders_onclick),
             ]}
             sidebar_options={ vec![
-                ("Profile Settings".to_string(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
-                ("Address Settings".to_string(), go_to_address, if *current_page == SettingsPage::Address { true } else { false }),
-                ("Key Recovery".to_string(), go_to_key_recovery, if *current_page == SettingsPage::KeyRecovery { true } else { false }),
+                (translations["profile_address_personal_information_button"].clone(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
+                (translations["profile_address_address_button"].clone(), go_to_address, if *current_page == SettingsPage::Address { true } else { false }),
+                (translations["profile_settings_key"].clone(), go_to_key_recovery, if *current_page == SettingsPage::KeyRecovery { true } else { false }),
+                (translations["profile_settings_language"].clone(), go_to_language, if *current_page == SettingsPage::Language { true } else { false }),
             ]}
-            content_button={None}>
+            content_button={Some(edit_button)} >
             <>
             {match *current_page {
                     SettingsPage::Profile => html! {
-                        <div class="flex flex-col w-full h-full gap-8 px-4">
-                        </div>
+                        <MyContactDetails />
+                    },
+                    SettingsPage::Address => html! {
+                        <MyAddressDetails />
                     },
                     SettingsPage::KeyRecovery => html! {
                         <KeyRecoverySection />
                     },
-                    SettingsPage::Address => html! {
-                        <>
-                        </>
-
+                    SettingsPage::Language => html! {
+                        <LanguageToggle />
                     },
             }}
             </>
         </SettingsPageTemplate>
     }
 }
-#[function_component(SettingsPageComponent2)]
-pub fn settings_page() -> Html {
-    let current_page = use_state(|| SettingsPage::Profile);
-    let profile_menu_state = use_state(|| ProfilePageMenu::None);
 
-    html! {
-        <div class="h-full w-full flex flex-col">
-            <PageHeader title={"Settings".to_string()} />
-
-            <div class="flex flex-row h-full">
-                // Settings Menu
-                <div class="w-64 border-r p-4">
-                    <div class="flex flex-col gap-4">
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Profile))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Profile Settings"}
-                        </button>
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Key Recovery"}
-                        </button>
-                    </div>
-                </div>
-
-                // Content Area
-                <div class="flex-1 p-4">
-                    {match *current_page {
-                        SettingsPage::Profile => match *profile_menu_state {
-                            ProfilePageMenu::None => html! {
-                                <div class="flex flex-col w-full h-full gap-8 px-4">
-                                    <MyAvatar handle={profile_menu_state.clone()} />
-                                    <MyContactDetails handle={profile_menu_state.clone()} />
-                                    <MyAddressDetails handle={profile_menu_state.clone()} />
-                                </div>
-                            },
-                            ProfilePageMenu::EditProfile => html! {
-                                <div class="flex flex-col w-full h-full gap-8">
-                                    <EditProfileMenu handle={profile_menu_state.clone()} />
-                                </div>
-                            },
-                            ProfilePageMenu::AddAddress => html! {
-                                <div class="flex flex-col w-full flex-1 gap-8">
-                                    <NewAddressMenu handle={profile_menu_state.clone()} />
-                                </div>
-                            },
-                        },
-                        SettingsPage::KeyRecovery => html! {
-                            <KeyRecoverySection />
-                        },
-                        SettingsPage::Address => html! {
-                            <></>
-                        },
-                    }}
-                </div>
-            </div>
-        </div>
-    }
-}
-
-#[function_component(MyAvatar)]
-pub fn my_avatar(props: &MenuProps) -> Html {
-    let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
-    let profile = user_ctx.get_profile().expect("No user profile found");
-    let handle = props.handle.clone();
-    html! {
-        <div class="w-full flex flex-col gap-2">
-            <div class="flex flex-row justify-between items-center pr-4">
-                <h3 class="font-bold">{"Avatar"}</h3>
-                <button
-                    onclick={Callback::from(move |_| handle.set(ProfilePageMenu::EditProfile))}
-                    class="text-sm text-fuente">{"Edit"}</button>
-            </div>
-            <CardComponent>
-                <img class="w-24 h-24 rounded-lg" src={profile.avatar_url.clone()} />
-            </CardComponent>
-        </div>
-    }
-}
 #[function_component(MyContactDetails)]
-pub fn my_contact_details(props: &MenuProps) -> Html {
+pub fn my_contact_details() -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
     let profile = user_ctx.get_profile().expect("No user profile found");
 
-    let handle = props.handle.clone();
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let translations = language_ctx.translations();
+
     html! {
-        <div class="w-full flex flex-col gap-2">
-            <div class="flex flex-row justify-between items-center pr-4">
-                <h3 class="font-bold">{"Contact Details"}</h3>
-                <button
-                    onclick={Callback::from(move |_| handle.set(ProfilePageMenu::EditProfile))}
-                    class="text-sm text-fuente">{"Edit"}</button>
+    <div class="grid grid-cols-2 gap-10 h-full">
+        <div class="space-y-3">
+            <h3 class="text-gray-500 text-2xl font-semibold">{profile.nickname.clone()}</h3>
+
+            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
+                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
+                <p class="text-gray-500 font-light">{&profile.email}</p>
             </div>
-            <CardComponent>
-                <ConsumerProfileDetails consumer_profile={profile} />
-            </CardComponent>
+            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
+                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                <p class="text-gray-500 font-light">{&profile.telephone}</p>
+            </div>
         </div>
+        <div class="flex flex-col gap-4 flex-1 items-center justify-center">
+            <img class="w-24 h-24 rounded-lg" src={profile.avatar_url.clone()} />
+        </div>
+    </div>
     }
 }
 
 #[function_component(MyAddressDetails)]
-pub fn my_address_details(props: &MenuProps) -> Html {
-    let close_handle = props.handle.clone();
+pub fn my_address_details() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let translations = language_ctx.translations();
     let mut addresses = use_context::<ConsumerDataStore>()
         .expect("No user context found")
         .get_address_entrys();
     addresses.sort_by(|a, b| a.is_default().cmp(&b.is_default()));
     addresses.reverse();
+    let default_address = addresses.iter().find(|a| a.is_default());
     html! {
-        <div class="w-full flex-1 flex flex-col gap-4 overflow-hidden">
-            <div class="flex flex-row justify-between items-center pr-4">
-            <h3 class="font-bold">{"My Addresses"}</h3>
-                <button
-                    onclick={Callback::from(move |_| close_handle.set(ProfilePageMenu::AddAddress))}
-                    class="text-sm text-fuente">{"Add Address"}</button>
-            </div>
-            <div class="w-full flex-1 flex flex-col gap-4 overflow-y-scroll">
-                {if !addresses.is_empty() {
-                    gloo::console::log!(format!("{}", addresses.len()));
-                    addresses.iter().map(|address| {
-                        html! {
-                            <AddressListItem consumer_address={address.clone()} />
-                        }
-                    }).collect::<Html>()
-                } else {
-                    html! {
-                        <div class="w-full h-full flex-1 flex flex-col gap-2 justify-center items-center">
-                            <LookupIcon class="w-16 h-16 stroke-neutral-300" />
-                            <p class="text-neutral-400 text-sm font-semibold">
-                                {"No Address Found"}
-                            </p>
-                        </div>
-                    }
-                }}
-            </div>
-        </div>
+        {if let Some(address) = default_address {
+            html! {
+                <div>
+                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_address_registered"]}</p>
+                    <span class="text-xl font-thin text-gray-500">{address.address().lookup().display_name()}</span>
+                </div>
+            }
+        } else {
+            html! {
+                <div>
+                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_address_registered"]}</p>
+                    <span class="text-xl font-thin text-gray-500">{&translations["profile_address_no_address_registered"]}</span>
+                </div>
+            }
+        }}
     }
 }
 
@@ -495,4 +447,3 @@ fn legal_section() -> Html {
         </div>
     }
 }
-

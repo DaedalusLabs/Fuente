@@ -189,10 +189,10 @@ pub struct ImageUploadInputProps {
 
 use nostr_minions::{browser_api::HtmlDocument, relay_pool::NostrProps};
 
-use crate::models::{
+use crate::{contexts::{AppLocale, LanguageConfigsAction, LanguageConfigsStore}, models::{
     NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_REQUEST,
     TEST_PUB_KEY,
-};
+}};
 #[function_component(ImageUploadInput)]
 pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let ImageUploadInputProps {
@@ -420,6 +420,56 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                 </label>
             }
         }}
+        </div>
+    }
+}
+#[function_component(LanguageToggle)]
+pub fn language_toggle() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("LanguageConfigsStore not found");
+    let current_locale = language_ctx.current_locale();
+
+    html! {
+        <div class="flex items-center gap-2 mt-4">
+            <button 
+                onclick={
+                    let language_ctx = language_ctx.clone();
+                    Callback::from(move |_| {
+                        language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::English));
+                    })
+                }
+                class={classes!(
+                    "px-4", 
+                    "py-2", 
+                    "rounded-lg",
+                    if matches!(current_locale, AppLocale::English) {
+                        "bg-fuente text-white"
+                    } else {
+                        "bg-gray-100 hover:bg-gray-200"
+                    }
+                )}
+            >
+                {"EN"}
+            </button>
+            <button 
+                onclick={
+                    let language_ctx = language_ctx.clone();
+                    Callback::from(move |_| {
+                        language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::Dutch));
+                    })
+                }
+                class={classes!(
+                    "px-4", 
+                    "py-2", 
+                    "rounded-lg",
+                    if matches!(current_locale, AppLocale::Dutch) {
+                        "bg-fuente text-white"
+                    } else {
+                        "bg-gray-100 hover:bg-gray-200"
+                    }
+                )}
+            >
+                {"NL"}
+            </button>
         </div>
     }
 }

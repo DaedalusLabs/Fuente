@@ -14,8 +14,8 @@ pub fn home_page() -> Html {
     html! {
         <>
             <CommerceFilters />
-            <FuenteHotCategories />
             <FuenteStoresBanner/>
+            <FuenteHotCategories />
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />
         </>
@@ -40,7 +40,7 @@ pub fn stores_banner() -> Html {
                         let commerce_data = profile.profile().clone();
                         html! {
                             <AppLink<ConsumerRoute>
-                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white"
+                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white max-h-56 overflow-clip"
                                 selected_class=""
                                 route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
                                 <CommerceProfileCard commerce_data={commerce_data.clone()} />
