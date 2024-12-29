@@ -99,7 +99,7 @@ pub struct CommerceDataChildren {
 #[function_component(CommerceDataProvider)]
 pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let ctx = use_reducer(|| CommerceData {
-        has_loaded: true,
+        has_loaded: false,
         commerces: vec![],
         products_lists: vec![],
     });

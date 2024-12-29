@@ -139,7 +139,6 @@ impl DriverStateUpdate {
             kind: NOSTR_KIND_DRIVER_STATE,
             content: location_data,  // Direct location data
             pubkey: keys.public_key(),
-            created_at: js_sys::Date::now() as i64,
             ..Default::default()
         };
         
