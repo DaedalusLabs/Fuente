@@ -159,8 +159,14 @@ pub fn commerce_data_sync() -> Html {
             match note.kind {
                 NOSTR_KIND_COMMERCE_PROFILE => {
                     if admin_wl.contains(&note.pubkey) {
-                        if let Ok(profile) = note.clone().try_into() {
-                            ctx_clone.dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
+                        match note.clone().try_into() {
+                            Ok(profile) => {
+                                ctx_clone
+                                    .dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
+                            }
+                            Err(e) => {
+                                gloo::console::error!("Error in commerce profile", format!("{:?}", e));
+                            }
                         }
                     }
                 }
