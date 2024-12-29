@@ -1,23 +1,16 @@
 use crate::contexts::FavoritesAction;
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
 use fuente::mass::templates::{FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
-use fuente::models::FavoriteStore;
-use fuente::{
-    contexts::LanguageConfigsStore,
-    mass::{
-        AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LookupIcon, MenuBarsIcon,
-        ShoppingCartIcon, UserBadgeIcon,
-    },
+use fuente::mass::{
+    AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, MenuBarsIcon, ShoppingCartIcon,
+    UserBadgeIcon,
 };
+use fuente::models::FavoriteStore;
 use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
-    let translations = language_ctx.translations();
-    let businesses = commerce_ctx.commerces();
     html! {
         <>
             <CommerceFilters />
@@ -25,7 +18,6 @@ pub fn home_page() -> Html {
             <FuenteStoresBanner/>
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />
-
         </>
     }
 }
@@ -118,7 +110,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
 pub fn commerce_filters() -> Html {
     html! {
         <nav class="hidden lg:flex max-w-6xl mx-auto">
-            <div class="flex justify-between">
+            <div class="flex justify-between w-full">
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
@@ -130,49 +122,5 @@ pub fn commerce_filters() -> Html {
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
             </div>
         </nav>
-    }
-}
-#[function_component(HomeHeader)]
-pub fn home_header() -> Html {
-    html! {
-        <div class="w-full flex flex-row justify-between p-4 ">
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Settings}>
-                <MenuBarsIcon class="w-8 h-8 stroke-neutral-900" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Cart}>
-                <ShoppingCartIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-        </div>
-    }
-}
-#[function_component(HomeFooter)]
-pub fn home_footer() -> Html {
-    html! {
-        <div class="w-full p-4 flex flex-row justify-between">
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Home}>
-                <HomeIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Favorites}>
-                <HeartIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Settings}>
-                <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::History}>
-                <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-        </div>
     }
 }

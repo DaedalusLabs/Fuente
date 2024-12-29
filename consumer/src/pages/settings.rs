@@ -1,25 +1,27 @@
-use yew::prelude::*;
-use yew::props;
 use super::PageHeader;
 use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
+use fuente::mass::LookupIcon;
 use fuente::mass::{
-    AddressLookupDetails, CardComponent, ConsumerProfileDetails,
-    ImageUploadInput, NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
+    AddressLookupDetails, CardComponent, ConsumerProfileDetails, ImageUploadInput, NewAddressForm,
+    NewAddressProps, PopupSection, SimpleInput, templates::SettingsPageTemplate,
 };
+use fuente::models::{
+    ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
+};
+use lucide_yew::ScrollText;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
 };
-use fuente::models::{ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY};
-use fuente::mass::LookupIcon;
+use yew::prelude::*;
+use yew::props;
 
 #[derive(Clone, PartialEq)]
 pub enum SettingsPage {
     Profile,
+    Address,
     KeyRecovery,
-    FAQ,
-    Legal,
 }
 
 #[derive(Clone, PartialEq)]
@@ -45,8 +47,65 @@ pub struct AddressListItemProps {
     pub consumer_address: ConsumerAddressIdb,
 }
 
-
 #[function_component(SettingsPageComponent)]
+pub fn settings_page() -> Html {
+    let current_page = use_state(|| SettingsPage::Profile);
+    let go_to_profile = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Profile))
+    };
+    let go_to_address = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Address))
+    };
+    let go_to_key_recovery = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::KeyRecovery))
+    };
+    let my_orders_button = {
+        html! {
+            <>
+                <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
+                {"My Orders"}
+            </>
+        }
+    };
+    let my_orders_onclick = {
+        let page = current_page.clone();
+        Callback::noop()
+    };
+    html! {
+        <SettingsPageTemplate
+            heading={"My Profile".to_string()}
+            options={ vec![
+                (my_orders_button, my_orders_onclick),
+            ]}
+            sidebar_options={ vec![
+                ("Profile Settings".to_string(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
+                ("Address Settings".to_string(), go_to_address, if *current_page == SettingsPage::Address { true } else { false }),
+                ("Key Recovery".to_string(), go_to_key_recovery, if *current_page == SettingsPage::KeyRecovery { true } else { false }),
+            ]}
+            content_button={None}>
+            <>
+            {match *current_page {
+                    SettingsPage::Profile => html! {
+                        <div class="flex flex-col w-full h-full gap-8 px-4">
+                        </div>
+                    },
+                    SettingsPage::KeyRecovery => html! {
+                        <KeyRecoverySection />
+                    },
+                    SettingsPage::Address => html! {
+                        <>
+                        </>
+
+                    },
+            }}
+            </>
+        </SettingsPageTemplate>
+    }
+}
+#[function_component(SettingsPageComponent2)]
 pub fn settings_page() -> Html {
     let current_page = use_state(|| SettingsPage::Profile);
     let profile_menu_state = use_state(|| ProfilePageMenu::None);
@@ -54,34 +113,22 @@ pub fn settings_page() -> Html {
     html! {
         <div class="h-full w-full flex flex-col">
             <PageHeader title={"Settings".to_string()} />
-            
+
             <div class="flex flex-row h-full">
                 // Settings Menu
                 <div class="w-64 border-r p-4">
                     <div class="flex flex-col gap-4">
-                        <button 
-                            onclick={let page = current_page.clone(); 
+                        <button
+                            onclick={let page = current_page.clone();
                                 Callback::from(move |_| page.set(SettingsPage::Profile))}
                             class="text-left p-2 hover:bg-gray-100 rounded">
                             {"Profile Settings"}
                         </button>
-                        <button 
+                        <button
                             onclick={let page = current_page.clone();
                                 Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
                             class="text-left p-2 hover:bg-gray-100 rounded">
                             {"Key Recovery"}
-                        </button>
-                        <button 
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::FAQ))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"FAQ"}
-                        </button>
-                        <button 
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Legal))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Legal"}
                         </button>
                     </div>
                 </div>
@@ -111,11 +158,8 @@ pub fn settings_page() -> Html {
                         SettingsPage::KeyRecovery => html! {
                             <KeyRecoverySection />
                         },
-                        SettingsPage::FAQ => html! {
-                            <FAQSection />
-                        },
-                        SettingsPage::Legal => html! {
-                            <LegalSection />
+                        SettingsPage::Address => html! {
+                            <></>
                         },
                     }}
                 </div>
@@ -389,10 +433,11 @@ pub fn edit_profile_form(props: &EditProfileFormProps) -> Html {
 fn key_recovery_section() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let keys = key_ctx.get_nostr_key().expect("No keys found");
-    
+
     // Convert secret key bytes to hex string
     let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes.iter()
+    let secret_key_hex: String = secret_key_bytes
+        .iter()
         .map(|b| format!("{:02x}", b))
         .collect();
 
@@ -440,13 +485,14 @@ fn legal_section() -> Html {
             <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="font-bold mb-2">{"Terms of Service"}</h3>
                 <p class="mb-4">{"By using our service, you agree to these terms..."}</p>
-                
+
                 <h3 class="font-bold mb-2">{"Privacy Policy"}</h3>
                 <p class="mb-4">{"We respect your privacy and protect your data..."}</p>
-                
+
                 <h3 class="font-bold mb-2">{"Refund Policy"}</h3>
                 <p>{"Our refund policy details..."}</p>
             </div>
         </div>
     }
 }
+
