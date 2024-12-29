@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, SettingsPageComponent};
+use crate::{contexts::{CommerceDataStore, LiveOrderStore}, pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent}};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -21,6 +21,15 @@ pub enum ConsumerRoute {
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
+    let order_ctx = use_context::<LiveOrderStore>().expect("No order context found");
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
+    if !order_ctx.has_loaded || !commerce_ctx.finished_loading() {
+        return html! {<div>{"Loading..."}</div>};
+    }
+    if let Some(order) = order_ctx.order.as_ref() {
+        return html! {<LiveOrderCheck />};
+    }
+    
     html! {
         <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                 match switch {

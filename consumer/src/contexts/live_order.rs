@@ -10,11 +10,13 @@ use crate::pages::LiveOrderCheck;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
     pub order: Option<(NostrNote, OrderInvoiceState)>,
+    pub has_loaded: bool,
 }
 
 impl LiveOrder {}
 
 pub enum LiveOrderAction {
+    FinishedLoadingRelay,
     SetOrder(NostrNote, OrderInvoiceState),
     ClearOrder,
     CompleteOrder(String),
@@ -27,12 +29,19 @@ impl Reducible for LiveOrder {
         match action {
             LiveOrderAction::SetOrder(order, state) => Rc::new(LiveOrder {
                 order: Some((order, state)),
+                has_loaded: self.has_loaded,
             }),
-            LiveOrderAction::ClearOrder => Rc::new(LiveOrder { order: None }),
+            LiveOrderAction::ClearOrder => Rc::new(LiveOrder {
+                order: None,
+                has_loaded: self.has_loaded,
+            }),
             LiveOrderAction::CompleteOrder(order_id) => {
                 if let Some(order) = &self.order {
                     if order.1.order_id() == order_id {
-                        Rc::new(LiveOrder { order: None })
+                        Rc::new(LiveOrder {
+                            order: None,
+                            has_loaded: self.has_loaded,
+                        })
                     } else {
                         self
                     }
@@ -40,6 +49,10 @@ impl Reducible for LiveOrder {
                     self
                 }
             }
+            LiveOrderAction::FinishedLoadingRelay => Rc::new(LiveOrder {
+                order: self.order.clone(),
+                has_loaded: true,
+            }),
         }
     }
 }
@@ -53,24 +66,14 @@ pub struct LiveOrderChildren {
 
 #[function_component(LiveOrderProvider)]
 pub fn key_handler(props: &LiveOrderChildren) -> Html {
-    let ctx = use_reducer(|| LiveOrder { order: None });
+    let ctx = use_reducer(|| LiveOrder {
+        order: None,
+        has_loaded: false,
+    });
 
     html! {
         <ContextProvider<LiveOrderStore> context={ctx.clone()}>
-            {match ctx.order.as_ref() {
-                Some(_) => {
-                    html! {
-                        <LiveOrderCheck />
-                    }
-                }
-                None => {
-                    html! {
-                        <>
-                            {props.children.clone()}
-                        </>
-                    }
-                }
-            }}
+            {props.children.clone()}
             <LiveOrderSync />
         </ContextProvider<LiveOrderStore>>
     }
@@ -85,6 +88,7 @@ pub fn commerce_data_sync() -> Html {
     let subscriber = relay_ctx.subscribe;
     let unique_notes = relay_ctx.unique_notes.clone();
     let keys_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let ctx_clone = ctx.clone();
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
@@ -128,6 +132,20 @@ pub fn commerce_data_sync() -> Html {
                             }
                         }
                     }
+                }
+            }
+        }
+        || {}
+    });
+
+    use_effect_with(relay_ctx.relay_events.clone(), move |events| {
+        if let Some(event) = events.last() {
+            if let nostro2::relays::RelayEvent::EndOfSubscription(
+                nostro2::relays::EndOfSubscriptionEvent(_, id),
+            ) = event
+            {
+                if id == &(*sub_id) {
+                    ctx_clone.dispatch(LiveOrderAction::FinishedLoadingRelay);
                 }
             }
         }
