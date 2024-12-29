@@ -12,9 +12,10 @@
     "auth_login_title": "Login",
     "auth_login_heading_shop": "Shop",
     "auth_login_heading_now": "Now",
-    "auth_login_form_label": "Write the key",
+    "auth_login_form_label": "Your Private Key",
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
+    "auth_login_link_button": "Shop Now",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",
@@ -23,6 +24,7 @@
     "auth_register_form_label_email": "Your email",
     "auth_register_form_label_phone": "Phone number",
     "auth_register_link_login": "I have an account - Login",
+    "auth_register_link_button": "Register Now",
 
     "profile_address_title": "Profile - Address",
     "profile_address_heading": "My Profile",

@@ -1,7 +1,10 @@
+use fuente::mass::templates::{FuenteFooter, FuenteHeader};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, SettingsPageComponent};
+use crate::pages::{
+    CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, SettingsPageComponent,
+};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -22,6 +25,8 @@ pub enum ConsumerRoute {
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
     html! {
+        <>
+        <FuenteHeader />
         <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                 match switch {
                     ConsumerRoute::Home => html!{<HomePage />},
@@ -35,5 +40,7 @@ pub fn consumer_pages() -> Html {
                 }
             }}
         />
+        <FuenteFooter />
+        </>
     }
 }
