@@ -3,7 +3,7 @@ use consumer::{
         CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
         ConsumerDataStore, FavoritesProvider, LiveOrderProvider,
     },
-    pages::NewProfilePage,
+    pages::{LiveOrderCheck, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{

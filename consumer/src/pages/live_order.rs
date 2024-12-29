@@ -1,18 +1,27 @@
 use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{CancelIcon, DriverDetailsComponent, LoadingScreen, OrderRequestDetailsComponent, SpinnerIcon},
+    mass::{
+        CancelIcon, DriverDetailsComponent, LoadingScreen, OrderRequestDetailsComponent,
+        SpinnerIcon,
+    },
     models::{
-        DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE
+        DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus,
+        OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE,
     },
 };
 use nostr_minions::{
-    browser_api::{clipboard_copy, GeolocationCoordinates}, key_manager::NostrIdStore, relay_pool::NostrProps, widgets::leaflet::{IconOptions, LatLng, LeafletComponent, LeafletMap, LeafletMapOptions, Marker},
+    browser_api::{clipboard_copy, GeolocationCoordinates},
+    key_manager::NostrIdStore,
+    relay_pool::NostrProps,
+    widgets::leaflet::{
+        IconOptions, LatLng, LeafletComponent, LeafletMap, LeafletMapOptions, Marker,
+    },
 };
-use nostro2::notes::NostrNote;
+use nostro2::relays::NostrSubscription;
 use yew::prelude::*;
 
-use crate::contexts::{CommerceDataStore, LiveOrderStore, CommerceDataExt};
+use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderStore};
 
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check() -> Html {
@@ -24,12 +33,15 @@ pub fn live_order_check() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
 
     // Early return if commerce data is still loading
-    if commerce_ctx.is_loading() {
+    if commerce_ctx.is_loading() || !order_ctx.has_loaded {
         return html! {
             <div class="h-full w-full flex items-center justify-center">
                 <LoadingScreen />
             </div>
         };
+    }
+    if order_ctx.order.is_none() {
+        return html! {};
     }
 
     let inside_html = if let Some(order) = &order_ctx.order {
@@ -69,7 +81,7 @@ pub fn live_order_check() -> Html {
                             let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
                             let driver = driver_db.profile();
                             let pubkey = driver_db.pubkey();
-            
+
                             Ok(html! {
                                 <>
                                     <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
@@ -199,6 +211,8 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     let order_req = order.get_order_request();
     let delivery_location: GeolocationCoordinates = order_req.address.coordinates().into();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     if !commerce_ctx.finished_loading() {
         return html! {<LoadingScreen />};
@@ -221,6 +235,17 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     let driver_location = use_state(|| None::<GeolocationCoordinates>);
     let map_handle = use_state(|| None::<LeafletMap>);
     let marker_handle = use_state(|| None::<Marker>);
+    let subscriber = relay_ctx.subscribe.clone();
+    let keys_clone = key_ctx.get_nostr_key().clone();
+    if let Some(driver_pubkey) = order.courier.as_ref().map(|c| c.pubkey.clone()) {
+        let mut filter = NostrSubscription {
+            kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
+            authors: Some(vec![driver_pubkey.clone()]),
+            ..Default::default()
+        };
+        filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
+        subscriber.emit(filter.relay_subscription());
+    }
 
     let location_icon_options = IconOptions {
         icon_url: "/public/assets/img/rider2.png".to_string(),
@@ -236,38 +261,50 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
             gloo::console::log!("Received note kind:", note.kind);
-            
+
             // Only process driver state notes
             if note.kind == NOSTR_KIND_DRIVER_STATE {
                 if let Some(keys) = key_ctx.get_nostr_key() {
                     match keys.decrypt_nip_04_content(note) {
                         Ok(decrypted) => {
                             gloo::console::log!("Decrypted content:", &decrypted);
-                            
+
                             // Parse directly as DriverStateUpdate
                             match serde_json::from_str::<DriverStateUpdate>(&decrypted) {
                                 Ok(state_update) => {
                                     let coords = state_update.get_location();
-                                    gloo::console::log!("Got driver coordinates:", format!("{:?}", coords));
-                                    
+                                    gloo::console::log!(
+                                        "Got driver coordinates:",
+                                        format!("{:?}", coords)
+                                    );
+
                                     driver_location.set(Some(coords.clone()));
-                                    
-                                    if let (Some(marker), Some(_map)) = (driver_marker.as_ref(), map.as_ref()) {
+
+                                    if let (Some(marker), Some(_map)) =
+                                        (driver_marker.as_ref(), map.as_ref())
+                                    {
                                         let latlng: LatLng = coords.clone().into();
-                                        if let Ok(js_value) = serde_wasm_bindgen::to_value(&latlng) {
+                                        if let Ok(js_value) = serde_wasm_bindgen::to_value(&latlng)
+                                        {
                                             marker.set_lat_lng(&js_value);
-                                            gloo::console::log!("Updated marker position:", format!("{:?}", coords));
+                                            gloo::console::log!(
+                                                "Updated marker position:",
+                                                format!("{:?}", coords)
+                                            );
                                         }
                                     } else {
                                         gloo::console::warn!("Marker or map not initialized");
                                     }
-                                },
+                                }
                                 Err(e) => {
-                                    gloo::console::error!("Failed to parse driver state:", e.to_string());
+                                    gloo::console::error!(
+                                        "Failed to parse driver state:",
+                                        e.to_string()
+                                    );
                                     gloo::console::log!("Raw decrypted content:", &decrypted);
                                 }
                             }
-                        },
+                        }
                         Err(e) => gloo::console::error!("Failed to decrypt note:", e.to_string()),
                     }
                 }
@@ -290,7 +327,7 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
         <div class="w-full h-96">
             <LeafletComponent
                 map_id="tracking-map"
-                {map_options} 
+                {map_options}
                 location_icon_options={Some(location_icon_options)}
                 markers={vec![]}
                 on_map_created={Callback::from({
