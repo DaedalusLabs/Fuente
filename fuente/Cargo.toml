@@ -29,3 +29,4 @@ bright-lightning.workspace = true
 # Nostr stuff
 nostro2.workspace = true
 sha2 = "0.10.8"
+lucide-yew.workspace = true

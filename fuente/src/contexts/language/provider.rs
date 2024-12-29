@@ -16,6 +16,9 @@ impl LanguageConfigs {
     pub fn translations(&self) -> &std::collections::HashMap<String, String> {
         &self.translations.translations
     }
+     pub fn current_locale(&self) -> AppLocale {
+        self.locale
+    }
 }
 
 pub enum LanguageConfigsAction {

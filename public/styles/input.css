@@ -10,9 +10,13 @@
     width: 95%;
 }
 
+div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div {
+    display: none;
+}
+
 @font-face {
-  font-family: 'OpenSans';
-  src: url('/public/assets/fonts/ProductSans-Regular.ttf') format('truetype');
+  font-family: 'Open Sans';
+  src: url('/public/assets/fonts/OpenSans.ttf') format('truetype');
 }
 @font-face {
   font-family: 'MPlus';

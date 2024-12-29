@@ -15,6 +15,7 @@
     "auth_login_form_label": "Write the key",
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
+    "auth_login_link_button": "Buy Now",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",
@@ -46,6 +47,9 @@
     "profile_personal_information_email": "christineam@gmail.com",
     "profile_personal_information_phone_number": "+507 7656559012",
     "profile_personal_information_edit_button": "Edit",
+
+    "profile_settings_key": "Key Recovery",
+    "profile_settings_language": "Language",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",

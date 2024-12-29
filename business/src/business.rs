@@ -5,7 +5,7 @@ use business::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore},
-    mass::{LoadingScreen, MainLayout, NewUserPage},
+    mass::{LoadingScreen, MainLayout, LoginPage},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -92,7 +92,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if key_ctx.get_nostr_key().is_none() {
         return html! {
             <div class="flex justify-center items-center flex-1">
-                <NewUserPage />
+                <LoginPage />
             </div>
         };
     }
