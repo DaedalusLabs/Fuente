@@ -1,11 +1,10 @@
 use std::rc::Rc;
 
-use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE};
+use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_DRIVER_STATE, NOSTR_KIND_ORDER_STATE};
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::NostrNote, relays::NostrSubscription};
 use yew::prelude::*;
 
-use crate::pages::LiveOrderCheck;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
@@ -85,7 +84,7 @@ pub fn commerce_data_sync() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let sub_id = use_state(|| "".to_string());
 
-    let subscriber = relay_ctx.subscribe;
+    let subscriber = relay_ctx.subscribe.clone();
     let unique_notes = relay_ctx.unique_notes.clone();
     let keys_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let ctx_clone = ctx.clone();
@@ -101,6 +100,22 @@ pub fn commerce_data_sync() -> Html {
             let sub = filter.relay_subscription();
             id_handle.set(sub.1.clone());
             subscriber.emit(sub);
+        }
+        || {}
+    });
+
+    let keys_clone = keys_ctx.get_nostr_key().clone();
+    let subscriber_clone = relay_ctx.subscribe;
+    use_effect_with(ctx.order.clone(), move |order| {
+        if let Some((_note, state)) = order {
+            if let Some(_courier_note) = state.courier.clone() {
+                let mut filter = NostrSubscription {
+                    kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
+                    ..Default::default()
+                };
+                filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
+                subscriber_clone.emit(filter.relay_subscription());
+            }
         }
         || {}
     });

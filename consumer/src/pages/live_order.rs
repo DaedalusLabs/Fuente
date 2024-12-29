@@ -1,15 +1,14 @@
 use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{
-        CancelIcon, DriverDetailsComponent, LoadingScreen, OrderRequestDetailsComponent,
-        SpinnerIcon,
-    },
+    mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{
-        DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus,
-        OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE,
+        CommerceProfile, DriverProfileIdb, DriverStateUpdate, OrderInvoiceState,
+        OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL,
+        NOSTR_KIND_DRIVER_STATE,
     },
 };
+use html::ChildrenProps;
 use nostr_minions::{
     browser_api::{clipboard_copy, GeolocationCoordinates},
     key_manager::NostrIdStore,
@@ -18,33 +17,27 @@ use nostr_minions::{
         IconOptions, LatLng, LeafletComponent, LeafletMap, LeafletMapOptions, Marker,
     },
 };
-use nostro2::relays::NostrSubscription;
 use yew::prelude::*;
 
 use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderStore};
 
 #[function_component(LiveOrderCheck)]
-pub fn live_order_check() -> Html {
+pub fn live_order_check(props: &ChildrenProps) -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let exchange_rate = admin_ctx.get_exchange_rate();
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
 
-    // Early return if commerce data is still loading
-    if commerce_ctx.is_loading() || !order_ctx.has_loaded {
-        return html! {
-            <div class="h-full w-full flex items-center justify-center">
-                <LoadingScreen />
-            </div>
-        };
-    }
     if order_ctx.order.is_none() {
         return html! {};
     }
 
     let inside_html = if let Some(order) = &order_ctx.order {
+        let commerce_profile = commerce_ctx
+            .find_commerce_by_id(&order.1.get_commerce_pubkey())
+            .expect("Commerce not found");
         match order.1.payment_status {
             OrderPaymentStatus::PaymentPending => Ok(html! {
                 <>
@@ -73,7 +66,7 @@ pub fn live_order_check() -> Html {
                         Ok(html! {
                             <>
                                 <h2 class="text-2xl font-bold">{"Order in Delivery!"}</h2>
-                                <LiveOrderTracking order={order.clone()} />
+                                <LiveOrderTracking order={order.clone()} commerce={commerce_profile} />
                             </>
                         })
                     } else {
@@ -106,10 +99,11 @@ pub fn live_order_check() -> Html {
                     }
                 }
             }
-            _ => Err(html! {<></>}),
+            _ => Err(html! {<>
+            </>}),
         }
     } else {
-        Err(html! {<></>})
+        Err(html! {<>{props.children.clone()}</>})
     };
     let onclick = {
         let order_ctx = order_ctx.clone();
@@ -203,58 +197,26 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
 #[derive(Clone, PartialEq, Properties)]
 pub struct LiveOrderTrackingProps {
     pub order: OrderInvoiceState,
+    pub commerce: CommerceProfile,
 }
 
 #[function_component(LiveOrderTracking)]
 pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
-    let LiveOrderTrackingProps { order } = props;
+    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let LiveOrderTrackingProps { order, commerce } = props;
     let order_req = order.get_order_request();
     let delivery_location: GeolocationCoordinates = order_req.address.coordinates().into();
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
-    let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
-    if !commerce_ctx.finished_loading() {
-        return html! {<LoadingScreen />};
-    }
-
-    let commerce = match commerce_ctx.find_commerce_by_id(&order_req.commerce) {
-        Some(commerce) => commerce,
-        None => {
-            gloo::console::error!("Commerce not found, ID:", &order_req.commerce);
-            return html! {
-                <div class="flex items-center justify-center h-full">
-                    <div class="text-red-500">
-                        {"Unable to load business details. Please try refreshing."}
-                    </div>
-                </div>
-            };
-        }
-    };
     let pickup_location = commerce.geolocation();
     let driver_location = use_state(|| None::<GeolocationCoordinates>);
     let map_handle = use_state(|| None::<LeafletMap>);
     let marker_handle = use_state(|| None::<Marker>);
-    let subscriber = relay_ctx.subscribe.clone();
-    let keys_clone = key_ctx.get_nostr_key().clone();
-    if let Some(driver_pubkey) = order.courier.as_ref().map(|c| c.pubkey.clone()) {
-        let mut filter = NostrSubscription {
-            kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
-            authors: Some(vec![driver_pubkey.clone()]),
-            ..Default::default()
-        };
-        filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
-        subscriber.emit(filter.relay_subscription());
-    }
-
     let location_icon_options = IconOptions {
         icon_url: "/public/assets/img/rider2.png".to_string(),
         icon_size: Some(vec![32, 32]),
         icon_anchor: Some(vec![16, 32]),
     };
-
-    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     let driver_marker = marker_handle.clone();
     let map = map_handle.clone();
