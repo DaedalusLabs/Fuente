@@ -250,9 +250,12 @@
     "admin_store_new_products_title": "Store - New Products",
     "admin_store_new_products_heading": "My Store",
 
+    "admin_store_profile_heading": "My Store Profile",
+
     "admin_store_add_product_button": "Add new product",
     "admin_store_new_products_button": "New products",
     "admin_store_all_products_button": "All products",
+    "admin_store_banner_button": "Store Banner",
     "admin_store_sale_products_button": "On Sale",
     "admin_store_discontinued_products_button": "Discontinued",
     "admin_store_table_detail_heading": "Product Details",
@@ -289,5 +292,24 @@
     "footer_politics_terms": "Terms and conditions",
     "footer_politics_general": "General policies",
     "footer_politics_privacy": "Privacy Policy",
-    "footer_politics_return": "Return and exchanges"
+    "footer_politics_return": "Return and exchanges",
+
+    "store_orders_history_title": "Order History",
+    "store_orders_history_date": "Select a Date",
+    "store_orders_history_completed": "Completed",
+    "store_orders_history_canceled": "Canceled",
+
+    "store_products_form_label_name": "Name of product",
+    "store_products_form_label_information": "Product information",
+    "store_products_form_label_details": "Details of your product",
+    "store_products_form_label_description": "Description of your product",
+    "store_products_form_label_photos": "Add photos of your product",
+    "store_products_form_label_price_info": "Price information",
+    "store_products_form_label_original_price": "Original price",
+    "store_products_form_label_discount": "Discount",
+    "store_products_form_label_total_price": "Total Price",
+    "store_products_form_label_category": "Product Category",
+    "store_products_form_label_add_button": "Add Product",
+    "store_products_form_label_add_category": "Add Category"
+
 }

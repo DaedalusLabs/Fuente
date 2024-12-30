@@ -75,7 +75,7 @@ pub fn settings_content_button(props: &SettingsButtonContentProps) -> Html {
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsOptionsButtonsProps {
-    pub options: Vec<(Html, Callback<MouseEvent>)>,
+    pub options: Vec<Html>,
 }
 
 #[function_component(SettingsOptionsButtons)]
@@ -83,14 +83,9 @@ pub fn settings_options_buttons(props: &SettingsOptionsButtonsProps) -> Html {
     let SettingsOptionsButtonsProps { options } = props;
     html! {
         <div class="flex items-center gap-4">
-            {for options.iter().map(|(name, onclick)| {
+            {for options.iter().map(|name| {
                 html! {
-                    <div class="flex justify-center items-center gap-2">
-                    <button type="button" {onclick}
-                        class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2">
-                            {name.clone()}
-                    </button>
-                    </div>
+                    {name.clone()}
                 }
             })}
         </div>
@@ -100,7 +95,7 @@ pub fn settings_options_buttons(props: &SettingsOptionsButtonsProps) -> Html {
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsPageTemplateProps {
     pub children: Children,
-    pub options: Vec<(Html, Callback<MouseEvent>)>,
+    pub options: Vec<Html>,
     pub heading: String,
     pub content_button: Option<Html>,
     pub sidebar_options: Vec<(String, Callback<MouseEvent>, bool)>,

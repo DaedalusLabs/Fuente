@@ -104,9 +104,8 @@ fn admin_config_sync() -> Html {
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_SERVER_CONFIG {
-                if let Some(conf_type_str) =
-                    note.tags.find_tags(NostrTag::Parameterized).get(2)
-                {
+                gloo::console::log!("AdminConfigSync effect");
+                if let Some(conf_type_str) = note.tags.find_tags(NostrTag::Parameterized).get(2) {
                     let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
                         .expect("Failed to parse conf type");
                     match conf_type {
@@ -119,13 +118,19 @@ fn admin_config_sync() -> Html {
                             }
                         }
                         AdminConfigurationType::CommerceWhitelist => {
-                            if let Ok(whitelist) =
-                                serde_json::from_str::<Vec<String>>(&note.content)
-                            {
-                                ctx_handler.dispatch(AdminConfigsAction::UpdateCommerceWhitelist(
-                                    whitelist,
-                                ));
-                                gloo::console::log!("Commerce whitelist updated");
+                            match serde_json::from_str::<Vec<String>>(&note.content) {
+                                Ok(whitelist) => {
+                                    gloo::console::log!("Commerce whitelist updated to: {:?}", format!("{:?}", &whitelist));
+                                    ctx_handler.dispatch(
+                                        AdminConfigsAction::UpdateCommerceWhitelist(whitelist),
+                                    );
+                                }
+                                Err(e) => {
+                                    gloo::console::error!(
+                                        "Failed to parse commerce whitelist: {:?}",
+                                        format!("{:?}", e)
+                                    );
+                                }
                             }
                         }
                         AdminConfigurationType::CourierWhitelist => {
