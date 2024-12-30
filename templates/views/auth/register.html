@@ -3,70 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>{"Register"}</title>
-    <link rel="stylesheet" href="../../styles/output.css">
+    <link rel="stylesheet" href="/templates/styles/output.css">
 </head>
-<body class="font-fuente">
-    <main class="flex min-h-screen">
-        <div class="bg-white bg-logo bg-no-repeat bg-[length:200px_75px] mt-10 ml-16 flex justify-end items-center flex-1">
-            <p class="text-fuente text-[175px] font-bold -rotate-90 -mr-52 tracking-[-1rem]">{"Register"}</p>
+<body class="font-fuente min-h-screen">
+    <header class="lg:hidden">
+        <img
+            src="/templates/img/Logo Fuente.jpeg"
+            alt="Fuente logo"
+            class="w-52 mx-auto py-5"
+        >
+    </header>
+    <main class="grid grid-rows-[3fr_1fr] lg:flex min-h-screen">
+        <div class="hidden bg-fuente min-h-screen overflow-hidden lg:overflow-visible lg:bg-white lg:bg-logo lg:bg-no-repeat lg:bg-[length:200px_75px] lg:mt-10 lg:ml-16 lg:flex lg:justify-end lg:items-center lg:flex-1">
+            <h2 class="hidden lg:flex text-fuente text-[135px] lg:text-[175px] font-bold -rotate-90 -mr-52 tracking-tighter lg:tracking-[-1rem]">Register</h2>
         </div>
 
-        <div class="bg-fuente flex items-center flex-auto">
-            <h2 class="text-white text-[175px] font-bold -rotate-90 -ml-[7.5rem] tracking-[-1rem] -mb-28">{"Now"}</h2>
-
-            <div class="w-full max-w-[380px] -ml-16 xl:ml-20">
-                <h2 class="text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">{"Register"}</h2>
-                <form class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
-                    <div class="space-y-5">
-                        <div class="space-y-1">
-                            <label
-                                for="username"
-                                class="text-white text-lg block text-left"
-                            >{"Your username"}</label>
+        <div class="bg-fuente lg:flex lg:items-center lg:flex-auto lg:h-auto lg:min-h-screen lg:overflow-visible relative lg:static">
+            <h2 class="hidden lg:flex text-white text-[135px] lg:text-[175px] font-bold -rotate-90 -ml-[5.4rem] lg:-ml-[7.7rem] tracking-[-1rem] -mb-16">Now</h2>
+            <div class="container mx-auto pt-10">
+                <div class="max-w-[400px] mx-auto lg:mx-0 lg:max-w-[380px] xl:ml-44 lg:mb-48 pb-56 lg:pb-0">
+                    <p class="text-5xl lg:text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">Register</p>
+                    <form class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+                        <div class="space-y-5">
+                            <div class="space-y-1">
+                                <label
+                                    for="username"
+                                    class="text-white text-lg block text-left"
+                                >{"Your username"}</label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    class="p-3 w-full rounded-xl"
+                                >
+                            </div>
+    
+                            <div class="space-y-1">
+                                <label
+                                    for="email"
+                                    class="text-white text-lg block text-left"
+                                >{"Your email"}</label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    class="p-3 w-full rounded-xl"
+                                >
+                            </div>
+    
+                            <div class="space-y-1">
+                                <label
+                                    for="phone"
+                                    class="text-white text-lg block text-left"
+                                >{"Phone number"}</label>
+                                <input
+                                    id="phone"
+                                    type="tel"
+                                    class="p-3 w-full rounded-xl"
+                                >
+                            </div>
+                        </div>
+    
+                        <div class="space-y-5 flex flex-col mt-5">
+                            <a href="/templates/views/auth/login.html" class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">{"I have an account - Login"}</a>
                             <input
-                                id="username"
-                                type="text"
-                                class="p-3 w-full rounded-xl"
+                                type="submit"
+                                class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                                value="Register Now"
                             >
                         </div>
-
-                        <div class="space-y-1">
-                            <label
-                                for="email"
-                                class="text-white text-lg block text-left"
-                            >{"Your email"}</label>
-                            <input
-                                id="email"
-                                type="email"
-                                class="p-3 w-full rounded-xl"
-                            >
-                        </div>
-
-                        <div class="space-y-1">
-                            <label
-                                for="phone"
-                                class="text-white text-lg block text-left"
-                            >{"Phone number"}</label>
-                            <input
-                                id="phone"
-                                type="tel"
-                                class="p-3 w-full rounded-xl"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="space-y-5 flex flex-col mt-5">
-                        <a href="/templates/views/auth/login.html" class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">{"I have an account - Login"}</a>
-                        <input
-                            type="submit"
-                            class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
-                            value="Register Now"
-                        >
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
+
+            <h2 class="text-white text-[135px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12 left-0 w-full">Register</h2>
+        </div>
+        <div class="lg:hidden bg-white">
+            <h2 class="text-fuente text-[135px] font-bold tracking-[-1rem] text-center -mt-5">Now</h2>
         </div>
     </main>
 </body>
