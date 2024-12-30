@@ -1,10 +1,24 @@
-<footer class="bg-fuente p-20 mt-40">
-    <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+<footer class="bg-fuente p-10 lg:p-20 mt-40">
+    <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
         <a href="/templates//views/app/home.html">
-            <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+            <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
         </a>
 
-        <div>
+        <svg 
+            viewBox="0 0 32 32" 
+            xml:space="preserve" 
+            xmlns="http://www.w3.org/2000/svg" 
+            enable-background="new 0 0 32 32" 
+            class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden"
+        >
+            <path 
+                d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                fill="#ffffff" 
+                class="fill-000000">
+            </path>
+        </svg>
+
+        <div class="hidden lg:block">
             <h3 class="text-xl text-white">{"About Fuente"}</h3>
             <div class="mt-5 space-y-3">
                 <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
@@ -13,7 +27,7 @@
             </div>
         </div>
 
-        <div>
+        <div class="hidden lg:block">
             <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
             <div class="mt-5 space-y-3">
                 <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
@@ -22,7 +36,7 @@
             </div>
         </div>
 
-        <div>
+        <div class="hidden lg:block">
             <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
             <div class="mt-5 space-y-3">
                 <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>

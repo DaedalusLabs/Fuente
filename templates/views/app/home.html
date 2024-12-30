@@ -102,13 +102,13 @@
             <p class="text-white text-lg font-light">{"Furniture"}</p>
             <h1 class="text-white text-4xl font-bold tracking-tighter">{"Decorative Pillow Cases"}</h1>
             <p class="text-white text-lg font-light mt-3 lg:max-w-[450px] xl:max-w-full">{"More than 40+ styles of multicolors pillow cases cushion covers that bring charm and modernity to your interior"}</p>
-            <div class="flex inset-0 justify-center pb-20 sm:pb-0 items-center z-10 h-full lg:justify-normal lg:items-start">
+            <div class="flex inset-0 justify-center pb-40 sm:pb-0 items-center z-10 h-full lg:justify-normal lg:items-start">
                 <button class="bg-fuente-buttons z-10 text-fuente-forms py-3 font-bold px-16 text-center rounded-full mt-10 h-fit">{"Buy Now"}</button>
             </div>
         </div>
     </section>
 
-    <section class="container mx-auto grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-5 gap-5 place-items-center">
+    <section class="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-5 gap-5 place-items-center">
         <div class="bg-fuente h-full lg:w-64 rounded-2xl relative px-5">
             <div class="flex justify-between mt-5">
                 <h2 class="text-white font-semibold leading-9 text-4xl text-left tracking-tighter">
@@ -207,8 +207,8 @@
 
     <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-7">
         <div class="flex">
-            <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10">
-            <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20">
+            <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10 -mr-10 lg:-mr-0">
+            <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 lg:left-28 z-20">
             <img src="/templates/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex">
         </div>
     
@@ -220,7 +220,7 @@
         </div>
     </div>
 
-    <main class="container mx-auto lg:mt-20 flex flex-col lg:grid lg:grid-cols-[1fr_3fr] lg:gap-5">
+    <main class="container mx-auto lg:mt-20 flex flex-col lg:grid lg:grid-cols-[1fr_3fr] lg:gap-5 mt-5">
         <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative">
             <div class="flex justify-between items-center lg:mb-4">
                 <h2 class="text-white text-4xl font-semibold tracking-tighter">{"More Stores"}</h2>
@@ -276,23 +276,28 @@
     </main>
 
     <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
-        <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
+        <div class="flex justify-between items-center container mx-auto">
+            <h2 class="text-fuente text-5xl font-semibold tracking-tighter">{"Our top stores"}</h2>
+            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16 lg:block">
+                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
+            </svg>
+        </div>
 
         <div class="flex justify-between items-center mt-10 px-10">
-            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
+            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16 hidden lg:block">
                 <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M4.5-282.3-9.2-296l13.7-13.7 1.8 1.9L-5.4-296l11.7 11.8-1.8 1.9" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M-7.3-297.4h24v2.8h-24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
             </svg>
 
             <div class="overflow-x-auto whitespace-nowrap">
                 <div class="grid grid-flow-col auto-cols-max gap-10">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
-                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white">
+                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-32 bg-white">
+                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-32 bg-white">
+                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl block object-contain w-32 bg-white">
+                    <img src="/templates/img/company.png" alt="Company Image" class="border-2 border-fuente rounded-3xl lg:block object-contain w-32 bg-white hidden">
                 </div>
             </div>
 
-            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
+            <svg viewBox="0 0 64 64" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16 hidden lg:block">
                 <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
             </svg>
         </div>
@@ -350,13 +355,27 @@
         </div>
     </section>
 
-    <footer class="bg-fuente p-20 mt-40">
-        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+    <footer class="bg-fuente p-10 lg:p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
             <a href="/templates//views/app/home.html">
-                <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+                <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
             </a>
+
+            <svg 
+                viewBox="0 0 32 32" 
+                xml:space="preserve" 
+                xmlns="http://www.w3.org/2000/svg" 
+                enable-background="new 0 0 32 32" 
+                class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden"
+            >
+                <path 
+                    d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                    fill="#ffffff" 
+                    class="fill-000000">
+                </path>
+            </svg>
     
-            <div>
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"About Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
@@ -365,7 +384,7 @@
                 </div>
             </div>
     
-            <div>
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
@@ -374,7 +393,7 @@
                 </div>
             </div>
     
-            <div>
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
