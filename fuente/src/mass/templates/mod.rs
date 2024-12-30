@@ -148,26 +148,32 @@ pub fn login_template(props: &LoginPageProps) -> Html {
         children,
     } = props;
     html! {
-    <main class="flex min-h-screen">
-        <div class="bg-white bg-logo bg-no-repeat bg-[length:200px_75px] mt-10 ml-16 flex justify-end items-center flex-1">
-            <h2 class="text-fuente text-[135px] lg:text-[175px] font-bold -rotate-90 -mr-24 tracking-tighter lg:tracking-[-1rem]">
-                {&heading}
-            </h2>
-        </div>
-
-        <div class="bg-fuente flex items-center flex-auto">
-            <h2 class="text-white text-[135px] lg:text-[175px] font-bold -rotate-90 -ml-[5.4rem] lg:-ml-[7.9rem] tracking-[-1rem] -mb-16">
-                {&sub_heading}
-            </h2>
-
-            <div class="w-full lg:max-w-[360px] mx-auto xl:ml-44 lg:mb-48">
-                <p class="text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">
-                    {&title}
-                </p>
-                {children}
+        <main class="grid grid-rows-[3fr_1fr] lg:flex min-h-screen">
+            <div class="hidden bg-fuente min-h-screen overflow-hidden lg:overflow-visible lg:bg-white lg:bg-logo lg:bg-no-repeat lg:bg-[length:200px_75px] lg:mt-10 lg:ml-16 lg:flex lg:justify-end lg:items-center lg:flex-1">
+                <h2 class="hidden lg:flex text-fuente text-[135px] lg:text-[175px] font-bold -rotate-90 -mr-24 tracking-tighter lg:tracking-[-1rem]">
+                    {&heading}
+                </h2>
             </div>
-        </div>
-    </main>
+
+            <div class="bg-fuente lg:flex lg:items-center lg:flex-auto lg:h-auto lg:min-h-screen lg:overflow-visible relative lg:static">
+                <h2 class="hidden lg:flex text-white text-[135px] lg:text-[175px] font-bold -rotate-90 -ml-[5.4rem] lg:-ml-[7.9rem] tracking-[-1rem] -mb-16">
+                    {&sub_heading}
+                </h2>
+                <div class="container mx-auto pt-10">
+                    <div class="max-w-[400px] lg:max-w-[360px] mx-auto xl:ml-44 lg:mb-48">
+                        <p class="text-5xl lg:text-6xl text-white font-bold -mb-2 relative z-10 text-right tracking-tighter mr-4">
+                            {&title}
+                        </p>
+                        {children}
+                    </div>
+                </div>
+
+                <h2 class="text-white text-[135px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12 left-0 w-full">{"Shop"}</h2>
+            </div>
+            <div class="lg:hidden bg-white">
+                <h2 class="text-fuente text-[135px] font-bold tracking-[-1rem] text-center -mt-5">{"Now"}</h2>
+            </div>
+        </main>
     }
 }
 #[function_component(FuenteBitcoinBanner)]

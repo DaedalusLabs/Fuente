@@ -1,11 +1,9 @@
 use crate::contexts::FavoritesAction;
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
 use fuente::mass::templates::{FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
-use fuente::mass::{
-    AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, MenuBarsIcon, ShoppingCartIcon,
-    UserBadgeIcon,
-};
+use fuente::mass::{AppLink, CommerceProfileCard};
 use fuente::models::FavoriteStore;
+use lucide_yew::{ArrowLeft, ArrowRight, Heart};
 use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
@@ -30,10 +28,7 @@ pub fn stores_banner() -> Html {
         <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
 
         <div class="flex justify-between items-center mt-10 px-10">
-            <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
-                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M4.5-282.3-9.2-296l13.7-13.7 1.8 1.9L-5.4-296l11.7 11.8-1.8 1.9" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M-7.3-297.4h24v2.8h-24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
-            </svg>
-
+            <ArrowLeft class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
             <div class="overflow-x-auto whitespace-nowrap">
                 <div class="grid grid-flow-col auto-cols-max gap-10">
                     {businesses.iter().map(|profile| {
@@ -49,10 +44,7 @@ pub fn stores_banner() -> Html {
                     }).collect::<Html>()}
                 </div>
             </div>
-
-            <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
-                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
-            </svg>
+            <ArrowRight class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
         </div>
     </section>
     }
@@ -101,7 +93,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
                 if is_favorite { "text-red-500" } else { "text-gray-400" }
             )}
         >
-            <HeartIcon class="w-6 h-6" />
+            <Heart class="w-6 h-6" />
         </button>
     }
 }

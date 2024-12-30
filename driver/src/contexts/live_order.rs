@@ -15,6 +15,7 @@ pub struct OrderHub {
     hub_keys: NostrKeypair,
     orders: Vec<(OrderInvoiceState, NostrNote)>,
     live_order: Option<(OrderInvoiceState, NostrNote)>,
+    has_loaded: bool,
 }
 
 impl OrderHub {
@@ -27,10 +28,12 @@ impl OrderHub {
     pub fn get_live_order(&self) -> Option<(OrderInvoiceState, NostrNote)> {
         self.live_order.clone()
     }
+    pub fn finished_loading(&self) -> bool {
+        self.has_loaded
+    }
 }
 
 pub enum OrderHubAction {
-    FinishedLoadingDb,
     FinishedLoadingRelays,
     LoadOrders(Vec<(OrderInvoiceState, NostrNote)>),
     NewOrder((OrderInvoiceState, NostrNote)),
@@ -47,17 +50,14 @@ impl Reducible for OrderHub {
             OrderHubAction::LoadOrders(orders) => Rc::new(OrderHub {
                 hub_keys: self.hub_keys.clone(),
                 live_order: self.live_order.clone(),
+                has_loaded: self.has_loaded,
                 orders,
-            }),
-            OrderHubAction::FinishedLoadingDb => Rc::new(OrderHub {
-                hub_keys: self.hub_keys.clone(),
-                orders: self.orders.clone(),
-                live_order: self.live_order.clone(),
             }),
             OrderHubAction::FinishedLoadingRelays => Rc::new(OrderHub {
                 hub_keys: self.hub_keys.clone(),
                 orders: self.orders.clone(),
                 live_order: self.live_order.clone(),
+                has_loaded: true,
             }),
             OrderHubAction::NewOrder(order) => {
                 let mut orders = self.orders.clone();
@@ -67,6 +67,7 @@ impl Reducible for OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders,
                     live_order: self.live_order.clone(),
+                    has_loaded: self.has_loaded,
                 })
             }
             OrderHubAction::LiveOrder(order) => {
@@ -76,6 +77,7 @@ impl Reducible for OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders,
                     live_order: Some(order),
+                    has_loaded: self.has_loaded,
                 })
             }
             OrderHubAction::OrderCompleted(completed_id) => {
@@ -85,6 +87,7 @@ impl Reducible for OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders: self.orders.clone(),
                     live_order: None,
+                    has_loaded: self.has_loaded,
                 })
             }
             OrderHubAction::DeleteOrder(order) => {
@@ -94,6 +97,7 @@ impl Reducible for OrderHub {
                     hub_keys: self.hub_keys.clone(),
                     orders,
                     live_order: self.live_order.clone(),
+                    has_loaded: self.has_loaded,
                 })
             }
         }
@@ -113,6 +117,7 @@ pub fn key_handler(props: &OrderHubChildren) -> Html {
         hub_keys: NostrKeypair::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
         orders: vec![],
         live_order: None,
+        has_loaded: false,
     });
 
     // let ctx_clone = ctx.clone();
@@ -138,6 +143,7 @@ pub fn commerce_data_sync() -> Html {
     let keys_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     let id_handle = sub_id.clone();
+    let ctx_clone = ctx.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
         if let Some(_keys) = key_ctx.get_nostr_key() {
             let mut filter = NostrSubscription {
@@ -221,6 +227,20 @@ pub fn commerce_data_sync() -> Html {
                             }
                         }
                     }
+                }
+            }
+        }
+        || {}
+    });
+
+    use_effect_with(relay_ctx.relay_events.clone(), move |events| {
+        if let Some(event) = events.last() {
+            if let nostro2::relays::RelayEvent::EndOfSubscription(
+                nostro2::relays::EndOfSubscriptionEvent(_, id),
+            ) = event
+            {
+                if id == &(*sub_id) {
+                    ctx_clone.dispatch(OrderHubAction::FinishedLoadingRelays);
                 }
             }
         }

@@ -1,18 +1,22 @@
 use crate::contexts::{
-    CommerceDataStore, {OrderHubAction, OrderHubStore},
+    CommerceDataStore, DriverDataStore, OrderHubAction, OrderHubStore
 };
 use fuente::{
     mass::LoadingScreen,
-    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COURIER_UPDATE},
+    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COURIER_UPDATE, NOSTR_KIND_DRIVER_STATE},
 };
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
     key_manager::NostrIdStore,
     relay_pool::NostrProps,
-    widgets::leaflet::{IconOptions, LeafletComponent, LeafletMap, Marker},
+    widgets::leaflet::{IconOptions, LeafletComponent, LeafletMap, Marker, LeafletMapOptions},
 };
 use nostro2::notes::NostrNote;
 use yew::prelude::*;
+
+use fuente::models::DriverStateUpdate;
+use gloo::timers::callback::Interval;
+use yew::platform::spawn_local; 
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
@@ -107,6 +111,16 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
                     {format!("Order #{} - for {}", order.order_id()[..12].to_string(), profile.nickname)}
                 </p>
             </div>
+            {if order.order_status == OrderStatus::InDelivery {
+                html! {
+                    <LocationTracker 
+                        order_id={order.order_id()} 
+                        location_state={location_state.clone()}
+                    />
+                }
+            } else {
+                html! {}
+            }}
             <div class="flex flex-row flex-1 ">
                 <OrderPickupMapPreview
                     order_id={order.order_id()}
@@ -222,10 +236,23 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
         own_location,
         classes,
     } = props.clone();
+
     let map_state: UseStateHandle<Option<LeafletMap>> = use_state(|| None);
     let markers: UseStateHandle<Vec<(f64, f64)>> = use_state(|| vec![]);
     let map_id = format!("order-map-{}", order_id);
     let own_marker_state = use_state(|| None::<Marker>);
+
+    let map_options = LeafletMapOptions {
+        zoom: 13,
+        zoom_control: true,
+        scroll_wheel_zoom: true,
+        double_click_zoom: true,
+        dragging: true,
+        min_zoom: Some(3),
+        max_zoom: Some(18),
+        ..Default::default()
+    };
+
     use_effect_with(map_state.clone(), move |map_state| {
         if let Some(map) = map_state.as_ref() {
             let commerce_icon = IconOptions {
@@ -257,6 +284,7 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
     html! {
         <LeafletComponent
             {map_id}
+            {map_options}
             {location_icon_options}
             markers={(*markers).clone()}
             on_location_changed={Callback::from({
@@ -277,4 +305,75 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
             class={classes}
         />
     }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct LocationTrackerProps {
+    pub order_id: String,
+    pub location_state: UseStateHandle<Option<GeolocationCoordinates>>,
+}
+
+#[function_component(LocationTracker)]
+pub fn location_tracker(props: &LocationTrackerProps) -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
+    let driver_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
+    let order_ctx = use_context::<OrderHubStore>().expect("OrderHub context not found");
+
+    // Clone the data we need before the effect
+    let order_id = props.order_id.clone();
+    let location_state = props.location_state.clone();
+
+    use_effect_with(order_id.clone(), move |_| {
+        let keys = key_ctx.get_nostr_key().expect("No keys found");
+        let sender = relay_ctx.send_note.clone();
+        let driver_profile = driver_ctx.get_profile_note()
+            .expect("No driver profile found");
+        let location_state = location_state.clone();
+
+        let interval = {
+            Interval::new(5000, move || {
+                let keys = keys.clone();
+                let sender = sender.clone();
+                let driver_profile = driver_profile.clone();
+                let location_state = location_state.clone();
+                let order_ctx = order_ctx.clone();
+                
+                spawn_local(async move {
+                    if let Some((order_state, _order_note)) = order_ctx.get_live_order() {
+                        // Get the customer's pubkey from the original order
+                        let customer_pubkey = order_state.order.pubkey.clone();
+                        
+                        match DriverStateUpdate::new(driver_profile.clone()).await {
+                            Ok(state_update) => {
+                                let coords = state_update.get_location();
+                                gloo::console::log!("Created state update with coords:", format!("{:?}", coords));
+                                
+                                // Send to driver hub
+                                if let Ok(final_note) = state_update.to_encrypted_note(&keys, DRIVER_HUB_PUB_KEY.to_string()) {
+                                    gloo::console::log!("Sending to hub, kind:", final_note.kind);
+                                    gloo::console::log!("Hub encrypted content length:", final_note.content.len());
+                                    sender.emit(final_note);
+                                }
+                                
+                                // Send to customer
+                                if let Ok(final_note) = state_update.to_encrypted_note(&keys, customer_pubkey) {
+                                    gloo::console::log!("Sending to customer, kind:", final_note.kind);
+                                    gloo::console::log!("Customer encrypted content length:", final_note.content.len());
+                                    sender.emit(final_note);
+                                }
+                            },
+                            Err(e) => gloo::console::error!("Failed to create state update:", e.to_string()),
+                        }
+                    }
+                });
+            })
+        };
+
+        move || {
+            interval.cancel();
+        }
+    });
+
+    html! { <></> }
 }
