@@ -69,17 +69,17 @@ pub fn settings_page() -> Html {
         let page = current_page.clone();
         Callback::from(move |_| page.set(SettingsPage::Language))
     };
-    let my_orders_button = {
-        html! {
-            <>
-                <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
-                {"My Orders"}
-            </>
-        }
-    };
     let my_orders_onclick = {
         let page = current_page.clone();
         Callback::noop()
+    };
+    let my_orders_button = {
+        html! {
+            <button type="button" class="flex gap-4 tracking-wide" onclick={my_orders_onclick}>
+                <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
+                {"My Orders"}
+            </button>
+        }
     };
     let edit_button = {
         match *current_page {
@@ -112,7 +112,7 @@ pub fn settings_page() -> Html {
         <SettingsPageTemplate
             heading={"My Profile".to_string()}
             options={ vec![
-                (my_orders_button, my_orders_onclick),
+                my_orders_button,
             ]}
             sidebar_options={ vec![
                 (translations["profile_address_personal_information_button"].clone(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
