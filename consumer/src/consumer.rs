@@ -1,7 +1,6 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, ConsumerDataProvider, ConsumerDataStore,
-        FavoritesProvider, LiveOrderProvider,
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
@@ -118,7 +117,9 @@ fn login_check(props: &ChildrenProps) -> Html {
 #[function_component(ProfileCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
-    if !user_ctx.finished_loading() {
+    let order_ctx = use_context::<LiveOrderStore>().expect("No order context found");
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
+    if !order_ctx.has_loaded || !commerce_ctx.finished_loading() || !user_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
     if user_ctx.get_profile().is_none() {

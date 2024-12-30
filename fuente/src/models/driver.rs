@@ -6,7 +6,7 @@ use super::{
     nostr_kinds::{NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_DRIVER_STATE},
     DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
 };
-use nostr_minions::browser_api::{GeolocationPosition, IdbStoreManager};
+use nostr_minions::browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
@@ -121,39 +121,44 @@ pub struct DriverStateUpdate {
     driver: NostrNote,
     geolocation: GeolocationPosition,
 }
+
 impl DriverStateUpdate {
+    // The new method looks fine, just fix the formatting and wildcards
     pub async fn new(driver: NostrNote) -> anyhow::Result<Self> {
-        let _: DriverProfile = driver.clone().try_into()?;
-        let geo = GeolocationPosition::locate()
-            .await
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
-        Ok(Self {
-            driver,
-            geolocation: geo,
-        })
+        let geo = GeolocationPosition::locate().await.map_err(|e| anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string())))?;
+        Ok(Self { driver, geolocation: geo })
     }
-    pub fn sign_update(
-        &self,
-        user_keys: &NostrKeypair,
-        recipient: String,
-    ) -> anyhow::Result<NostrNote> {
-        let mut new_note = NostrNote {
-            pubkey: user_keys.public_key(),
+
+
+    pub fn to_encrypted_note(&self, keys: &NostrKeypair, recipient: String) -> anyhow::Result<NostrNote> {
+        // Convert state directly to string - no nesting
+        let location_data = serde_json::to_string(&self)?;
+        
+        // Create a single encrypted note
+        let mut encrypted_note = NostrNote {
             kind: NOSTR_KIND_DRIVER_STATE,
-            content: self.to_string(),
+            content: location_data,  // Direct location data
+            pubkey: keys.public_key(),
             ..Default::default()
         };
-        user_keys.sign_nip_04_encrypted(&mut new_note, recipient)?;
-        Ok(new_note)
+        
+        // Encrypt it for the recipient
+        keys.sign_nip_04_encrypted(&mut encrypted_note, recipient)?;
+        
+        Ok(encrypted_note)
     }
-    pub fn from_signed_update(
-        &self,
-        user_keys: &NostrKeypair,
-        signed_note: NostrNote,
-    ) -> anyhow::Result<Self> {
-        let note = user_keys.decrypt_nip_04_content(&signed_note)?;
-        let update: DriverStateUpdate = note.try_into()?;
-        Ok(update)
+
+    // pub fn from_signed_update(
+    //     &self,
+    //     user_keys: &NostrKeypair,
+    //     signed_note: NostrNote,
+    // ) -> anyhow::Result<Self> {
+    //     let note = user_keys.decrypt_nip_04_content(&signed_note)?;
+    //     let update: DriverStateUpdate = note.try_into()?;
+    //     Ok(update)
+    // }
+    pub fn get_location(&self) -> GeolocationCoordinates {
+        self.geolocation.coords.clone()
     }
 }
 impl ToString for DriverStateUpdate {

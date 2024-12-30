@@ -1,20 +1,21 @@
 use std::rc::Rc;
 
-use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_ORDER_STATE};
+use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_DRIVER_STATE, NOSTR_KIND_ORDER_STATE};
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::NostrNote, relays::NostrSubscription};
 use yew::prelude::*;
 
-use crate::pages::LiveOrderCheck;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
     pub order: Option<(NostrNote, OrderInvoiceState)>,
+    pub has_loaded: bool,
 }
 
 impl LiveOrder {}
 
 pub enum LiveOrderAction {
+    FinishedLoadingRelay,
     SetOrder(NostrNote, OrderInvoiceState),
     ClearOrder,
     CompleteOrder(String),
@@ -27,12 +28,19 @@ impl Reducible for LiveOrder {
         match action {
             LiveOrderAction::SetOrder(order, state) => Rc::new(LiveOrder {
                 order: Some((order, state)),
+                has_loaded: self.has_loaded,
             }),
-            LiveOrderAction::ClearOrder => Rc::new(LiveOrder { order: None }),
+            LiveOrderAction::ClearOrder => Rc::new(LiveOrder {
+                order: None,
+                has_loaded: self.has_loaded,
+            }),
             LiveOrderAction::CompleteOrder(order_id) => {
                 if let Some(order) = &self.order {
                     if order.1.order_id() == order_id {
-                        Rc::new(LiveOrder { order: None })
+                        Rc::new(LiveOrder {
+                            order: None,
+                            has_loaded: self.has_loaded,
+                        })
                     } else {
                         self
                     }
@@ -40,6 +48,10 @@ impl Reducible for LiveOrder {
                     self
                 }
             }
+            LiveOrderAction::FinishedLoadingRelay => Rc::new(LiveOrder {
+                order: self.order.clone(),
+                has_loaded: true,
+            }),
         }
     }
 }
@@ -53,24 +65,14 @@ pub struct LiveOrderChildren {
 
 #[function_component(LiveOrderProvider)]
 pub fn key_handler(props: &LiveOrderChildren) -> Html {
-    let ctx = use_reducer(|| LiveOrder { order: None });
+    let ctx = use_reducer(|| LiveOrder {
+        order: None,
+        has_loaded: false,
+    });
 
     html! {
         <ContextProvider<LiveOrderStore> context={ctx.clone()}>
-            {match ctx.order.as_ref() {
-                Some(_) => {
-                    html! {
-                        <LiveOrderCheck />
-                    }
-                }
-                None => {
-                    html! {
-                        <>
-                            {props.children.clone()}
-                        </>
-                    }
-                }
-            }}
+            {props.children.clone()}
             <LiveOrderSync />
         </ContextProvider<LiveOrderStore>>
     }
@@ -82,9 +84,10 @@ pub fn commerce_data_sync() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
     let sub_id = use_state(|| "".to_string());
 
-    let subscriber = relay_ctx.subscribe;
+    let subscriber = relay_ctx.subscribe.clone();
     let unique_notes = relay_ctx.unique_notes.clone();
     let keys_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let ctx_clone = ctx.clone();
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
@@ -101,25 +104,46 @@ pub fn commerce_data_sync() -> Html {
         || {}
     });
 
+    let keys_clone = keys_ctx.get_nostr_key().clone();
+    let subscriber_clone = relay_ctx.subscribe;
+    use_effect_with(ctx.order.clone(), move |order| {
+        if let Some((_note, state)) = order {
+            if let Some(_courier_note) = state.courier.clone() {
+                let mut filter = NostrSubscription {
+                    kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
+                    ..Default::default()
+                };
+                filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
+                subscriber_clone.emit(filter.relay_subscription());
+            }
+        }
+        || {}
+    });
+
     use_effect_with(unique_notes, move |notes| {
         if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_nostr_key()) {
             if note.kind == NOSTR_KIND_ORDER_STATE {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_note) = NostrNote::try_from(decrypted) {
                         if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
+                            gloo::console::log!("Order status", &format!("{:?}", order_status.order_status));
+                            gloo::console::log!("Payment status", &format!("{:?}", order_status.payment_status));
                             match (&order_status.payment_status, &order_status.order_status) {
                                 (OrderPaymentStatus::PaymentFailed, _) => {}
                                 (_, OrderStatus::Canceled) => {
+                                    gloo::console::log!("Setting canceled order");
                                     ctx.dispatch(LiveOrderAction::CompleteOrder(
                                         order_status.order_id(),
                                     ));
                                 }
                                 (_, OrderStatus::Completed) => {
+                                    gloo::console::log!("Setting completed order");
                                     ctx.dispatch(LiveOrderAction::CompleteOrder(
                                         order_status.order_id(),
                                     ));
                                 }
                                 _ => {
+                                    gloo::console::log!("Setting order");
                                     ctx.dispatch(LiveOrderAction::SetOrder(
                                         order_note,
                                         order_status,
@@ -128,6 +152,20 @@ pub fn commerce_data_sync() -> Html {
                             }
                         }
                     }
+                }
+            }
+        }
+        || {}
+    });
+
+    use_effect_with(relay_ctx.relay_events.clone(), move |events| {
+        if let Some(event) = events.last() {
+            if let nostro2::relays::RelayEvent::EndOfSubscription(
+                nostro2::relays::EndOfSubscriptionEvent(_, id),
+            ) = event
+            {
+                if id == &(*sub_id) {
+                    ctx_clone.dispatch(LiveOrderAction::FinishedLoadingRelay);
                 }
             }
         }

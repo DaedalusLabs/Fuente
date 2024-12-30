@@ -1,5 +1,5 @@
 use driver::{
-    contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider},
+    contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider, OrderHubStore},
     pages::SettingsPageComponent,
     router::DriverPages,
 };
@@ -126,7 +126,8 @@ fn login_check(props: &ChildrenProps) -> Html {
 #[function_component(ProfileCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
     let user_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
-    if !user_ctx.finished_loading() {
+    let order_ctx = use_context::<OrderHubStore>().expect("OrderHubProvider not found");
+    if !user_ctx.finished_loading() || !order_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
     if user_ctx.get_profile().is_none() {
