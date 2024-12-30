@@ -31,6 +31,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
 
     if order_ctx.order.is_none() {
+        gloo::console::log!("No order found");
         return html! {};
     }
 

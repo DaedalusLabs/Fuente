@@ -1,12 +1,14 @@
-use fuente::{mass::LoadingScreen, models::NOSTR_KIND_DRIVER_STATE};
+use fuente::mass::LoadingScreen;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::mass::{templates::SettingsPageTemplate, AppLink};
-
-use crate::{contexts::{CommerceDataStore, LiveOrderStore}, pages::{
-    CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent
-}};
+use crate::{
+    contexts::{CommerceDataStore, LiveOrderStore},
+    pages::{
+        CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent
+    },
+};
+use fuente::mass::AppLink;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -28,12 +30,6 @@ pub enum ConsumerRoute {
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
-    let order_ctx = use_context::<LiveOrderStore>().expect("No order context found");
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
-    if !order_ctx.has_loaded || !commerce_ctx.finished_loading() {
-        return html! {<LoadingScreen />};
-    }
-
     html! {
         <div class="min-h-screen flex flex-col">
         <FuenteHeader />
