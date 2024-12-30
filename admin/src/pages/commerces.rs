@@ -22,22 +22,18 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
         action,
     } = props;
     if let Ok(profile) = CommerceProfile::try_from(commerce_id.clone()) {
-        let display_name = profile.name();
-        let description = profile.description();
-        let telephone = profile.telephone();
-        let email = profile.web();
         html! {
         <div class="w-full max-w-3xl mx-auto h-fit shadow-xl">
           <div class="flex flex-col md:flex-row">
             <div class="flex-grow p-6 md:p-8">
               <div class="space-y-2">
-                <p class="text-lg font-semibold">{display_name}</p>
-                <p class="text-sm text-muted-foreground">{description}</p>
+                <p class="text-lg font-semibold">{&profile.name}</p>
+                <p class="text-sm text-muted-foreground">{&profile.description}</p>
                 <p class="text-sm">
-                  <span class="font-medium">{"Tel:"}</span> {telephone}
+                  <span class="font-medium">{"Tel:"}</span> {&profile.telephone}
                 </p>
                 <p class="text-sm">
-                  <span class="font-medium">{"Email:"}</span> {email}
+                  <span class="font-medium">{"Email:"}</span> {&profile.web}
                 </p>
               </div>
             </div>

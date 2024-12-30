@@ -138,13 +138,11 @@ impl InvoicerBot {
             NOSTR_KIND_ADMIN_REQUEST => {
                 let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
-                if let Ok(admin_req) = AdminServerRequest::try_from(&inner_note) {
-                    let update_note = self
-                        .bot_state
-                        .sign_updated_config(admin_req, &self.server_keys)
-                        .await?;
-                    self.broadcaster.broadcast_note(update_note).await?;
-                }
+                let update_note = self
+                    .bot_state
+                    .sign_updated_config(inner_note, &self.server_keys)
+                    .await?;
+                self.broadcaster.broadcast_note(update_note).await?;
             }
             NOSTR_KIND_CONSUMER_REGISTRY => {
                 let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;

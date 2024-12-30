@@ -1,4 +1,3 @@
-use crate::mass::atoms::CardComponent;
 use gloo::timers::callback::Timeout;
 use nostr_minions::{
     browser_api::GeolocationCoordinates,
@@ -23,10 +22,9 @@ pub fn consumer_address_card(props: &LookupProps) -> Html {
     let display_name = split.collect::<Vec<&str>>().join(",");
     html! {
         <div class="flex flex-row gap-4">
-            <div class="min-w-16 min-h-16 h-16 w-16 bg-neutral-200 rounded-2xl"></div>
             <div class="flex flex-col gap-1 text-wrap shrink">
                 <span class="text-sm font-bold">{&name}</span>
-                <span class="text-xs text-neutral-400 overflow-hidden text-ellipsis">
+                <span class="text-xs overflow-hidden text-ellipsis">
                     {&display_name}
                 </span>
             </div>
@@ -47,20 +45,15 @@ pub struct NewAddressProps {
 pub fn new_address_menu(props: &NewAddressProps) -> Html {
     let NewAddressProps { onclick, .. } = props;
     html! {
-        <div class="h-full w-full flex flex-col gap-4 min-h-96 min-w-96">
-            <div class="w-full flex flex-col gap-2">
-                <div class="flex flex-row justify-between items-center pr-4">
-                    <h3 class="font-bold">{"Address Details"}</h3>
-                    <button
-                        {onclick}
-                        class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl"
-                        >{"Save"}
-                    </button>
-                </div>
-                <AddressDetails ..props.clone()/>
-            </div>
+        <div class="mt-4 flex flex-col gap-8">
+            <AddressDetails ..props.clone()/>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
+            <button
+                {onclick}
+                class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl"
+            >{"Save"}
+        </button>
         </div>
     }
 }
@@ -72,9 +65,7 @@ pub fn address_details(props: &NewAddressProps) -> Html {
     };
     let address = (*props.nominatim_handle).clone().unwrap();
     html! {
-        <CardComponent>
-            <AddressLookupDetails lookup={address} />
-        </CardComponent>
+        <AddressLookupDetails lookup={address} />
     }
 }
 
@@ -169,10 +160,10 @@ pub fn address_search(props: &NewAddressProps) -> Html {
                                     {onclick}
                                     class="flex flex-row gap-2 bg-neutral-50 shadow-xl p-4 rounded-xl hover:bg-neutral-100 z-[9999]">
                                     <div class="flex flex-col gap-1 text-wrap h-fit w-full items-start text-start truncate">
-                                        <span class="text-xs font-bold overflow-hidden text-ellipsis whitespace-nowrap">
+                                        <span class="text-xs text-neutral-900 font-bold overflow-hidden text-ellipsis whitespace-nowrap">
                                             {&name}
                                         </span>
-                                        <span class="text-xs text-neutral-400 overflow-hidden text-ellipsis whitespace-nowrap truncate">
+                                        <span class="text-xs text-neutral-700 overflow-hidden text-ellipsis whitespace-nowrap truncate">
                                             {&display_name}
                                         </span>
                                     </div>
@@ -195,12 +186,17 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
     let lookup_handle = props.nominatim_handle.clone();
     let map_options = LeafletMapOptions {
         double_click_zoom: false,
+        zoom_control: true,
+        scroll_wheel_zoom: true,
+        zoom: 13,
+        min_zoom: Some(3),
+        max_zoom: Some(18),
         ..Default::default()
     };
     let location_icon_options = IconOptions {
         icon_url: "/public/assets/img/my_marker.png".to_string(),
         icon_size: Some(vec![32, 32]),
-        icon_anchor: Some(vec![16, 32]),
+        icon_anchor: Some(vec![16, 16]),
     };
     let geo_handler_clone = props.coord_handle.clone();
     let address_handler_clone = props.nominatim_handle.clone();
@@ -262,7 +258,8 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
                     marker_handle.set(Some(marker));
                 }
             })}
-            class={classes!["w-full", "h-full", "border-2", "border-fuente", "rounded-3xl", "shadow-xl", "overflow-hidden", "-p-8"]}
+            style="height: 100%; width: 100%; border-radius: 1rem; border: 2px solid #f0f0f0;"
+            class={classes!["z-50","w-96", "h-96", "min-h-96", "min-w-96", "border-2", "border-fuente", "rounded-3xl", "shadow-xl"]}
         />
     }
 }

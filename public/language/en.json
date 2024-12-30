@@ -12,9 +12,10 @@
     "auth_login_title": "Login",
     "auth_login_heading_shop": "Shop",
     "auth_login_heading_now": "Now",
-    "auth_login_form_label": "Write the key",
+    "auth_login_form_label": "Your Private Key",
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
+    "auth_login_link_button": "Shop Now",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",
@@ -23,6 +24,7 @@
     "auth_register_form_label_email": "Your email",
     "auth_register_form_label_phone": "Phone number",
     "auth_register_link_login": "I have an account - Login",
+    "auth_register_link_button": "Register Now",
 
     "profile_address_title": "Profile - Address",
     "profile_address_heading": "My Profile",
@@ -39,13 +41,16 @@
     "profile_personal_information_heading": "My Profile",
     "profile_personal_information_orders_button": "My Orders",
     "profile_personal_information_packages_button": "Track Packages",
-    "profile_personal_information_delete_account_button": "Delete my account",
+    "profile_personal_information_delete_account_button": "Delete my key",
     "profile_personal_information_button": "Personal Information",
     "profile_personal_information_address_button": "Address",
     "profile_personal_information_name": "Christine Amador Russel",
     "profile_personal_information_email": "christineam@gmail.com",
     "profile_personal_information_phone_number": "+507 7656559012",
     "profile_personal_information_edit_button": "Edit",
+
+    "profile_settings_key": "Key Recovery",
+    "profile_settings_language": "Language",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",
@@ -245,9 +250,12 @@
     "admin_store_new_products_title": "Store - New Products",
     "admin_store_new_products_heading": "My Store",
 
+    "admin_store_profile_heading": "My Store Profile",
+
     "admin_store_add_product_button": "Add new product",
     "admin_store_new_products_button": "New products",
     "admin_store_all_products_button": "All products",
+    "admin_store_banner_button": "Store Banner",
     "admin_store_sale_products_button": "On Sale",
     "admin_store_discontinued_products_button": "Discontinued",
     "admin_store_table_detail_heading": "Product Details",
@@ -284,5 +292,24 @@
     "footer_politics_terms": "Terms and conditions",
     "footer_politics_general": "General policies",
     "footer_politics_privacy": "Privacy Policy",
-    "footer_politics_return": "Return and exchanges"
+    "footer_politics_return": "Return and exchanges",
+
+    "store_orders_history_title": "Order History",
+    "store_orders_history_date": "Select a Date",
+    "store_orders_history_completed": "Completed",
+    "store_orders_history_canceled": "Canceled",
+
+    "store_products_form_label_name": "Name of product",
+    "store_products_form_label_information": "Product information",
+    "store_products_form_label_details": "Details of your product",
+    "store_products_form_label_description": "Description of your product",
+    "store_products_form_label_photos": "Add photos of your product",
+    "store_products_form_label_price_info": "Price information",
+    "store_products_form_label_original_price": "Original price",
+    "store_products_form_label_discount": "Discount",
+    "store_products_form_label_total_price": "Total Price",
+    "store_products_form_label_category": "Product Category",
+    "store_products_form_label_add_button": "Add Product",
+    "store_products_form_label_add_category": "Add Category"
+
 }

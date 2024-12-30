@@ -55,9 +55,8 @@ pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 pub const STORE_NAME_CONSUMER_FAVORITES: &str = "consumer_favorites";
 
-pub const ADMIN_WHITELIST: [&str; 2] = [
-    "decfef1c4a027fe815eda8ea5748aa0d3e971c4c377423a49d94fa0fc3e25575",
-    "93effcf32813a65c82c6f97e3d514a77e48cbe14ef36e89453e20bd155809b33",
+pub const ADMIN_WHITELIST: [&str; 1] = [
+    "63295e2ea1fffdc000b851c7298d1723c317e1f7d488241536f41feb420d0acd",
 ];
 
 pub fn init_consumer_db() -> Result<(), JsValue> {

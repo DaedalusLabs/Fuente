@@ -40,3 +40,4 @@ yew-router = "0.18.0"
 tokio = { version = "1.41.0", features = ["macros", "sync"] }
 
 
+lucide-yew = "1.1.0"

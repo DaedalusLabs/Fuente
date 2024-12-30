@@ -21,3 +21,4 @@ web-sys.workspace = true
 yew.workspace = true
 yew-router.workspace = true
 upload-things.workspace = true
+lucide-yew.workspace = true

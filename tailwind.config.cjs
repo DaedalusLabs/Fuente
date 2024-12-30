@@ -16,9 +16,8 @@ module.exports = {
                 "fuente-orange": "#f4801b"
             },
             fontFamily: {
-                'product': ['OpenSans', 'sans-serif'],
                 'mplus': ['MPlus', 'sans-serif'],
-                'fuente': ["Open Sans"]
+                'fuente': ['Open Sans']
             },
             backgroundImage: {
                 logo: `url('/templates/img/Logo Fuente.jpeg')`

@@ -1,24 +1,22 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, ConsumerDataAction, ConsumerDataProvider,
-        ConsumerDataStore, FavoritesProvider, LiveOrderProvider,
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore
     },
-    pages::{LiveOrderCheck, NewProfilePage},
+    pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, MainLayout, NewAddressForm, NewAddressProps, NewUserPage},
-    models::{init_consumer_db, ConsumerAddress, ConsumerAddressIdb},
+    mass::{LoadingScreen, LoginPage},
+    models::init_consumer_db,
 };
 use html::ChildrenProps;
 use nostr_minions::{
-    browser_api::GeolocationCoordinates,
     init_nostr_db,
     key_manager::{NostrIdProvider, NostrIdStore},
     relay_pool::{RelayProvider, UserRelay},
 };
-use yew::{prelude::*, props};
+use yew::prelude::*;
 use yew_router::BrowserRouter;
 
 fn main() {
@@ -33,10 +31,10 @@ fn app() -> Html {
         || {}
     });
     html! {
+    <LanguageConfigsProvider>
         <BrowserRouter>
             <RelayPoolComponent>
                 <AuthContext>
-                    <MainLayout>
                     <LoginCheck>
                         <AppContext>
                             <ProfileCheck>
@@ -44,10 +42,10 @@ fn app() -> Html {
                             </ProfileCheck>
                         </AppContext>
                     </LoginCheck>
-                    </MainLayout>
                 </AuthContext>
             </RelayPoolComponent>
         </BrowserRouter>
+    </LanguageConfigsProvider>
     }
 }
 
@@ -85,7 +83,6 @@ fn app_context(props: &ChildrenProps) -> Html {
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
-        <LanguageConfigsProvider>
        <ConsumerDataProvider>
            <CommerceDataProvider>
                <CartProvider>
@@ -97,7 +94,6 @@ fn app_context(props: &ChildrenProps) -> Html {
                </CartProvider>
            </CommerceDataProvider>
        </ConsumerDataProvider>
-       </LanguageConfigsProvider>
     }
 }
 #[function_component(LoginCheck)]
@@ -109,9 +105,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     }
     if key_ctx.get_nostr_key().is_none() {
         return html! {
-            <div class="flex justify-center items-center flex-1">
-                <NewUserPage />
-            </div>
+            <LoginPage />
         };
     }
     html! {
@@ -122,50 +116,20 @@ fn login_check(props: &ChildrenProps) -> Html {
 }
 #[function_component(ProfileCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let user_ctx = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
-    let coordinate_state = use_state(|| None::<GeolocationCoordinates>);
-    let nominatim_state = use_state(|| None);
-    let map_state = use_state(|| None);
-    let marker_state = use_state(|| None);
-    if !user_ctx.finished_loading() {
+    let order_ctx = use_context::<LiveOrderStore>().expect("No order context found");
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
+    if !order_ctx.has_loaded || !commerce_ctx.finished_loading() || !user_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
     if user_ctx.get_profile().is_none() {
         return html! {
-            <div class="flex flex-col flex-1">
-                <h2 class="text-2xl m-8 font-bold">{"Save Your Contact Details"}</h2>
-                <NewProfilePage />
-            </div>
+            <NewProfilePage />
         };
     }
-    let nominatim = nominatim_state.clone();
-    let coordinate = coordinate_state.clone();
     if user_ctx.get_default_address().is_none() {
-        let onclick = Callback::from(move |_: MouseEvent| {
-            if let (Some(address), Some(coords), Some(keys)) = (
-                (*nominatim).clone(),
-                (*coordinate).clone(),
-                key_ctx.get_nostr_key(),
-            ) {
-                let address = ConsumerAddress::new(address, coords.into());
-                let mut db_entry = ConsumerAddressIdb::new(address.clone(), &keys);
-                db_entry.set_default(true);
-                user_ctx.dispatch(ConsumerDataAction::NewAddress(db_entry));
-            }
-        });
-        let props = props!(NewAddressProps {
-            map_handle: map_state,
-            marker_handle: marker_state,
-            coord_handle: coordinate_state.clone(),
-            nominatim_handle: nominatim_state.clone(),
-            onclick,
-        });
         return html! {
-            <div class="flex flex-col flex-1 p-8">
-                <h2 class="text-2xl m-8 font-bold">{"Save Your Address"}</h2>
-                <NewAddressForm ..props />
-            </div>
+            <NewAddressPage />
         };
     }
     html! {

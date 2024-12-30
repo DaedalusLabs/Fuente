@@ -126,19 +126,24 @@ pub fn commerce_data_sync() -> Html {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_note) = NostrNote::try_from(decrypted) {
                         if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
+                            gloo::console::log!("Order status", &format!("{:?}", order_status.order_status));
+                            gloo::console::log!("Payment status", &format!("{:?}", order_status.payment_status));
                             match (&order_status.payment_status, &order_status.order_status) {
                                 (OrderPaymentStatus::PaymentFailed, _) => {}
                                 (_, OrderStatus::Canceled) => {
+                                    gloo::console::log!("Setting canceled order");
                                     ctx.dispatch(LiveOrderAction::CompleteOrder(
                                         order_status.order_id(),
                                     ));
                                 }
                                 (_, OrderStatus::Completed) => {
+                                    gloo::console::log!("Setting completed order");
                                     ctx.dispatch(LiveOrderAction::CompleteOrder(
                                         order_status.order_id(),
                                     ));
                                 }
                                 _ => {
+                                    gloo::console::log!("Setting order");
                                     ctx.dispatch(LiveOrderAction::SetOrder(
                                         order_note,
                                         order_status,

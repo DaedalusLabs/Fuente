@@ -21,7 +21,7 @@ pub enum CommerceRoute {
 #[function_component(CommercePages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="w-full h-full flex flex-row">
+        <div class="w-dvw h-dvh flex flex-row">
             <div class="h-full border-r-2 border-black">
                 <div class="w-fit h-full px-4 py-8 gap-8 items-center flex flex-col">
                     <img
@@ -31,7 +31,7 @@ pub fn consumer_pages() -> Html {
                     <HomeSidebar />
                 </div>
             </div>
-            <div class="flex flex-1 pl-8 pt-8 overflow-auto no-scrollbar">
+            <div class="flex-1">
                 <Switch<CommerceRoute> render = { move |switch: CommerceRoute| {
                         match switch {
                             CommerceRoute::Home => html!{<HomePage />},

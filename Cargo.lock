@@ -407,6 +407,7 @@ dependencies = [
  "bright-lightning",
  "fuente",
  "gloo 0.11.0",
+ "lucide-yew",
  "nostr-minions",
  "nostro2",
  "serde",
@@ -663,6 +664,7 @@ dependencies = [
  "bright-lightning",
  "gloo 0.11.0",
  "js-sys",
+ "lucide-yew",
  "nostr-minions",
  "nostro2",
  "serde",
@@ -1696,6 +1698,15 @@ name = "log"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+
+[[package]]
+name = "lucide-yew"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58dc9ff13b652cbcf1883126c5fcb2b9970198715f9ff2d88740cbdd1846733f"
+dependencies = [
+ "yew",
+]
 
 [[package]]
 name = "matchers"
