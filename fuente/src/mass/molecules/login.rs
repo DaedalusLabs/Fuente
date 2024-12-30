@@ -1,79 +1,134 @@
-use crate::mass::atoms::{
-    CopyIcon, {SimpleFormButton, SimpleInput},
+use crate::{
+    contexts::LanguageConfigsStore,
+    mass::atoms::{SimpleFormButton, SimpleInput},
+    mass::templates::LoginPageTemplate,
 };
-use nostr_minions::{browser_api::{clipboard_copy, HtmlForm}, key_manager::{NostrIdAction, NostrIdStore, UserIdentity}};
+use lucide_yew::Copy;
+use nostr_minions::{
+    browser_api::{clipboard_copy, HtmlForm},
+    key_manager::{NostrIdAction, NostrIdStore, UserIdentity},
+};
 use nostro2::keypair::NostrKeypair;
+use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 
-#[derive(Debug, Clone, PartialEq, Properties)]
-pub struct LoginProps {
-    login_handle: UseStateHandle<LoginType>,
+#[derive(Clone, PartialEq)]
+enum AuthPage {
+    Login,
+    Register,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum LoginType {
-    NewUser,
-    ImportUser,
+#[derive(Properties, Clone, PartialEq)]
+pub struct AuthPageProps {
+    pub login_handle: Callback<MouseEvent>,
 }
 
-#[function_component(NewUserPage)]
-pub fn new_user() -> Html {
-    let new_user_state = use_state(|| LoginType::NewUser);
+#[function_component(LoginPage)]
+pub fn login_template() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
+    let translations = language_ctx.translations();
+    let login_type = use_state(|| AuthPage::Login);
+    let register: Callback<MouseEvent> = {
+        let login_type = login_type.clone();
+        Callback::from(move |_| login_type.set(AuthPage::Register))
+    };
+    let login: Callback<MouseEvent> = {
+        let login_type = login_type.clone();
+        Callback::from(move |_| login_type.set(AuthPage::Login))
+    };
+    let title = match *login_type {
+        AuthPage::Login => &translations["auth_login_title"],
+        AuthPage::Register => &translations["auth_register_title"],
+    };
+    let heading = match *login_type {
+        AuthPage::Login => &translations["auth_login_heading_shop"],
+        AuthPage::Register => &translations["auth_register_heading"],
+    };
     html! {
-        <div class="flex flex-col w-full h-full">
-            <LoginTypeSelector login_handle={new_user_state.clone()} />
-            {match &*new_user_state {
-                LoginType::NewUser => html! {
-                    <>
-                        <NewUserForm />
-                    </>
-                },
-                LoginType::ImportUser => html! {
-                    <>
-                        <ImportUserForm />
-                    </>
-                },
-            }}
-        </div>
+        <LoginPageTemplate 
+            heading={heading.to_string()} 
+            sub_heading={translations["auth_register_heading_now"].clone()} 
+            title={title.to_string()}>
+                {match *login_type {
+                    AuthPage::Login => html! {<LoginForm login_handle={register} />},
+                    AuthPage::Register => html! {<RegisterUserForm login_handle={login} />},
+                }}
+        </LoginPageTemplate>
+    }
+}
+#[function_component(LoginForm)]
+pub fn import_user_form(props: &AuthPageProps) -> Html {
+    let AuthPageProps { login_handle } = props;
+    let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
+    let translations = language_ctx.translations();
+    let onclick = Callback::from(move |e: MouseEvent| {
+        e.prevent_default();
+        let document =
+            nostr_minions::browser_api::HtmlDocument::new().expect("Failed to get document");
+        let user_keys_str = document
+            .find_element_by_id::<HtmlInputElement>("private_key")
+            .expect("Failed to get password")
+            .value();
+        let user_keys =
+            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
+        let user_ctx = user_ctx.clone();
+        spawn_local(async move {
+            let user_identity = UserIdentity::from_new_keys(user_keys)
+                .await
+                .expect("Failed to create user identity");
+            let keys = user_identity
+                .get_user_keys()
+                .await
+                .expect("Failed to get user keys");
+            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+        });
+    });
+
+    html! {
+      <form class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+          <div class="space-y-1">
+              <label
+                  for="private_key"
+                  class="text-white text-lg block text-left"
+              >
+                  {&translations["auth_login_form_label"]}
+              </label>
+              <input
+                  id="private_key"
+                  name="private_key"
+                  label="Private Key"
+                  input_type="text"
+                  class="p-2 w-full rounded-xl"
+                  required={true}
+                  />
+          </div>
+
+          <div class="space-y-5 flex flex-col mt-5">
+              <a
+                  class="text-center text-white font-thin underline cursor-pointer hover:text-cyan-400">
+                  {&translations["auth_login_link_key"]}
+              </a>
+              <a  onclick={login_handle}
+                  class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">
+                  {&translations["auth_login_link_register"]}
+              </a>
+              <input
+                  {onclick}
+                  type="submit"
+                  class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto"
+                  value={translations["auth_login_link_button"].clone()}
+              />
+          </div>
+      </form>
     }
 }
 
-#[function_component(LoginTypeSelector)]
-pub fn popup_selector(props: &LoginProps) -> Html {
-    let new_user_state = props.login_handle.clone();
-    let state_clone = new_user_state.clone();
-    let selected_class = "border-b-4 border-purple-900 text-sm font-bold py-4 px-8 mx-8";
-    let unselected_class = "text-sm font-bold py-4 px-8 mx-8";
-    html! {
-        <div class="w-full h-1/3 shadow-xl rounded-b-3xl bg-neutral-50 flex flex-col justify-end relative">
-            <div class="absolute inset-0 flex items-center justify-center select-none z-0">
-                <img src="/public/assets/img/logo.png" alt="Suriname Logo" class="w-32 h-32" />
-            </div>
-            <div class="flex flex-row gap-2 z-10 justify-between">
-                <button
-                    class={if *new_user_state == LoginType::NewUser { selected_class } else { unselected_class }}
-                    onclick={Callback::from(move |_| {
-                        gloo::console::log!("New User");
-                        state_clone.set(LoginType::NewUser);
-                    })} >
-                    {"Sign-up"}
-                </button>
-                <button
-                    class={if *new_user_state == LoginType::ImportUser { selected_class } else { unselected_class }}
-                    onclick={Callback::from(move |_| {
-                        gloo::console::log!("Import User");
-                        new_user_state.set(LoginType::ImportUser);
-                    })}
-                    >
-                    {"Recover"}
-                </button>
-            </div>
-        </div>
-    }
-}
-
-#[function_component(NewUserForm)]
-pub fn new_user_form() -> Html {
+#[function_component(RegisterUserForm)]
+pub fn new_user_form(props: &AuthPageProps) -> Html {
+    let AuthPageProps { login_handle } = props;
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
+    let translations = language_ctx.translations();
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
     let new_keys = NostrKeypair::generate(true);
     let private_key = new_keys
@@ -98,74 +153,52 @@ pub fn new_user_form() -> Html {
     });
     let key_clone = private_key.clone();
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 flex-1 p-8 items-center">
-                <SimpleInput
-                    id="private_key"
-                    name="private_key"
-                    label="Private Key"
-                    value={private_key.clone()}
-                    input_type="text"
-                    required={true}
-                    />
-                <button
-                    type="button"
-                    onclick={Callback::from(move |_: MouseEvent| {
-                         clipboard_copy(&key_clone);
-                    })}
-                    class="flex flex-row-reverse gap-0.5 text-blue-400 items-center text-sm w-full">
-                        {"Copy Key"}
-                        <CopyIcon class="w-6 h-6" />
-                </button>
-                <span class="w-full font-bold text-neutral-500">
+        <form   {onsubmit}
+            class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+            <div class="space-y-5">
+                <div class="space-y-1">
+                    <label
+                        for="private_key"
+                        class="text-white text-lg block text-left"
+                    >
+                        {&translations["auth_login_form_label"]}
+                    </label>
+                    <span class="w-full font-bold flex gap-2">
+                        <input
+                            id="private_key"
+                            name="private_key"
+                            label="Private Key"
+                            value={private_key.clone()}
+                            class="p-2 w-full rounded-xl"
+                            type="text"
+                            required={true}
+                            disabled={true}
+                            />
+                        <button
+                            type="button"
+                            onclick={Callback::from(move |_: MouseEvent| {
+                                 clipboard_copy(&key_clone);
+                            })}>
+                            <Copy class="w-8 h-8 text-white" />
+                        </button>
+                    </span>
+                </div>
+                <span class="w-full font-bold text-white">
                     <p>{"This key encrypts all your data."}</p>
                     <p>{"You must keep this safe."}</p>
                     <p>{"We do not have access to your keys!"}</p>
                 </span>
                 <input type="hidden" class="hidden" name="password" id="password" type={"password"} value={private_key} />
-                <SimpleFormButton>
-                    {"Understood!"}
-                </SimpleFormButton>
-        </form>
-    }
-}
-
-#[function_component(ImportUserForm)]
-pub fn import_user_form() -> Html {
-    let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
-        let form_element = HtmlForm::new(e).expect("Failed to get form element");
-        let user_keys_str = form_element
-            .input_value("password")
-            .expect("Failed to get password");
-        let user_keys =
-            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
-        let user_ctx = user_ctx.clone();
-        spawn_local(async move {
-            let user_identity = UserIdentity::from_new_keys(user_keys)
-                .await
-                .expect("Failed to create user identity");
-            let keys = user_identity
-                .get_user_keys()
-                .await
-                .expect("Failed to get user keys");
-            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
-        });
-    });
-
-    html! {
-        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center">
-            <SimpleInput
-                id="password"
-                name="password"
-                label="Private Key"
-                value=""
-                input_type="password"
-                required={true}
+            </div>
+            <div class="space-y-5 flex flex-col mt-5">
+                <a  onclick={login_handle}
+                    class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">{"I have an account - Login"}</a>
+                <input
+                    type="submit"
+                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    value={translations["auth_register_link_button"].clone()}
                 />
-            <SimpleFormButton>
-                {"Log In"}
-            </SimpleFormButton>
+            </div>
         </form>
     }
 }

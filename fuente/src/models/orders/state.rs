@@ -192,6 +192,9 @@ impl OrderInvoiceState {
     pub fn order_id(&self) -> String {
         self.order.id.as_ref().unwrap().to_string()
     }
+    pub fn order_timestamp(&self) -> i64 {
+        self.order.created_at
+    }
 }
 impl ToString for OrderInvoiceState {
     fn to_string(&self) -> String {

@@ -1,15 +1,19 @@
 use business::{
     contexts::{CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, OrderDataProvider},
-    pages::{NewProductListSection, NewProfilePage},
+    pages::NewProfilePage,
     router::CommercePages,
 };
 use fuente::{
-    contexts::{AdminConfigsProvider, AdminConfigsStore},
-    mass::{LoadingScreen, MainLayout, NewUserPage},
+    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
+    mass::{LoadingScreen, LoginPage},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
-use nostr_minions::{init_nostr_db, key_manager::{NostrIdProvider, NostrIdStore}, relay_pool::{RelayProvider,UserRelay}};
+use nostr_minions::{
+    init_nostr_db,
+    key_manager::{NostrIdProvider, NostrIdStore},
+    relay_pool::{RelayProvider, UserRelay},
+};
 use yew::prelude::*;
 use yew_router::BrowserRouter;
 
@@ -29,17 +33,17 @@ fn app() -> Html {
         || {}
     });
     html! {
+        <LanguageConfigsProvider>
         <BrowserRouter>
             <RelayProviderComponent>
                 <AppContext>
-                    <MainLayout>
-                        <LoginCheck>
-                            <CommercePages />
-                        </LoginCheck>
-                    </MainLayout>
+                    <LoginCheck>
+                        <CommercePages />
+                    </LoginCheck>
                 </AppContext>
             </RelayProviderComponent>
         </BrowserRouter>
+        </LanguageConfigsProvider>
     }
 }
 
@@ -90,21 +94,14 @@ fn login_check(props: &ChildrenProps) -> Html {
         return html! {<LoadingScreen />};
     }
     if key_ctx.get_nostr_key().is_none() {
-        return html! {
-            <div class="flex justify-center items-center flex-1">
-                <NewUserPage />
-            </div>
-        };
+        return html! { <LoginPage /> };
     }
     if !user_ctx.checked_db() {
         return html! {<LoadingScreen />};
     }
     if user_ctx.profile().is_none() && user_ctx.checked_relay() {
         return html! {
-            <div class="flex flex-col w-full h-full overflow-y-scroll">
-                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Contact Details"}</h2>
-                <NewProfilePage />
-            </div>
+            <NewProfilePage />
         };
     }
     let whitelist = config_ctx.get_commerce_whitelist();
@@ -112,14 +109,6 @@ fn login_check(props: &ChildrenProps) -> Html {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not yet authorized to access this page"}</h2>
-            </div>
-        };
-    }
-    if user_ctx.menu().is_none() {
-        return html! {
-            <div class="flex flex-col w-full h-full overflow-y-scroll">
-                <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Save Your Product List"}</h2>
-                <NewProductListSection />
             </div>
         };
     }

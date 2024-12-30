@@ -21,21 +21,31 @@ pub fn home_page() -> Html {
 
 #[function_component(OrderDashboard)]
 pub fn order_dashboard() -> Html {
-    // use_effect_with((), |_| {
-    //     let droppable = Droppable::init(".draggable-zone", ".draggable", ".draggable-col").unwrap();
-    //     droppable.event_listener();
-    //     || {}
-    // });
     let commerce_ctx = use_context::<OrderDataStore>().expect("No commerce ctx");
     html! {
-        <div class="draggable-zone flex flex-row gap-8">
-            <OrderList title={OrderStatus::Pending} orders={commerce_ctx.filter_by_order_status(OrderStatus::Pending)} />
-            <OrderList title={OrderStatus::Preparing} orders={commerce_ctx.filter_by_order_status(OrderStatus::Preparing)} />
-            <OrderList title={OrderStatus::ReadyForDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery)} />
-            <OrderList title={OrderStatus::InDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::InDelivery)} />
-            <OrderList title={OrderStatus::Completed} orders={commerce_ctx.filter_by_order_status(OrderStatus::Completed)} />
-            <OrderList title={OrderStatus::Canceled} orders={commerce_ctx.filter_by_order_status(OrderStatus::Canceled)} />
-        </div>
+        <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
+            <div class="flex justify-between items-center">
+                <h1 class="text-fuente text-6xl tracking-tighter font-bold">{"My Orders"}</h1>
+                <button class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
+            </div>
+
+            <div class="flex gap-10 mt-10 min-h-96 h-full">
+                <div class="grid grid-cols-2 gap-4 lg:w-1/2 xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
+                    <OrderList title={OrderStatus::Pending} orders={commerce_ctx.filter_by_order_status(OrderStatus::Pending)} />
+                    <OrderList title={OrderStatus::Preparing} orders={commerce_ctx.filter_by_order_status(OrderStatus::Preparing)} />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 lg:w-[65%] xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
+                    <OrderList title={OrderStatus::ReadyForDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery)} />
+                    <OrderList title={OrderStatus::InDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::InDelivery)} />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 lg:w-1/2 xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
+                    <OrderList title={OrderStatus::Completed} orders={commerce_ctx.filter_by_order_status(OrderStatus::Completed)} />
+                    <OrderList title={OrderStatus::Canceled} orders={commerce_ctx.filter_by_order_status(OrderStatus::Canceled)} />
+                </div>
+            </div>
+        </main>
     }
 }
 #[derive(Clone, PartialEq, Properties)]
@@ -47,19 +57,51 @@ pub struct OrderListProps {
 #[function_component(OrderList)]
 pub fn order_list(props: &OrderListProps) -> Html {
     let column_id = props.title.to_string();
+    let theme_color = match props.title {
+        OrderStatus::Pending => "bg-gray-100",
+        OrderStatus::Preparing => "bg-orange-100",
+        OrderStatus::ReadyForDelivery => "bg-sky-100",
+        OrderStatus::InDelivery => "bg-orange-100",
+        OrderStatus::Completed => "bg-green-100",
+        OrderStatus::Canceled => "bg-red-100",
+    };
+    let text_color = match props.title {
+        OrderStatus::Pending => "text-gray-500",
+        OrderStatus::Preparing => "text-orange-500",
+        OrderStatus::ReadyForDelivery => "text-sky-500",
+        OrderStatus::InDelivery => "text-orange-500",
+        OrderStatus::Completed => "text-green-500",
+        OrderStatus::Canceled => "text-red-500",
+    };
+    let border_color = match props.title {
+        OrderStatus::Pending => "border-gray-500",
+        OrderStatus::Preparing => "border-orange-500",
+        OrderStatus::ReadyForDelivery => "border-sky-500",
+        OrderStatus::InDelivery => "border-orange-500",
+        OrderStatus::Completed => "border-green-500",
+        OrderStatus::Canceled => "border-red-500",
+    };
+    let button_class = classes!("text-sm", "font-bold", "px-4", "py-2", "border", border_color, "rounded-lg");
+    let button_text_class = classes!("text-lg", "font-semibold", "text-center", "text-nowrap", text_color);
+    let column_class = classes!("h-full", "min-w-fit", "max-h-[calc(100vh-16rem)]", "mt-2", "rounded-2xl", "overflow-y-auto", "no-scrollbar", theme_color);
+
     html! {
-        <div class="flex flex-col min-w-64">
-            <h2 class="text-2xl text-nowrap">{&props.title.display()}</h2>
+        <section>
+            <div class={button_class}>
+                <p class={button_text_class}>
+                    {&props.title.display()}
+                </p>
+            </div>
             <div
                 id={column_id}
-                class="draggable-col h-full flex flex-col gap-4 overflow-y-scroll no-scrollbar p-2">
+                class={column_class}>
                 {props.orders.iter().map(|order| {
                     html! {
                         <OrderCard order={order.0.clone()} order_note={order.1.clone()} />
                     }
                 }).collect::<Html>()}
             </div>
-        </div>
+        </section>
     }
 }
 

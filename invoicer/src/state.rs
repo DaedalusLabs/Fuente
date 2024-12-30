@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use fuente::models::{
     AdminConfiguration, AdminConfigurationType, AdminServerRequest, CommerceProfile,
-    OrderInvoiceState, ProductMenu, TEST_PUB_KEY,
+    OrderInvoiceState, ProductMenu, ADMIN_WHITELIST, TEST_PUB_KEY,
 };
 use nostro2::{
     keypair::NostrKeypair,
@@ -30,7 +30,8 @@ impl InvoicerState {
         let mut admin_config = AdminConfiguration::default();
         // TODO
         // make this env variables
-        admin_config.set_admin_whitelist(vec![TEST_PUB_KEY.to_string()]);
+        admin_config.set_admin_whitelist(ADMIN_WHITELIST.map(|x| x.to_string()).to_vec());
+        info!("Admin whitelist set to {:?}", ADMIN_WHITELIST);
         Self {
             consumer_profiles: ConsumerRegistry::default(),
             courier_profiles: CourierRegistry::default(),
@@ -184,10 +185,14 @@ impl InvoicerStateLock {
     }
     pub async fn sign_updated_config(
         &self,
-        admin_req: AdminServerRequest,
+        admin_note: NostrNote,
         signing_keys: &NostrKeypair,
     ) -> anyhow::Result<NostrNote> {
         let mut bot_state = self.lock().await;
+        bot_state
+            .admin_config
+            .check_admin_whitelist(&admin_note.pubkey)?;
+        let admin_req = AdminServerRequest::try_from(&admin_note)?;
         let update = match admin_req.config_type {
             AdminConfigurationType::ExchangeRate => {
                 bot_state
@@ -219,9 +224,6 @@ impl InvoicerStateLock {
         decrypted: Option<String>,
     ) -> anyhow::Result<()> {
         let mut bot_state = self.lock().await;
-        bot_state
-            .admin_config
-            .check_admin_whitelist(&new_config.pubkey)?;
         let config_type: AdminConfigurationType = new_config
             .tags
             .find_tags(NostrTag::Parameterized)
@@ -232,8 +234,8 @@ impl InvoicerStateLock {
         match config_type {
             AdminConfigurationType::CommerceWhitelist => {
                 let whitelist: Vec<String> = serde_json::from_str(&new_config.content)?;
+                info!("Commerce whitelist set to: {:?}", &bot_state.admin_config);
                 bot_state.admin_config.set_commerce_whitelist(whitelist);
-                info!("Commerce whitelist updated");
             }
             AdminConfigurationType::CourierWhitelist => {
                 let whitelist: Vec<String> = serde_json::from_str(&new_config.content)?;

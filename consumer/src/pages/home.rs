@@ -1,63 +1,60 @@
 use crate::contexts::FavoritesAction;
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
-use fuente::models::FavoriteStore;
-use fuente::{
-    contexts::LanguageConfigsStore,
-    mass::{
-        AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, LookupIcon, MenuBarsIcon,
-        ShoppingCartIcon, UserBadgeIcon,
-    },
+use fuente::mass::templates::{FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
+use fuente::mass::{
+    AppLink, CommerceProfileCard, HeartIcon, HistoryIcon, HomeIcon, MenuBarsIcon, ShoppingCartIcon,
+    UserBadgeIcon,
 };
+use fuente::models::FavoriteStore;
 use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
-    let translations = language_ctx.translations();
-    let businesses = commerce_ctx.commerces();
-    let filter_state = use_state(|| CommerceFilter::All);
     html! {
-        <div class="h-full w-full flex flex-col">
-            <HomeHeader />
-            <div class="flex flex-col flex-1 gap-8">
-                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4">{&translations["home_title"]}</h2>
+        <>
+            <CommerceFilters />
+            <FuenteStoresBanner/>
+            <FuenteHotCategories />
+            <FuenteBitcoinBanner />
+            <FuenteSalesPitch />
+        </>
+    }
+}
+#[function_component(FuenteStoresBanner)]
+pub fn stores_banner() -> Html {
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let businesses = commerce_ctx.commerces();
+    html! {
+    <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
+        <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
 
-                <div class="relative w-full max-w-sm mx-auto px-4">
-                    <input
-                      type={"search"}
-                      placeholder={"Search..."}
-                      class={"w-full pl-10 pr-4 py-2 text-sm bg-transparent border border-neutral-400
-                      rounded-full focus:outline-none focus:border-fuente"}
-                    />
-                    <div class={"absolute inset-y-0 left-4 flex items-center pl-3 pointer-events-none"}>
-                      <LookupIcon class={"h-4 w-4 stroke-neutral-600"} />
-                    </div>
-                </div>
-                <CommerceFilters filter_handle={filter_state} />
-                <div class="flex flex-1 flex-row overflow-x-scroll gap-8 pl-8 items-center">
+        <div class="flex justify-between items-center mt-10 px-10">
+            <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
+                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M4.5-282.3-9.2-296l13.7-13.7 1.8 1.9L-5.4-296l11.7 11.8-1.8 1.9" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M-7.3-297.4h24v2.8h-24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
+            </svg>
+
+            <div class="overflow-x-auto whitespace-nowrap">
+                <div class="grid grid-flow-col auto-cols-max gap-10">
                     {businesses.iter().map(|profile| {
                         let commerce_data = profile.profile().clone();
                         html! {
                             <AppLink<ConsumerRoute>
-                                class="w-64"
+                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white max-h-56 overflow-clip"
                                 selected_class=""
                                 route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
-                                <div class="relative">
                                 <CommerceProfileCard commerce_data={commerce_data.clone()} />
-                                <FavoriteButton
-                                    commerce_id={profile.id().to_string()}
-                                    commerce_data={commerce_data}
-                                />
-                            </div>
                             </AppLink<ConsumerRoute>>
                         }
                     }).collect::<Html>()}
                 </div>
             </div>
-            <HomeFooter />
+
+            <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
+                <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
+            </svg>
         </div>
+    </section>
     }
 }
 
@@ -109,123 +106,21 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     }
 }
 
-#[derive(Clone, PartialEq)]
-pub enum CommerceFilter {
-    All,
-    Books,
-    Tech,
-    Clothing,
-    Hardware,
-    Pharmacy,
-    Groceries,
-    Music,
-    Movies,
-}
-impl CommerceFilter {
-    pub fn all_filters() -> Vec<CommerceFilter> {
-        vec![
-            CommerceFilter::All,
-            CommerceFilter::Books,
-            CommerceFilter::Tech,
-            CommerceFilter::Clothing,
-            CommerceFilter::Hardware,
-            CommerceFilter::Pharmacy,
-            CommerceFilter::Groceries,
-            CommerceFilter::Music,
-            CommerceFilter::Movies,
-        ]
-    }
-}
-
-impl ToString for CommerceFilter {
-    fn to_string(&self) -> String {
-        match self {
-            CommerceFilter::All => "All".to_string(),
-            CommerceFilter::Groceries => "Groceries".to_string(),
-            CommerceFilter::Books => "Books".to_string(),
-            CommerceFilter::Tech => "Tech".to_string(),
-            CommerceFilter::Clothing => "Clothing".to_string(),
-            CommerceFilter::Hardware => "Hardware".to_string(),
-            CommerceFilter::Pharmacy => "Pharmacy".to_string(),
-            CommerceFilter::Music => "Music".to_string(),
-            CommerceFilter::Movies => "Movies".to_string(),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Properties)]
-pub struct CommerceFiltersProps {
-    pub filter_handle: UseStateHandle<CommerceFilter>,
-}
-
 #[function_component(CommerceFilters)]
-pub fn commerce_filters(props: &CommerceFiltersProps) -> Html {
-    let current_filter = (*props.filter_handle).clone();
-    let handle = props.filter_handle.clone();
-    let selected_class = "text-fuente px-4 py-4 border-b-2 border-fuente";
-    let unselected_class = "text-neutral-400 px-4 py-4";
-    let filters = CommerceFilter::all_filters();
+pub fn commerce_filters() -> Html {
     html! {
-        <div class="flex flex-row pl-4 overflow-x-scroll items-end text-xs font-bold whitespace-nowrap">
-        {filters.iter().map(|filter| {
-            let class = if *filter == current_filter {
-                selected_class
-            } else {
-                unselected_class
-            };
-            let handle = handle.clone();
-            let filter_clone = filter.clone();
-            html! {
-                <button
-                    class={class}
-                    onclick={Callback::from(move |_| handle.set(filter_clone.clone()))}>
-                    {filter.to_string()}
-                </button>
-            }}).collect::<Html>()}
-        </div>
-    }
-}
-#[function_component(HomeHeader)]
-pub fn home_header() -> Html {
-    html! {
-        <div class="w-full flex flex-row justify-between p-4 ">
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Settings}>
-                <MenuBarsIcon class="w-8 h-8 stroke-neutral-900" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Cart}>
-                <ShoppingCartIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-        </div>
-    }
-}
-#[function_component(HomeFooter)]
-pub fn home_footer() -> Html {
-    html! {
-        <div class="w-full p-4 flex flex-row justify-between">
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Home}>
-                <HomeIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Favorites}>
-                <HeartIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::Settings}>
-                <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-            <AppLink<ConsumerRoute>
-                class="" selected_class=""
-                route={ConsumerRoute::History}>
-                <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
-            </AppLink<ConsumerRoute>>
-        </div>
+        <nav class="hidden lg:flex max-w-6xl mx-auto">
+            <div class="flex justify-between w-full">
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Hardware"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Pharmacy"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Groceries"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Music"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Movies"}</a>
+                <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
+            </div>
+        </nav>
     }
 }
