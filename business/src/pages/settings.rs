@@ -1,19 +1,21 @@
-use crate::contexts::{CommerceDataAction, CommerceDataStore};
-use fuente::mass::CommerceProfileProps;
+use crate::contexts::CommerceDataStore;
+use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::{
-    CardComponent, CommerceProfileAddressDetails, CommerceProfileDetails, DrawerSection,
-    ImageUploadInput, NewAddressForm, NewAddressProps, SimpleInput, SimpleTextArea,
+    templates::SettingsPageTemplate, CommerceProfileAddressDetails, CommerceProfileDetails,
+    SimpleInput, SimpleTextArea,
 };
-use fuente::models::{CommerceProfile, CommerceProfileIdb};
-use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use yew::{prelude::*, props};
+use fuente::mass::{CommerceProfileProps, LanguageToggle};
+use fuente::models::CommerceProfile;
+use lucide_yew::{ScrollText, ShoppingBag, SquarePen, X};
+use nostr_minions::key_manager::NostrIdStore;
+use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
 pub enum SettingsPage {
     Profile,
+    Address,
     KeyRecovery,
-    FAQ,
-    Legal,
+    Language,
 }
 
 #[derive(Clone, PartialEq)]
@@ -25,65 +27,123 @@ pub enum ProfilePageMenu {
 
 #[function_component(SettingsPageComponent)]
 pub fn settings_page() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let profile = use_context::<CommerceDataStore>()
+        .expect("No CommerceDataStore found")
+        .profile();
+
+    let translations = language_ctx.translations();
     let current_page = use_state(|| SettingsPage::Profile);
+    let go_to_profile = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Profile))
+    };
+    let go_to_address = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Address))
+    };
+    let go_to_key_recovery = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::KeyRecovery))
+    };
+    let go_to_language = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Language))
+    };
+    let my_orders_onclick = {
+        let page = current_page.clone();
+        Callback::noop()
+    };
+    let my_orders_button = {
+        html! {
+            <div class="flex justify-center items-center">
+                <button onclick={my_orders_onclick}
+                    type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
 
-    html! {
-        <div class="h-full w-full flex flex-col">
-            <h2 class="text-4xl mb-6 p-4">{"Settings"}</h2>
+                    <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
 
-            <div class="flex flex-row h-full">
-                // Settings Menu
-                <div class="w-64 border-r p-4">
-                    <div class="flex flex-col gap-4">
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Profile))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Profile Settings"}
-                        </button>
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Key Recovery"}
-                        </button>
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::FAQ))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"FAQ"}
-                        </button>
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Legal))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Legal"}
-                        </button>
-                    </div>
-                </div>
-
-                // Content Area
-                <div class="flex-1 p-4">
-                    {match *current_page {
-                        SettingsPage::Profile => html! {
-                            <ProfileSettingsSection />
-                        },
-                        SettingsPage::KeyRecovery => html! {
-                            <KeyRecoverySection />
-                        },
-                        SettingsPage::FAQ => html! {
-                            <FAQSection />
-                        },
-                        SettingsPage::Legal => html! {
-                            <LegalSection />
-                        },
-                    }}
-                </div>
+                    <span class="text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
+                </button>
             </div>
-        </div>
+        }
+    };
+    let my_store_onclick = {
+        let page = current_page.clone();
+        Callback::noop()
+    };
+    let my_store_button = {
+        html! {
+            <div class="flex justify-center items-center">
+                <button onclick={my_store_onclick}
+                    type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
+
+                    <ShoppingBag class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
+
+                    <span class="text-lg font-bold text-center">{&translations["admin_store_new_products_heading"]}</span>
+                </button>
+            </div>
+        }
+    };
+    let edit_button = {
+        match *current_page {
+            SettingsPage::KeyRecovery => {
+                html! {
+                    <button type="button" class="flex gap-4 tracking-wide">
+                        <span class="text-red-600 font-bold text-sm">
+                            {&translations["profile_personal_information_delete_account_button"]}
+                        </span>
+                        <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
+                    </button>
+                }
+            }
+            SettingsPage::Language => {
+                html! {}
+            }
+            _ => {
+                html! {
+                    <button type="button" class="flex gap-4 tracking-wide">
+                        <span class="text-fuente font-bold text-xl">
+                            {&translations["profile_personal_information_edit_button"]}
+                        </span>
+                        <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
+                    </button>
+                }
+            }
+        }
+    };
+    html! {
+        <SettingsPageTemplate
+            heading={translations["admin_store_profile_heading"].clone()}
+            options={ vec![
+                (my_orders_button),
+                (my_store_button),
+            ]}
+            sidebar_options={ vec![
+                (translations["profile_address_personal_information_button"].clone(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
+                (translations["profile_address_address_button"].clone(), go_to_address, if *current_page == SettingsPage::Address { true } else { false }),
+                (translations["profile_settings_key"].clone(), go_to_key_recovery, if *current_page == SettingsPage::KeyRecovery { true } else { false }),
+                (translations["profile_settings_language"].clone(), go_to_language, if *current_page == SettingsPage::Language { true } else { false }),
+            ]}
+            content_button={Some(edit_button)} >
+            <>
+            {match *current_page {
+                    SettingsPage::Profile => html! {
+                        <MyContactDetails profile={profile.clone()}/>
+                    },
+                    SettingsPage::Address => html! {
+                        <MyBusinessAddress profile={profile.clone()}/>
+                    },
+                    SettingsPage::KeyRecovery => html! {
+                        <KeyRecoverySection />
+                    },
+                    SettingsPage::Language => html! {
+                        <LanguageToggle />
+                    },
+            }}
+            </>
+        </SettingsPageTemplate>
     }
 }
-
 // Key Recovery Section
 #[function_component(KeyRecoverySection)]
 fn key_recovery_section() -> Html {
@@ -153,66 +213,18 @@ fn legal_section() -> Html {
     }
 }
 
-#[function_component(ProfileSettingsSection)]
-fn profile_settings() -> Html {
-    let menu_state = use_state(|| ProfilePageMenu::None);
-    let user_ctx = use_context::<CommerceDataStore>().expect("No user context found");
-    let profile = user_ctx.profile();
-
-    match *menu_state {
-        ProfilePageMenu::None => {
-            if let Some(profile) = profile {
-                html! {
-                    <div class="flex flex-col gap-8">
-                        <MyContactDetails handle={menu_state.clone()} profile={Some(profile.clone())}/>
-                        <MyBusinessAddress handle={menu_state.clone()} profile={Some(profile.clone())}/>
-                    </div>
-                }
-            } else {
-                html! {
-                    <div>{"No profile found"}</div>
-                }
-            }
-        }
-        ProfilePageMenu::EditProfile => html! {
-            <EditProfileMenu
-                handle={menu_state.clone()}
-                profile={profile}
-            />
-        },
-        ProfilePageMenu::EditBusinessAddress => html! {
-            <EditAddressMenu handle={menu_state.clone()} />
-        },
-    }
-}
-
 #[derive(Properties, Clone, PartialEq)]
 pub struct MenuProps {
-    pub handle: UseStateHandle<ProfilePageMenu>,
     #[prop_or_default]
     pub profile: Option<CommerceProfile>,
 }
 
 #[function_component(MyContactDetails)]
 fn my_contact_details(props: &MenuProps) -> Html {
-    let MenuProps { handle, profile } = props;
-
-    // First ensure we have a profile
+    let MenuProps { profile } = props;
     if let Some(profile) = profile {
         html! {
-            <div class="w-full flex flex-col gap-2">
-                <div class="flex flex-row justify-between items-center">
-                    <h3 class="font-bold">{"Contact Details"}</h3>
-                    <button
-                        onclick={let handle = handle.clone();
-                            Callback::from(move |_| handle.set(ProfilePageMenu::EditProfile))}
-                        class="text-sm text-fuente">{"Edit"}
-                    </button>
-                </div>
-                <CardComponent>
-                    <CommerceProfileDetails commerce_data={profile.clone()} />
-                </CardComponent>
-            </div>
+            <CommerceProfileDetails commerce_data={profile.clone()} />
         }
     } else {
         html! {}
@@ -221,120 +233,106 @@ fn my_contact_details(props: &MenuProps) -> Html {
 
 #[function_component(MyBusinessAddress)]
 fn my_business_address(props: &MenuProps) -> Html {
-    let MenuProps { handle, profile } = props;
-
-    // First ensure we have a profile
+    let MenuProps { profile } = props;
     if let Some(profile) = profile {
         html! {
-            <div class="w-full flex flex-col gap-2">
-                <div class="flex flex-row justify-between items-center">
-                    <h3 class="font-bold">{"Business Address"}</h3>
-                    <button
-                        onclick={let handle = handle.clone();
-                            Callback::from(move |_| handle.set(ProfilePageMenu::EditBusinessAddress))}
-                        class="text-sm text-fuente">{"Edit"}
-                    </button>
-                </div>
-                <CardComponent>
-                    <CommerceProfileAddressDetails commerce_data={profile.clone()} />
-                </CardComponent>
-            </div>
+            <CommerceProfileAddressDetails commerce_data={profile.clone()} />
         }
     } else {
         html! {}
     }
 }
 
-#[function_component(EditProfileMenu)]
-pub fn edit_profile_menu(props: &MenuProps) -> Html {
-    let MenuProps { handle, profile: _ } = props;
-    let user_ctx = use_context::<CommerceDataStore>().expect("No user context found");
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
-    let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
-
-    let logo_url = use_state(|| None);
-    let logo_handle = logo_url.clone();
-
-    let banner_url = use_state(|| None);
-    let banner_handle = banner_url.clone();
-
-    let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
-    let sender = relay_pool.send_note.clone();
-    let handle = handle.clone();
-
-    let coordinate_state = use_state(|| None);
-    let nominatim_state = use_state(|| None);
-    let map_state = use_state(|| None);
-    let marker_state = use_state(|| None);
-    let props = props!(NewAddressProps {
-        coord_handle: coordinate_state.clone(),
-        nominatim_handle: nominatim_state.clone(),
-        map_handle: map_state,
-        marker_handle: marker_state,
-        onclick: Callback::from(move |_: MouseEvent| {}),
-    });
-
-    let coords = (*coordinate_state).clone();
-    let address = (*nominatim_state).clone();
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
-        let form = HtmlForm::new(e).expect("Failed to get form");
-        let user_keys = keys.clone();
-        let handle = handle.clone();
-        let sender = sender.clone();
-        let user_ctx = user_ctx.clone();
-        let new_profile = CommerceProfile::new(
-            form.input_value("name").expect("Failed to get name"),
-            form.textarea_value("description")
-                .expect("Failed to get description"),
-            form.input_value("telephone")
-                .expect("Failed to get telephone"),
-            form.input_value("web").expect("Failed to get web"),
-            address.clone().expect("No address found"),
-            coords.clone().expect("No coordinates found"),
-            form.input_value("ln_address")
-                .expect("Failed to get lightning address"),
-            logo_url.as_ref().cloned().expect("No profile pic found"),
-            banner_url.as_ref().cloned().expect("No banner found"),
-        );
-        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        handle.set(ProfilePageMenu::None);
-    });
-    let details_card_state = use_state(|| false);
-    let address_card_state = use_state(|| false);
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
-    html! {
-        <form {onsubmit}
-            class="w-full h-full flex flex-col gap-4 overflow-y-scroll p-8">
-            <div class="flex flex-row w-full justify-between items-center pr-4">
-                <h3 class="font-bold">{"Edit Profile"}</h3>
-                <button
-                    type="submit"
-                    class="text-sm bg-fuente text-white font-bold p-2 px-4 rounded-3xl"
-                    >{"Save"}</button>
-            </div>
-            <DrawerSection title={"Edit Details"} open={details_card_state.clone()}>
-                <NewAddressInputs commerce_data={profile.clone()} />
-                <ImageUploadInput
-                    url_handle={logo_handle} nostr_keys={nostr_keys.clone()}
-                    classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                    input_id="logo-image-upload"/>
-                <ImageUploadInput
-                    url_handle={banner_handle} nostr_keys={nostr_keys}
-                    classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                    input_id="banner-image-upload"/>
-            </DrawerSection>
-            <DrawerSection title={"Edit Address"} open={address_card_state.clone()}>
-                <NewAddressForm ..props />
-            </DrawerSection>
-        </form>
-    }
-}
+// #[function_component(EditProfileMenu)]
+// pub fn edit_profile_menu(props: &MenuProps) -> Html {
+//     let MenuProps { handle, profile: _ } = props;
+//     let user_ctx = use_context::<CommerceDataStore>().expect("No user context found");
+//     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
+//     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
+//
+//     let logo_url = use_state(|| None);
+//     let logo_handle = logo_url.clone();
+//
+//     let banner_url = use_state(|| None);
+//     let banner_handle = banner_url.clone();
+//
+//     let profile = user_ctx.profile().expect("No user profile found");
+//     let keys = key_ctx.get_nostr_key().expect("No user keys found");
+//     let sender = relay_pool.send_note.clone();
+//     let handle = handle.clone();
+//
+//     let coordinate_state = use_state(|| None);
+//     let nominatim_state = use_state(|| None);
+//     let map_state = use_state(|| None);
+//     let marker_state = use_state(|| None);
+//     let props = props!(NewAddressProps {
+//         coord_handle: coordinate_state.clone(),
+//         nominatim_handle: nominatim_state.clone(),
+//         map_handle: map_state,
+//         marker_handle: marker_state,
+//         onclick: Callback::from(move |_: MouseEvent| {}),
+//     });
+//
+//     let coords = (*coordinate_state).clone();
+//     let address = (*nominatim_state).clone();
+//     let onsubmit = Callback::from(move |e: SubmitEvent| {
+//         e.prevent_default();
+//         let form = HtmlForm::new(e).expect("Failed to get form");
+//         let user_keys = keys.clone();
+//         let handle = handle.clone();
+//         let sender = sender.clone();
+//         let user_ctx = user_ctx.clone();
+//         let new_profile = CommerceProfile::new(
+//             form.input_value("name").expect("Failed to get name"),
+//             form.textarea_value("description")
+//                 .expect("Failed to get description"),
+//             form.input_value("telephone")
+//                 .expect("Failed to get telephone"),
+//             form.input_value("web").expect("Failed to get web"),
+//             address.clone().expect("No address found"),
+//             coords.clone().expect("No coordinates found"),
+//             form.input_value("ln_address")
+//                 .expect("Failed to get lightning address"),
+//             logo_url.as_ref().cloned().expect("No profile pic found"),
+//             banner_url.as_ref().cloned().expect("No banner found"),
+//         );
+//         let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+//             .expect("Failed to create profile");
+//         let note = db.signed_note();
+//         sender.emit(note.clone());
+//         user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+//         handle.set(ProfilePageMenu::None);
+//     });
+//     let details_card_state = use_state(|| false);
+//     let address_card_state = use_state(|| false);
+//     let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+//     html! {
+//         <form {onsubmit}
+//             class="w-full h-full flex flex-col gap-4 overflow-y-scroll p-8">
+//             <div class="flex flex-row w-full justify-between items-center pr-4">
+//                 <h3 class="font-bold">{"Edit Profile"}</h3>
+//                 <button
+//                     type="submit"
+//                     class="text-sm bg-fuente text-white font-bold p-2 px-4 rounded-3xl"
+//                     >{"Save"}</button>
+//             </div>
+//             <DrawerSection title={"Edit Details"} open={details_card_state.clone()}>
+//                 <NewAddressInputs commerce_data={profile.clone()} />
+//                 <ImageUploadInput
+//                     url_handle={logo_handle} nostr_keys={nostr_keys.clone()}
+//                     classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+//                     input_id="logo-image-upload"/>
+//                 <ImageUploadInput
+//                     url_handle={banner_handle} nostr_keys={nostr_keys}
+//                     classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+//                     input_id="banner-image-upload"/>
+//             </DrawerSection>
+//             <DrawerSection title={"Edit Address"} open={address_card_state.clone()}>
+//                 <NewAddressForm ..props />
+//             </DrawerSection>
+//         </form>
+//     }
+// }
 
 #[function_component(NewAddressInputs)]
 pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
@@ -385,41 +383,40 @@ pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
     }
 }
 
-#[function_component(EditAddressMenu)]
-pub fn edit_address_menu(props: &MenuProps) -> Html {
-    let MenuProps { handle, .. } = props;
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
-
-    let coordinate_state = use_state(|| None);
-    let nominatim_state = use_state(|| None);
-    let map_state = use_state(|| None);
-    let marker_state = use_state(|| None);
-
-    let coords = (*coordinate_state).clone();
-    let address = (*nominatim_state).clone();
-    let onclick = {
-        let handle = handle.clone();
-        Callback::from(move |_| {
-            if let (Some(_address), Some(_coords), Some(_keys)) =
-                (address.clone(), coords.clone(), key_ctx.get_nostr_key())
-            {
-                handle.set(ProfilePageMenu::None);
-            }
-        })
-    };
-
-    let props = props!(NewAddressProps {
-        coord_handle: coordinate_state.clone(),
-        nominatim_handle: nominatim_state.clone(),
-        map_handle: map_state,
-        marker_handle: marker_state,
-        onclick,
-    });
-
-    html! {
-        <>
-            <NewAddressForm ..props />
-        </>
-    }
-}
-
+// #[function_component(EditAddressMenu)]
+// pub fn edit_address_menu(props: &MenuProps) -> Html {
+//     let MenuProps { handle, .. } = props;
+//     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
+//
+//     let coordinate_state = use_state(|| None);
+//     let nominatim_state = use_state(|| None);
+//     let map_state = use_state(|| None);
+//     let marker_state = use_state(|| None);
+//
+//     let coords = (*coordinate_state).clone();
+//     let address = (*nominatim_state).clone();
+//     let onclick = {
+//         let handle = handle.clone();
+//         Callback::from(move |_| {
+//             if let (Some(_address), Some(_coords), Some(_keys)) =
+//                 (address.clone(), coords.clone(), key_ctx.get_nostr_key())
+//             {
+//                 handle.set(ProfilePageMenu::None);
+//             }
+//         })
+//     };
+//
+//     let props = props!(NewAddressProps {
+//         coord_handle: coordinate_state.clone(),
+//         nominatim_handle: nominatim_state.clone(),
+//         map_handle: map_state,
+//         marker_handle: marker_state,
+//         onclick,
+//     });
+//
+//     html! {
+//         <>
+//             <NewAddressForm ..props />
+//         </>
+//     }
+// }

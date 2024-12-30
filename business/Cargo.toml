@@ -20,3 +20,4 @@ yew.workspace = true
 yew-router.workspace = true
 nostr-minions.workspace = true
 base64.workspace = true
+lucide-yew.workspace = true

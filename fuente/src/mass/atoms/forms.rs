@@ -1,5 +1,6 @@
 use html::ChildrenProps;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use lucide_yew::Plus;
 use upload_things::{UtPreSignedUrl, UtUpload};
 use wasm_bindgen::JsCast;
 use web_sys::{FileReader, FormData, HtmlInputElement};
@@ -28,8 +29,9 @@ pub fn simple_input(props: &SimpleInputProps) -> Html {
     let required = props.required;
     let label = props.label.clone();
     html! {
-        <div class="w-full">
-            <label class="text-xs font-bold text-neutral-400"
+        <div class="space-y-1">
+            <label 
+                class="text-white text-lg block text-left"
                 for={id.clone()}>{label}</label>
             <input
                 {id}
@@ -37,9 +39,7 @@ pub fn simple_input(props: &SimpleInputProps) -> Html {
                 type={input_type}
                 {value}
                 {required}
-                class="w-full border-b-2 border-neutral-400 p-0 py-2 pr-2 text-sm
-                truncate bg-transparent border-0 focus:outline-none focus:border-b-2 focus:bg-transparent
-                focus:ring-0 focus:ring-transparent tracking-widest focus:border-fuente-dark"
+                class="p-3 w-full rounded-xl"
                 />
         </div>
     }
@@ -414,7 +414,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                             <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                         },
                         false => html! {
-                            <span class="text-gray-500">{"IMAGE UPLOAD"}</span>
+                            <Plus class="w-8 h-8 text-blue-500" />
                         }
                     }}
                 </label>
