@@ -1,6 +1,6 @@
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb,
-    NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
+    NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
 };
 use nostr_minions::{
     browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
@@ -223,7 +223,7 @@ pub fn commerce_data_sync() -> Html {
             if &(*id_handle) == "" {
                 let pubkey = keys.public_key();
                 let filter = NostrSubscription {
-                    kinds: Some(vec![NOSTR_KIND_CONSUMER_PROFILE]),
+                    kinds: Some(vec![NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP]),
                     authors: Some(vec![pubkey.clone()]),
                     ..Default::default()
                 }
@@ -246,7 +246,7 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             match note.kind {
-                NOSTR_KIND_CONSUMER_PROFILE => {
+                NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP => {
                     let decrypted_note_str = key_ctx
                         .get_nostr_key()
                         .expect("No keys found")

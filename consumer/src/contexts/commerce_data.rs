@@ -3,8 +3,7 @@ use std::rc::Rc;
 use fuente::{
     contexts::AdminConfigsStore,
     models::{
-        CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
-        NOSTR_KIND_COMMERCE_PROFILE,
+        CommerceProfile, CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE
     },
 };
 use nostr_minions::relay_pool::NostrProps;
@@ -27,6 +26,29 @@ impl CommerceData {
     }
     pub fn products_lists(&self) -> Vec<ProductMenuIdb> {
         self.products_lists.clone()
+    }
+}
+
+pub trait CommerceDataExt {
+    fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile>;
+    fn is_loading(&self) -> bool;
+}
+
+impl CommerceDataExt for UseReducerHandle<CommerceData> {
+    fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile> {
+        if !self.finished_loading() {
+            gloo::console::warn!("Attempting to find commerce while data is still loading");
+            return None;
+        }
+        
+        self.commerces.iter()
+            .find(|p| p.id() == id)
+            .map(|p| p.profile())
+            .cloned()
+    }
+
+    fn is_loading(&self) -> bool {
+        !self.finished_loading()
     }
 }
 
@@ -77,7 +99,7 @@ pub struct CommerceDataChildren {
 #[function_component(CommerceDataProvider)]
 pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let ctx = use_reducer(|| CommerceData {
-        has_loaded: true,
+        has_loaded: false,
         commerces: vec![],
         products_lists: vec![],
     });
