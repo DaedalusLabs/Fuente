@@ -1,6 +1,6 @@
 use crate::contexts::FavoritesAction;
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
-use fuente::mass::templates::{FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
+use fuente::mass::templates::{FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
 use fuente::mass::{AppLink, CommerceProfileCard};
 use fuente::models::FavoriteStore;
 use lucide_yew::{ArrowLeft, ArrowRight, Heart};
@@ -10,13 +10,14 @@ use yew::prelude::*;
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
     html! {
-        <>
+        <div class="space-y-4">
             <CommerceFilters />
             <FuenteStoresBanner/>
             <FuenteHotCategories />
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />
-        </>
+            <FuenteBenefits />
+        </div>
     }
 }
 #[function_component(FuenteStoresBanner)]
@@ -35,7 +36,7 @@ pub fn stores_banner() -> Html {
                         let commerce_data = profile.profile().clone();
                         html! {
                             <AppLink<ConsumerRoute>
-                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white max-h-56 overflow-clip"
+                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
                                 selected_class=""
                                 route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
                                 <CommerceProfileCard commerce_data={commerce_data.clone()} />
@@ -101,8 +102,8 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
 #[function_component(CommerceFilters)]
 pub fn commerce_filters() -> Html {
     html! {
-        <nav class="hidden lg:flex max-w-6xl mx-auto">
-            <div class="flex justify-between w-full">
+        <nav class="hidden lg:flex lg:max-w-4xl xl:max-w-6xl mx-auto">
+            <div class="flex justify-evenly w-full">
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
