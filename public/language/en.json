@@ -51,6 +51,7 @@
 
     "profile_settings_key": "Key Recovery",
     "profile_settings_language": "Language",
+    "profile_settings_upload": "Upload New Photo",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",
@@ -269,18 +270,18 @@
     "product_man_description": "Man Black shoes for run",
     "product_man_description_2": "Man gray shoes for run",
 
-    "sale_products_heading": "Are you looking for sale your products?",
+    "sale_products_heading": "Are you looking to sell your products?",
     "sale_products_button": "Get more info",
 
     "benefits_support_heading": "Support 24/7",
-    "benefits_support_text": "Call to our support team",
-    "benefits_support_text_description": "Availble 24 hours 7 days of week!",
+    "benefits_support_text": "Call our support team",
+    "benefits_support_text_description": "Available 24 hours a day 7 days of week!",
     "benefits_track_heading": "Track your package!",
     "benefits_track_text": "You can track your package",
-    "benefits_track_text_description": "on real time!",
+    "benefits_track_text_description": "in real time!",
     "benefits_secure_heading": "Shop Secure",
-    "benefits_secure_text": "Our website compiles",
-    "benefits_secure_text_description": "with security standards.",
+    "benefits_secure_text": "Your data secured",
+    "benefits_secure_text_description": "by the illuminodes standard.",
 
     "footer_heading": "Fuente",
     "footer_about_how_to_buy": "How to buy?",

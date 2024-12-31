@@ -88,6 +88,7 @@ pub fn drawer_section(props: &DrawerProps) -> Html {
 
 #[derive(Clone, Debug, Properties, PartialEq)]
 pub struct PopupProps {
+    #[prop_or_default]
     pub children: Children,
     pub close_handle: UseStateHandle<bool>,
 }
@@ -104,7 +105,7 @@ pub fn popup_section(props: &PopupProps) -> Html {
     html! {
         <>
         <div {onclick}
-            class="fixed inset-0 bg-neutral-900 opacity-20 z-[500]">
+            class="fixed inset-0 bg-neutral-900 opacity-40 z-[500]">
         </div>
         <div class="absolute inset-0 flex items-center justify-center p-8 z-[501] pointer-events-none">
             <div class="h-fit w-fit flex-col pointer-events-auto">
