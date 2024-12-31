@@ -51,7 +51,7 @@
 
     "profile_settings_key": "Key Recovery",
     "profile_settings_language": "Language",
-    "profile_settings_upload": "Upload New Photo",
+    "profile_settings_upload": "Upload Photo",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",
@@ -160,6 +160,7 @@
     "checkout_client_information_heading_name": "Clients Name",
     "checkout_client_information_heading_email": "Email",
     "checkout_client_information_heading_phone": "Phone Number",
+    "checkout_client_information_heading_ln_address": "Lightning Address",
     "checkout_client_information_heading_location": "Driver Location",
     "checkout_client_information_location": "Cali Street, New York, United States, 11232",
     "checkout_product_details": "Product Details",
@@ -247,6 +248,8 @@
     "stores_store_name": "Evany Store",
     "stores_store_category": "Category: Shoes",
     "stores_store_delivery": "Delivery on time",
+
+    "stores_settings_option_information": "Store Information",
 
     "admin_store_new_products_title": "Store - New Products",
     "admin_store_new_products_heading": "My Store",
