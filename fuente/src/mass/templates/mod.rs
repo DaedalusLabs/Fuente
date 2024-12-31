@@ -1,5 +1,7 @@
-use lucide_yew::SquarePen;
+use lucide_yew::{ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
 use yew::prelude::*;
+
+use crate::contexts::LanguageConfigsStore;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsSideBarBrops {
@@ -65,9 +67,11 @@ pub struct SettingsButtonContentProps {
 #[function_component(SettingsContentButton)]
 pub fn settings_content_button(props: &SettingsButtonContentProps) -> Html {
     let SettingsButtonContentProps { onclick } = props;
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     html! {
         <button type="button" class="flex gap-4 tracking-wide" {onclick}>
-            <span class="text-fuente font-bold text-xl">{"Edit"}</span>
+            <span class="text-fuente font-bold text-xl">{&translations["profile_address_edit_button"]}</span>
             <SquarePen class="w-6 h-6 text-fuente" />
         </button>
     }
@@ -168,10 +172,10 @@ pub fn login_template(props: &LoginPageProps) -> Html {
                     </div>
                 </div>
 
-                <h2 class="text-white text-[135px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12 left-0 w-full">{"Shop"}</h2>
+                <h2 class="text-white text-[135px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12 left-0 w-full">{&heading}</h2>
             </div>
             <div class="lg:hidden bg-white">
-                <h2 class="text-fuente text-[135px] font-bold tracking-[-1rem] text-center -mt-5">{"Now"}</h2>
+                <h2 class="text-fuente text-[135px] font-bold tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
             </div>
         </main>
     }
@@ -179,7 +183,7 @@ pub fn login_template(props: &LoginPageProps) -> Html {
 #[function_component(FuenteBitcoinBanner)]
 pub fn bitcoin_banner() -> Html {
     html! {
-    <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-[3fr_1fr] lg:place-items-center">
+    <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
         <div class="bg-orange-400 w-full mt-10 rounded-2xl h-fit lg:max-h-52">
             <div class="flex items-center">
                 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-80 -rotate-12 -mt-5 lg:-mt-14">
@@ -189,8 +193,8 @@ pub fn bitcoin_banner() -> Html {
             </div>
         </div>
 
-        <img src="templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
-        <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg"   class="lg:hidden w-1/2 h-full">
+        <img src="/templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
+        <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg" class="lg:hidden w-1/2 h-full">
             <defs id="defs4"><filter color-interpolation-filters="sRGB" id="_drop-shadow"><feGaussianBlur id="feGaussianBlur7" in="SourceAlpha" result="blur-out" stdDeviation="1"/><feBlend id="feBlend9" in="SourceGraphic" in2="blur-out" mode="normal"/></filter><linearGradient id="coin-gradient" x1="0%" x2="0%" y1="0%" y2="100%"><stop id="stop12" offset="0%" style="stop-color:#f9aa4b"/><stop id="stop14" offset="100%" style="stop-color:#f7931a"/></linearGradient></defs><g id="g16" transform="scale(0.015625)"><path d="m 63.0359,39.741 c -4.274,17.143 -21.637,27.576 -38.782,23.301 -17.138,-4.274 -27.571,-21.638 -23.295,-38.78 4.272,-17.145 21.635,-27.579 38.775,-23.305 17.144,4.274 27.576,21.64 23.302,38.784 z" id="coin" style="fill:url(#coin-gradient)"/><path d="m 46.1009,27.441 c 0.637,-4.258 -2.605,-6.547 -7.038,-8.074 l 1.438,-5.768 -3.511,-0.875 -1.4,5.616 c -0.923,-0.23 -1.871,-0.447 -2.813,-0.662 l 1.41,-5.653 -3.509,-0.875 -1.439,5.766 c -0.764,-0.174 -1.514,-0.346 -2.242,-0.527 l 0.004,-0.018 -4.842,-1.209 -0.934,3.75 c 0,0 2.605,0.597 2.55,0.634 1.422,0.355 1.679,1.296 1.636,2.042 l -1.638,6.571 c 0.098,0.025 0.225,0.061 0.365,0.117 -0.117,-0.029 -0.242,-0.061 -0.371,-0.092 l -2.296,9.205 c -0.174,0.432 -0.615,1.08 -1.609,0.834 0.035,0.051 -2.552,-0.637 -2.552,-0.637 l -1.743,4.019 4.569,1.139 c 0.85,0.213 1.683,0.436 2.503,0.646 l -1.453,5.834 3.507,0.875 1.439,-5.772 c 0.958,0.26 1.888,0.5 2.798,0.726 l -1.434,5.745 3.511,0.875 1.453,-5.823 c 5.987,1.133 10.489,0.676 12.384,-4.739 1.527,-4.36 -0.076,-6.875 -3.226,-8.515 2.294,-0.529 4.022,-2.038 4.483,-5.155 z m -8.022,11.249 c -1.085,4.36 -8.426,2.003 -10.806,1.412 l 1.928,-7.729 c 2.38,0.594 10.012,1.77 8.878,6.317 z m 1.086,-11.312 c -0.99,3.966 -7.1,1.951 -9.082,1.457 l 1.748,-7.01 c 1.982,0.494 8.365,1.416 7.334,5.553 z" id="symbol" style="fill:#ffffff"/></g>
         </svg>
     </div>
@@ -198,39 +202,34 @@ pub fn bitcoin_banner() -> Html {
 }
 #[function_component(FuenteHotCategories)]
 pub fn categories_banner() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     html! {
-
     <main class="container mx-auto lg:mt-20 flex flex-col lg:grid lg:grid-cols-[1fr_3fr] lg:gap-5">
         <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative">
             <div class="flex justify-between items-center lg:mb-4">
-                <h2 class="text-white text-4xl font-semibold tracking-tighter">{"More Stores"}</h2>
-                <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" class="w-16 h-16">
-                    <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#ffffff"></path>
-                    <path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#ffffff"></path>
-                    <path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#ffffff"></path>
-                </svg>
+                <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
             </div>
 
             <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto lg:absolute lg:bottom-0 lg:right-8" />
         </div>
         <div class="overflow-x-auto whitespace-nowrap mt-10 lg:mt-0">
             <div class="flex justify-between items-center">
-                <h2 class="text-fuente text-5xl font-bold tracking-tighter">{"Hot Categories!"}</h2>
-                <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 64 64" class="w-16 h-16">
-                    <path d="M4-272.1c-13.2 0-23.9-10.7-23.9-23.9S-9.2-319.9 4-319.9s23.9 10.7 23.9 23.9S17.2-272.1 4-272.1zm0-45.2c-11.7 0-21.3 9.6-21.3 21.3s9.6 21.3 21.3 21.3 21.3-9.6 21.3-21.3-9.6-21.3-21.3-21.3z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="m3.5-282.3-1.8-1.9L13.4-296 1.7-307.8l1.8-1.9L17.2-296 3.5-282.3" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path><path d="M15.3-294.6h-24v-2.8h24z" transform="translate(28 328)" fill="#4167e8" class="fill-134563"></path>
-                </svg>
+                <h2 class="text-fuente text-5xl font-bold tracking-tighter">{&translations["home_hot_categories_heading"]}</h2>
+                <ArrowRight class="w-12 h-12 text-fuente rounded-full border-4 border-fuente" />
             </div>
 
             <div class=" mt-10">
                 <div class="grid grid-flow-col auto-cols-max gap-4">
                     <div class="bg-fuente-light rounded-2xl flex items-center w-80">
-                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{"Books"}</p>
+                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{&translations["home_hot_categories_books"]}</p>
                     </div>
                     <img src="/templates/img/iphone.png" alt="iPhone Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/yumi.jpg" alt="Yumi Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <div class="bg-fuente-light rounded-2xl w-80 flex items-center">
-                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{"Tech"}</p>
+                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{&translations["home_hot_categories_tech"]}</p>
                     </div>
                     <img src="/templates/img/iphone.png" alt="iPhone Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/sneaker_1.png" alt="Sneaker Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
@@ -240,13 +239,13 @@ pub fn categories_banner() -> Html {
                 <div class="grid grid-flow-col auto-cols-max gap-4 mt-5">
                     <img src="/templates/img/ninja.png" alt="iPhone Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <div class="bg-fuente-light rounded-2xl flex items-center w-80">
-                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{"Movies"}</p>
+                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{&translations["home_hot_categories_movies"]}</p>
                     </div>
                     <img src="/templates/img/candy.jpg" alt="Sneaker Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/whey.jpg" alt="Yumi Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/ninja.png" alt="iPhone Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <div class="bg-fuente-light rounded-2xl w-80 flex items-center">
-                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{"Music"}</p>
+                        <p class="text-white text-6xl font-bold tracking-tighter text-center flex-1">{&translations["home_hot_categories_music"]}</p>
                     </div>
                     <img src="/templates/img/candy.jpg" alt="Sneaker Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
                     <img src="/templates/img/whey.jpg" alt="Yumi Product" class="max-w-32 bg-gray-100 w-full object-cover flex h-full p-5 rounded-2xl" />
@@ -258,6 +257,8 @@ pub fn categories_banner() -> Html {
 }
 #[function_component(FuenteSalesPitch)]
 pub fn sales_pitch() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     html! {
     <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-7">
         <div class="flex">
@@ -267,11 +268,47 @@ pub fn sales_pitch() -> Html {
         </div>
 
         <div class="mx-auto lg:mx-0 lg:ml-auto">
-            <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px] text-center lg:text-left">{"Are you looking for sale your products?"}</h2>
+            <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
             <div class="flex justify-center lg:justify-start">
-                <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{"Get more info"}</button>
+                <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{&translations["sale_products_button"]}</button>
             </div>
         </div>
     </div>
+    }
+}
+
+#[function_component(FuenteBenefits)]
+pub fn benefits() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    html! {
+    <section class="mt-5 container mx-auto">
+        <div class="grid lg:grid-cols-3 gap-5 bg-gray-100 p-12 rounded-2xl place-content-center lg:place-items-center">
+            <div class="flex items-center gap-5">
+                <Headset class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <div>
+                    <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_support_heading"]}</h3>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_support_text"]}</p>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_support_text_description"]}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-5">
+                <Truck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <div>
+                    <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_track_heading"]}</h3>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_track_text"]}</p>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_track_text_description"]}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-5">
+                <ShieldCheck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <div>
+                    <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_secure_heading"]}</h3>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_secure_text"]}</p>
+                    <p class="text-lg text-fuente-dark">{&translations["benefits_secure_text_description"]}</p>
+                </div>
+            </div>
+        </div>
+    </section>
     }
 }
