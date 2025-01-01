@@ -1,4 +1,4 @@
-use lucide_yew::{ArrowLeft, ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
+use lucide_yew::{ArrowLeft, ArrowRight, Headset, Heart, ShieldCheck, SquarePen, Star, Truck};
 use nostro2::notes::NostrNote;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
@@ -8,6 +8,8 @@ use crate::{
     contexts::LanguageConfigsStore,
     models::{DriverProfile, OrderInvoiceState, OrderStatus},
 };
+
+use super::CommerceProfileProps;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsSideBarBrops {
@@ -558,5 +560,42 @@ fn order_details(props: &OrderDetailsProps) -> Html {
                 </div>
             </div>
         </div>
+    }
+}
+
+#[function_component(FavoritesPageTemplate)]
+pub fn settings_template(props: &html::ChildrenProps) -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    html! {
+        <>
+            <div class="container mx-auto py-10 flex justify-between">
+                <h1 class="text-fuente text-6xl font-bold tracking-tighter">{&translations["favorites_stores_heading"]}</h1>
+            </div>
+
+            <main class="container mx-auto">
+                <div class="flex gap-10">
+                    <aside class="flex flex-col gap-3">
+                        <button
+                            type="button"
+                            class={classes!(
+                                "py-4",
+                                "px-8",
+                                "rounded-2xl",
+                                "font-bold",
+                                "text-lg",
+                                "bg-fuente",
+                                "text-white"
+                            )}
+                            >
+                            {&translations["favorites_stores_stores_button"]}
+                        </button>
+                    </aside>
+                    <div class="grid grid-cols-2 flex-1 gap-5">
+                        {props.children.clone()}
+                    </div>
+                </div>
+            </main>
+    </>
     }
 }
