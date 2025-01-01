@@ -195,6 +195,25 @@ impl OrderInvoiceState {
     pub fn order_timestamp(&self) -> i64 {
         self.order.created_at
     }
+    pub fn locale_date(&self) -> String {
+        let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+            self.order.created_at as f64 * 1000.0,
+        ));
+        let locale_options = web_sys::js_sys::Object::new();
+        let locale_options = web_sys::js_sys::Intl::DateTimeFormat::new(
+            &web_sys::js_sys::Array::of1(&"nl-SR".into()),
+            &locale_options,
+        );
+        let locale_date = timestamp.to_locale_date_string("nl-SR", &locale_options);
+        locale_date.into()
+    }
+    pub fn locale_time(&self) -> String {
+        let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+            self.order.created_at as f64 * 1000.0,
+        ));
+        let locale_time = timestamp.to_locale_time_string("nl-SR");
+        locale_time.into()
+    }
 }
 impl ToString for OrderInvoiceState {
     fn to_string(&self) -> String {
