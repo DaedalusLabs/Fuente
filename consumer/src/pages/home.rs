@@ -36,10 +36,11 @@ pub fn stores_banner() -> Html {
                         let commerce_data = profile.profile().clone();
                         html! {
                             <AppLink<ConsumerRoute>
-                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
+                                class="relative border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
                                 selected_class=""
                                 route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
                                 <CommerceProfileCard commerce_data={commerce_data.clone()} />
+                                <FavoriteButton commerce_id={profile.id().to_string()} commerce_data={commerce_data.clone()} />
                             </AppLink<ConsumerRoute>>
                         }
                     }).collect::<Html>()}
@@ -85,6 +86,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
             {onclick}
             class={classes!(
                 "absolute",
+                "z-[500]",
                 "top-4",
                 "right-4",
                 "p-2",
