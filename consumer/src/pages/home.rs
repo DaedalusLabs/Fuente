@@ -1,4 +1,4 @@
-use crate::contexts::FavoritesAction;
+use crate::contexts::{FavoritesAction, RatingsStore};
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
 use fuente::mass::templates::{FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
 use fuente::mass::{AppLink, CommerceProfileCard};
@@ -23,31 +23,41 @@ pub fn home_page() -> Html {
 #[function_component(FuenteStoresBanner)]
 pub fn stores_banner() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let ratings_ctx = use_context::<RatingsStore>().expect("RatingsStore not found");
     let businesses = commerce_ctx.commerces();
-    html! {
-    <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
-        <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
 
-        <div class="flex justify-between items-center mt-10 px-10">
-            <ArrowLeft class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
-            <div class="overflow-x-auto whitespace-nowrap">
-                <div class="grid grid-flow-col auto-cols-max gap-10">
-                    {businesses.iter().map(|profile| {
-                        let commerce_data = profile.profile().clone();
-                        html! {
-                            <AppLink<ConsumerRoute>
-                                class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
-                                selected_class=""
-                                route={ConsumerRoute::Commerce { commerce_id: profile.id().to_string() }}>
-                                <CommerceProfileCard commerce_data={commerce_data.clone()} />
-                            </AppLink<ConsumerRoute>>
-                        }
-                    }).collect::<Html>()}
+    html! {
+        <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
+            <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
+
+            <div class="flex justify-between items-center mt-10 px-10">
+                <ArrowLeft class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
+                <div class="overflow-x-auto whitespace-nowrap">
+                    <div class="grid grid-flow-col auto-cols-max gap-10">
+                        {businesses.iter().map(|profile| {
+                            let commerce_data = profile.profile().clone();
+                            let commerce_id = profile.id().to_string();
+                            let rating = ratings_ctx.get_business_rating(&commerce_id);
+
+                            // debugging
+                            gloo::console::log!("Rating for business:", commerce_id.clone(), format!("{:?}", rating));
+                            
+                            html! {
+                                <AppLink<ConsumerRoute>
+                                    class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
+                                    selected_class=""
+                                    route={ConsumerRoute::Commerce { commerce_id: commerce_id.clone() }}>
+                                    <div class="relative">
+                                        <CommerceProfileCard {commerce_data} {rating} />
+                                    </div>
+                                </AppLink<ConsumerRoute>>
+                            }
+                        }).collect::<Html>()}
+                    </div>
                 </div>
+                <ArrowRight class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
             </div>
-            <ArrowRight class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
-        </div>
-    </section>
+        </section>
     }
 }
 

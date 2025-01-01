@@ -3,7 +3,7 @@ use std::rc::Rc;
 use fuente::models::{OrderInvoiceState, OrderPaymentStatus, OrderStatus, NOSTR_KIND_DRIVER_STATE, NOSTR_KIND_ORDER_STATE};
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{notes::NostrNote, relays::NostrSubscription};
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
 
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -136,10 +136,11 @@ pub fn commerce_data_sync() -> Html {
                                         order_status.order_id(),
                                     ));
                                 }
-                                (_, OrderStatus::Completed) => {
-                                    gloo::console::log!("Setting completed order");
-                                    ctx.dispatch(LiveOrderAction::CompleteOrder(
-                                        order_status.order_id(),
+                                (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
+                                    gloo::console::log!("Setting completed order for rating");
+                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                        order_note,
+                                        order_status,
                                     ));
                                 }
                                 _ => {

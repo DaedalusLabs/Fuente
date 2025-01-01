@@ -1,6 +1,6 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, RatingsProvider
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
@@ -83,18 +83,20 @@ fn app_context(props: &ChildrenProps) -> Html {
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
-       <ConsumerDataProvider>
-           <CommerceDataProvider>
-               <CartProvider>
-                   <LiveOrderProvider>
-                       <FavoritesProvider>
-                           {props.children.clone()}
-                       </FavoritesProvider>
-                   </LiveOrderProvider>
-               </CartProvider>
-           </CommerceDataProvider>
-       </ConsumerDataProvider>
-    }
+        <ConsumerDataProvider>
+            <CommerceDataProvider>
+                <CartProvider>
+                    <LiveOrderProvider>
+                        <FavoritesProvider>
+                            <RatingsProvider>
+                                {props.children.clone()}
+                            </RatingsProvider>
+                        </FavoritesProvider>
+                    </LiveOrderProvider>
+                </CartProvider>
+            </CommerceDataProvider>
+        </ConsumerDataProvider>
+     }
 }
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {

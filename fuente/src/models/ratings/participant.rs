@@ -1,3 +1,5 @@
+use nostro2::notes::NostrNote;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct ParticipantRating {
     pub pubkey: String,
@@ -21,6 +23,24 @@ impl Into<nostro2::notes::NostrNote> for ParticipantRating {
         }
     }
 }
+
+impl TryFrom<&NostrNote> for ParticipantRating {
+    type Error = anyhow::Error;
+    fn try_from(note: &NostrNote) -> Result<Self, Self::Error> {
+        if note.kind != crate::models::NOSTR_KIND_PARTICIPANT_RATING {
+            return Err(anyhow::anyhow!("Wrong kind"));
+        }
+        Ok(serde_json::from_str(&note.content)?)
+    }
+}
+
+impl TryFrom<NostrNote> for ParticipantRating {
+    type Error = anyhow::Error;
+    fn try_from(note: NostrNote) -> Result<Self, Self::Error> {
+        Self::try_from(&note)
+    }
+}
+
 impl ParticipantRating {
     pub fn add_record(&mut self, record: crate::models::TrustRecord) {
         self.history.push(record);
