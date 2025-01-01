@@ -2,9 +2,7 @@ use fuente::models::{
     OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
     TEST_PUB_KEY,
 };
-use nostr_minions::{
-    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
-};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
     notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
@@ -83,6 +81,16 @@ impl Reducible for OrderData {
                 live_orders: {
                     let mut orders = self.live_orders.clone();
                     if let Ok(state) = OrderInvoiceState::try_from(&order) {
+                        match state.order_status {
+                            OrderStatus::Canceled | OrderStatus::Completed => {
+                                let idb = OrderStateIdb::new(order.clone())
+                                    .expect("Failed to create idb");
+                                spawn_local(async move {
+                                    idb.save().await.expect("Failed to save order state idb");
+                                });
+                            }
+                            _ => {}
+                        }
                         orders.retain(|o| o.0.order_id() != state.order_id());
                         orders.push((state, order));
                     }
@@ -116,17 +124,12 @@ pub fn key_handler(props: &OrderDataChildren) -> Html {
     });
 
     let ctx_clone = ctx.clone();
-    let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
 
-    use_effect_with(key_ctx.get_nostr_key(), move |user_key| {
-        let user_key = user_key.clone();
+    use_effect_with((), move |_| {
         spawn_local(async move {
-            if let Some(keys) = user_key {
-                if let Ok(live_orders) = OrderStateIdb::find_history(&keys).await {
-                    gloo::console::log!("Loaded live orders", live_orders.len());
-                    ctx_clone.dispatch(OrderDataAction::LoadOrderHistory(live_orders));
-                };
-            }
+            if let Ok(live_orders) = OrderStateIdb::find_history().await {
+                ctx_clone.dispatch(OrderDataAction::LoadOrderHistory(live_orders));
+            };
             ctx_clone.dispatch(OrderDataAction::CheckedDb);
         });
     });
@@ -154,22 +157,17 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(keys) = key_ctx.get_nostr_key() {
             spawn_local(async move {
-                // let last_sync_time = match LastSyncTime::get_last_sync_time().await {
-                //     Ok(time) => time,
-                //     Err(_) => 0,
-                // };
+                let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
                     authors: Some(vec![TEST_PUB_KEY.to_string()]),
+                    since: Some(last_save_time as u64),
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys.public_key().as_str());
                 let relay_sub = filter.relay_subscription();
                 id_handle.set(relay_sub.1.clone());
                 subscriber.emit(relay_sub);
-                // LastSyncTime::update_sync_time(nostro2::utils::get_unix_timestamp())
-                //     .await
-                //     .expect("Failed to update sync time");
             });
         }
         || {}
@@ -194,14 +192,6 @@ pub fn commerce_data_sync() -> Html {
                 if let Ok(plaintext) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order) = plaintext.try_into() {
                         ctx_clone.dispatch(OrderDataAction::UpdateCommerceOrder(order));
-                        let db_entry = OrderStateIdb::new(note.clone());
-                        spawn_local(async move {
-                            db_entry
-                                .expect("Failed to create order entry")
-                                .save_to_store()
-                                .await
-                                .expect("Failed to save order entry");
-                        })
                     }
                 }
             }

@@ -1,6 +1,7 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
+        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore,
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,

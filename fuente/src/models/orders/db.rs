@@ -37,35 +37,43 @@ impl TryFrom<JsValue> for OrderStateIdb {
 }
 impl OrderStateIdb {
     pub fn new(order: NostrNote) -> Result<Self, JsValue> {
-        if let Some(order_id) = order.tags.find_first_parameter() {
-            Ok(Self {
-                order_id: order_id.clone(),
-                timestamp: order.created_at,
-                state_note: order,
-            })
-        } else {
-            Err(JsValue::from_str("No id tag found"))
-        }
+        let order_state = OrderInvoiceState::try_from(&order)
+            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
+        Ok(Self {
+            order_id: order_state.order_id(),
+            timestamp: order.created_at,
+            state_note: order,
+        })
     }
-    pub async fn find_history(user_keys: &NostrKeypair) -> Result<Vec<OrderInvoiceState>, JsValue> {
+    pub async fn find_history() -> Result<Vec<OrderInvoiceState>, JsValue> {
         let db_entries = Self::retrieve_all_from_store().await?;
         let order_states = db_entries
             .iter()
-            .filter_map(|entry| entry.parse_order(user_keys).ok())
+            .filter_map(|entry| entry.parse_order().ok())
             .collect::<Vec<OrderInvoiceState>>();
         Ok(order_states)
+    }
+    pub async fn save(&self) -> Result<(), JsValue> {
+        self.clone().save_to_store().await
     }
     pub fn signed_note(&self) -> NostrNote {
         self.state_note.clone()
     }
-    fn parse_order(&self, user_keys: &NostrKeypair) -> Result<OrderInvoiceState, String> {
-        let decrypted = user_keys
-            .decrypt_nip_04_content(&self.state_note)
-            .map_err(|e| format!("{:?}", e))?;
-        OrderInvoiceState::try_from(decrypted).map_err(|e| format!("{:?}", e))
+    fn parse_order(&self) -> Result<OrderInvoiceState, String> {
+        OrderInvoiceState::try_from(&self.state_note).map_err(|e| format!("{:?}", e))
     }
     pub fn id(&self) -> String {
         self.order_id.clone()
+    }
+    pub async fn last_saved_timestamp() -> anyhow::Result<i64> {
+        let db_entries = Self::retrieve_all_from_store()
+            .await
+            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+        let last_entry = db_entries
+            .iter()
+            .max_by(|a, b| a.timestamp.cmp(&b.timestamp))
+            .ok_or_else(|| anyhow::anyhow!("No entries found"))?;
+        Ok(last_entry.timestamp)
     }
 }
 impl IdbStoreManager for OrderStateIdb {

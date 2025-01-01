@@ -1,7 +1,13 @@
-use lucide_yew::{ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
+use lucide_yew::{ArrowLeft, ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
+use nostro2::notes::NostrNote;
+use wasm_bindgen::JsCast;
+use web_sys::HtmlElement;
 use yew::prelude::*;
 
-use crate::contexts::LanguageConfigsStore;
+use crate::{
+    contexts::LanguageConfigsStore,
+    models::{DriverProfile, OrderInvoiceState, OrderStatus},
+};
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsSideBarBrops {
@@ -310,5 +316,247 @@ pub fn benefits() -> Html {
             </div>
         </div>
     </section>
+    }
+}
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct OrderHistoryTemplateProps {
+    pub orders: Vec<OrderInvoiceState>,
+}
+
+#[function_component(OrderHistoryTemplate)]
+pub fn order_history_template(props: &OrderHistoryTemplateProps) -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    let filter_state = use_state(|| OrderStatus::Completed);
+    let selected_order = use_state(|| None::<String>);
+    let selected_class = classes!("bg-fuente", "text-white");
+    let unselected_class = classes!("bg-gray-100", "text-gray-400");
+    let back_button = classes!(
+        "flex",
+        "gap-2",
+        "items-center",
+        "justify-center",
+        "bg-fuente",
+        "text-white",
+        "text-center",
+        "font-bold",
+        "text-lg",
+        "rounded-2xl",
+        "py-4",
+        "w-56",
+    );
+    let completed_filter_button_class = classes!(
+        "text-center",
+        "font-bold",
+        "text-lg",
+        "rounded-2xl",
+        "py-4",
+        "w-56",
+        if *filter_state == OrderStatus::Completed {
+            selected_class.clone()
+        } else {
+            unselected_class.clone()
+        }
+    );
+    let set_completed_filter = {
+        let filter_state = filter_state.clone();
+        Callback::from(move |_| filter_state.set(OrderStatus::Completed))
+    };
+    let canceled_filter_button_class = classes!(
+        "text-center",
+        "font-bold",
+        "text-lg",
+        "rounded-2xl",
+        "py-4",
+        "w-56",
+        if *filter_state == OrderStatus::Canceled {
+            selected_class.clone()
+        } else {
+            unselected_class.clone()
+        }
+    );
+    let set_canceled_filter = {
+        let filter_state = filter_state.clone();
+        Callback::from(move |_| filter_state.set(OrderStatus::Canceled))
+    };
+    let order_handler = selected_order.clone();
+    let onclick_order = Callback::from(move |e: MouseEvent| {
+        e.stop_propagation();
+        let order_id = e.target_dyn_into::<HtmlElement>().unwrap().id();
+        if order_id.is_empty() {
+            return;
+        }
+        order_handler.set(Some(order_id));
+    });
+
+    let mut filtered_orders = (props.orders)
+        .iter()
+        .filter(|order| order.order_status == *filter_state)
+        .cloned()
+        .collect::<Vec<_>>();
+    filtered_orders.sort_by(|a, b| b.order_timestamp().cmp(&a.order_timestamp()));
+
+    if filtered_orders.is_empty() {
+        return html! {};
+    }
+    let unselect_order = {
+        let selected = selected_order.clone();
+        Callback::from(move |_| selected.set(None))
+    };
+    html! {
+        <main class="mt-16 container mx-auto">
+            <div class="w-full flex items-center justify-between">
+                <h1 class="text-6xl font-bold text-fuente tracking-tighter">{&translations["profile_address_button_orders"]}</h1>
+                {match *selected_order {
+                    Some(_) => html! {
+                        <div class="mt-5 flex gap-4">
+                            <button
+                                onclick={unselect_order}
+                                class={back_button}>
+                                <ArrowLeft class="w-6 h-6 text-white" />
+                                {&translations["store_orders_history_back"]}
+                            </button>
+                        </div>
+                    },
+                    None => html! {
+                        <div class="mt-5 flex gap-4">
+                            <button class={completed_filter_button_class} onclick={set_completed_filter}>
+                                {&translations["store_orders_history_completed"]}</button>
+                            <button class={canceled_filter_button_class} onclick={set_canceled_filter}>
+                                {&translations["store_orders_history_canceled"]}
+                            </button>
+                        </div>
+                    },
+                }}
+            </div>
+
+            {match selected_order.as_ref() {
+                Some(order) => {
+                    let order = (*filtered_orders).iter().find(|o| o.order_id() == *order).expect("Order not found");
+                    html! {
+                        <OrderDetails
+                            order={order.clone()}
+                        />
+                    }
+                },
+                None => html! {
+                    <table class="table-auto w-full border-collapse mt-5">
+                        <thead>
+                            <tr>
+                                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{&translations["packages_track_table_heading_order"]}</th>
+                                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{&translations["packages_track_table_heading_date"]}</th>
+                                <th class="text-fuente-dark font-semibold text-center pb-5 px-5 text-xl">{&translations["packages_track_table_heading_driver"]}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-gray-100 space-y-2">
+                            {filtered_orders.iter().map(|order| {
+                                let driver_profile = DriverProfile::try_from(order.courier.as_ref().unwrap_or(&NostrNote::default()));
+                                let driver_name = driver_profile.map(|profile| profile.nickname()).unwrap_or_default();
+                                let driver_id = order.courier.as_ref().unwrap_or(&NostrNote::default()).pubkey.clone();
+                                html! {
+                                    <tr onclick={onclick_order.clone()} id={order.order_id()} class="cursor-pointer hover:bg-gray-200">
+                                        <td id={order.order_id()} class="text-center text-xl font-semibold text-fuente-dark">{format!("#{}", &order.order_id()[..12])}</td>
+                                        <td id={order.order_id()} class="text-center text-xl font-semibold text-fuente-dark">{format!("{} - {}", order.locale_date(), order.locale_time())}</td>
+                                        {if driver_name.is_empty() {
+                                            html! {
+                                                <td id={order.order_id()} class="text-center text-fuente-dark font-semibold text-xl">{"-"}</td>
+                                            }
+                                        } else {
+                                            html! {
+                                                <td id={order.order_id()} class="text-center text-fuente-dark font-semibold text-xl space-y-2">
+                                                    <p id={order.order_id()} class="text-xl text-gray-500 font-bold">{driver_name}</p>
+                                                    <p id={order.order_id()} class="text-gray-500 font-light">{format!("{}", &driver_id[..12])}</p>
+                                                </td>
+                                            }
+                                        }}
+                                    </tr>
+                                }
+                            }).collect::<Html>()}
+                        </tbody>
+                    </table>
+                },
+            }}
+
+        </main>
+    }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+struct OrderDetailsProps {
+    order: OrderInvoiceState,
+}
+
+#[function_component(OrderDetails)]
+fn order_details(props: &OrderDetailsProps) -> Html {
+    let order_req = props.order.get_order_request();
+    let products = order_req.products.counted_products();
+    let profile = order_req.profile;
+
+    html! {
+        <div class="flex flex-col w-full h-full">
+            <div class="flex items-center gap-4 mb-6 p-6">
+                <h2 class="text-2xl font-semibold text-fuente-dark">
+                    {format!("Order Details #{}", &props.order.order_id()[..8])}
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 p-6">
+                <div class="space-y-6">
+                <div class="space-y-2">
+                <h3 class="font-medium text-gray-500">{"Customer Information"}</h3>
+                    <div class="space-y-1">
+                        <p>{"Name: "}{profile.nickname}</p>
+                        <p>{"Phone: "}{profile.telephone}</p>
+                        <p>{"Email: "}{profile.email}</p>
+                    </div>
+            </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-medium text-gray-500">{"Delivery Address"}</h3>
+                        <p class="text-sm">{order_req.address.lookup().display_name()}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-medium text-gray-500">{"Order Status"}</h3>
+                        <p class={classes!(
+                            "font-medium",
+                            if props.order.order_status == OrderStatus::Completed {
+                                "text-green-600"
+                            } else {
+                                "text-red-600"
+                            }
+                        )}>
+                            {props.order.order_status.display()}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="font-medium text-gray-500">{"Order Items"}</h3>
+                    <div class="space-y-2">
+                        {products.iter().map(|(product, count)| {
+                            let subtotal = product.price().parse::<f64>().unwrap() * *count as f64;
+                            html! {
+                                <div class="flex justify-between py-2 border-b">
+                                    <div>
+                                        <p class="font-medium">{product.name()}</p>
+                                        <p class="text-sm text-gray-500">
+                                            {format!("{} x {} SRD", count, product.price())}
+                                        </p>
+                                    </div>
+                                    <p class="font-medium">{format!("{:.2} SRD", subtotal)}</p>
+                                </div>
+                            }
+                        }).collect::<Html>()}
+
+                        <div class="flex justify-between pt-4 font-medium">
+                            <p>{"Total"}</p>
+                            <p>{format!("{:.2} SRD", order_req.products.total())}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     }
 }
