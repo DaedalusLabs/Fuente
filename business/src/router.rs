@@ -1,4 +1,5 @@
-use fuente::mass::{AppLink, CategoriesIcon, HistoryIcon, HomeIcon, MenuBarsIcon};
+use fuente::mass::AppLink;
+use lucide_yew::{BellPlus, History, House, Settings, Store};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -21,56 +22,56 @@ pub enum CommerceRoute {
 #[function_component(CommercePages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="w-dvw h-dvh flex flex-row">
-            <div class="h-full border-r-2 border-black">
-                <div class="w-fit h-full px-4 py-8 gap-8 items-center flex flex-col">
-                    <img
-                        class={"min-w-10 min-h-10 max-w-10 max-h-10"}
-                        src={"/public/assets/img/logo.png"}
-                        alt="avatar" />
-                    <HomeSidebar />
+        <div class="flex h-screen ">
+            <HomeSidebar />
+            <main class="flex-1">
+                <div class="h-full no-scrollbar">
+                    <div class="container mx-auto p-6">
+                        <Switch<CommerceRoute> render = { move |switch: CommerceRoute| {
+                                match switch {
+                                    CommerceRoute::Home => html!{<HomePage />},
+                                    CommerceRoute::History => html!{<HistoryPage />},
+                                    CommerceRoute::Settings => html!{<SettingsPageComponent />},
+                                    CommerceRoute::Products => html!{<ProductsPage />},
+                                    CommerceRoute::Orders => html!{<></>},
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-            <div class="flex-1">
-                <Switch<CommerceRoute> render = { move |switch: CommerceRoute| {
-                        match switch {
-                            CommerceRoute::Home => html!{<HomePage />},
-                            CommerceRoute::History => html!{<HistoryPage />},
-                            CommerceRoute::Settings => html!{<SettingsPageComponent />},
-                            CommerceRoute::Products => html!{<ProductsPage />},
-                            CommerceRoute::Orders => html!{<></>},
-                        }
-                    }}
-                />
-            </div>
+            </main>
         </div>
     }
 }
 #[function_component(HomeSidebar)]
 pub fn home_footer() -> Html {
     html! {
-        <div class="w-fit flex flex-col gap-8 items-center">
+        <aside class="flex w-16 flex-col items-center space-y-8 border-r border-fuente py-8">
+            <img
+                class={"min-w-10 min-h-10 max-w-10 max-h-10"}
+                src={"/public/assets/img/logo.png"}
+                alt="avatar" />
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Home}>
-                <HomeIcon class="w-8 h-8 stroke-neutral-400" />
+                <BellPlus class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Products}>
-                <CategoriesIcon class="w-8 h-8 stroke-neutral-400" />
+                <Store class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::History}>
-                <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
+                <History class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
             // Add settings link (using MenuBarsIcon)
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Settings}>
-                <MenuBarsIcon class="w-8 h-8 stroke-neutral-400" />
+                <Settings class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
-        </div>
+        </aside>
     }
 }

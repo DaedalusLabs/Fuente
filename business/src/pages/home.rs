@@ -1,12 +1,15 @@
-use crate::contexts::{CommerceDataStore, OrderDataStore};
+use crate::{
+    contexts::{CommerceDataStore, OrderDataStore},
+    router::CommerceRoute,
+};
 use fuente::{
-    // js::draggable::Droppable,
-    mass::LoadingScreen,
+    mass::{LoadingScreen, OrderDetailModal, OrderStateCard, PopupSection},
     models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
-use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::notes::NostrNote;
 use yew::prelude::*;
+use yew_router::hooks::use_navigator;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
@@ -15,18 +18,28 @@ pub fn home_page() -> Html {
         return html! {<LoadingScreen />};
     }
     html! {
+        <>
         <OrderDashboard />
+        </>
+
     }
 }
 
 #[function_component(OrderDashboard)]
 pub fn order_dashboard() -> Html {
     let commerce_ctx = use_context::<OrderDataStore>().expect("No commerce ctx");
+    let go_to_orders = {
+        let router = use_navigator().expect("No router found");
+        Callback::from(move |_| {
+            router.push(&CommerceRoute::History);
+        })
+    };
     html! {
         <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
             <div class="flex justify-between items-center">
                 <h1 class="text-fuente text-6xl tracking-tighter font-bold">{"My Orders"}</h1>
-                <button class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
+                <button onclick={go_to_orders}
+                    class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
             </div>
 
             <div class="flex gap-10 mt-10 min-h-96 h-full">
@@ -57,33 +70,32 @@ pub struct OrderListProps {
 #[function_component(OrderList)]
 pub fn order_list(props: &OrderListProps) -> Html {
     let column_id = props.title.to_string();
-    let theme_color = match props.title {
-        OrderStatus::Pending => "bg-gray-100",
-        OrderStatus::Preparing => "bg-orange-100",
-        OrderStatus::ReadyForDelivery => "bg-sky-100",
-        OrderStatus::InDelivery => "bg-orange-100",
-        OrderStatus::Completed => "bg-green-100",
-        OrderStatus::Canceled => "bg-red-100",
-    };
-    let text_color = match props.title {
-        OrderStatus::Pending => "text-gray-500",
-        OrderStatus::Preparing => "text-orange-500",
-        OrderStatus::ReadyForDelivery => "text-sky-500",
-        OrderStatus::InDelivery => "text-orange-500",
-        OrderStatus::Completed => "text-green-500",
-        OrderStatus::Canceled => "text-red-500",
-    };
-    let border_color = match props.title {
-        OrderStatus::Pending => "border-gray-500",
-        OrderStatus::Preparing => "border-orange-500",
-        OrderStatus::ReadyForDelivery => "border-sky-500",
-        OrderStatus::InDelivery => "border-orange-500",
-        OrderStatus::Completed => "border-green-500",
-        OrderStatus::Canceled => "border-red-500",
-    };
-    let button_class = classes!("text-sm", "font-bold", "px-4", "py-2", "border", border_color, "rounded-lg");
-    let button_text_class = classes!("text-lg", "font-semibold", "text-center", "text-nowrap", text_color);
-    let column_class = classes!("h-full", "min-w-fit", "max-h-[calc(100vh-16rem)]", "mt-2", "rounded-2xl", "overflow-y-auto", "no-scrollbar", theme_color);
+    let button_class = classes!(
+        "text-sm",
+        "font-bold",
+        "px-4",
+        "py-2",
+        "border",
+        props.title.theme_color(),
+        "rounded-lg"
+    );
+    let button_text_class = classes!(
+        "text-lg",
+        "font-semibold",
+        "text-center",
+        "text-nowrap",
+        props.title.text_color()
+    );
+    let column_class = classes!(
+        "h-full",
+        "min-w-fit",
+        "max-h-[calc(100vh-16rem)]",
+        "mt-2",
+        "rounded-2xl",
+        "overflow-y-auto",
+        "no-scrollbar",
+        props.title.border_color()
+    );
 
     html! {
         <section>
@@ -115,23 +127,21 @@ pub struct OrderCardProps {
 pub fn order_card(props: &OrderCardProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No user context found");
     let relay_ctx = use_context::<NostrProps>().expect("No relay context found");
-    let id = &props.order.order;
-    let order = props.order.get_order_request();
-    let order_status = &props.order.order_status;
-    let customer_name = order.profile.nickname;
-    let products = order.products.counted_products();
-    let value = order.products.total();
-    let accept_order = {
+    let order_popup = use_state(|| true);
+    let respond_to_order = {
         let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();
-        let order_confirmation = props.order.clone();
         let order = props.order_note.clone();
-        Callback::from(move |_: MouseEvent| {
-            let status_update = match &order_confirmation.order_status {
-                OrderStatus::Pending => OrderStatus::Preparing,
-                OrderStatus::Preparing => OrderStatus::ReadyForDelivery,
-                _ => return,
-            };
+        let order_popup = order_popup.clone();
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            let form = HtmlForm::new(e).expect("Could not get form");
+
+            let status_update_str = form
+                .select_value("order_status")
+                .expect("Could not parse order status");
+            let status_update =
+                OrderStatus::try_from(status_update_str).expect("Could not parse order status");
             let new_request = OrderUpdateRequest {
                 order: order.clone(),
                 status_update,
@@ -140,68 +150,19 @@ pub fn order_card(props: &OrderCardProps) -> Html {
                 .sign_update(&user_keys, NOSTR_KIND_COMMERCE_UPDATE)
                 .expect("Could not sign order");
             send_note.emit(signed_req);
+            order_popup.set(false);
         })
     };
-    let cancel_order = {
-        let user_keys = key_ctx.get_nostr_key().unwrap();
-        let send_note = relay_ctx.send_note.clone();
-        let order = props.order_note.clone();
-        Callback::from(move |_| {
-            let status_update = OrderStatus::Canceled;
-            let new_request = OrderUpdateRequest {
-                order: order.clone(),
-                status_update,
-            };
-            let signed_req = new_request
-                .sign_update(&user_keys, NOSTR_KIND_COMMERCE_UPDATE)
-                .expect("Could not sign order");
-            send_note.emit(signed_req);
-        })
+    let open_popup = {
+        let order_popup = order_popup.clone();
+        Callback::from(move |_| order_popup.set(true))
     };
     html! {
-        <div
-            id={id.id.as_ref().unwrap().to_string()}
-            class="draggable h-fit col-span-1 bg-white rounded-lg shadow-lg m-1 p-4">
-            <div class="flex flex-row justify-between select-none">
-                <div class="flex flex-col gap-2">
-                    <span class="text-lg font-bold">{customer_name}</span>
-                    {products.iter().map(|product| {
-                        html! {
-                            <div class="flex flex-row gap-2">
-                                <span class="text-sm">{product.0.name()}</span>
-                                <span class="text-sm">{product.1}</span>
-                            </div>
-                        }
-                    }).collect::<Html>()}
-                </div>
-                <div class="flex flex-col gap-2">
-                    <span class="text-lg font-bold">{value}</span>
-                    <span class="text-sm">{order_status.to_string()}</span>
-                </div>
-            </div>
-            <div class="flex flex-row gap-4 select-none">
-                {match order_status {
-                    OrderStatus::Pending => html! {
-                        <>
-                        <button
-                            onmousedown={accept_order}
-                            class="text-sm font-bold px-4 py-2 border border-purple-900 rounded-lg">{"Accept"}</button>
-                        <button
-                            onclick={cancel_order}
-                            onmousedown={|event: MouseEvent| event.stop_propagation()}
-                            class="text-sm font-bold px-4 py-2 border border-red-500 rounded-lg">{"Decline"}</button>
-                        </>
-                    },
-                    OrderStatus::Preparing => html! {
-                        <>
-                        <button
-                            onmousedown={accept_order}
-                            class="text-sm font-bold px-4 py-2 border border-purple-900 rounded-lg">{"Ready"}</button>
-                        </>
-                    },
-                    _ => html! {}
-                }}
-            </div>
-        </div>
+        <>
+        <OrderStateCard order={props.order.clone()} on_click={open_popup} />
+        <PopupSection close_handle={order_popup.clone()}>
+            <OrderDetailModal order={props.order.clone()} on_submit={respond_to_order} />
+        </PopupSection>
+        </>
     }
 }

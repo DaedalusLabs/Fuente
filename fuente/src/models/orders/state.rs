@@ -33,14 +33,44 @@ impl TryFrom<&String> for OrderStatus {
     }
 }
 impl OrderStatus {
-    pub fn display(&self) -> String {
+    pub fn display(&self) -> &'static str {
         match self {
-            Self::Pending => "Pending".to_string(),
-            Self::Preparing => "Preparing".to_string(),
-            Self::ReadyForDelivery => "Ready for Delivery".to_string(),
-            Self::InDelivery => "In Delivery".to_string(),
-            Self::Completed => "Completed".to_string(),
-            Self::Canceled => "Canceled".to_string(),
+            Self::Pending => "Pending",
+            Self::Preparing => "Preparing",
+            Self::ReadyForDelivery => "Ready for Delivery",
+            Self::InDelivery => "In Delivery",
+            Self::Completed => "Completed",
+            Self::Canceled => "Canceled",
+        }
+    }
+    pub fn theme_color(&self) -> &'static str {
+        match self {
+            Self::Pending => "bg-gray-100",
+            Self::Preparing => "bg-orange-100",
+            Self::ReadyForDelivery => "bg-sky-100",
+            Self::InDelivery => "bg-orange-100",
+            Self::Completed => "bg-green-100",
+            Self::Canceled => "bg-red-100",
+        }
+    }
+    pub fn text_color(&self) -> &'static str {
+        match self {
+            Self::Pending => "text-gray-500",
+            Self::Preparing => "text-orange-500",
+            Self::ReadyForDelivery => "text-sky-500",
+            Self::InDelivery => "text-orange-500",
+            Self::Completed => "text-green-500",
+            Self::Canceled => "text-red-500",
+        }
+    }
+    pub fn border_color(&self) -> &'static str {
+        match self {
+            Self::Pending => "border-gray-500",
+            Self::Preparing => "border-orange-500",
+            Self::ReadyForDelivery => "border-sky-500",
+            Self::InDelivery => "border-orange-500",
+            Self::Completed => "border-green-500",
+            Self::Canceled => "border-red-500",
         }
     }
 }
