@@ -2,14 +2,22 @@ use crate::contexts::{
     CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore,
 };
 use crate::pages::OrderInvoiceComponent;
+use crate::router::ConsumerRoute;
 use fuente::contexts::{AdminConfigsStore, LanguageConfigsStore};
+use fuente::mass::ThreeBlockSpinner;
 use fuente::models::ProductOrder;
 use lucide_yew::Trash;
+use nostr_minions::key_manager::NostrIdStore;
+use nostr_minions::relay_pool::NostrProps;
 use yew::prelude::*;
+use yew_router::hooks::use_navigator;
 
 #[function_component(CartPage)]
 pub fn cart_page() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let translations = language_ctx.translations();
 
     let cart_items = cart_ctx.cart();
     if cart_items.is_empty() {
@@ -18,11 +26,81 @@ pub fn cart_page() -> Html {
 
     html! {
     <main class="container mx-auto mt-10">
-        <h1 class="text-fuente text-6xl tracking-tighter font-bold ">{"Checkout"}</h1>
+        <h1 class="text-fuente text-6xl tracking-tighter font-bold ">{&translations["cart_heading"]}</h1>
+        <CartTemplate order={ProductOrder::new(cart_items)} />
+        <CartPreTotal />
+    </main>
+    }
+}
+#[function_component(CartPreTotal)]
+pub fn cart_pre_total() -> Html {
+    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let key_ctx = use_context::<NostrIdStore>().expect("No key context not found");
+    let relay_ctx = use_context::<NostrProps>().expect("No relay context not found");
+    let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let translations = language_ctx.translations();
+    let order = ProductOrder::new(cart_ctx.cart());
+    let id = cart_ctx.business_id().expect("No business id");
+    let profile = user_ctx.get_profile();
+    let address = user_ctx.get_default_address();
+    let navigator = use_navigator().expect("No navigator found");
+
+    let send_order_request = {
+        let cart_ctx = cart_ctx.clone();
+        let sender = relay_ctx.send_note.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            let keys = key_ctx.get_nostr_key();
+            let note = cart_ctx.sign_request(
+                &keys.unwrap(),
+                id.clone(),
+                profile.clone().unwrap(),
+                address.clone().unwrap(),
+            );
+            // sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
+            sender.emit(note);
+            navigator.push(&ConsumerRoute::Checkout);
+        })
+    };
+    html! {
+        <>
+        <div class="bg-gray-100 py-5 px-40 mt-5 rounded-2xl flex justify-end items-center">
+            <p class="text-fuente text-lg flex items-center gap-10">
+                {&translations["cart_pre_total"]}
+                <span class="font-bold text-5xl">{format!("SRD {:.2}", order.total())}</span>
+            </p>
+        </div>
+
+        <div class="flex justify-end mt-5 px-40">
+            <button onclick={send_order_request} class="bg-fuente-buttons py-4 px-10 rounded-full font-bold text-fuente-forms">
+                {&translations["cart_checkout"]}
+            </button>
+        </div>
+        </>
+    }
+}
+
+#[function_component(CheckoutPage)]
+pub fn cart_page() -> Html {
+    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let translations = language_ctx.translations();
+
+    let cart_items = cart_ctx.cart();
+    if cart_items.is_empty() {
+        return html! {};
+    }
+
+    html! {
+    <main class="container mx-auto mt-10">
+        <h1 class="text-fuente text-6xl tracking-tighter font-bold ">{&translations["checkout_title"]}</h1>
         <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5">
             <div>
                 <CheckoutClientInfo />
-                <CheckoutCartTemplate order={ProductOrder::new(cart_items)} />
+                <CartTemplate order={ProductOrder::new(cart_items)} />
             </div>
 
             <div>
@@ -34,15 +112,13 @@ pub fn cart_page() -> Html {
     }
 }
 #[derive(Properties, Clone, PartialEq)]
-pub struct CheckoutCartTemplateProps {
-    #[prop_or_default]
-    pub children: Children,
+pub struct CartTemplateProps {
     pub order: ProductOrder,
 }
 
-#[function_component(CheckoutCartTemplate)]
-pub fn checkout_cart_template(props: &CheckoutCartTemplateProps) -> Html {
-    let CheckoutCartTemplateProps { children: _, order } = props;
+#[function_component(CartTemplate)]
+pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
+    let CartTemplateProps { order } = props;
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("No language context not found");
@@ -230,6 +306,10 @@ pub fn checkout_summary() -> Html {
             <OrderInvoiceComponent invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()} {exchange_rate} />
         }
     } else {
-        html! {}
+        html! {
+        <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 items-center justify-center w-full">
+            <ThreeBlockSpinner class="w-8 h-8 text-fuente" />
+        </div>
+        }
     }
 }

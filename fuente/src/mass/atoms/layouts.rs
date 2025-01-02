@@ -1,5 +1,5 @@
-use crate::mass::atoms::svgs::ChevronRightIcon;
 use html::ChildrenProps;
+use lucide_yew::ChevronRight;
 use yew::prelude::*;
 
 #[function_component(MainLayout)]
@@ -75,7 +75,7 @@ pub fn drawer_section(props: &DrawerProps) -> Html {
                 <div class="flex flex-row w-full gap-4 items-center">
                     <div class="w-16 h-16 min-w-16 min-h-16 bg-neutral-300 rounded-xl"></div>
                     <h3 class="text-2xl font-bold flex-1 flex">{title}</h3>
-                        <ChevronRightIcon class={icon_class} />
+                        <ChevronRight class={icon_class} />
                 </div>
             </CardComponent>
         </button>

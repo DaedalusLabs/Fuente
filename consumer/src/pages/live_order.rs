@@ -1,7 +1,7 @@
 use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
+    mass::{DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{
         CommerceProfile, DriverProfileIdb, DriverStateUpdate, OrderInvoiceState,
         OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL,
@@ -142,7 +142,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         <SpinnerIcon class="absolute top-4 right-4 w-4 h-4 text-fuente" />
                     </div>
                     <button {onclick} class="absolute top-4 right-4">
-                        <CancelIcon class="w-8 h-8 text-red-500" />
+                        <Cross class="w-8 h-8 text-red-500" />
                     </button>
 
                 </div>
@@ -151,7 +151,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     }
 }
 
-use lucide_yew::Copy;
+use lucide_yew::{Copy, Cross};
 #[derive(Properties, Clone, PartialEq)]
 pub struct OrderInvoiceComponentProps {
     pub invoice: LndHodlInvoice,
@@ -192,7 +192,7 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
                     <Copy class="text-xs font-bold text-gray-500"  />
                 </button>
             </div>
-            <div class="align-self-center justify-center w-full items-center">
+            <div class="align-self-center justify-center w-full items-center flex">
                 <BitcoinQrCode
                     id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
                     lightning={invoice_pr.clone()} type_="svg" />
