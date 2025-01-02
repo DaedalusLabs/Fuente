@@ -34,11 +34,16 @@ impl Cart {
             .giftwrapped_request(keys, TEST_PUB_KEY.to_string())
             .unwrap()
     }
+    pub fn business_id(&self) -> Option<String> {
+        self.current_business.clone()
+    }
 }
 
 pub enum CartAction {
     AddProduct(ProductItem, String),
+    AddOne(ProductItem),
     RemoveProduct(ProductItem),
+    ClearProduct(ProductItem),
     ClearCart,
 }
 
@@ -71,6 +76,16 @@ impl Reducible for Cart {
                 };
 
                 Rc::new(Cart { cart_items, current_business })
+            }
+            CartAction::AddOne(product) => {
+                let mut cart_items = self.cart_items.clone();
+                cart_items.add(product);
+                Rc::new(Cart { cart_items, current_business: self.current_business.clone() })
+            }
+            CartAction::ClearProduct(product) => {
+                let mut cart_items = self.cart_items.clone();
+                cart_items.remove_all(product.id());
+                Rc::new(Cart { cart_items, current_business: self.current_business.clone() })
             }
             CartAction::ClearCart => Rc::new(Cart {
                 cart_items: ProductOrder::new(vec![]),

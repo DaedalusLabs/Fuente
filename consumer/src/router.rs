@@ -5,7 +5,7 @@ use yew_router::prelude::*;
 use fuente::mass::AppLink;
 
 use crate::pages::{
-    CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent,
+    CartPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent
 };
 
 #[derive(Clone, Routable, PartialEq)]
@@ -38,7 +38,7 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::History => html!{<HistoryPage />},
                         ConsumerRoute::Settings => html!{<SettingsPageComponent />},
                         ConsumerRoute::Favorites => html!{<FavoritesPage />},
-                        ConsumerRoute::Cart => html!{<LiveOrderCheck />},
+                        ConsumerRoute::Cart => html!{<CartPage />},
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },

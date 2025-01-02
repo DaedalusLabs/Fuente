@@ -27,6 +27,9 @@ impl CommerceData {
     pub fn products_lists(&self) -> Vec<ProductMenuIdb> {
         self.products_lists.clone()
     }
+    pub fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfileIdb> {
+        self.commerces.iter().find(|p| p.id() == id).cloned()
+    }
 }
 
 pub trait CommerceDataExt {

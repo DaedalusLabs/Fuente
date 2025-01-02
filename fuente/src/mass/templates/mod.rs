@@ -1,6 +1,5 @@
-use lucide_yew::{ArrowLeft, ArrowRight, Headset, Heart, ShieldCheck, SquarePen, Star, Truck};
+use lucide_yew::{ArrowLeft, ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
 use nostro2::notes::NostrNote;
-use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use yew::prelude::*;
 
@@ -8,8 +7,6 @@ use crate::{
     contexts::LanguageConfigsStore,
     models::{DriverProfile, OrderInvoiceState, OrderStatus},
 };
-
-use super::CommerceProfileProps;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct SettingsSideBarBrops {

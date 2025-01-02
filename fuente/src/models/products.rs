@@ -269,6 +269,9 @@ impl ProductOrder {
             self.products.remove(i);
         }
     }
+    pub fn remove_all(&mut self, product_id: String) {
+        self.products.retain(|p| p.id != product_id);
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProductMenu {
