@@ -1,7 +1,7 @@
 use bright_lightning::LndHodlInvoice;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{CancelIcon, DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
+    mass::{DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
     models::{
         CommerceProfile, DriverProfileIdb, DriverStateUpdate, OrderInvoiceState,
         OrderPaymentStatus, OrderStatus, OrderUpdateRequest, NOSTR_KIND_CONSUMER_CANCEL,
@@ -142,7 +142,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         <SpinnerIcon class="absolute top-4 right-4 w-4 h-4 text-fuente" />
                     </div>
                     <button {onclick} class="absolute top-4 right-4">
-                        <CancelIcon class="w-8 h-8 text-red-500" />
+                        <Cross class="w-8 h-8 text-red-500" />
                     </button>
 
                 </div>
@@ -151,6 +151,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     }
 }
 
+use lucide_yew::{Copy, Cross};
 #[derive(Properties, Clone, PartialEq)]
 pub struct OrderInvoiceComponentProps {
     pub invoice: LndHodlInvoice,
@@ -173,24 +174,29 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
         })
     };
     html! {
-        <div class="flex flex-col gap-4 items-center text-center">
-            <h2 class="text-2xl font-bold">{"Invoice Details"}</h2>
-            <p>{"Exchange Rate: "}{format!("1 BTC = SRD {:.2}", exchange_rate)}</p>
-            <p>{"Amount: "}{format!("{} sats ~ SRD {:.2}", sat_amount, srd_amount)}</p>
-            <p class="text-sm font-bold text-gray-500">
-                {"Tap the invoice to open in your wallet."}
-            </p>
-            <BitcoinQrCode
-                id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
-                lightning={invoice_pr.clone()} type_="svg" />
-            <p class="text-sm font-bold text-gray-500">
-                {format!("{}...", invoice_pr[..12].to_string())}
-            </p>
-            <button
-                class="bg-fuente-light text-white p-2 rounded-md font-mplus"
-                onclick={onclick_copy}>
-                {"Copy Invoice"}
-            </button>
+        <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3">
+            <div class="flex justify-between flex-1">
+                <h3 class="text-fuente text-xl font-bold">{"Total Amount"}</h3>
+                <p class="text-gray-400 text-lg">{format!("{:.2} SRD", srd_amount)}</p>
+            </div>
+            <div class="flex justify-between">
+                <h3 class="text-fuente text-xl font-bold">{"Bitcoin"}</h3>
+                <p class="text-gray-400 text-lg">{format!("{:.8} BTC", sat_amount as f64 / 100_000_000.0)}</p>
+            </div>
+            <div class="flex justify-between">
+                <p class="text-xs font-bold text-gray-500">
+                    {"Tap the invoice to open in your wallet."}
+                </p>
+                <button
+                    onclick={onclick_copy} >
+                    <Copy class="text-xs font-bold text-gray-500"  />
+                </button>
+            </div>
+            <div class="align-self-center justify-center w-full items-center flex">
+                <BitcoinQrCode
+                    id={"qr".to_string()} width={"200".to_string()} height={"200".to_string()}
+                    lightning={invoice_pr.clone()} type_="svg" />
+            </div>
         </div>
     }
 }
@@ -359,11 +365,11 @@ pub fn bitcoin_qr(props: &BitcoinQrCodeProps) -> Html {
         {height}
         {lightning}
         type={type_}
-        corners-square-color="#b23c05"
-        corners-dot-color={"#e24a04"}
+        corners-square-color="#B40A2D"
+        corners-dot-color={"#ECC81D"}
         corners-square-type={"extra-rounded"}
         dots-type={"classy-rounded"}
-        dots-color={"#ff5000"}
+        dots-color={"#377E3F"}
     />
     }
 }
