@@ -193,7 +193,6 @@ pub fn my_contact_details() -> Html {
     let translations = language_ctx.translations();
 
     let profile_popup_handle = use_state(|| false);
-
     let profile_popup_handle_clone = profile_popup_handle.clone();
     html! {
     <div class="grid grid-cols-2 gap-10 h-full">

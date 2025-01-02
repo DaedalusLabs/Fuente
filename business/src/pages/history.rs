@@ -19,7 +19,7 @@ pub fn history_page() -> Html {
     let orders = order_ctx.order_history();
     let selected_order = use_state(|| None::<String>);
 
-    let completed_orders = orders
+    let mut completed_orders = orders
         .iter()
         .filter(|order| order.order_status == OrderStatus::Completed)
         .collect::<Vec<_>>();
@@ -99,16 +99,11 @@ pub fn history_page() -> Html {
                             let profile = order_req.profile;
                             let order_id = order.order_id();
                             let selected = selected_order.clone();
-                            let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(order.order_timestamp() as f64 * 1000.0));
-                            let locale_options = web_sys::js_sys::Object::new();
-                            let locale_options = web_sys::js_sys::Intl::DateTimeFormat::new(&web_sys::js_sys::Array::of1(&"nl-SR".into()), &locale_options);
-                            let locale_date = timestamp.to_locale_date_string("nl-SR", &locale_options);
-                            let locale_time = timestamp.to_locale_time_string("nl-SR");
                             html! {
                                 <div id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
                                     <p class="text-fuente font-bold text-md">{profile.nickname}</p>
                                     <p class="font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
-                                    <p class="text-gray-500 text-xs">{format!("{} | {}", locale_date, locale_time)}</p>
+                                    <p class="text-gray-500 text-xs">{format!("{} | {}", order.locale_date(), order.locale_time())}</p>
                                 </div>
                             }
                         }).collect::<Html>()}

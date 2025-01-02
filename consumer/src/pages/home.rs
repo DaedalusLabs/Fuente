@@ -29,7 +29,7 @@ pub fn stores_banner() -> Html {
     html! {
         <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
             <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
-
+    
             <div class="flex justify-between items-center mt-10 px-10">
                 <ArrowLeft class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
                 <div class="overflow-x-auto whitespace-nowrap">
@@ -38,17 +38,15 @@ pub fn stores_banner() -> Html {
                             let commerce_data = profile.profile().clone();
                             let commerce_id = profile.id().to_string();
                             let rating = ratings_ctx.get_business_rating(&commerce_id);
-
-                            // debugging
-                            gloo::console::log!("Rating for business:", commerce_id.clone(), format!("{:?}", rating));
-                            
+    
                             html! {
                                 <AppLink<ConsumerRoute>
                                     class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
                                     selected_class=""
                                     route={ConsumerRoute::Commerce { commerce_id: commerce_id.clone() }}>
                                     <div class="relative">
-                                        <CommerceProfileCard {commerce_data} {rating} />
+                                        <CommerceProfileCard commerce_data={commerce_data.clone()} {rating} />
+                                        <FavoriteButton commerce_id={commerce_id} commerce_data={commerce_data} />
                                     </div>
                                 </AppLink<ConsumerRoute>>
                             }
@@ -95,6 +93,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
             {onclick}
             class={classes!(
                 "absolute",
+                "z-[500]",
                 "top-4",
                 "right-4",
                 "p-2",
