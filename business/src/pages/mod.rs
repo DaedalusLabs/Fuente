@@ -6,12 +6,13 @@ mod products;
 mod settings;
 pub use history::*;
 pub use home::*;
+use lucide_yew::ArrowLeft;
 pub use new_user::*;
 pub use orders::*;
 pub use products::*;
 pub use settings::*;
 
-use fuente::mass::{AppLink, BackArrowIcon};
+use fuente::mass::AppLink;
 use yew::prelude::*;
 
 use crate::router::CommerceRoute;
@@ -28,7 +29,7 @@ pub fn page_header(props: &PageHeaderProps) -> Html {
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Home}>
-                <BackArrowIcon class="w-8 h-8 stroke-black" />
+                <ArrowLeft class="w-8 h-8 stroke-black" />
             </AppLink<CommerceRoute>>
             <h3 class="flex-1 text-center text-lg font-semibold">{&props.title}</h3>
             <div class="h-8 w-8"></div>

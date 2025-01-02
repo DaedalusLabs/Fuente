@@ -1,8 +1,10 @@
 use crate::contexts::OrderDataStore;
 use fuente::{
-    contexts::LanguageConfigsStore, mass::HistoryIcon, models::{OrderInvoiceState, OrderStatus}
+    contexts::LanguageConfigsStore,
+    mass::OrderStateCard,
+    models::{OrderInvoiceState, OrderStatus},
 };
-use lucide_yew::Search;
+use lucide_yew::{History, Search};
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -19,7 +21,7 @@ pub fn history_page() -> Html {
     let orders = order_ctx.order_history();
     let selected_order = use_state(|| None::<String>);
 
-    let mut completed_orders = orders
+    let completed_orders = orders
         .iter()
         .filter(|order| order.order_status == OrderStatus::Completed)
         .collect::<Vec<_>>();
@@ -43,78 +45,52 @@ pub fn history_page() -> Html {
     }
 
     html! {
-        <>
-        <div class="container mx-auto mt-10 flex justify-between">
-            <h1 class="text-fuente text-6xl tracking-tighter font-bold">{&translations["store_orders_history_title"]}</h1>
+    <>
+    <div class="container mx-auto mt-10 flex justify-between">
+        <h1 class="text-fuente text-6xl tracking-tighter font-bold">{&translations["store_orders_history_title"]}</h1>
 
-            <div class="flex items-center gap-5 flex-1">
-                <label for="date" class="text-fuente font-light text-md w-full text-right">{&translations["store_orders_history_date"]}</label>
-                <div class="relative w-1/3">
-                    <input type="text" class="border-2 border-fuente w-full rounded-xl py-2 px-5" id="date" />
-                    <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none"/>
-                </div>
+        <div class="flex items-center gap-5 flex-1">
+            <label for="date" class="text-fuente font-light text-md w-full text-right">{&translations["store_orders_history_date"]}</label>
+            <div class="relative w-1/3">
+                <input type="text" class="border-2 border-fuente w-full rounded-xl py-2 px-5" id="date" />
+                <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none"/>
             </div>
         </div>
+    </div>
 
-        <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
-            <div class="flex gap-10 mt-10 min-h-96">
-                <div class="flex-flex-col gap-4">
-                    <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit">
-                        <p class="text-green-500 text-lg font-semibold text-center">{&translations["store_orders_history_completed"]}</p>
-                    </div>
-
-                    <div class="grid grid-cols-3 auto-cols-fr gap-8 bg-green-100 rounded-2xl mt-2 max-h-1/2 px-2 py-2 w-full overflow-y-auto no-scrollbar" >
-
-                        {completed_orders.iter().map(|order| {
-                            let order_req = order.get_order_request();
-                            let profile = order_req.profile;
-                            let order_id = order.order_id();
-                            let selected = selected_order.clone();
-                            let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(order.order_timestamp() as f64 * 1000.0));
-                            let locale_options = web_sys::js_sys::Object::new();
-                            let locale_options = web_sys::js_sys::Intl::DateTimeFormat::new(&web_sys::js_sys::Array::of1(&"nl-SR".into()), &locale_options);
-                            let locale_date = timestamp.to_locale_date_string("nl-SR", &locale_options);
-                            let locale_time = timestamp.to_locale_time_string("nl-SR");
-                            html! {
-                                <div id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
-                                    <p class="text-fuente font-bold text-md">{profile.nickname}</p>
-                                    <p class="font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
-                                    <p class="text-gray-500 text-xs">{format!("{} | {}", locale_date, locale_time)}</p>
-                                </div>
-                            }
-                        }).collect::<Html>()}
-                    </div>
-
+    <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
+        <div class="flex gap-10 mt-10 min-h-96">
+            <div class="flex-flex-col gap-4">
+                <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit">
+                    <p class="text-green-500 text-lg font-semibold text-center">{&translations["store_orders_history_completed"]}</p>
                 </div>
 
-                <div class="flex-flex-col gap-4">
-                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit">
-                        <p class="text-red-500 text-lg font-semibold text-center">{&translations["store_orders_history_canceled"]}</p>
-                    </div>
-
-                    <div class=" grid grid-cols-3 auto-cols-fr gap-8 bg-red-100 rounded-2xl mt-2 px-2 py-2 w-full max-h-[36rem] overflow-y-auto no-scrollbar" >
-
-                        {canceled_orders.iter().map(|order| {
-                            let order_req = order.get_order_request();
-                            let profile = order_req.profile;
-                            let order_id = order.order_id();
-                            let selected = selected_order.clone();
-                            html! {
-                                <div id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
-                                    <p class="text-fuente font-bold text-md">{profile.nickname}</p>
-                                    <p class="font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
-                                    <p class="text-gray-500 text-xs">{format!("{} | {}", order.locale_date(), order.locale_time())}</p>
-                                </div>
-                            }
-                        }).collect::<Html>()}
-                    </div>
+                <div class="grid grid-cols-3 auto-cols-fr gap-8 bg-green-100 rounded-2xl mt-2 max-h-1/2 px-2 py-2 w-full overflow-y-auto no-scrollbar" >
+                    {completed_orders.iter().map(|order| {
+                       html! {  <OrderStateCard order={(**order).clone()} on_click={Callback::noop()} />}
+                    }).collect::<Html>()}
                 </div>
 
             </div>
-        </main>
-        </>
 
-        }
+            <div class="flex-flex-col gap-4">
+                <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit">
+                    <p class="text-red-500 text-lg font-semibold text-center">{&translations["store_orders_history_canceled"]}</p>
+                </div>
+
+                <div class=" grid grid-cols-3 auto-cols-fr gap-8 bg-red-100 rounded-2xl mt-2 px-2 py-2 w-full max-h-[36rem] overflow-y-auto no-scrollbar" >
+
+                    {canceled_orders.iter().map(|order| {
+                        html! { <OrderStateCard order={(**order).clone()} on_click={Callback::noop()} />}
+                    }).collect::<Html>()}
+                </div>
+            </div>
+
+        </div>
+    </main>
+    </>
+
+    }
 }
 #[function_component(HistoryPage2)]
 pub fn history_page() -> Html {
@@ -325,7 +301,7 @@ pub fn history_page() -> Html {
     html! {
         <>
             <div class="flex flex-1 flex-col items-center justify-center text-wrap">
-                <HistoryIcon class="w-32 h-32 stroke-neutral-200" />
+                <History class="w-32 h-32 stroke-neutral-200" />
                 <h4 class="text-xl font-semibold mt-4">{"No history yet"}</h4>
                 <p class="text-sm text-neutral-400 font-semibold mt-2 max-w-48  text-center text-wrap">
                     {"New sales will appear here!"}

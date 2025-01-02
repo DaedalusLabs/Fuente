@@ -1,8 +1,9 @@
-use fuente::mass::{AppLink, HistoryIcon, HomeIcon, MenuBarsIcon, UserBadgeIcon};
+use fuente::mass::AppLink;
+use lucide_yew::{History, House, Menu, UserRound};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{HomePage, SettingsPageComponent, HistoryPage};
+use crate::pages::{HistoryPage, HomePage, SettingsPageComponent};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum DriverRoute {
@@ -46,17 +47,17 @@ pub fn home_footer() -> Html {
             <AppLink<DriverRoute>
                 class="" selected_class=""
                 route={DriverRoute::Settings}>
-                <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
+                <UserRound class="w-8 h-8 stroke-neutral-400" />
             </AppLink<DriverRoute>>
             <AppLink<DriverRoute>
                 class="" selected_class=""
                 route={DriverRoute::Home}>
-                <HomeIcon class="w-8 h-8 stroke-neutral-400" />
+                <House class="w-8 h-8 stroke-neutral-400" />
             </AppLink<DriverRoute>>
             <AppLink<DriverRoute>
                 class="" selected_class=""
                 route={DriverRoute::History}>
-                <HistoryIcon class="w-8 h-8 stroke-neutral-400" />
+                <History class="w-8 h-8 stroke-neutral-400" />
             </AppLink<DriverRoute>>
         </div>
     }
@@ -65,7 +66,7 @@ pub fn home_footer() -> Html {
 pub fn settings_toggle() -> Html {
     let navigator = use_navigator().unwrap();
     let current_route = use_route::<DriverRoute>().unwrap();
-    
+
     let onclick = Callback::from(move |_| {
         if current_route == DriverRoute::Settings {
             navigator.push(&DriverRoute::Home)
@@ -76,7 +77,7 @@ pub fn settings_toggle() -> Html {
 
     html! {
         <button {onclick}>
-            <MenuBarsIcon class="w-8 h-8 stroke-neutral-400" />
+            <Menu class="w-8 h-8 stroke-neutral-400" />
         </button>
     }
 }
