@@ -156,8 +156,8 @@
     "checkout_step_1": "Payment",
     "checkout_step_2": "Confirmation",
     "checkout_heading": "Checkout",
-    "checkout_client_information": "Client Information",
-    "checkout_client_information_heading_name": "Clients Name",
+    "checkout_client_information": "Personal Information",
+    "checkout_client_information_heading_name": "Name",
     "checkout_client_information_heading_email": "Email",
     "checkout_client_information_heading_phone": "Phone Number",
     "checkout_client_information_heading_ln_address": "Lightning Address",
@@ -298,6 +298,12 @@
     "footer_politics_general": "General policies",
     "footer_politics_privacy": "Privacy Policy",
     "footer_politics_return": "Return and exchanges",
+
+    "store_order_modal_title": "Order Details",
+    "store_order_modal_products": "Products",
+    "store_order_modal_customer": "Customer Information",
+    "store_order_modal_option_response": "Response",
+    "store_order_modal_button_submit": "Send",
 
     "store_orders_history_title": "Order History",
     "store_orders_history_date": "Select a Date",

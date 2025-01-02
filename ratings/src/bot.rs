@@ -54,6 +54,7 @@ impl RatingBot {
                     let new_rating = self.ratings.add_trust_record(record).await?;
                     tracing::info!("Updated rating for {}", new_rating.pubkey);
                     let mut new_note: nostro2::notes::NostrNote = new_rating.into();
+                    new_note.tags.add_parameter_tag("rating");
                     self.keys.sign_nostr_event(&mut new_note);
                     self.broadcaster.broadcast_note(new_note).await?;
                 };
@@ -64,6 +65,7 @@ impl RatingBot {
                     for rating in new_ratings {
                         tracing::info!("Updated rating for {}", rating.pubkey);
                         let mut new_note: nostro2::notes::NostrNote = rating.into();
+                        new_note.tags.add_parameter_tag("rating");
                         self.keys.sign_nostr_event(&mut new_note);
                         self.broadcaster.broadcast_note(new_note).await?;
                     }
