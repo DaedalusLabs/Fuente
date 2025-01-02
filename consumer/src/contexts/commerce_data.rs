@@ -3,7 +3,8 @@ use std::rc::Rc;
 use fuente::{
     contexts::AdminConfigsStore,
     models::{
-        CommerceProfile, CommerceProfileIdb, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE
+        CommerceProfile, CommerceProfileIdb, ProductItem, ProductMenuIdb,
+        NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
     },
 };
 use nostr_minions::relay_pool::NostrProps;
@@ -27,6 +28,24 @@ impl CommerceData {
     pub fn products_lists(&self) -> Vec<ProductMenuIdb> {
         self.products_lists.clone()
     }
+    pub fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfileIdb> {
+        self.commerces.iter().find(|p| p.id() == id).cloned()
+    }
+    pub fn find_product_list_by_id(&self, id: &str) -> Option<ProductMenuIdb> {
+        self.products_lists.iter().find(|p| p.id() == id).cloned()
+    }
+    pub fn find_product(&self, commerce_id: &str, product_id: &str) -> Option<ProductItem> {
+        self.products_lists
+            .iter()
+            .find(|p| p.id() == commerce_id)
+            .and_then(|p| p.menu().categories().iter().fold(None, |acc, c| {
+                acc.or_else(|| {
+                    c.products().iter().find(|i| i.id() == product_id).map(|i| i.clone())
+                })
+
+            }))
+
+    }
 }
 
 pub trait CommerceDataExt {
@@ -40,8 +59,9 @@ impl CommerceDataExt for UseReducerHandle<CommerceData> {
             gloo::console::warn!("Attempting to find commerce while data is still loading");
             return None;
         }
-        
-        self.commerces.iter()
+
+        self.commerces
+            .iter()
             .find(|p| p.id() == id)
             .map(|p| p.profile())
             .cloned()
@@ -165,7 +185,10 @@ pub fn commerce_data_sync() -> Html {
                                     .dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
                             }
                             Err(e) => {
-                                gloo::console::error!("Error in commerce profile", format!("{:?}", e));
+                                gloo::console::error!(
+                                    "Error in commerce profile",
+                                    format!("{:?}", e)
+                                );
                             }
                         }
                     }
