@@ -2,7 +2,7 @@ use std::rc::Rc;
 use fuente::models::ParticipantRating;
 use yew::prelude::*;
 use nostr_minions::relay_pool::NostrProps;
-use nostro2::relays::{NostrSubscription, RelayEvent, NoteEvent};
+use nostro2::{notes::NostrTag, relays::{NostrSubscription, NoteEvent, RelayEvent}};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RatingsData {
@@ -97,22 +97,23 @@ fn ratings_sync() -> Html {
 
     use_effect_with((), move |_| {
         gloo::console::log!("Setting up ratings subscription");
-        let filter = NostrSubscription {
+        let mut filter = NostrSubscription {
             kinds: Some(vec![fuente::models::NOSTR_KIND_PARTICIPANT_RATING]),
             ..Default::default()
-        }.relay_subscription();
-
-        id_handle.set(filter.1.clone());
-        subscriber.emit(filter);
+        };
+        filter.add_tag("#d", "rating");
+        let sub = filter.relay_subscription();
+        id_handle.set(sub.1.clone());
+        subscriber.emit(sub);
         || {}
     });
 
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
-            gloo::console::log!("Received note kind in RatingsSync:", note.kind);
             if note.kind == fuente::models::NOSTR_KIND_PARTICIPANT_RATING {
-                gloo::console::log!("Processing participant rating note");
+                gloo::console::log!("Received note kind in RatingsSync:", note.kind);
+                gloo::console::log!("Processing participant rating note:", &note.content);
                 match ParticipantRating::try_from(note.clone()) {
                     Ok(rating) => {
                         let pubkey_clone = rating.pubkey.clone();
