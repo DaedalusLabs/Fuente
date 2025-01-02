@@ -12,10 +12,11 @@ pub use favorites::*;
 pub use history::*;
 pub use home::*;
 pub use live_order::*;
+use lucide_yew::ArrowLeft;
 pub use new_user::*;
 pub use settings::*;
 
-use fuente::mass::{AppLink, BackArrowIcon};
+use fuente::mass::AppLink;
 use yew::prelude::*;
 
 use crate::router::ConsumerRoute;
@@ -32,7 +33,7 @@ pub fn page_header(props: &PageHeaderProps) -> Html {
             <AppLink<ConsumerRoute>
                 class="" selected_class=""
                 route={ConsumerRoute::Home}>
-                <BackArrowIcon class="w-8 h-8 stroke-black" />
+                <ArrowLeft class="w-8 h-8 stroke-black" />
             </AppLink<ConsumerRoute>>
             <h3 class="flex-1 text-center text-2xl font-mplus text-fuente-dark">{&props.title}</h3>
             <div class="h-8 w-8"></div>

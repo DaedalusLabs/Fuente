@@ -2,11 +2,11 @@ use lucide_yew::{Heart, Menu, Search, ShoppingCart, UserRound};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::mass::AppLink;
+use fuente::{mass::AppLink, models::ProductItem};
 
-use crate::pages::{
-    CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent,
-};
+use crate::{contexts::CartStore, pages::{
+    CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, ProductPage, SettingsPageComponent
+}};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -20,6 +20,8 @@ pub enum ConsumerRoute {
     Favorites,
     #[at("/cart")]
     Cart,
+    #[at("/checkout")]
+    Checkout,
     #[at("/commerce/:commerce_id")]
     Commerce { commerce_id: String },
     #[at("/order/:order_id")]
@@ -38,7 +40,8 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::History => html!{<HistoryPage />},
                         ConsumerRoute::Settings => html!{<SettingsPageComponent />},
                         ConsumerRoute::Favorites => html!{<FavoritesPage />},
-                        ConsumerRoute::Cart => html!{<LiveOrderCheck />},
+                        ConsumerRoute::Cart => html!{<CartPage />},
+                        ConsumerRoute::Checkout => html!{<CheckoutPage />},
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },
@@ -55,6 +58,8 @@ pub fn consumer_pages() -> Html {
 }
 #[function_component(FuenteHeader)]
 pub fn header() -> Html {
+    let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
+    let cart_len = cart_ctx.cart().len();
     html! {
     <header class="container mx-auto py-10 flex justify-center lg:justify-between">
        <AppLink<ConsumerRoute>
@@ -90,7 +95,17 @@ pub fn header() -> Html {
                     class=""
                     selected_class=""
                     route={ConsumerRoute::Cart}>
-                    <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
+                    {match cart_len {
+                        0 => html! {<ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />},
+                        _ => html! {
+                            <div class="relative">
+                                <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
+                                <span class="absolute -top-2 -right-2 bg-red-500 text-[12px] text-white rounded-full w-5 h-5 p-1 font-bold flex justify-center items-center">
+                                    {cart_len}
+                                </span>
+                            </div>
+                        }
+                    }}
                 </AppLink<ConsumerRoute>>
 
                 <AppLink<ConsumerRoute>
