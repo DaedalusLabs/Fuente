@@ -41,17 +41,17 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                 gloo::console::log!("Current order status:", format!("{:?}", order_state.order_status));
                 gloo::console::log!("Current payment status:", format!("{:?}", order_state.payment_status));
                 
-                // Only show rating when order is completed AND payment is successful
+                // Show rating only when order is Completed/Canceled AND payment is Success
                 let should_show_rating = 
-                    order_state.order_status == OrderStatus::Completed && 
+                    (order_state.order_status == OrderStatus::Completed || 
+                    order_state.order_status == OrderStatus::Canceled) && 
                     order_state.payment_status == OrderPaymentStatus::PaymentSuccess;
                 
                 if should_show_rating && !*show_rating {
-                    gloo::console::log!("Setting show_rating to true - Order completed successfully");
+                    gloo::console::log!("Setting show_rating to true - Order completed/canceled with payment success");
                     show_rating.set(true);
                 } else if !should_show_rating && *show_rating {
-                    // Reset show_rating if order is not in completed state
-                    gloo::console::log!("Resetting show_rating - Order not completed");
+                    gloo::console::log!("Resetting show_rating - Conditions not met");
                     show_rating.set(false);
                 }
             }

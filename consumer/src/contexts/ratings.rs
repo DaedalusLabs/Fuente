@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use fuente::models::ParticipantRating;
+use fuente::models::{ParticipantRating, TEST_PUB_KEY};
 use yew::prelude::*;
 use nostr_minions::relay_pool::NostrProps;
 use nostro2::{notes::NostrTag, relays::{NostrSubscription, NoteEvent, RelayEvent}};
@@ -97,16 +97,16 @@ fn ratings_sync() -> Html {
 
     use_effect_with((), move |_| {
         gloo::console::log!("Setting up ratings subscription");
-        let mut filter = NostrSubscription {
+        let filter = NostrSubscription {
             kinds: Some(vec![fuente::models::NOSTR_KIND_PARTICIPANT_RATING]),
+            authors: Some(vec![TEST_PUB_KEY.to_string()]), // Add this line
             ..Default::default()
-        };
-        filter.add_tag("#d", "rating");
-        let sub = filter.relay_subscription();
-        id_handle.set(sub.1.clone());
-        subscriber.emit(sub);
+        }.relay_subscription();
+    
+        id_handle.set(filter.1.clone());
+        subscriber.emit(filter);
         || {}
-    });
+    });    
 
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
@@ -123,6 +123,23 @@ fn ratings_sync() -> Html {
                     Err(e) => {
                         gloo::console::error!("Failed to parse rating:", e.to_string());
                     }
+                }
+            }
+        }
+        || {}
+    });
+
+    //new effect after the subscription effect:
+    let ctx_clone = ctx.clone();
+    let id_handle = sub_id.clone();
+    use_effect_with(relay_ctx.relay_events.clone(), move |events| {
+        if let Some(event) = events.last() {
+            if let nostro2::relays::RelayEvent::EndOfSubscription(
+                nostro2::relays::EndOfSubscriptionEvent(_, id)
+            ) = event {
+                if id == &(*id_handle) {
+                    gloo::console::log!("Received EOSE for ratings subscription");
+                    ctx_clone.dispatch(RatingsAction::SetLoaded);
                 }
             }
         }
