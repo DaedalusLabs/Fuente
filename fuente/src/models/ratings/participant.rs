@@ -51,7 +51,7 @@ impl ParticipantRating {
         self.history.iter().for_each(|record| {
             match record.status {
                 crate::models::OrderStatus::Completed => completed_orders += 1,
-                crate::models::OrderStatus::Canceled => canceled_orders += 1,
+                crate::models::OrderStatus::Canceled => canceled_orders -= 1,
                 _ => {} // Other statuses can be added if needed
             }
         });

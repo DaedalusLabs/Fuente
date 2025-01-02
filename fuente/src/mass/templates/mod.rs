@@ -54,8 +54,9 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5" style="padding: 40px 50px 40px 80px;">
-            <div class="w-full">
+        <div class="border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5" 
+            style="padding: 40px 50px 40px 80px;">
+            <div class="w-full h-full overflow-y-auto">
                 {children}
             </div>
             {edit_button.clone().unwrap_or_default()}
