@@ -313,7 +313,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
 
 #[function_component(EditProfileInputs)]
 pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
-    let CommerceProfileProps { commerce_data } = props;
+    let CommerceProfileProps { commerce_data, rating } = props;
     html! {
         <div class="flex flex-col px-4 gap-2">
             <SimpleInput

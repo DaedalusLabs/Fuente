@@ -563,6 +563,7 @@ dependencies = [
  "fuente",
  "gloo 0.11.0",
  "js-sys",
+ "lucide-yew",
  "nostr-minions",
  "nostro2",
  "serde",
