@@ -21,6 +21,7 @@ pub enum LiveOrderAction {
     SetOrder(NostrNote, OrderInvoiceState),
     ClearOrder,
     CompleteOrder(String),
+    CancelOrder(NostrNote, OrderInvoiceState),
 }
 
 impl Reducible for LiveOrder {
@@ -28,14 +29,18 @@ impl Reducible for LiveOrder {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
-            LiveOrderAction::SetOrder(order, state) => Rc::new(LiveOrder {
-                order: Some((order, state)),
-                has_loaded: self.has_loaded,
-            }),
-            LiveOrderAction::ClearOrder => Rc::new(LiveOrder {
-                order: None,
-                has_loaded: self.has_loaded,
-            }),
+            LiveOrderAction::SetOrder(order, state) => {                
+                Rc::new(LiveOrder {
+                    order: Some((order, state)),
+                    has_loaded: self.has_loaded,
+                })
+            },
+            LiveOrderAction::ClearOrder => {
+                Rc::new(LiveOrder {
+                    order: None,
+                    has_loaded: self.has_loaded,
+                })
+            },
             LiveOrderAction::CompleteOrder(order_id) => {
                 if let Some(order) = &self.order {
                     if order.1.order_id() == order_id {
@@ -49,11 +54,18 @@ impl Reducible for LiveOrder {
                 } else {
                     self
                 }
-            }
+            },
             LiveOrderAction::FinishedLoadingRelay => Rc::new(LiveOrder {
                 order: self.order.clone(),
                 has_loaded: true,
             }),
+            LiveOrderAction::CancelOrder(note, state) => {
+                // Set the order with cancelled state but don't clear it yet
+                Rc::new(LiveOrder {
+                    order: Some((note, state)),
+                    has_loaded: self.has_loaded,
+                })
+            },
         }
     }
 }
@@ -135,7 +147,8 @@ pub fn commerce_data_sync() -> Html {
                             match (&order_status.payment_status, &order_status.order_status) {
                                 (OrderPaymentStatus::PaymentFailed, _) => {}
                                 (_, OrderStatus::Canceled) => {
-                                    match OrderStateIdb::new(order_note) {
+                                    // Save to IDB but don't complete the order immediately
+                                    match OrderStateIdb::new(order_note.clone()) {
                                         Ok(order_idb) => {
                                             spawn_local(async move {
                                                 order_idb
@@ -151,8 +164,10 @@ pub fn commerce_data_sync() -> Html {
                                             );
                                         }
                                     }
-                                    ctx.dispatch(LiveOrderAction::CompleteOrder(
-                                        order_status.order_id(),
+                                    // Use SetOrder instead of CompleteOrder to keep the order in context
+                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                        order_note,
+                                        order_status,
                                     ));
                                 }
                                 (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
