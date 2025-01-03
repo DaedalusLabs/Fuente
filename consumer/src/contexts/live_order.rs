@@ -155,8 +155,9 @@ pub fn commerce_data_sync() -> Html {
                                         order_status.order_id(),
                                     ));
                                 }
-                                (_, OrderStatus::Completed) => {
-                                    match OrderStateIdb::new(order_note) {
+                                (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
+                                    gloo::console::log!("Setting completed order for rating");
+                                    match OrderStateIdb::new(order_note.clone()) {
                                         Ok(order_idb) => {
                                             spawn_local(async move {
                                                 order_idb
@@ -172,8 +173,9 @@ pub fn commerce_data_sync() -> Html {
                                             );
                                         }
                                     }
-                                    ctx.dispatch(LiveOrderAction::CompleteOrder(
-                                        order_status.order_id(),
+                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                        order_note,
+                                        order_status,
                                     ));
                                 }
                                 _ => {

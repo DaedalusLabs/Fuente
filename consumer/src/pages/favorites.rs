@@ -52,7 +52,7 @@ pub fn favorites_page() -> Html {
 }
 #[function_component(FavoriteCommerceTemplate)]
 pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
-    let CommerceProfileProps { commerce_data } = props;
+    let CommerceProfileProps { commerce_data, rating } = props;
     html! {
         <div class="border-2 border-fuente rounded-2xl p-2 relative">
             <div class="flex flex-col xl:flex-row items-center justify-center gap-5 xl:justify-normal">
@@ -69,7 +69,7 @@ pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
         </div>
     }
 }
-// Add the FavoriteButton component here as well since we're using it
+
 #[derive(Properties, Clone, PartialEq)]
 pub struct FavoriteButtonProps {
     pub commerce_id: String,
