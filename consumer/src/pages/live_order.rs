@@ -16,7 +16,8 @@ use nostr_minions::{
     },
 };
 use yew::prelude::*;
-
+use yew_router::prelude::*;
+use crate::router::ConsumerRoute;
 use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderAction, LiveOrderStore};
 
 #[function_component(LiveOrderCheck)]
@@ -29,7 +30,14 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
 
     let show_rating = use_state(|| false);
-    let rating_shown = use_state(|| false);
+
+    let navigator = use_navigator().unwrap();
+    let return_to_cart = {
+        let navigator = navigator.clone();
+        Callback::from(move |_| {
+            navigator.push(&ConsumerRoute::Cart);
+        })
+    };
 
     // Effect to handle order completion and show rating
     {
@@ -58,6 +66,28 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
             || {}
         });
     }
+
+    // Effect to handle navigation based on payment status
+    {
+        let navigator = navigator.clone();
+        use_effect_with(order_ctx.order.clone(), move |order| {
+            if let Some((_, state)) = order {
+                match state.payment_status {
+                    OrderPaymentStatus::PaymentFailed => {
+                        navigator.push(&ConsumerRoute::Cart);
+                    },
+                    OrderPaymentStatus::PaymentSuccess => {
+                        if state.order_status == OrderStatus::Completed {
+                            navigator.push(&ConsumerRoute::History);
+                        }
+                    },
+                    _ => {}
+                }
+            }
+            || {}
+        });
+    }
+
 
     // Debug effect for show_rating changes
     {
@@ -109,34 +139,107 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     };
 
 
-    let inside_html = if let Some((order_note, order_state)) = &order_ctx.order {
-        match order_state.payment_status {
-            OrderPaymentStatus::PaymentPending => Ok(html! {
-                <>
-                    <h2 class="text-2xl font-bold">{"Order Received!"}</h2>
-                    <OrderInvoiceComponent 
-                        invoice={order_state.consumer_invoice.as_ref().cloned().unwrap()} 
-                        {exchange_rate} 
-                    />
-                </>
-            }),
-            OrderPaymentStatus::PaymentReceived => Ok(html! {
-                <>
-                    <div class="bg-white p-8 rounded-lg">
-                        <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
+    let inside_html = if let Some((_order_note, order_state)) = &order_ctx.order {
+        // First check if order is cancelled
+        if order_state.order_status == OrderStatus::Canceled {
+            Ok(html! {
+                <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
+                    <div class="text-red-500">
+                        <lucide_yew::Frown class="w-16 h-16" />
                     </div>
-                    <div class="flex flex-col gap-4 text-wrap max-w-md">
-                        <p>{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                        <p>{"Waiting for confirmation..."}</p>
+                    <h2 class="text-2xl font-bold text-gray-800">{"Sorry, your order was denied"}</h2>
+                    <p class="text-gray-600">{"Please try again!"}</p>
+                    <p class="text-gray-600">{"Order: #"}{order_state.order_id()[..12].to_string()}</p>
+                    <div class="text-center text-gray-600">
+                        <p>{"The store has declined your order."}</p>
+                        <p>{"You can check the status in your order history."}</p>
                     </div>
-                </>
-            }),
-            OrderPaymentStatus::PaymentSuccess => {
-                let status = &order_state.order_status;
-                if status == &OrderStatus::Completed || status == &OrderStatus::Canceled {
-                    Err(html! {<></>})
-                } else {
-                    if status == &OrderStatus::InDelivery {
+                    <button 
+                        onclick={
+                            let navigator = navigator.clone();
+                            let order_ctx = order_ctx.clone();
+                            let order_id = order_state.order_id();
+                            Callback::from(move |_| {
+                                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order_id.clone()));
+                                navigator.push(&ConsumerRoute::History);
+                            })
+                        }
+                        class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
+                    >
+                        {"Check My Orders"}
+                    </button>
+                </div>
+            })
+        } else {
+            match order_state.payment_status {
+                OrderPaymentStatus::PaymentPending => Ok(html! {
+                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
+                        <div class="animate-pulse">
+                            <img src="/public/assets/img/bitcoin-logo.svg" alt="Bitcoin Logo" class="w-16 h-16" />
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800">{"Your transaction is waiting to be approved by the store."}</h2>
+                        <div class="text-center">
+                            <p class="text-gray-600">{"Please do not close the window, approval may take 5 minutes,"}</p>
+                            <p class="text-gray-600">{"otherwise your money will be refunded to the account."}</p>
+                        </div>
+                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
+                    </div>
+                }),
+                
+                OrderPaymentStatus::PaymentReceived => Ok(html! {
+                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
+                        <div class="animate-pulse">
+                            <img src="/public/assets/img/bitcoin-logo.svg" alt="Bitcoin Logo" class="w-16 h-16" />
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800">{"Your transaction is waiting to be approved by the store."}</h2>
+                        <div class="text-center">
+                            <p class="text-gray-600">{"Please do not close the window, approval may take 5 minutes,"}</p>
+                            <p class="text-gray-600">{"otherwise your money will be refunded to the account."}</p>
+                        </div>
+                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
+                    </div>
+                }),
+                OrderPaymentStatus::PaymentFailed => Ok(html! {
+                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
+                        <div class="text-red-500">
+                            <Cross class="w-16 h-16" />
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800">{"Payment Failed"}</h2>
+                        <p class="text-gray-600 text-center">{"We couldn't process your payment. Please try again."}</p>
+                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
+                        <button 
+                            onclick={return_to_cart}
+                            class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
+                        >
+                            {"Return to Cart"}
+                        </button>
+                    </div>
+                }),
+                OrderPaymentStatus::PaymentSuccess => {
+                    let status = &order_state.order_status;
+                    if status == &OrderStatus::Preparing {
+                        Ok(html! {
+                            <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
+                                <div class="text-green-500">
+                                    <lucide_yew::PartyPopper class="w-16 h-16" />
+                                </div>
+                                <h2 class="text-2xl font-bold text-gray-800">{"Yay! Your transaction was Processed successfully!"}</h2>
+                                <p class="text-gray-600">{"Order: #"}{order_state.order_id()[..12].to_string()}</p>
+                                <p class="text-gray-600">{"Track your order on My packages list!"}</p>
+                                <button 
+                                    onclick={
+                                        let navigator = navigator.clone();
+                                        Callback::from(move |_| {
+                                            navigator.push(&ConsumerRoute::History);
+                                        })
+                                    }
+                                    class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
+                                >
+                                    {"View My Package"}
+                                </button>
+                            </div>
+                        })
+                    } else if status == &OrderStatus::InDelivery {
                         let commerce = commerce_ctx
                             .find_commerce_by_id(&order_state.get_commerce_pubkey())
                             .expect("Failed to find commerce");
@@ -149,38 +252,25 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                                 />
                             </>
                         })
+                    } else if let Some(courier_note) = order_state.courier.as_ref().cloned() {
+                        let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
+                        let driver = driver_db.profile();
+                        let pubkey = driver_db.pubkey();
+                
+                        Ok(html! {
+                            <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                <DriverDetailsComponent {pubkey} {driver} />
+                            </div>
+                        })
                     } else {
-                        if let Some(courier_note) = order_state.courier.as_ref().cloned() {
-                            let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
-                            let driver = driver_db.profile();
-                            let pubkey = driver_db.pubkey();
-
-                            Ok(html! {
-                                <>
-                                    <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                                    <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                        <p>{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                                        <p>{"Order Status: "}{order_state.order_status.clone()}</p>
-                                        <DriverDetailsComponent {pubkey} {driver} />
-                                    </div>
-                                </>
-                            })
-                        } else {
-                            Ok(html! {
-                                <>
-                                    <h2 class="text-2xl font-bold">{"Order Paid!"}</h2>
-                                    <div class="flex flex-col gap-4 text-wrap max-w-md">
-                                        <p>{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                                        <p>{"Order Status: "}{order_state.order_status.clone()}</p>
-                                    </div>
-                                </>
-                            })
-                        }
+                        Ok(html! {
+                            <div class="flex flex-col gap-4 text-wrap max-w-md">
+                                <p>{"Order Status: "}{order_state.order_status.clone()}</p>
+                            </div>
+                        })
                     }
                 }
             }
-            _ => Err(html! {<>
-            </>}),
         }
     } else {
         Err(html! {<>{props.children.clone()}</>})

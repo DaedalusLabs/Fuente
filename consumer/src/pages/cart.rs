@@ -5,7 +5,7 @@ use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
 use fuente::contexts::{AdminConfigsStore, LanguageConfigsStore};
 use fuente::mass::ThreeBlockSpinner;
-use fuente::models::ProductOrder;
+use fuente::models::{OrderPaymentStatus, ProductOrder};
 use lucide_yew::Trash;
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
@@ -300,16 +300,39 @@ pub fn checkout_summary() -> Html {
 pub fn checkout_summary() -> Html {
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
+    let navigator = use_navigator().unwrap();
     let exchange_rate = admin_ctx.get_exchange_rate();
+
+    // Effect to watch payment status changes
+    {
+        let navigator = navigator.clone();
+        use_effect_with(order_ctx.order.clone(), move |order| {
+            if let Some((_, order_state)) = order {
+                match order_state.payment_status {
+                    OrderPaymentStatus::PaymentReceived => {  // Changed from PaymentPending
+                        if let Some(order_id) = order_state.order.id.clone() {
+                            navigator.push(&ConsumerRoute::Order { order_id });
+                        }
+                    },
+                    _ => {}
+                }
+            }
+            || {}
+        });
+    }
+
     if let Some(order) = order_ctx.order.as_ref() {
         html! {
-            <OrderInvoiceComponent invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()} {exchange_rate} />
+            <OrderInvoiceComponent 
+                invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()} 
+                {exchange_rate} 
+            />
         }
     } else {
         html! {
-        <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 items-center justify-center w-full">
-            <ThreeBlockSpinner class="w-8 h-8 text-fuente" />
-        </div>
+            <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 items-center justify-center w-full">
+                <ThreeBlockSpinner class="w-8 h-8 text-fuente" />
+            </div>
         }
     }
 }
