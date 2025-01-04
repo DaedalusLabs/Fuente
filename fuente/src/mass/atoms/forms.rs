@@ -1,6 +1,6 @@
 use html::ChildrenProps;
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use lucide_yew::Plus;
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use upload_things::{UtPreSignedUrl, UtUpload};
 use wasm_bindgen::JsCast;
 use web_sys::{FileReader, FormData, HtmlInputElement};
@@ -30,7 +30,7 @@ pub fn simple_input(props: &SimpleInputProps) -> Html {
     let label = props.label.clone();
     html! {
         <div class="space-y-1">
-            <label 
+            <label
                 class="text-white text-lg block text-left"
                 for={id.clone()}>{label}</label>
             <input
@@ -189,10 +189,13 @@ pub struct ImageUploadInputProps {
 
 use nostr_minions::{browser_api::HtmlDocument, relay_pool::NostrProps};
 
-use crate::{contexts::{AppLocale, LanguageConfigsAction, LanguageConfigsStore}, models::{
-    NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_REQUEST,
-    TEST_PUB_KEY,
-}};
+use crate::{
+    contexts::{AppLocale, LanguageConfigsAction, LanguageConfigsStore},
+    models::{
+        NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_REQUEST,
+        TEST_PUB_KEY,
+    },
+};
 #[function_component(ImageUploadInput)]
 pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let ImageUploadInputProps {
@@ -240,13 +243,14 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                     }
                 };
 
-                let input: HtmlInputElement = match document.find_element_by_id(&input_id_for_effect) {
-                    Ok(input) => input,
-                    Err(e) => {
-                        gloo::console::error!("Failed to find input element:", e);
-                        return;
-                    }
-                };
+                let input: HtmlInputElement =
+                    match document.find_element_by_id(&input_id_for_effect) {
+                        Ok(input) => input,
+                        Err(e) => {
+                            gloo::console::error!("Failed to find input element:", e);
+                            return;
+                        }
+                    };
 
                 let files = match input.files() {
                     Some(files) => files,
@@ -294,37 +298,46 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
                 let presigned_url_clone = presigned_url.clone();
                 let form_data_clone = form_data.clone();
 
+                let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(
+                    move |_: web_sys::ProgressEvent| {
+                        if let Ok(_) = reader_handle.result() {
+                            let url_setter = url_handle_clone.clone();
+                            let loading_setter = loading_handle_clone.clone();
+                            let url = presigned_url_clone.clone();
+                            let form_data = form_data_clone.clone();
 
-                let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(move |_: web_sys::ProgressEvent| {
-                    if let Ok(_) = reader_handle.result() {
-                        let url_setter = url_handle_clone.clone();
-                        let loading_setter = loading_handle_clone.clone();
-                        let url = presigned_url_clone.clone();
-                        let form_data = form_data_clone.clone();
-                        
-                        spawn_local(async move {
-                            let url_req = match url.try_into_request(form_data) {
-                                Ok(req) => req,
-                                Err(e) => {
-                                    gloo::console::error!("Failed to create request:", e);
-                                    loading_setter.set(false);
-                                    return;
+                            spawn_local(async move {
+                                let url_req = match url.try_into_request(form_data) {
+                                    Ok(req) => req,
+                                    Err(e) => {
+                                        gloo::console::error!("Failed to create request:", e);
+                                        loading_setter.set(false);
+                                        return;
+                                    }
+                                };
+
+                                match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(
+                                    &url_req,
+                                )
+                                .await
+                                {
+                                    Ok(upload_url) => {
+                                        gloo::console::log!(
+                                            "Upload successful, setting URL:",
+                                            &upload_url.url
+                                        );
+                                        url_setter.set(Some(upload_url.url));
+                                    }
+                                    Err(e) => {
+                                        gloo::console::error!("Upload failed:", e);
+                                    }
                                 }
-                            };
-                
-                            match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(&url_req).await {
-                                Ok(upload_url) => {
-                                    gloo::console::log!("Upload successful, setting URL:", &upload_url.url);
-                                    url_setter.set(Some(upload_url.url));
-                                }
-                                Err(e) => {
-                                    gloo::console::error!("Upload failed:", e);
-                                }
-                            }
-                            loading_setter.set(false);
-                        });
-                    }
-                }) as Box<dyn FnMut(web_sys::ProgressEvent)>);
+                                loading_setter.set(false);
+                            });
+                        }
+                    },
+                )
+                    as Box<dyn FnMut(web_sys::ProgressEvent)>);
 
                 reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
                 if let Err(e) = reader.read_as_array_buffer(&file) {
@@ -339,7 +352,6 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let sender = relay_pool.send_note.clone();
     let loading_handle = is_loading_new.clone();
     let onchange = Callback::from(move |e: yew::Event| {
-
         gloo::console::log!("Starting file upload process");
         loading_handle.set(true);
         let input = e
@@ -390,19 +402,18 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
         {match url_clone.as_ref() {
             Some(url) => {
                 html! {
-                     <div class="relative">
-                    <img src={url.clone()} class={image_classes} />
-                    <label for={input_id.clone()} class={with_url}>
-                        <input {onchange} id={input_id.clone()} type="file" accept="image/*" class="hidden" />
-                        {match *is_loading_new {
-                            true => html! {
-                                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                            },
-                            false => html! {
-                                <span class="text-gray-500">{"CHANGE"}</span>
-                            }
-                        }}
-                    </label>
+                     <div class="relative w-full h-full">
+                        <img src={url.clone()} class="w-full h-full object-cover" />
+                        <label for={input_id.clone()} class="absolute inset-0 flex items-center justify-center">
+                            <input {onchange} id={input_id.clone()} type="file" accept="image/*" class="hidden" />
+                            {match *is_loading_new {
+                                true => html! {
+                                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                },
+                                false => html! {
+                                }
+                            }}
+                        </label>
                     </div>
                 }
             }
@@ -425,12 +436,13 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
 }
 #[function_component(LanguageToggle)]
 pub fn language_toggle() -> Html {
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("LanguageConfigsStore not found");
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("LanguageConfigsStore not found");
     let current_locale = language_ctx.current_locale();
 
     html! {
         <div class="flex items-center gap-2 mt-4">
-            <button 
+            <button
                 onclick={
                     let language_ctx = language_ctx.clone();
                     Callback::from(move |_| {
@@ -438,8 +450,8 @@ pub fn language_toggle() -> Html {
                     })
                 }
                 class={classes!(
-                    "px-4", 
-                    "py-2", 
+                    "px-4",
+                    "py-2",
                     "rounded-lg",
                     if matches!(current_locale, AppLocale::English) {
                         "bg-fuente text-white"
@@ -450,7 +462,7 @@ pub fn language_toggle() -> Html {
             >
                 {"EN"}
             </button>
-            <button 
+            <button
                 onclick={
                     let language_ctx = language_ctx.clone();
                     Callback::from(move |_| {
@@ -458,8 +470,8 @@ pub fn language_toggle() -> Html {
                     })
                 }
                 class={classes!(
-                    "px-4", 
-                    "py-2", 
+                    "px-4",
+                    "py-2",
                     "rounded-lg",
                     if matches!(current_locale, AppLocale::Dutch) {
                         "bg-fuente text-white"

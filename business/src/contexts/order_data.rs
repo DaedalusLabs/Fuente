@@ -157,11 +157,15 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(keys) = key_ctx.get_nostr_key() {
             spawn_local(async move {
-                let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
+                // let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
+                let unix_time = web_sys::js_sys::Date::new_0();
+                let twelve_hours_ago_unix = (unix_time.get_time() as u64  / 1000)- 43200;
+
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
                     authors: Some(vec![TEST_PUB_KEY.to_string()]),
-                    since: Some(last_save_time as u64),
+                    since: Some(twelve_hours_ago_unix),
+                    // since: Some(last_save_time as u64),
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys.public_key().as_str());

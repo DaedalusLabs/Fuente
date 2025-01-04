@@ -2,10 +2,9 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput,
-        SimpleFormButton, SimpleInput, SimpleTextArea,
+        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleFormButton, SimpleInput, SimpleTextArea
     },
-    models::{ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
+    models::{CommerceProfileIdb, ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
 
 use fuente::mass::{ImageUploadInput, ProductCard};
@@ -30,6 +29,7 @@ pub fn home_page() -> Html {
     let current_page = use_state(|| ProductPageSection::Products);
     let add_product_modal = use_state(|| false);
     let add_category_modal = use_state(|| false);
+    let add_banner = use_state(|| false);
     if commerce_ctx.is_none() {
         return html! {<LoadingScreen />};
     }
@@ -37,10 +37,10 @@ pub fn home_page() -> Html {
         let page = current_page.clone();
         Callback::from(move |_| page.set(ProductPageSection::Products))
     };
-    let go_to_on_sale = {
-        let page = current_page.clone();
-        Callback::from(move |_| page.set(ProductPageSection::OnSale))
-    };
+    // let go_to_on_sale = {
+    //     let page = current_page.clone();
+    //     Callback::from(move |_| page.set(ProductPageSection::OnSale))
+    // };
     let go_to_banner = {
         let page = current_page.clone();
         Callback::from(move |_| page.set(ProductPageSection::Banner))
@@ -83,6 +83,12 @@ pub fn home_page() -> Html {
             </div>
         }
     };
+    let onclick_new_banner = {
+        let modal = add_banner.clone();
+        Callback::from(move |_| {
+            modal.set(true);
+        })
+    };
     html! {
         <>
         <SettingsPageTemplate
@@ -93,7 +99,7 @@ pub fn home_page() -> Html {
             ]}
             sidebar_options={ vec![
                 (translations["admin_store_new_products_button"].clone(), go_to_products, if *current_page == ProductPageSection::Products { true } else { false }),
-                (translations["admin_store_sale_products_button"].clone(), go_to_on_sale, if *current_page == ProductPageSection::OnSale { true } else { false }),
+                // (translations["admin_store_sale_products_button"].clone(), go_to_on_sale, if *current_page == ProductPageSection::OnSale { true } else { false }),
                 (translations["admin_store_banner_button"].clone(), go_to_banner, if *current_page == ProductPageSection::Banner { true } else { false }),
             ]}
             content_button={None} >
@@ -110,13 +116,21 @@ pub fn home_page() -> Html {
                     }
                     ProductPageSection::Banner => {
                         html! {
+                            <BannerDetailsSection onclick={onclick_new_banner} />
                         }
                     }
                 }}
             </>
         </SettingsPageTemplate>
-        <AddProductModal screen_handle={add_product_modal.clone()} />
-        <AddCategoryModal screen_handle={add_category_modal.clone()} />
+        <PopupSection close_handle={add_product_modal.clone()}>
+            <AddProductForm />
+        </PopupSection>
+        <PopupSection close_handle={add_category_modal.clone()}>
+            <AddCategoryForm />
+        </PopupSection>
+        <PopupSection close_handle={add_banner.clone()}>
+            <AddBannerForm />
+        </PopupSection>
         </>
     }
 }
@@ -135,6 +149,8 @@ pub struct EditProductFormProps {
 
 #[function_component(AddCategoryForm)]
 pub fn add_category_form() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageConfigsStore found");
+    let translations = language_ctx.translations();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
@@ -173,55 +189,88 @@ pub fn add_category_form() -> Html {
             <form
                 class="flex flex-col gap-2 items-center p-4"
                 {onsubmit}>
-                <SimpleInput label="Categoria" name="category_name" value="" input_type="text" id="category_name" required={true} />
-                <SimpleFormButton>{"Add Category"}</SimpleFormButton>
+                <div class="space-y-2">
+                    <label for="category_name" class="text-gray-400 font-light block text-md">{&translations["store_products_form_label_add_category"]}</label>
+                    <input type="text" id="category_name" name="category_name" class="border border-fuente rounded-xl p-2 w-full" required={true} />
+                </div>
+                <button
+                    type="submit"
+                    class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
+                    {&translations["store_products_form_label_add_button"]}
+                </button>
             </form>
         </main>
     }
 }
 
-#[function_component(AddProductModal)]
-pub fn add_product_modal(props: &EditMenuProps) -> Html {
-    let close_handle = props.screen_handle.clone();
-    match *close_handle {
-        true => {
-            html! {
-                <>
-                    <div onclick={Callback::from(move |_| close_handle.set(false))}
-                        class="fixed inset-0 flex justify-center items-center bg-neutral-500 opacity-80 z-20">
-                    </div>
-                    <div class="fixed top-8 z-30 h-fit w-fit left-12">
-                         <AddProductForm />
-                    </div>
-                </>
-            }
-        }
-        false => {
-            html! {}
-        }
-    }
-}
 
-#[function_component(AddCategoryModal)]
-pub fn add_product_modal(props: &EditMenuProps) -> Html {
-    let close_handle = props.screen_handle.clone();
-    match *close_handle {
-        true => {
-            html! {
-                <>
-                    <div onclick={Callback::from(move |_| close_handle.set(false))}
-                        class="fixed inset-0 flex justify-center items-center bg-neutral-500 opacity-80 z-20">
-                    </div>
-                    <div class="fixed top-8 z-30 h-fit w-fit left-12">
-                        <AddCategoryForm />
-                    </div>
-                </>
+#[function_component(AddBannerForm)]
+pub fn add_product_form() -> Html {
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
+
+    let image_url = use_state(|| None::<String>);
+    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
+    let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageStore found");
+    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let translations = language_ctx.translations();
+
+    let onsubmit = {
+        let image_url = image_url.clone();
+        let sender = relay_ctx.send_note.clone();
+        let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let handle = commerce_ctx.clone();
+
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            if let Some(mut profile) = handle.profile().clone() {
+                profile.banner_url = (*image_url).clone().unwrap();
+                let db_entry = CommerceProfileIdb::new(profile, &nostr_keys).expect("Failed to create profile entry");
+                sender.emit(db_entry.signed_note().clone());
+                handle.dispatch(CommerceDataAction::UpdateCommerceProfile(db_entry));
             }
+
+        })
+    };
+
+    html! {
+        <main class="bg-white rounded-2xl p-10 w-fit h-fit mx-auto">
+            <form {onsubmit} class="grid grid-cols-2 gap-20">
+                <div>
+                    <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_photos"]}</p>
+                    <div class="grid grid-cols-2 mt-2 gap-5">
+                        // Large Image Upload
+                        <div class="w-full flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400">
+                                {"Product Image (Large)"}
+                            </label>
+                            <ImageUploadInput
+                                url_handle={image_url.clone()}
+                                nostr_keys={nostr_keys.clone()}
+                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                                input_id="large-image-upload"  // Unique ID for large image
+                            />
+                            // can be removed
+                            {if let Some(_url) = (*image_url).clone() {
+                                html! {
+                                    <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
+                                }
+                            } else {
+                                html! {}
+                            }}
+                        </div>
+                    </div>
+                    <div class="mt-10">
+                        <button
+                            type="submit"
+                            class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
+                            {&translations["store_products_form_label_add_button"]}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
         }
-        false => {
-            html! {}
-        }
-    }
 }
 
 #[function_component(AddProductForm)]
@@ -448,6 +497,34 @@ pub fn add_product_form() -> Html {
         </form>
     </main>
         }
+}
+
+#[derive(Clone, PartialEq, Properties)]
+pub struct BannerDetailsProps {
+    pub onclick: Callback<MouseEvent>,
+}
+
+#[function_component(BannerDetailsSection)]
+pub fn banner_details_section(props: &BannerDetailsProps) -> Html {
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No LanguageConfigsStore found");
+    let translations = language_ctx.translations();
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
+    let profile = commerce_ctx.profile().clone().expect("No profile found");
+    let onclick = props.onclick.clone();
+    html! {
+            <div class="w-full flex items-center gap-10 pb-5">
+                <div class="w-full">
+                    <div class="w-full xl:relative flex items-center justify-center bg-fuente rounded-2xl h-32 lg:pr-5 2xl:pr-20">
+                        <img src={profile.banner_url.clone()} alt={profile.name.clone()}
+                        class="xl:absolute xl:top-2 xl:right-40 2xl:right-72 xl:-translate-x-10 xl:-translate-y-10 block object-contain w-56" />
+                    </div>
+                </div>
+                <button {onclick} class="border border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">
+                    {&translations["admin_store_banner_new"]}
+                </button>
+            </div>
+    }
 }
 
 #[function_component(AllProductsSection)]

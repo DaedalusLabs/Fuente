@@ -1,4 +1,4 @@
-use lucide_yew::{ArrowLeft, ArrowRight, Headset, ShieldCheck, SquarePen, Truck};
+use lucide_yew::{ArrowLeft, ArrowRight, Bitcoin, Headset, ShieldCheck, SquarePen, Truck};
 use nostro2::notes::NostrNote;
 use web_sys::HtmlElement;
 use yew::prelude::*;
@@ -19,17 +19,28 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
     let selected_class = classes!("bg-fuente", "text-white");
     let unselected_class = classes!("bg-gray-100", "text-gray-500");
     html! {
-        <aside class="flex flex-col gap-3">
+        <aside class="flex lg:flex-col gap-3 overflow-x-auto no-scrollbar">
             {for options.iter().map(|(name, onclick, selected)| {
                 html! {
                     <button
                         type="button"
                         class={classes!(
+                            "flex", 
+                            "items-center", 
+                            "justify-center",
+                            "lg:justify-start",
+                            "text-center",
+                            "lg:text-left", 
+                            "w-full",
+                            "mt-4",
+                            "lg:mt-0",
                             "py-4",
                             "px-8",
                             "rounded-2xl",
                             "font-bold",
-                            "text-lg",
+                            "text-md",
+                            "lg:text-lg",
+                            "tracking-wide",
                             if *selected { selected_class.clone() } else { unselected_class.clone() }
                         )}
                         {onclick}>
@@ -54,13 +65,11 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5" 
-            style="padding: 40px 50px 40px 80px;">
-            <div class="w-full h-full overflow-y-auto">
+        <div class="relative border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5 p-5 lg:p-10">
+            <div class="w-full overflow-clip">
                 {children}
             </div>
             {edit_button.clone().unwrap_or_default()}
-
         </div>
     }
 }
@@ -122,13 +131,15 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     } = props.clone();
     html! {
         <>
-    <div class="container mx-auto py-10 flex justify-between">
-        <h1 class="text-fuente text-6xl font-bold tracking-tighter">{&heading}</h1>
-        <SettingsOptionsButtons {options} />
-    </div>
+        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
+            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                {&heading}
+            </h1>
+            <SettingsOptionsButtons {options} />
+        </div>
 
-    <main class="container mx-auto">
-        <div class="flex gap-10">
+    <main class="container mx-auto flex-grow">
+        <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
             <SettingsSideBar options={sidebar_options} />
             <SettingsContent edit_button={content_button} >
                 <>
@@ -190,19 +201,22 @@ pub fn login_template(props: &LoginPageProps) -> Html {
 pub fn bitcoin_banner() -> Html {
     html! {
     <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
-        <div class="bg-orange-400 w-full mt-10 rounded-2xl h-fit lg:max-h-52">
+        <div class="bg-orange-400 w-full rounded-2xl h-fit lg:max-h-52">
             <div class="flex items-center">
                 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-80 -rotate-12 -mt-5 lg:-mt-14">
                     <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
                 </svg>
-                <h2 class="text-3xl lg:text-5xl tracking-tighter text-white font-semibold max-w-[500px] lg:-mt-14 mx-auto">{"Shop now, track your package and pay with"}</h2>
+                <h2 class="sm:text-3xl pr-2 sm:pr-0 lg:text-5xl tracking-tighter text-white font-semibold max-w-[500px] xl:-mt-14 mx-auto">
+                    {"Shop now, track your package and pay with"}
+                </h2>
             </div>
         </div>
 
-        <img src="/templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
-        <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg" class="lg:hidden w-1/2 h-full">
-            <defs id="defs4"><filter color-interpolation-filters="sRGB" id="_drop-shadow"><feGaussianBlur id="feGaussianBlur7" in="SourceAlpha" result="blur-out" stdDeviation="1"/><feBlend id="feBlend9" in="SourceGraphic" in2="blur-out" mode="normal"/></filter><linearGradient id="coin-gradient" x1="0%" x2="0%" y1="0%" y2="100%"><stop id="stop12" offset="0%" style="stop-color:#f9aa4b"/><stop id="stop14" offset="100%" style="stop-color:#f7931a"/></linearGradient></defs><g id="g16" transform="scale(0.015625)"><path d="m 63.0359,39.741 c -4.274,17.143 -21.637,27.576 -38.782,23.301 -17.138,-4.274 -27.571,-21.638 -23.295,-38.78 4.272,-17.145 21.635,-27.579 38.775,-23.305 17.144,4.274 27.576,21.64 23.302,38.784 z" id="coin" style="fill:url(#coin-gradient)"/><path d="m 46.1009,27.441 c 0.637,-4.258 -2.605,-6.547 -7.038,-8.074 l 1.438,-5.768 -3.511,-0.875 -1.4,5.616 c -0.923,-0.23 -1.871,-0.447 -2.813,-0.662 l 1.41,-5.653 -3.509,-0.875 -1.439,5.766 c -0.764,-0.174 -1.514,-0.346 -2.242,-0.527 l 0.004,-0.018 -4.842,-1.209 -0.934,3.75 c 0,0 2.605,0.597 2.55,0.634 1.422,0.355 1.679,1.296 1.636,2.042 l -1.638,6.571 c 0.098,0.025 0.225,0.061 0.365,0.117 -0.117,-0.029 -0.242,-0.061 -0.371,-0.092 l -2.296,9.205 c -0.174,0.432 -0.615,1.08 -1.609,0.834 0.035,0.051 -2.552,-0.637 -2.552,-0.637 l -1.743,4.019 4.569,1.139 c 0.85,0.213 1.683,0.436 2.503,0.646 l -1.453,5.834 3.507,0.875 1.439,-5.772 c 0.958,0.26 1.888,0.5 2.798,0.726 l -1.434,5.745 3.511,0.875 1.453,-5.823 c 5.987,1.133 10.489,0.676 12.384,-4.739 1.527,-4.36 -0.076,-6.875 -3.226,-8.515 2.294,-0.529 4.022,-2.038 4.483,-5.155 z m -8.022,11.249 c -1.085,4.36 -8.426,2.003 -10.806,1.412 l 1.928,-7.729 c 2.38,0.594 10.012,1.77 8.878,6.317 z m 1.086,-11.312 c -0.99,3.966 -7.1,1.951 -9.082,1.457 l 1.748,-7.01 c 1.982,0.494 8.365,1.416 7.334,5.553 z" id="symbol" style="fill:#ffffff"/></g>
-        </svg>
+        <Bitcoin class="bg-orange-400 rounded-full text-white flex h-24 w-24" />
+        // <img src="/templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
+        // <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg" class="lg:hidden w-1/2 h-full">
+        //     <defs id="defs4"><filter color-interpolation-filters="sRGB" id="_drop-shadow"><feGaussianBlur id="feGaussianBlur7" in="SourceAlpha" result="blur-out" stdDeviation="1"/><feBlend id="feBlend9" in="SourceGraphic" in2="blur-out" mode="normal"/></filter><linearGradient id="coin-gradient" x1="0%" x2="0%" y1="0%" y2="100%"><stop id="stop12" offset="0%" style="stop-color:#f9aa4b"/><stop id="stop14" offset="100%" style="stop-color:#f7931a"/></linearGradient></defs><g id="g16" transform="scale(0.015625)"><path d="m 63.0359,39.741 c -4.274,17.143 -21.637,27.576 -38.782,23.301 -17.138,-4.274 -27.571,-21.638 -23.295,-38.78 4.272,-17.145 21.635,-27.579 38.775,-23.305 17.144,4.274 27.576,21.64 23.302,38.784 z" id="coin" style="fill:url(#coin-gradient)"/><path d="m 46.1009,27.441 c 0.637,-4.258 -2.605,-6.547 -7.038,-8.074 l 1.438,-5.768 -3.511,-0.875 -1.4,5.616 c -0.923,-0.23 -1.871,-0.447 -2.813,-0.662 l 1.41,-5.653 -3.509,-0.875 -1.439,5.766 c -0.764,-0.174 -1.514,-0.346 -2.242,-0.527 l 0.004,-0.018 -4.842,-1.209 -0.934,3.75 c 0,0 2.605,0.597 2.55,0.634 1.422,0.355 1.679,1.296 1.636,2.042 l -1.638,6.571 c 0.098,0.025 0.225,0.061 0.365,0.117 -0.117,-0.029 -0.242,-0.061 -0.371,-0.092 l -2.296,9.205 c -0.174,0.432 -0.615,1.08 -1.609,0.834 0.035,0.051 -2.552,-0.637 -2.552,-0.637 l -1.743,4.019 4.569,1.139 c 0.85,0.213 1.683,0.436 2.503,0.646 l -1.453,5.834 3.507,0.875 1.439,-5.772 c 0.958,0.26 1.888,0.5 2.798,0.726 l -1.434,5.745 3.511,0.875 1.453,-5.823 c 5.987,1.133 10.489,0.676 12.384,-4.739 1.527,-4.36 -0.076,-6.875 -3.226,-8.515 2.294,-0.529 4.022,-2.038 4.483,-5.155 z m -8.022,11.249 c -1.085,4.36 -8.426,2.003 -10.806,1.412 l 1.928,-7.729 c 2.38,0.594 10.012,1.77 8.878,6.317 z m 1.086,-11.312 c -0.99,3.966 -7.1,1.951 -9.082,1.457 l 1.748,-7.01 c 1.982,0.494 8.365,1.416 7.334,5.553 z" id="symbol" style="fill:#ffffff"/></g>
+        // </svg>
     </div>
     }
 }
@@ -567,14 +581,14 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let translations = language_ctx.translations();
     html! {
         <>
-            <div class="container mx-auto py-10 flex justify-between">
-                <h1 class="text-fuente text-6xl font-bold tracking-tighter">{&translations["favorites_stores_heading"]}</h1>
-            </div>
-
-            <main class="container mx-auto">
-                <div class="flex gap-10">
-                    <aside class="flex flex-col gap-3">
-                        <button
+            <main 
+                class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
+                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                    {&translations["favorites_stores_heading"]}
+                </h1>
+                <div class="flex flex-col justify-center items-center lg:items-start lg:flex-row gap-10 mt-5">
+                        <aside class="flex flex-grow lg:flex-col gap-3 lg:max-w-72 mx-auto">
+                            <button
                             type="button"
                             class={classes!(
                                 "py-4",
@@ -586,10 +600,10 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
                                 "text-white"
                             )}
                             >
-                            {&translations["favorites_stores_stores_button"]}
-                        </button>
-                    </aside>
-                    <div class="grid grid-cols-2 flex-1 gap-5">
+                                {&translations["favorites_stores_stores_button"]}
+                            </button>
+                        </aside>
+                    <div class="grid sm:grid-cols-2 flex-1 gap-5">
                         {props.children.clone()}
                     </div>
                 </div>
