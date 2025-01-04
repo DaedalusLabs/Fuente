@@ -1,8 +1,15 @@
-use crate::contexts::{DriverDataAction, DriverDataStore};
+use crate::{
+    contexts::{DriverDataAction, DriverDataStore},
+    router::DriverRoute,
+};
 use fuente::{
-    mass::{SimpleFormButton, SimpleInput},
+    contexts::LanguageConfigsStore,
+    mass::{
+        templates::SettingsPageTemplate, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleFormButton, SimpleInput
+    },
     models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
+use lucide_yew::{ScrollText, SquarePen, Truck, X};
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
@@ -10,65 +17,133 @@ use yew::prelude::*;
 pub enum SettingsPage {
     Profile,
     KeyRecovery,
-    FAQ,
-    Legal,
+    Language,
 }
 
 #[function_component(SettingsPageComponent)]
+pub fn settings_page() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let translations = language_ctx.translations();
+    let current_page = use_state(|| SettingsPage::Profile);
+    let go_to_profile = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Profile))
+    };
+    let go_to_key_recovery = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::KeyRecovery))
+    };
+    let go_to_language = {
+        let page = current_page.clone();
+        Callback::from(move |_| page.set(SettingsPage::Language))
+    };
+    let my_orders_button = {
+        html! {
+            <div class="flex justify-center items-center">
+                <AppLink<DriverRoute>
+                    class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
+                    selected_class=""
+                    route={DriverRoute::History}>
+                    <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2", "font-bold")} />
+                    {&translations["profile_personal_information_orders_button"]}
+                </AppLink<DriverRoute>>
+            </div>
+        }
+    };
+    let profile_popup_handle = use_state(|| false);
+    let address_popup_handle = use_state(|| false);
+    let edit_button = {
+        let profile_popup_handle = profile_popup_handle.clone();
+        match *current_page {
+            SettingsPage::KeyRecovery => {
+                html! {
+                    <button
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
+                        <span class="text-red-600 font-bold text-sm">
+                            {&translations["profile_personal_information_delete_account_button"]}
+                        </span>
+                        <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
+                    </button>
+                }
+            }
+            SettingsPage::Language => {
+                html! {}
+            }
+            SettingsPage::Profile => {
+                html! {
+                    <button onclick={Callback::from(move |_| profile_popup_handle.set(true))}
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
+                        <span class="text-fuente font-bold text-xl">
+                            {&translations["profile_personal_information_edit_button"]}
+                        </span>
+                        <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
+                    </button>
+                }
+            }
+        }
+    };
+    html! {
+        <SettingsPageTemplate
+            heading={"My Profile".to_string()}
+            options={ vec![
+                my_orders_button,
+            ]}
+            sidebar_options={ vec![
+                (translations["profile_address_personal_information_button"].clone(), go_to_profile, if *current_page == SettingsPage::Profile { true } else { false }),
+                (translations["profile_settings_key"].clone(), go_to_key_recovery, if *current_page == SettingsPage::KeyRecovery { true } else { false }),
+                (translations["profile_settings_language"].clone(), go_to_language, if *current_page == SettingsPage::Language { true } else { false }),
+            ]}
+            content_button={Some(edit_button)} >
+            <>
+            {match *current_page {
+                    SettingsPage::Profile => html! {
+                        <>
+                            <MyContactDetails />
+                            <PopupSection close_handle={profile_popup_handle.clone()}>
+                                <NewProfileForm close_handle={profile_popup_handle.clone()} />
+                            </PopupSection>
+                        </>
+                    },
+                    SettingsPage::KeyRecovery => html! {
+                        <KeyRecoverySection />
+                    },
+                    SettingsPage::Language => html! {
+                        <LanguageToggle />
+                    },
+            }}
+            </>
+        </SettingsPageTemplate>
+    }
+}
+#[function_component(SettingsPageComponent2)]
 pub fn settings_page() -> Html {
     let current_page = use_state(|| SettingsPage::Profile);
 
     html! {
         <div class="h-full w-full flex flex-col">
             <h2 class="text-4xl mb-6 p-4">{"Settings"}</h2>
-            
+
             <div class="flex flex-row h-full">
                 // Settings Menu
                 <div class="w-64 border-r p-4">
                     <div class="flex flex-col gap-4">
-                        <button 
-                            onclick={let page = current_page.clone(); 
+                        <button
+                            onclick={let page = current_page.clone();
                                 Callback::from(move |_| page.set(SettingsPage::Profile))}
                             class="text-left p-2 hover:bg-gray-100 rounded">
                             {"Profile Settings"}
                         </button>
-                        <button 
+                        <button
                             onclick={let page = current_page.clone();
                                 Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
                             class="text-left p-2 hover:bg-gray-100 rounded">
                             {"Key Recovery"}
-                        </button>
-                        <button 
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::FAQ))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"FAQ"}
-                        </button>
-                        <button 
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Legal))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Legal"}
                         </button>
                     </div>
                 </div>
 
                 // Content Area
                 <div class="flex-1 p-4">
-                    {match *current_page {
-                        SettingsPage::Profile => html! {
-                            <ProfileSettingsSection />
-                        },
-                        SettingsPage::KeyRecovery => html! {
-                            <KeyRecoverySection />
-                        },
-                        SettingsPage::FAQ => html! {
-                            <FAQSection />
-                        },
-                        SettingsPage::Legal => html! {
-                            <LegalSection />
-                        },
-                    }}
                 </div>
             </div>
         </div>
@@ -80,10 +155,11 @@ pub fn settings_page() -> Html {
 fn key_recovery_section() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let keys = key_ctx.get_nostr_key().expect("No keys found");
-    
+
     // Convert secret key bytes to hex string
     let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes.iter()
+    let secret_key_hex: String = secret_key_bytes
+        .iter()
         .map(|b| format!("{:02x}", b))
         .collect();
 
@@ -103,81 +179,35 @@ fn key_recovery_section() -> Html {
     }
 }
 
-// FAQ Section
-#[function_component(FAQSection)]
-fn faq_section() -> Html {
+#[function_component(MyContactDetails)]
+pub fn my_contact_details() -> Html {
+    let user_ctx = use_context::<DriverDataStore>().expect("No user context found");
+    let profile = user_ctx.get_profile().expect("No user profile found");
+
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let translations = language_ctx.translations();
+
     html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Frequently Asked Questions"}</h2>
-            <div class="space-y-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-bold mb-2">{"How do I pick up orders?"}</h3>
-                    <p>{"Accept available orders from the dashboard and follow the delivery instructions."}</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-bold mb-2">{"How do earnings work?"}</h3>
-                    <p>{"Earnings are calculated per delivery and paid via Lightning Network."}</p>
-                </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 h-full">
+        <div class="space-y-3">
+            <h3 class="text-gray-500 text-2xl font-semibold">{profile.nickname()}</h3>
+
+            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
+                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                <p class="text-gray-500 font-light">{&profile.telephone()}</p>
             </div>
         </div>
-    }
-}
-
-// Legal Section
-#[function_component(LegalSection)]
-fn legal_section() -> Html {
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Legal Information"}</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-bold mb-2">{"Terms of Service"}</h3>
-                <p class="mb-4">{"By using our service, you agree to these terms..."}</p>
-                
-                <h3 class="font-bold mb-2">{"Privacy Policy"}</h3>
-                <p class="mb-4">{"We respect your privacy and protect your data..."}</p>
-                
-                <h3 class="font-bold mb-2">{"Delivery Guidelines"}</h3>
-                <p>{"Our delivery policy and guidelines..."}</p>
-            </div>
-        </div>
-    }
-}
-
-#[function_component(ProfileSettingsSection)]
-fn profile_settings() -> Html {
-    let user_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
-    let profile = user_ctx.get_profile();
-
-    match profile {
-        Some(profile) => html! {
-            <div class="flex flex-col gap-4">
-                <h2 class="text-2xl font-bold">{"Profile Settings"}</h2>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <div class="flex flex-col gap-4">
-                        <div>
-                            <label class="font-bold">{"Name"}</label>
-                            <p>{profile.nickname()}</p>
-                        </div>
-                        <div>
-                            <label class="font-bold">{"Phone"}</label>
-                            <p>{profile.telephone()}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        },
-        None => html! {
-            <NewProfileForm />
-        }
+    </div>
     }
 }
 
 #[function_component(NewProfileForm)]
-pub fn new_profile_form() -> Html {
+pub fn new_profile_form(props: &PopupProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
     let user_ctx = use_context::<DriverDataStore>().expect("No CryptoId Context found");
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let sender = relay_pool.send_note.clone();
+    let popup_handle = props.close_handle.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let user_ctx = user_ctx.clone();
@@ -192,22 +222,29 @@ pub fn new_profile_form() -> Html {
         let sender = sender.clone();
         let user_profile = DriverProfile::new(nickname, telephone);
         let db = DriverProfileIdb::new(user_profile.clone(), &keys);
-        
+
         // Fix the giftwrapped_data calls by providing the proper parameters
         let giftwrap = user_profile
             .giftwrapped_data(&keys, keys.public_key(), keys.public_key())
             .expect("Failed to giftwrap data");
         let pool_copy = user_profile
-            .giftwrapped_data(&keys, DRIVER_HUB_PUB_KEY.to_string(), DRIVER_HUB_PUB_KEY.to_string())
+            .giftwrapped_data(
+                &keys,
+                DRIVER_HUB_PUB_KEY.to_string(),
+                DRIVER_HUB_PUB_KEY.to_string(),
+            )
             .expect("Failed to giftwrap data");
-            
+
         sender.emit(giftwrap);
         sender.emit(pool_copy);
         user_ctx.dispatch(DriverDataAction::NewProfile(db));
+        popup_handle.set(false);
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col p-8 gap-8 flex-1 items-center">
+        <form {onsubmit}
+            class="w-full flex flex-col gap-2 bg-white rounded-3xl p-4 items-center">
+                <label class="text-gray-500 text-lg font-bold" for="name">{"Name"}</label>
                 <SimpleInput
                     id="name"
                     name="name"
@@ -216,6 +253,7 @@ pub fn new_profile_form() -> Html {
                     input_type="text"
                     required={true}
                     />
+                <label class="text-gray-500 text-lg font-bold" for="telephone">{"Telephone"}</label>
                 <SimpleInput
                     id="telephone"
                     name="telephone"
@@ -224,9 +262,11 @@ pub fn new_profile_form() -> Html {
                     input_type="tel"
                     required={true}
                     />
-                <SimpleFormButton>
+                <button
+                    type="submit"
+                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl">
                     {"Save"}
-                </SimpleFormButton>
+                </button>
         </form>
     }
 }

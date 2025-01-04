@@ -59,7 +59,7 @@ impl OrderStateIdb {
     pub fn signed_note(&self) -> NostrNote {
         self.state_note.clone()
     }
-    fn parse_order(&self) -> Result<OrderInvoiceState, String> {
+    pub fn parse_order(&self) -> Result<OrderInvoiceState, String> {
         OrderInvoiceState::try_from(&self.state_note).map_err(|e| format!("{:?}", e))
     }
     pub fn id(&self) -> String {

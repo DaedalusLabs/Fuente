@@ -4,7 +4,7 @@ use driver::{
     router::DriverPages,
 };
 use fuente::{
-    contexts::{AdminConfigsProvider, AdminConfigsStore},
+    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
     mass::{LoadingScreen, MainLayout, SimpleFormButton, SimpleInput},
     models::{init_commerce_db, init_consumer_db},
 };
@@ -32,10 +32,10 @@ fn app() -> Html {
         || {}
     });
     html! {
+        <LanguageConfigsProvider>
         <BrowserRouter>
             <RelayPoolComponent>
                 <LoginContext>
-                    <MainLayout>
                     <LoginCheck>
                         <AppContext>
                             <ProfileCheck>
@@ -43,10 +43,10 @@ fn app() -> Html {
                             </ProfileCheck>
                         </AppContext>
                     </LoginCheck>
-                    </MainLayout>
                 </LoginContext>
             </RelayPoolComponent>
         </BrowserRouter>
+        </LanguageConfigsProvider>
     }
 }
 

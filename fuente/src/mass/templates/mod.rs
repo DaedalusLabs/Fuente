@@ -420,8 +420,10 @@ pub fn order_history_template(props: &OrderHistoryTemplateProps) -> Html {
     };
     html! {
         <main class="mt-16 container mx-auto">
-            <div class="w-full flex items-center justify-between">
-                <h1 class="text-6xl font-bold text-fuente tracking-tighter">{&translations["profile_address_button_orders"]}</h1>
+            <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
+                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                    {&translations["profile_address_button_orders"]}
+                </h1>
                 {match *selected_order {
                     Some(_) => html! {
                         <div class="mt-5 flex gap-4">
@@ -609,5 +611,17 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
                 </div>
             </main>
     </>
+    }
+}
+#[function_component(FuenteSidebarTemplate)]
+pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
+    html! {
+        <aside class="flex w-16 flex-col items-center space-y-8 border-r border-fuente py-8">
+            <img
+                class={"min-w-10 min-h-10 max-w-10 max-h-10"}
+                src={"/public/assets/img/logo.png"}
+                alt="avatar" />
+            {props.children.clone()}
+        </aside>
     }
 }

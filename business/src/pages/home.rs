@@ -4,11 +4,11 @@ use crate::{
 };
 use fuente::{
     contexts::LanguageConfigsStore,
-    mass::{LoadingScreen, OrderDetailModal, OrderStateCard, PopupSection},
-    models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
+    mass::{LoadingScreen, OrderCard, OrderList},
+    models::{OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::notes::NostrNote;
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -26,10 +26,39 @@ pub fn home_page() -> Html {
     }
 }
 
+fn respond_to_order(
+    nostr_keys: NostrKeypair,
+    send_note: Callback<NostrNote>,
+    order: NostrNote,
+    update_kind: u32,
+) -> Callback<SubmitEvent> {
+    Callback::from(move |e: SubmitEvent| {
+        e.prevent_default();
+        let form = HtmlForm::new(e).expect("Could not get form");
+
+        let status_update_str = form
+            .select_value("order_status")
+            .expect("Could not parse order status");
+        let status_update =
+            OrderStatus::try_from(status_update_str).expect("Could not parse order status");
+        let new_request = OrderUpdateRequest {
+            order: order.clone(),
+            status_update,
+        };
+        let signed_req = new_request
+            .sign_update(&nostr_keys, update_kind)
+            .expect("Could not sign order");
+        send_note.emit(signed_req);
+    })
+}
 #[function_component(OrderDashboard)]
 pub fn order_dashboard() -> Html {
     let commerce_ctx = use_context::<OrderDataStore>().expect("No commerce ctx");
     let languague_ctx = use_context::<LanguageConfigsStore>().expect("No language ctx");
+    let send_note = use_context::<NostrProps>().expect("Nostr context not found");
+    let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
+    let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
+    let nostr_keys = key_ctx.get_nostr_key().expect("Nostr key not found");
     let translations = languague_ctx.translations();
     let go_to_orders = {
         let router = use_navigator().expect("No router found");
@@ -50,140 +79,88 @@ pub fn order_dashboard() -> Html {
             <div class="flex justify-center gap-10 mt-10 min-h-96">
                 <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
                     <section>
-                        <OrderList title={OrderStatus::Pending} orders={commerce_ctx.filter_by_order_status(OrderStatus::Pending)} />
+                        <OrderList title={OrderStatus::Pending}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::Pending).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
 
                     <section>
-                        <OrderList title={OrderStatus::Preparing} orders={commerce_ctx.filter_by_order_status(OrderStatus::Preparing)} />
+                        <OrderList title={OrderStatus::Preparing}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::Preparing).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 lg:w-[65%] xl:w-[40%] 2xl:w-[30%]">
                     <section>
-                        <OrderList title={OrderStatus::ReadyForDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery)} />
+                        <OrderList title={OrderStatus::ReadyForDelivery}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
 
                     <section>
-                        <OrderList title={OrderStatus::InDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::InDelivery)} />
+                        <OrderList title={OrderStatus::InDelivery}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::InDelivery).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
                     <section>
-                        <OrderList title={OrderStatus::Completed} orders={commerce_ctx.filter_by_order_status(OrderStatus::Completed)} />
+                        <OrderList title={OrderStatus::Completed}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::Completed).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
 
                     <section>
-                        <OrderList title={OrderStatus::Canceled} orders={commerce_ctx.filter_by_order_status(OrderStatus::Canceled)} />
+                        <OrderList title={OrderStatus::Canceled}>
+                            {commerce_ctx.filter_by_order_status(OrderStatus::Canceled).iter().map(|order| {
+                                let on_click = {
+                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                };
+                                html! {
+                                    <OrderCard order={order.0.clone()} on_click={on_click} order_note={order.1.clone()} />
+                                }
+                            }).collect::<Html>()}
+                        </OrderList>
                     </section>
                 </div>
             </div>
         </main>
-    }
-}
-#[derive(Clone, PartialEq, Properties)]
-pub struct OrderListProps {
-    pub title: OrderStatus,
-    pub orders: Vec<(OrderInvoiceState, NostrNote)>,
-}
-
-#[function_component(OrderList)]
-pub fn order_list(props: &OrderListProps) -> Html {
-    let column_id = props.title.to_string();
-    let button_class = classes!(
-        "text-sm",
-        "font-bold",
-        "px-2",
-        "py-3",
-        "border-2",
-        props.title.border_color(),
-        "rounded-lg"
-    );
-    let button_text_class = classes!(
-        "text-lg",
-        "font-semibold",
-        "text-center",
-        "text-nowrap",
-        props.title.text_color()
-    );
-    let column_class = classes!(
-        "h-[500px]",
-        "overflow-y-scroll",
-        "mt-2",
-        "rounded-2xl",
-        "px-2",
-        "py-2",
-        "space-y-3",
-        "no-scrollbar",
-        props.title.theme_color()
-    );
-
-    html! {
-        <section>
-            <div class={button_class}>
-                <p class={button_text_class}>
-                    {&props.title.display()}
-                </p>
-            </div>
-            <div
-                id={column_id}
-                class={column_class}>
-                {props.orders.iter().map(|order| {
-                    html! {
-                        <OrderCard order={order.0.clone()} order_note={order.1.clone()} />
-                    }
-                }).collect::<Html>()}
-            </div>
-        </section>
-    }
-}
-
-#[derive(Clone, PartialEq, Properties)]
-pub struct OrderCardProps {
-    pub order: OrderInvoiceState,
-    pub order_note: NostrNote,
-}
-
-#[function_component(OrderCard)]
-pub fn order_card(props: &OrderCardProps) -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("No user context found");
-    let relay_ctx = use_context::<NostrProps>().expect("No relay context found");
-    let order_popup = use_state(|| false);
-    let respond_to_order = {
-        let user_keys = key_ctx.get_nostr_key().unwrap();
-        let send_note = relay_ctx.send_note.clone();
-        let order = props.order_note.clone();
-        let order_popup = order_popup.clone();
-        Callback::from(move |e: SubmitEvent| {
-            e.prevent_default();
-            let form = HtmlForm::new(e).expect("Could not get form");
-
-            let status_update_str = form
-                .select_value("order_status")
-                .expect("Could not parse order status");
-            let status_update =
-                OrderStatus::try_from(status_update_str).expect("Could not parse order status");
-            let new_request = OrderUpdateRequest {
-                order: order.clone(),
-                status_update,
-            };
-            let signed_req = new_request
-                .sign_update(&user_keys, NOSTR_KIND_COMMERCE_UPDATE)
-                .expect("Could not sign order");
-            send_note.emit(signed_req);
-            order_popup.set(false);
-        })
-    };
-    let open_popup = {
-        let order_popup = order_popup.clone();
-        Callback::from(move |_| order_popup.set(true))
-    };
-    html! {
-        <>
-        <OrderStateCard order={props.order.clone()} on_click={open_popup} />
-        <PopupSection close_handle={order_popup.clone()}>
-            <OrderDetailModal order={props.order.clone()} on_submit={respond_to_order} />
-        </PopupSection>
-        </>
     }
 }
