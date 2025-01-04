@@ -54,13 +54,11 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5" 
-            style="padding: 40px 50px 40px 80px;">
-            <div class="w-full h-full overflow-y-auto">
+        <div class="h-fit border border-fuente min-h-80 rounded-xl flex items-center justify-between flex-1 gap-5 p-10">
+            <div class="w-full">
                 {children}
             </div>
             {edit_button.clone().unwrap_or_default()}
-
         </div>
     }
 }
@@ -127,7 +125,7 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
         <SettingsOptionsButtons {options} />
     </div>
 
-    <main class="container mx-auto">
+    <main class="container mx-auto flex-grow">
         <div class="flex gap-10">
             <SettingsSideBar options={sidebar_options} />
             <SettingsContent edit_button={content_button} >

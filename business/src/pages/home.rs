@@ -3,6 +3,7 @@ use crate::{
     router::CommerceRoute,
 };
 use fuente::{
+    contexts::LanguageConfigsStore,
     mass::{LoadingScreen, OrderDetailModal, OrderStateCard, PopupSection},
     models::{OrderInvoiceState, OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
@@ -28,6 +29,8 @@ pub fn home_page() -> Html {
 #[function_component(OrderDashboard)]
 pub fn order_dashboard() -> Html {
     let commerce_ctx = use_context::<OrderDataStore>().expect("No commerce ctx");
+    let languague_ctx = use_context::<LanguageConfigsStore>().expect("No language ctx");
+    let translations = languague_ctx.translations();
     let go_to_orders = {
         let router = use_navigator().expect("No router found");
         Callback::from(move |_| {
@@ -35,27 +38,44 @@ pub fn order_dashboard() -> Html {
         })
     };
     html! {
-        <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
+        <main class="container mx-auto mt-10">
             <div class="flex justify-between items-center">
-                <h1 class="text-fuente text-6xl tracking-tighter font-bold">{"My Orders"}</h1>
+                <h1 class="text-fuente text-6xl tracking-tighter font-bold">{&translations["orders_heading"]}</h1>
                 <button onclick={go_to_orders}
-                    class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
+                    class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">
+                    {&translations["orders_historic"]}
+                </button>
             </div>
 
-            <div class="flex gap-10 mt-10 min-h-96 h-full">
-                <div class="grid grid-cols-2 gap-4 lg:w-1/2 xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
-                    <OrderList title={OrderStatus::Pending} orders={commerce_ctx.filter_by_order_status(OrderStatus::Pending)} />
-                    <OrderList title={OrderStatus::Preparing} orders={commerce_ctx.filter_by_order_status(OrderStatus::Preparing)} />
+            <div class="flex justify-center gap-10 mt-10 min-h-96">
+                <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                    <section>
+                        <OrderList title={OrderStatus::Pending} orders={commerce_ctx.filter_by_order_status(OrderStatus::Pending)} />
+                    </section>
+
+                    <section>
+                        <OrderList title={OrderStatus::Preparing} orders={commerce_ctx.filter_by_order_status(OrderStatus::Preparing)} />
+                    </section>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 lg:w-[65%] xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
-                    <OrderList title={OrderStatus::ReadyForDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery)} />
-                    <OrderList title={OrderStatus::InDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::InDelivery)} />
+                <div class="grid grid-cols-2 gap-2 lg:w-[65%] xl:w-[40%] 2xl:w-[30%]">
+                    <section>
+                        <OrderList title={OrderStatus::ReadyForDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::ReadyForDelivery)} />
+                    </section>
+
+                    <section>
+                        <OrderList title={OrderStatus::InDelivery} orders={commerce_ctx.filter_by_order_status(OrderStatus::InDelivery)} />
+                    </section>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 lg:w-1/2 xl:w-[40%] 2xl:w-[30%] h-[calc(100vh-16rem)]">
-                    <OrderList title={OrderStatus::Completed} orders={commerce_ctx.filter_by_order_status(OrderStatus::Completed)} />
-                    <OrderList title={OrderStatus::Canceled} orders={commerce_ctx.filter_by_order_status(OrderStatus::Canceled)} />
+                <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                    <section>
+                        <OrderList title={OrderStatus::Completed} orders={commerce_ctx.filter_by_order_status(OrderStatus::Completed)} />
+                    </section>
+
+                    <section>
+                        <OrderList title={OrderStatus::Canceled} orders={commerce_ctx.filter_by_order_status(OrderStatus::Canceled)} />
+                    </section>
                 </div>
             </div>
         </main>
@@ -73,10 +93,10 @@ pub fn order_list(props: &OrderListProps) -> Html {
     let button_class = classes!(
         "text-sm",
         "font-bold",
-        "px-4",
-        "py-2",
-        "border",
-        props.title.theme_color(),
+        "px-2",
+        "py-3",
+        "border-2",
+        props.title.border_color(),
         "rounded-lg"
     );
     let button_text_class = classes!(
@@ -87,14 +107,15 @@ pub fn order_list(props: &OrderListProps) -> Html {
         props.title.text_color()
     );
     let column_class = classes!(
-        "h-full",
-        "min-w-fit",
-        "max-h-[calc(100vh-16rem)]",
+        "h-[500px]",
+        "overflow-y-scroll",
         "mt-2",
         "rounded-2xl",
-        "overflow-y-auto",
+        "px-2",
+        "py-2",
+        "space-y-3",
         "no-scrollbar",
-        props.title.border_color()
+        props.title.theme_color()
     );
 
     html! {
@@ -127,7 +148,7 @@ pub struct OrderCardProps {
 pub fn order_card(props: &OrderCardProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No user context found");
     let relay_ctx = use_context::<NostrProps>().expect("No relay context found");
-    let order_popup = use_state(|| true);
+    let order_popup = use_state(|| false);
     let respond_to_order = {
         let user_keys = key_ctx.get_nostr_key().unwrap();
         let send_note = relay_ctx.send_note.clone();

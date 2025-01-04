@@ -2,13 +2,12 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use crate::router::CommerceRoute;
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::{
-    templates::SettingsPageTemplate, AppLink, CommerceProfileAddressDetails,
-    CommerceProfileDetails, PopupProps, PopupSection, SimpleInput, SimpleTextArea,
+    templates::SettingsPageTemplate, AppLink, PopupProps, PopupSection, SimpleInput, SimpleTextArea,
 };
 use fuente::mass::{
     CommerceProfileProps, ImageUploadInput, LanguageToggle, NewAddressForm, NewAddressProps,
 };
-use fuente::models::{CommerceProfile, CommerceProfileIdb};
+use fuente::models::CommerceProfileIdb;
 use lucide_yew::{ScrollText, ShoppingBag, SquarePen, X};
 use nostr_minions::browser_api::HtmlForm;
 use nostr_minions::key_manager::NostrIdStore;
@@ -233,13 +232,14 @@ pub fn edit_avatar(props: &PopupProps) -> Html {
     let url_handle = logo_url.clone();
     let url_clone = logo_url.clone();
 
-
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let mut new_profile = profile.clone();
-        new_profile.logo_url = (*url_clone).clone().unwrap_or_else(|| new_profile.logo_url.clone());
-        let db =
-            CommerceProfileIdb::new(new_profile.clone(), &user_keys).expect("Failed to create profile");
+        new_profile.logo_url = (*url_clone)
+            .clone()
+            .unwrap_or_else(|| new_profile.logo_url.clone());
+        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+            .expect("Failed to create profile");
         let note = db.signed_note();
         sender.emit(note.clone());
         user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
@@ -313,7 +313,10 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
 
 #[function_component(EditProfileInputs)]
 pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
-    let CommerceProfileProps { commerce_data, rating } = props;
+    let CommerceProfileProps {
+        commerce_data,
+        rating,
+    } = props;
     html! {
         <div class="flex flex-col px-4 gap-2">
             <SimpleInput

@@ -1,9 +1,16 @@
+use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderAction, LiveOrderStore};
+use crate::router::ConsumerRoute;
 use bright_lightning::LndHodlInvoice;
+use fuente::mass::CheckoutBannerTemplate;
 use fuente::{
     contexts::AdminConfigsStore,
-    mass::{DriverDetailsComponent, OrderRequestDetailsComponent, SpinnerIcon},
+    mass::{
+        DriverDetailsComponent, OrderFailureTemplate, OrderPendingTemplate, OrderSuccessTemplate,
+    },
     models::{
-        CommerceProfile, DriverProfileIdb, DriverStateUpdate, OrderInvoiceState, OrderPaymentStatus, OrderStatus, OrderUpdateRequest, SatisfactionRecord, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE, TEST_PUB_KEY
+        CommerceProfile, DriverProfileIdb, DriverStateUpdate, OrderInvoiceState,
+        OrderPaymentStatus, OrderStatus, OrderUpdateRequest, SatisfactionRecord,
+        NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_DRIVER_STATE, TEST_PUB_KEY,
     },
 };
 use html::ChildrenProps;
@@ -17,8 +24,6 @@ use nostr_minions::{
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
-use crate::router::ConsumerRoute;
-use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderAction, LiveOrderStore};
 
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check(props: &ChildrenProps) -> Html {
@@ -34,7 +39,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     let navigator = use_navigator().unwrap();
     let return_to_cart = {
         let navigator = navigator.clone();
-        Callback::from(move |_| {
+        Callback::from(move |_: MouseEvent| {
             navigator.push(&ConsumerRoute::Cart);
         })
     };
@@ -44,17 +49,22 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
         let show_rating = show_rating.clone();
         use_effect_with(order_ctx.clone(), move |order_ctx| {
             gloo::console::log!("Order context changed");
-            
+
             if let Some((_, order_state)) = &order_ctx.order {
-                gloo::console::log!("Current order status:", format!("{:?}", order_state.order_status));
-                gloo::console::log!("Current payment status:", format!("{:?}", order_state.payment_status));
-                
+                gloo::console::log!(
+                    "Current order status:",
+                    format!("{:?}", order_state.order_status)
+                );
+                gloo::console::log!(
+                    "Current payment status:",
+                    format!("{:?}", order_state.payment_status)
+                );
+
                 // Show rating only when order is Completed/Canceled AND payment is Success
-                let should_show_rating = 
-                    (order_state.order_status == OrderStatus::Completed || 
-                    order_state.order_status == OrderStatus::Canceled) && 
-                    order_state.payment_status == OrderPaymentStatus::PaymentSuccess;
-                
+                let should_show_rating = (order_state.order_status == OrderStatus::Completed
+                    || order_state.order_status == OrderStatus::Canceled)
+                    && order_state.payment_status == OrderPaymentStatus::PaymentSuccess;
+
                 if should_show_rating && !*show_rating {
                     gloo::console::log!("Setting show_rating to true - Order completed/canceled with payment success");
                     show_rating.set(true);
@@ -75,19 +85,18 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                 match state.payment_status {
                     OrderPaymentStatus::PaymentFailed => {
                         navigator.push(&ConsumerRoute::Cart);
-                    },
+                    }
                     OrderPaymentStatus::PaymentSuccess => {
                         if state.order_status == OrderStatus::Completed {
                             navigator.push(&ConsumerRoute::History);
                         }
-                    },
+                    }
                     _ => {}
                 }
             }
             || {}
         });
     }
-
 
     // Debug effect for show_rating changes
     {
@@ -110,12 +119,12 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
             gloo::console::log!("Have order data for rating prompt - creating component");
             let order_ctx_clone = order_ctx.clone();
             let order_id = order_state.order_id();
-            
+
             html! {
                 <div class="fixed inset-0 flex items-center justify-center" style="z-index: 9999;">
                     <div class="fixed inset-0 bg-black opacity-50"></div>
                     <div class="relative z-50">
-                        <RatingPrompt 
+                        <RatingPrompt
                             order_id={order_state.order_id()}
                             commerce_id={order_state.get_commerce_pubkey()}
                             onclose={
@@ -138,106 +147,52 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
         html! {}
     };
 
-
     let inside_html = if let Some((_order_note, order_state)) = &order_ctx.order {
         // First check if order is cancelled
         if order_state.order_status == OrderStatus::Canceled {
+            let onclick = {
+                let navigator = navigator.clone();
+                let order_ctx = order_ctx.clone();
+                let order_id = order_state.order_id();
+                Callback::from(move |_| {
+                    order_ctx.dispatch(LiveOrderAction::CompleteOrder(order_id.clone()));
+                    navigator.push(&ConsumerRoute::History);
+                })
+            };
             Ok(html! {
-                <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
-                    <div class="text-red-500">
-                        <lucide_yew::Frown class="w-16 h-16" />
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800">{"Sorry, your order was denied"}</h2>
-                    <p class="text-gray-600">{"Please try again!"}</p>
-                    <p class="text-gray-600">{"Order: #"}{order_state.order_id()[..12].to_string()}</p>
-                    <div class="text-center text-gray-600">
-                        <p>{"The store has declined your order."}</p>
-                        <p>{"You can check the status in your order history."}</p>
-                    </div>
-                    <button 
-                        onclick={
-                            let navigator = navigator.clone();
-                            let order_ctx = order_ctx.clone();
-                            let order_id = order_state.order_id();
-                            Callback::from(move |_| {
-                                order_ctx.dispatch(LiveOrderAction::CompleteOrder(order_id.clone()));
-                                navigator.push(&ConsumerRoute::History);
-                            })
-                        }
-                        class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
-                    >
-                        {"Check My Orders"}
-                    </button>
-                </div>
+                <OrderFailureTemplate order={order_state.clone()} onclick={onclick} />
             })
         } else {
             match order_state.payment_status {
                 OrderPaymentStatus::PaymentPending => Ok(html! {
-                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
-                        <div class="animate-pulse">
-                            <img src="/public/assets/img/bitcoin-logo.svg" alt="Bitcoin Logo" class="w-16 h-16" />
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-800">{"Your transaction is waiting to be approved by the store."}</h2>
-                        <div class="text-center">
-                            <p class="text-gray-600">{"Please do not close the window, approval may take 5 minutes,"}</p>
-                            <p class="text-gray-600">{"otherwise your money will be refunded to the account."}</p>
-                        </div>
-                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                    </div>
+                    <OrderPendingTemplate  />
                 }),
-                
+
                 OrderPaymentStatus::PaymentReceived => Ok(html! {
-                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
-                        <div class="animate-pulse">
-                            <img src="/public/assets/img/bitcoin-logo.svg" alt="Bitcoin Logo" class="w-16 h-16" />
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-800">{"Your transaction is waiting to be approved by the store."}</h2>
-                        <div class="text-center">
-                            <p class="text-gray-600">{"Please do not close the window, approval may take 5 minutes,"}</p>
-                            <p class="text-gray-600">{"otherwise your money will be refunded to the account."}</p>
-                        </div>
-                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                    </div>
+                    <OrderPendingTemplate  />
                 }),
-                OrderPaymentStatus::PaymentFailed => Ok(html! {
-                    <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
-                        <div class="text-red-500">
-                            <Cross class="w-16 h-16" />
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-800">{"Payment Failed"}</h2>
-                        <p class="text-gray-600 text-center">{"We couldn't process your payment. Please try again."}</p>
-                        <p class="text-sm text-gray-500">{"Order ID: "}{order_state.order_id()[..12].to_string()}</p>
-                        <button 
-                            onclick={return_to_cart}
-                            class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
-                        >
-                            {"Return to Cart"}
-                        </button>
-                    </div>
-                }),
+                OrderPaymentStatus::PaymentFailed => {
+                    let onclick = {
+                        let navigator = navigator.clone();
+                        Callback::from(move |_| {
+                            navigator.push(&ConsumerRoute::Cart);
+                        })
+                    };
+                    Ok(html! {
+                        <OrderFailureTemplate order={order_state.clone()} onclick={onclick} />
+                    })
+                }
                 OrderPaymentStatus::PaymentSuccess => {
                     let status = &order_state.order_status;
                     if status == &OrderStatus::Preparing {
+                        let onclick = {
+                            let navigator = navigator.clone();
+                            Callback::from(move |_| {
+                                navigator.push(&ConsumerRoute::History);
+                            })
+                        };
                         Ok(html! {
-                            <div class="flex flex-col items-center justify-center gap-6 p-8 bg-white rounded-xl shadow-lg max-w-2xl mx-auto">
-                                <div class="text-green-500">
-                                    <lucide_yew::PartyPopper class="w-16 h-16" />
-                                </div>
-                                <h2 class="text-2xl font-bold text-gray-800">{"Yay! Your transaction was Processed successfully!"}</h2>
-                                <p class="text-gray-600">{"Order: #"}{order_state.order_id()[..12].to_string()}</p>
-                                <p class="text-gray-600">{"Track your order on My packages list!"}</p>
-                                <button 
-                                    onclick={
-                                        let navigator = navigator.clone();
-                                        Callback::from(move |_| {
-                                            navigator.push(&ConsumerRoute::History);
-                                        })
-                                    }
-                                    class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
-                                >
-                                    {"View My Package"}
-                                </button>
-                            </div>
+                            <OrderSuccessTemplate order={order_state.clone()} onclick={onclick} />
                         })
                     } else if status == &OrderStatus::InDelivery {
                         let commerce = commerce_ctx
@@ -246,9 +201,9 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         Ok(html! {
                             <>
                                 <h2 class="text-2xl font-bold">{"Order in Delivery!"}</h2>
-                                <LiveOrderTracking 
-                                    order={order_state.clone()} 
-                                    commerce={commerce} 
+                                <LiveOrderTracking
+                                    order={order_state.clone()}
+                                    commerce={commerce}
                                 />
                             </>
                         })
@@ -256,7 +211,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         let driver_db = DriverProfileIdb::try_from(courier_note).unwrap();
                         let driver = driver_db.profile();
                         let pubkey = driver_db.pubkey();
-                
+
                         Ok(html! {
                             <div class="flex flex-col gap-4 text-wrap max-w-md">
                                 <DriverDetailsComponent {pubkey} {driver} />
@@ -304,31 +259,16 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
             } else {
                 e
             }
-        },
+        }
         Ok(inside_html) => {
-            let order = order_ctx
-                .order
-                .clone()
-                .unwrap()
-                .1
-                .get_order_request()
-                .products;
-            
+            let order = order_ctx.order.clone().unwrap().1.clone();
+
             gloo::console::log!("Final render - show_rating:", *show_rating);
-            
+
             html! {
                 <>
-                    {rating_prompt}
-                    <div class="relative h-full w-full flex items-center justify-center">
-                        <div class="relative bg-white p-4 flex flex-col gap-4">
-                            <OrderRequestDetailsComponent {order} />
-                            {inside_html}
-                            <SpinnerIcon class="absolute top-4 right-4 w-4 h-4 text-fuente" />
-                        </div>
-                        <button onclick={cancel_onclick} class="absolute top-4 right-4">
-                            <Cross class="w-8 h-8 text-red-500" />
-                        </button>
-                    </div>
+                    <CheckoutBannerTemplate {order} onclick={cancel_onclick} />
+                    {inside_html}
                 </>
             }
         }
@@ -527,13 +467,17 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
 #[derive(Properties, Clone, PartialEq)]
 pub struct RatingPromptProps {
     pub order_id: String,
-    pub commerce_id: String, 
+    pub commerce_id: String,
     pub onclose: Callback<()>,
 }
 
 #[function_component(RatingPrompt)]
 pub fn rating_prompt(props: &RatingPromptProps) -> Html {
-    let RatingPromptProps { order_id, commerce_id, onclose } = props.clone();
+    let RatingPromptProps {
+        order_id,
+        commerce_id,
+        onclose,
+    } = props.clone();
     let rating = use_state(|| 5); // Default 5 stars
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayPool context found");
@@ -550,9 +494,12 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
                     satisfaction: rating.to_string(),
                     rater_pubkey: keys.public_key(),
                 };
-                
-                gloo::console::log!("Sending satisfaction record:", format!("{:?}", satisfaction));
-                
+
+                gloo::console::log!(
+                    "Sending satisfaction record:",
+                    format!("{:?}", satisfaction)
+                );
+
                 let sender = relay_ctx.send_note.clone();
                 let mut giftwrap = nostro2::notes::NostrNote {
                     kind: fuente::models::NOSTR_KIND_SATISFACTION_EVENT,
@@ -560,19 +507,24 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
                     pubkey: keys.public_key(),
                     ..Default::default()
                 };
-                
+
                 // Sign the note first
                 keys.sign_nostr_event(&mut giftwrap);
-                
+
                 // Now encrypt it
                 match keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string()) {
                     Ok(()) => {
-                        gloo::console::log!("Successfully encrypted and sending satisfaction record");
+                        gloo::console::log!(
+                            "Successfully encrypted and sending satisfaction record"
+                        );
                         sender.emit(giftwrap);
                         onclose.emit(());
-                    },
+                    }
                     Err(e) => {
-                        gloo::console::error!("Failed to encrypt satisfaction record:", e.to_string());
+                        gloo::console::error!(
+                            "Failed to encrypt satisfaction record:",
+                            e.to_string()
+                        );
                     }
                 }
             }
@@ -583,12 +535,12 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
         <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <form class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4" {onsubmit}>
                 <h3 class="text-2xl font-bold mb-6">{"How was your experience?"}</h3>
-                
+
                 <div class="flex justify-center gap-4 mb-8">
                     {(1..=5).map(|i| {
                         let rating_state = rating.clone();
                         html! {
-                            <button 
+                            <button
                                 type="button"
                                 onclick={Callback::from(move |_| rating_state.set(i))}
                                 class={if *rating >= i { "text-yellow-400" } else { "text-gray-300" }}
@@ -602,14 +554,14 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
                 </div>
 
                 <div class="flex justify-end gap-4">
-                    <button 
+                    <button
                         type="button"
                         onclick={Callback::from(move |_| onclose.emit(()))}
                         class="px-6 py-2 border rounded-lg hover:bg-gray-50"
                     >
                         {"Skip"}
                     </button>
-                    <button 
+                    <button
                         type="submit"
                         class="px-6 py-2 bg-fuente text-white rounded-lg hover:bg-fuente-dark"
                     >

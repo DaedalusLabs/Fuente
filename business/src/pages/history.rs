@@ -5,6 +5,8 @@ use fuente::{
     models::{OrderInvoiceState, OrderStatus},
 };
 use lucide_yew::{History, Search};
+use wasm_bindgen::JsValue;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -20,14 +22,43 @@ pub fn history_page() -> Html {
     let order_ctx = use_context::<OrderDataStore>().expect("No order context found");
     let orders = order_ctx.order_history();
     let selected_order = use_state(|| None::<String>);
+    let date_filter = use_state(|| None::<String>);
 
     let completed_orders = orders
         .iter()
-        .filter(|order| order.order_status == OrderStatus::Completed)
+        .filter(|order| {
+            let date_filtered = match date_filter.as_ref() {
+                Some(filter) => {
+                    let order_date_day = web_sys::js_sys::Date::new(&JsValue::from_f64(
+                        (order.order_timestamp() * 1000) as f64,
+                    ));
+                    let filter_date_day = web_sys::js_sys::Date::new(&JsValue::from_str(filter));
+                    gloo::console::log!("Order Date: {:?}", order_date_day.get_utc_date());
+                    gloo::console::log!("Filter Date: {:?}", filter_date_day.get_utc_date());
+                    order_date_day.get_utc_date() == filter_date_day.get_utc_date()
+                }
+                None => true,
+            };
+            date_filtered && order.order_status == OrderStatus::Completed
+        })
         .collect::<Vec<_>>();
     let canceled_orders = orders
         .iter()
-        .filter(|order| order.order_status == OrderStatus::Canceled)
+        .filter(|order| {
+            let date_filtered = match date_filter.as_ref() {
+                Some(filter) => {
+                    let order_date_day = web_sys::js_sys::Date::new(&JsValue::from_f64(
+                        (order.order_timestamp() * 1000) as f64,
+                    ));
+                    let filter_date_day = web_sys::js_sys::Date::new(&JsValue::from_str(filter));
+                    gloo::console::log!("Order Date: {:?}", order_date_day.get_utc_date());
+                    gloo::console::log!("Filter Date: {:?}", filter_date_day.get_utc_date());
+                    order_date_day.get_utc_date() == filter_date_day.get_utc_date()
+                }
+                None => true,
+            };
+            date_filtered && order.order_status == OrderStatus::Canceled
+        })
         .collect::<Vec<_>>();
 
     if let Some(order_id) = (*selected_order).clone() {
@@ -44,6 +75,14 @@ pub fn history_page() -> Html {
         }
     }
 
+    let onchange = {
+        let date_filter = date_filter.clone();
+        Callback::from(move |e: Event| {
+            let value = e.target_unchecked_into::<HtmlInputElement>().value();
+            date_filter.set(Some(value));
+        })
+    };
+
     html! {
     <>
     <div class="container mx-auto mt-10 flex justify-between">
@@ -52,8 +91,8 @@ pub fn history_page() -> Html {
         <div class="flex items-center gap-5 flex-1">
             <label for="date" class="text-fuente font-light text-md w-full text-right">{&translations["store_orders_history_date"]}</label>
             <div class="relative w-1/3">
-                <input type="text" class="border-2 border-fuente w-full rounded-xl py-2 px-5" id="date" />
-                <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none"/>
+                <input {onchange} type="date" class="border-2 border-fuente w-full rounded-xl py-2 px-5 text-fuente placeholder:text-fuente" id="date" />
+                <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none text-fuente"/>
             </div>
         </div>
     </div>
@@ -65,7 +104,7 @@ pub fn history_page() -> Html {
                     <p class="text-green-500 text-lg font-semibold text-center">{&translations["store_orders_history_completed"]}</p>
                 </div>
 
-                <div class="grid grid-cols-3 auto-cols-fr gap-8 bg-green-100 rounded-2xl mt-2 max-h-1/2 px-2 py-2 w-full overflow-y-auto no-scrollbar" >
+                <div class="grid grid-cols-3 auto-cols-fr gap-8 bg-green-100 rounded-2xl mt-2 max-h-[36rem] px-2 py-2 w-full overflow-y-auto no-scrollbar" >
                     {completed_orders.iter().map(|order| {
                        html! {  <OrderStateCard order={(**order).clone()} on_click={Callback::noop()} />}
                     }).collect::<Html>()}
@@ -79,7 +118,6 @@ pub fn history_page() -> Html {
                 </div>
 
                 <div class=" grid grid-cols-3 auto-cols-fr gap-8 bg-red-100 rounded-2xl mt-2 px-2 py-2 w-full max-h-[36rem] overflow-y-auto no-scrollbar" >
-
                     {canceled_orders.iter().map(|order| {
                         html! { <OrderStateCard order={(**order).clone()} on_click={Callback::noop()} />}
                     }).collect::<Html>()}
