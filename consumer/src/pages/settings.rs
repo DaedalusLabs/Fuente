@@ -105,7 +105,7 @@ pub fn settings_page() -> Html {
             SettingsPage::KeyRecovery => {
                 html! {
                     <button
-                        type="button" class="flex gap-4 tracking-wide">
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
                         <span class="text-red-600 font-bold text-sm">
                             {&translations["profile_personal_information_delete_account_button"]}
                         </span>
@@ -119,7 +119,7 @@ pub fn settings_page() -> Html {
             SettingsPage::Address => {
                 html! {
                     <button onclick={Callback::from(move |_| address_popup_handle.set(true))}
-                        type="button" class="flex gap-4 tracking-wide">
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
                         <span class="text-fuente font-bold text-xl">
                             {&translations["profile_personal_information_edit_button"]}
                         </span>
@@ -130,7 +130,7 @@ pub fn settings_page() -> Html {
             SettingsPage::Profile => {
                 html! {
                     <button onclick={Callback::from(move |_| profile_popup_handle.set(true))}
-                        type="button" class="flex gap-4 tracking-wide">
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
                         <span class="text-fuente font-bold text-xl">
                             {&translations["profile_personal_information_edit_button"]}
                         </span>
@@ -195,7 +195,7 @@ pub fn my_contact_details() -> Html {
     let profile_popup_handle = use_state(|| false);
     let profile_popup_handle_clone = profile_popup_handle.clone();
     html! {
-    <div class="grid grid-cols-2 gap-10 h-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 h-full">
         <div class="space-y-3">
             <h3 class="text-gray-500 text-2xl font-semibold">{profile.nickname.clone()}</h3>
 

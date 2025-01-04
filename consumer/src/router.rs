@@ -1,12 +1,16 @@
-use lucide_yew::{Heart, Menu, Search, ShoppingCart, UserRound};
+use lucide_yew::{Heart, House, Menu, Search, ShoppingCart, UserRound};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::{mass::AppLink, models::ProductItem};
+use fuente::mass::AppLink;
 
-use crate::{contexts::CartStore, pages::{
-    CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, ProductPage, SettingsPageComponent
-}};
+use crate::{
+    contexts::CartStore,
+    pages::{
+        CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck,
+        SettingsPageComponent,
+    },
+};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -79,9 +83,12 @@ pub fn header() -> Html {
                     <Search class="absolute right-4 h-6 w-6 text-fuente pointer-events-none" />
                 </div>
 
-                <button class="lg:hidden">
-                    <Menu class="bg-fuente h-14 w-14 p-2 rounded-xl text-white" />
-                </button>
+                <AppLink<ConsumerRoute>
+                    class="lg:hidden"
+                    selected_class=""
+                    route={ConsumerRoute::Home}>
+                    <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
+                </AppLink<ConsumerRoute>>
             </div>
             <div class="flex gap-5">
                 <AppLink<ConsumerRoute>

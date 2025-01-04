@@ -1,7 +1,6 @@
 use crate::contexts::FavoritesAction;
 use crate::contexts::{CommerceDataStore, FavoritesStore};
 use crate::router::ConsumerRoute;
-use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::templates::FavoritesPageTemplate;
 use fuente::mass::{AppLink, CommerceProfileProps};
 use fuente::models::FavoriteStore;
@@ -13,7 +12,6 @@ use yew::prelude::*;
 pub fn favorites_page() -> Html {
     let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
 
     // Get all favorites
     let favorites = favorites_ctx.get_favorites();
@@ -26,8 +24,6 @@ pub fn favorites_page() -> Html {
         .iter()
         .filter(|commerce| favorites.iter().any(|f| f.commerce_id == commerce.id()))
         .collect::<Vec<_>>();
-
-    gloo::console::log!("Found favorite businesses:", favorite_businesses.len());
 
     html! {
         <FavoritesPageTemplate >
@@ -52,18 +48,27 @@ pub fn favorites_page() -> Html {
 }
 #[function_component(FavoriteCommerceTemplate)]
 pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
-    let CommerceProfileProps { commerce_data, rating } = props;
+    let CommerceProfileProps {
+        commerce_data,
+        rating,
+    } = props;
     html! {
-        <div class="border-2 border-fuente rounded-2xl p-2 relative">
-            <div class="flex flex-col xl:flex-row items-center justify-center gap-5 xl:justify-normal">
-                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-36" />
-                <div class="space-y-2 flex flex-col items-center">
-                    <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
-                    <p class="text-gray-500 font-light text-md max-w-32 truncate">{&commerce_data.description}</p>
-                    <div class="flex items-center gap-2">
-                        <Star class="w-7 h-7 text-yellow-400" />
-                        <p class="text-gray-500 font-light">{"TODO"}</p>
-                    </div>
+        <div class="border-2 border-fuente rounded-2xl p-2">
+            <div class="flex items-center justify-center lg:gap-5">
+                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-20 lg:w-28 xl:w-36 object-contain"/>
+                <div class="lg:space-y-2 flex flex-col items-center">
+                    <h3 class="text-gray-500 text-md xl:text-lg font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
+                    <p class="text-gray-500 font-light text-sm xl:text-md">{&commerce_data.description}</p>
+                    {if let Some(rating) = rating {
+                        html! {
+                        <div class="flex items-center gap-1">
+                            <Star class="w-7 h-7 text-yellow-400" />
+                            <p class="text-gray-500 font-light text-sm xl:text-base">{&rating.trust_score}</p>
+                        </div>
+                        }
+                    } else {
+                        html! {}
+                    }}
                 </div>
             </div>
         </div>
@@ -116,4 +121,3 @@ fn favorite_button(props: &FavoriteButtonProps) -> Html {
         </button>
     }
 }
-

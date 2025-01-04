@@ -5,8 +5,8 @@ use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
 use fuente::contexts::{AdminConfigsStore, LanguageConfigsStore};
 use fuente::mass::ThreeBlockSpinner;
-use fuente::models::{OrderPaymentStatus, ProductOrder};
-use lucide_yew::Trash;
+use fuente::models::{OrderPaymentStatus, ProductItem, ProductOrder};
+use lucide_yew::{ArrowRight, Trash2};
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
 use yew::prelude::*;
@@ -21,17 +21,51 @@ pub fn cart_page() -> Html {
 
     let cart_items = cart_ctx.cart();
     if cart_items.is_empty() {
-        return html! {};
+        return html! {
+            <EmptyCart />
+        };
     }
 
     html! {
-    <main class="container mx-auto mt-10">
-        <h1 class="text-fuente text-6xl tracking-tighter font-bold ">{&translations["cart_heading"]}</h1>
+    <main 
+        class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
+        <h1 class="text-fuente text-4xl pb-4 sm:pb-6 md:pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+            {&translations["cart_heading"]}
+        </h1>
         <CartTemplate order={ProductOrder::new(cart_items)} />
         <CartPreTotal />
     </main>
     }
 }
+
+#[function_component(EmptyCart)]
+pub fn empty_cart() -> Html {
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let translations = language_ctx.translations();
+    let onclick = {
+        let navigator = use_navigator().expect("No navigator found");
+        Callback::from(move |_| {
+            navigator.push(&ConsumerRoute::Home);
+        })
+    };
+    html! {
+        <div class="mt-7 px-16 rounded-3xl flex items-center justify-center flex-col">
+            <h2 class="text-lg text-fuente font-bold p-5">{&translations["cart_empty"]}</h2>
+            <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative">
+                <div class="flex justify-between items-center lg:mb-4">
+                    <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores_find"]}</h2>
+                    <button {onclick}>
+                        <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                    </button>
+                </div>
+
+                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto lg:absolute lg:bottom-0 lg:right-8" />
+            </div>
+        </div>
+    }
+}
+
 #[function_component(CartPreTotal)]
 pub fn cart_pre_total() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
@@ -66,15 +100,16 @@ pub fn cart_pre_total() -> Html {
     };
     html! {
         <>
-        <div class="bg-gray-100 py-5 px-40 mt-5 rounded-2xl flex justify-end items-center">
-            <p class="text-fuente text-lg flex items-center gap-10">
+        <div class="bg-gray-100 py-5 px-5 lg:px-40 mt-5 rounded-2xl flex justify-end items-center">
+            <p class="text-center text-fuente text-lg flex items-center gap-10">
                 {&translations["cart_pre_total"]}
-                <span class="font-bold text-5xl">{format!("SRD {:.2}", order.total())}</span>
+                <span class="font-bold text-3xl md:text-5xl">{format!("SRD {:.2}", order.total())}</span>
             </p>
         </div>
 
-        <div class="flex justify-end mt-5 px-40">
-            <button onclick={send_order_request} class="bg-fuente-buttons py-4 px-10 rounded-full font-bold text-fuente-forms">
+        <div class="lg:flex lg:justify-end mt-5 px-5 lg:px-40">
+            <button onclick={send_order_request}
+                class="bg-fuente-buttons text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-fuente-forms">
                 {&translations["cart_checkout"]}
             </button>
         </div>
@@ -95,8 +130,11 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-    <main class="container mx-auto mt-10">
-        <h1 class="text-fuente text-6xl tracking-tighter font-bold ">{&translations["checkout_title"]}</h1>
+       <main 
+           class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
+           <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+            {&translations["checkout_title"]}
+            </h1>
         <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5">
             <div>
                 <CheckoutClientInfo />
@@ -119,7 +157,6 @@ pub struct CartTemplateProps {
 #[function_component(CartTemplate)]
 pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
     let CartTemplateProps { order } = props;
-    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let translations = language_ctx.translations();
@@ -132,79 +169,92 @@ pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
         };
     }
     html! {
-        <div class="border border-fuente mt-7 px-16 rounded-3xl">
-            <h2 class="text-2xl text-fuente font-bold pt-5">{&translations["packages_track_table_heading_details"]}</h2>
+        <div class="border border-fuente mt-10 px-5 rounded-3xl">
+            <h2 class="flex text-2xl text-fuente font-bold pt-5">{&translations["cart_text"]}</h2>
 
-            <table class="table-auto w-full border-collapse">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th class=" py-3 text-left text-md leading-4 font-semibold text-fuente text-lg">
-                            {&translations["checkout_product_details_table_heading"]}</th>
-                        <th class=" py-3 text-center text-md leading-4 font-semibold text-fuente text-lg">
-                            {&translations["checkout_product_quantity_table_heading"]}</th>
-                        <th class=" py-3 text-center text-md leading-4 font-semibold text-fuente text-lg">
-                            {&translations["checkout_product_price_table_heading"]}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {order.counted_products().iter().map(|(item, count)| {
-                        let remove_one_item = {
-                            let cart_ctx = cart_ctx.clone();
-                            let item_clone = item.clone();
-                            Callback::from(move |_| {
-                            cart_ctx.dispatch(CartAction::RemoveProduct(item_clone.clone()));
-                        })};
-                        let add_one_item = {
-                            let cart_ctx = cart_ctx.clone();
-                            let item_clone = item.clone();
-                            Callback::from(move |_| {
-                            cart_ctx.dispatch(CartAction::AddOne(item_clone.clone()));
-                        })};
-                        let clear_product = {
-                            let cart_ctx = cart_ctx.clone();
-                            let item_clone = item.clone();
-                            Callback::from(move |_| {
-                            cart_ctx.dispatch(CartAction::ClearProduct(item_clone.clone()));
-                        })
-                        };
-                        let price = item.price().parse::<f64>().unwrap() * *count as f64;
+            <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
+                <h3></h3>
+                <h3 class="text-fuente lg:pl-16 xl:pl-40">{&translations["cart_table_heading_details"]}</h3>
+                <h3 class="text-fuente lg:pl-0 xl:pl-5">{&translations["cart_table_heading_quantity"]}</h3>
+                <h3 class="text-fuente lg:pr-10 xl:pr-32">{&translations["cart_table_heading_price"]}</h3>
+                <h3></h3>
+            </div>
+            {order.counted_products().iter().map(|(item, count)| {
 
-                        html! {
-                            <tr>
-                                <td class="py-8 pt-4 whitespace-nowrap">
-                                    <img src={item.thumbnail_url()} alt="Product Image" class="w-32 min-w-32 bg-gray-200 rounded-2xl" />
-                                </td>
-                                <td class="px-6 py-8 whitespace-nowrap overflow-hidden truncate">
-                                    <p class="font-bold text-gray-500 mt-8">{item.name()}</p>
-                                    <p class="font-thin text-gray-500 mt-3 max-w-32 truncate">{item.details()}</p>
-                                    <p class="font-bold text-gray-500">{format!("SKU: {}", item.sku())}</p>
-                                </td>
-                                <td class="px-6 py-8">
-                                    <div
-                                        class="border border-fuente flex justify-center gap-8 rounded-xl py-3 px-2 mt-20">
-                                        <button onclick={remove_one_item} class="text-gray-600">{"-"}</button>
-                                        <span class="text-gray-600">{count}</span>
-                                        <button onclick={add_one_item} class="text-gray-600">{"+"}</button>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-8 whitespace-nowrap text-right text-4xl text-fuente font-semibold">
-                                    <p class="mt-20">{format!("{:.2}", price)}</p>
-                                </td>
-                                <td class="whitespace-nowrap text-center py-8 px-6">
-                                    <button onclick={clear_product} class="w-10 h-10 mt-24">
-                                        <Trash class="w-10 h-10 text-fuente" />
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    }).collect::<Html>()}
-                </tbody>
-            </table>
+                html! {
+                    <CartItemDetails
+                        item={item.clone()}
+                        count={*count} />
+                }
+            }).collect::<Html>()}
         </div>
     }
 }
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct CartItemDetailsProps {
+    pub item: ProductItem,
+    pub count: u32,
+}
+
+#[function_component(CartItemDetails)]
+pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
+    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let CartItemDetailsProps { item, count } = props;
+    let remove_one_item = {
+        let cart_ctx = cart_ctx.clone();
+        let item_clone = item.clone();
+        Callback::from(move |_: MouseEvent| {
+            cart_ctx.dispatch(CartAction::RemoveProduct(item_clone.clone()));
+        })
+    };
+    let add_one_item = {
+        let cart_ctx = cart_ctx.clone();
+        let item_clone = item.clone();
+        Callback::from(move |_: MouseEvent| {
+            cart_ctx.dispatch(CartAction::AddOne(item_clone.clone()));
+        })
+    };
+    let clear_product = {
+        let cart_ctx = cart_ctx.clone();
+        let item_clone = item.clone();
+        Callback::from(move |_: MouseEvent| {
+            cart_ctx.dispatch(CartAction::ClearProduct(item_clone.clone()));
+        })
+    };
+    let price = item.price().parse::<f64>().unwrap() * *count as f64;
+    html! {
+        <div class="flex justify-between  items-center gap-5 md:gap-20 mt-10 py-10 border-t border-t-fuente">
+            <img
+                src={item.thumbnail_url()}
+                alt="Product Image"
+                class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block"
+            />
+            <div class="flex flex-col">
+                <p class="text-gray-500 font-bold">{item.name()}</p>
+                <p class="text-gray-500 font-light w-20 sm:w-28 lg:w-32 line-clamp-3">{item.details()}</p>
+                <p class="text-gray-500 font-bold uppercase">{format!("SKU: {}", item.sku())}</p>
+                <button onclick={add_one_item.clone()}
+                    class="lg:hidden border-2 border-fuente px-5 py-2 rounded-xl w-fit mt-1">{count}</button>
+            </div>
+
+            <div class="hidden lg:flex items-center justify-between border border-fuente rounded-xl">
+                <button onclick={remove_one_item}
+                    class="text-gray-500 w-full px-5 py-3">{"-"}</button>
+                <button class="text-gray-500 w-full px-5 py-3">{count}</button>
+                <button onclick={add_one_item}
+                    class="text-gray-500 w-full px-5 py-3">{"+"}</button>
+            </div>
+
+            <p class="text-2xl md:text-4xl text-fuente font-bold">{format!("SRD {:.2}", price)}</p>
+
+            <button onclick={clear_product} >
+                <Trash2 class="w-8 h-8 text-red-500" />
+            </button>
+        </div>
+    }
+}
+
 #[function_component(CheckoutClientInfo)]
 pub fn checkout_summary() -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
@@ -309,11 +359,12 @@ pub fn checkout_summary() -> Html {
         use_effect_with(order_ctx.order.clone(), move |order| {
             if let Some((_, order_state)) = order {
                 match order_state.payment_status {
-                    OrderPaymentStatus::PaymentReceived => {  // Changed from PaymentPending
+                    OrderPaymentStatus::PaymentReceived => {
+                        // Changed from PaymentPending
                         if let Some(order_id) = order_state.order.id.clone() {
                             navigator.push(&ConsumerRoute::Order { order_id });
                         }
-                    },
+                    }
                     _ => {}
                 }
             }
@@ -323,9 +374,9 @@ pub fn checkout_summary() -> Html {
 
     if let Some(order) = order_ctx.order.as_ref() {
         html! {
-            <OrderInvoiceComponent 
-                invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()} 
-                {exchange_rate} 
+            <OrderInvoiceComponent
+                invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()}
+                {exchange_rate}
             />
         }
     } else {

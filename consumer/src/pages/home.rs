@@ -1,10 +1,13 @@
 use crate::contexts::{FavoritesAction, RatingsStore};
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
-use fuente::mass::templates::{FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch};
+use fuente::mass::templates::{
+    FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch,
+};
 use fuente::mass::{AppLink, CommerceProfileCard};
 use fuente::models::FavoriteStore;
 use lucide_yew::{ArrowLeft, ArrowRight, Heart};
 use nostr_minions::key_manager::NostrIdStore;
+use web_sys::HtmlElement;
 use yew::prelude::*;
 
 #[function_component(HomePage)]
@@ -25,20 +28,43 @@ pub fn stores_banner() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let ratings_ctx = use_context::<RatingsStore>().expect("RatingsStore not found");
     let businesses = commerce_ctx.commerces();
+    let scroll_left = Callback::from(|e: MouseEvent| {
+        e.stop_propagation();
+        let carousel = nostr_minions::browser_api::HtmlDocument::new()
+            .expect("Document not found")
+            .find_element_by_id::<HtmlElement>("commerce_carousel")
+            .expect("Element not found");
+        let scroll_amount = carousel.scroll_left() - 200;
+        carousel.set_scroll_left(scroll_amount);
+    });
+    let scroll_right = Callback::from(|e: MouseEvent| {
+        e.stop_propagation();
+        let carousel = nostr_minions::browser_api::HtmlDocument::new()
+            .expect("Document not found")
+            .find_element_by_id::<HtmlElement>("commerce_carousel")
+            .expect("Element not found");
+        let scroll_amount = carousel.scroll_left() + 200;
+        carousel.set_scroll_left(scroll_amount);
+    });
 
     html! {
         <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
-            <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
-    
-            <div class="flex justify-between items-center mt-10 px-10">
-                <ArrowLeft class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
-                <div class="overflow-x-auto whitespace-nowrap">
-                    <div class="grid grid-flow-col auto-cols-max gap-10">
+            <div class="flex justify-between items-center container mx-auto">
+                <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
+            </div>
+
+            <div class="flex justify-center lg:justify-between items-center mt-10 px-6">
+                <button onclick={scroll_left}>
+                    <ArrowLeft 
+                        class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
+                </button>
+                <div class="overflow-x-auto whitespace-nowrap no-scrollbar">
+                    <div id="commerce_carousel" class="grid grid-flow-col auto-cols-max gap-10">
                         {businesses.iter().map(|profile| {
                             let commerce_data = profile.profile().clone();
                             let commerce_id = profile.id().to_string();
                             let rating = ratings_ctx.get_business_rating(&commerce_id);
-    
+
                             html! {
                                 <AppLink<ConsumerRoute>
                                     class="border-2 border-fuente rounded-3xl block object-contain w-40 bg-white h-40 overflow-clip"
@@ -53,7 +79,10 @@ pub fn stores_banner() -> Html {
                         }).collect::<Html>()}
                     </div>
                 </div>
-                <ArrowRight class="w-16 h-16 text-fuente rounded-full border-4 border-fuente" />
+                <button  onclick={scroll_right}>
+                <ArrowRight
+                    class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
+                </button>
             </div>
         </section>
     }

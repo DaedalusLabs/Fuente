@@ -55,6 +55,7 @@
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",
+    "cart_empty": "Your cart is empty",
     "cart_text": "Products Details",
     "cart_table_heading_details": "Product Details",
     "cart_table_heading_quantity": "Quantity",
@@ -232,6 +233,7 @@
     "home_product_3_description": "Whey Store",
     "home_product_3_reviews": "30 reviews",
     "home_stores": "More Stores",
+    "home_stores_find": "Find Stores",
     "home_hot_categories_heading": "Hot Categories!",
     "home_hot_categories_books": "Books",
     "home_hot_categories_tech": "Tech",
