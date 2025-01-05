@@ -19,4 +19,4 @@ web-sys.workspace = true
 yew.workspace = true
 yew-router.workspace = true
 nostr-minions.workspace = true
-
+lucide-yew.workspace = true

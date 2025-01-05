@@ -18,7 +18,7 @@ pub struct ServerConfigs {
     admin_whitelist: Vec<String>,
     commerce_whitelist: Vec<String>,
     commerces: Vec<NostrNote>,
-    couriers: Vec<NostrNote>,
+    couriers: Vec<(NostrNote, DriverProfile)>,
     couriers_whitelist: Vec<String>,
     consumer_blacklist: Vec<String>,
     user_registrations: Vec<String>,
@@ -27,6 +27,12 @@ pub struct ServerConfigs {
 }
 
 impl ServerConfigs {
+    pub fn find_courier(&self, pubkey: &str) -> Option<(NostrNote, DriverProfile)> {
+        self.couriers
+            .iter()
+            .find(|note| note.0.pubkey == pubkey)
+            .cloned()
+    }
     pub fn get_exchange_rate(&self) -> f64 {
         self.exchange_rate
     }
@@ -51,10 +57,10 @@ impl ServerConfigs {
         }
         commerces
     }
-    pub fn get_whitelisted_couriers(&self) -> Vec<NostrNote> {
+    pub fn get_whitelisted_couriers(&self) -> Vec<(NostrNote, DriverProfile)> {
         let mut couriers = vec![];
         for note in self.couriers.iter() {
-            if self.couriers_whitelist.contains(&note.pubkey) {
+            if self.couriers_whitelist.contains(&note.0.pubkey) {
                 couriers.push(note.clone());
             }
         }
@@ -95,7 +101,7 @@ pub enum ServerConfigsAction {
     UpdateCommerceWhitelist(Vec<String>),
     UpdateCouriersWhitelist(Vec<String>),
     AddCommerce(NostrNote),
-    AddCourier(NostrNote),
+    AddCourier((NostrNote, DriverProfile)),
 }
 
 impl Reducible for ServerConfigs {
@@ -131,7 +137,7 @@ impl Reducible for ServerConfigs {
             }
             ServerConfigsAction::AddCourier(note) => {
                 let mut new_state = (*self).clone();
-                new_state.couriers.retain(|n| n.pubkey != note.pubkey);
+                new_state.couriers.retain(|n| n.0.pubkey != note.0.pubkey);
                 new_state.couriers.push(note);
                 Rc::new(new_state)
             }
@@ -202,14 +208,13 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                 }
             }
             if note.kind == NOSTR_KIND_CONSUMER_GIFTWRAP {
-                gloo::console::log!("Driver profile");
                 let cleartext = driver_hub_key
                     .decrypt_nip_04_content(&note)
                     .expect("Failed to decrypt");
                 let giftwrapped_note = NostrNote::try_from(cleartext).expect("Failed to parse");
 
-                if let Ok(_) = DriverProfile::try_from(giftwrapped_note.clone()) {
-                    ctx_clone.dispatch(ServerConfigsAction::AddCourier(note.clone()));
+                if let Ok(profile) = DriverProfile::try_from(giftwrapped_note.content.clone()) {
+                    ctx_clone.dispatch(ServerConfigsAction::AddCourier((note.clone(), profile)));
                     gloo::console::log!("Courier added");
                 }
             }
@@ -221,7 +226,6 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                         AdminConfigurationType::ExchangeRate => {
                             if let Ok(rate) = note.content.parse::<f64>() {
                                 ctx_clone.dispatch(ServerConfigsAction::UpdateExchangeRate(rate));
-                                gloo::console::log!("Exchange rate updated");
                             }
                         }
                         AdminConfigurationType::CommerceWhitelist => {
@@ -231,7 +235,6 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                                 ctx_clone.dispatch(ServerConfigsAction::UpdateCommerceWhitelist(
                                     whitelist,
                                 ));
-                                gloo::console::log!("Commerce whitelist updated");
                             }
                         }
                         AdminConfigurationType::CourierWhitelist => {
@@ -241,7 +244,6 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                                 ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(
                                     whitelist,
                                 ));
-                                gloo::console::log!("Courier whitelist updated");
                             }
                         }
                         _ => {}

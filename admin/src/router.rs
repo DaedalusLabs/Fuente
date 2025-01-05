@@ -1,8 +1,9 @@
-use fuente::mass::{AppLink, BitcoinIcon, HomeIcon, MotoIcon, StoreIcon, UserBadgeIcon};
+use fuente::mass::{templates::FuenteSidebarTemplate, AppLink};
+use lucide_yew::{Bitcoin, House, Store, Truck, UserRound, Cog};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CommerceDisplay, CourierWhitelistPage, ExchangeRatePage};
+use crate::pages::{CommerceDisplay, CommercesPage, CourierWhitelistPage, ExchangeRatePage, HomePage, SettingsPage, SettingsPageComponent};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum AdminPanelRoute {
@@ -23,76 +24,69 @@ pub enum AdminPanelRoute {
 #[function_component(AdminPanelPages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="w-full h-full flex flex-row">
-            <div class="h-full border-r-2 border-black">
-                <div class="w-fit h-full px-4 py-8 gap-8 items-center flex flex-col">
-                    <img
-                        class={"min-w-10 min-h-10 max-w-10 max-h-10"}
-                        src={"/public/assets/img/logo.png"}
-                        alt="avatar" />
-                    <HomeSidebar />
+        <div class="flex h-screen ">
+            <HomeSidebar />
+            <main class="flex-1">
+                <div class="h-full no-scrollbar">
+                    <div class="container mx-auto p-6">
+                        <Switch<AdminPanelRoute> render = { move |switch: AdminPanelRoute| {
+                                match switch {
+                                    AdminPanelRoute::Home => html!{
+                                        <HomePage />
+                                    },
+                                    AdminPanelRoute::Settings => html!{
+                                        <SettingsPageComponent />
+                                    },
+                                    AdminPanelRoute::Exchange => html! {
+                                        <ExchangeRatePage />
+                                    },
+                                    AdminPanelRoute::Commerces => html! {
+                                        <CommercesPage />
+                                    },
+                                    AdminPanelRoute::Couriers => html! {
+                                        <CourierWhitelistPage />
+                                    },
+                                    AdminPanelRoute::Consumers => html!{
+                                        <></>
+                                    },
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-            <div class="flex flex-1 pl-8 pt-8 overflow-auto no-scrollbar">
-                <Switch<AdminPanelRoute> render = { move |switch: AdminPanelRoute| {
-                        match switch {
-                            AdminPanelRoute::Home => html!{<>
-                                <h1>{"Home"}</h1>
-                                </>},
-                            AdminPanelRoute::Settings => html!{<>
-                                <h1>{"Settings"}</h1>
-                                </>},
-                            AdminPanelRoute::Exchange => html!{<>
-                                <h1>{"Exchange"}</h1>
-                                <ExchangeRatePage />
-                                </>},
-                            AdminPanelRoute::Commerces => html!{<>
-                                <h1>{"Commerces"}</h1>
-                                <CommerceDisplay />
-                                </>},
-                            AdminPanelRoute::Couriers => html!{<>
-                                <h1>{"Couriers"}</h1>
-                                <CourierWhitelistPage />
-                                </>},
-                            AdminPanelRoute::Consumers => html!{<>
-                                <h1>{"Consumers"}</h1>
-                                </>},
-                        }
-                    }}
-                />
-            </div>
+            </main>
         </div>
     }
 }
 #[function_component(HomeSidebar)]
 pub fn home_footer() -> Html {
     html! {
-        <div class="w-fit flex flex-col gap-8 items-center">
+        <FuenteSidebarTemplate>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""
                 route={AdminPanelRoute::Home}>
-                <HomeIcon class="w-8 h-8 stroke-neutral-400" />
+                <House class="w-8 h-8 text-fuente" />
             </AppLink<AdminPanelRoute>>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""
                 route={AdminPanelRoute::Exchange}>
-                <BitcoinIcon class="w-8 h-8 stroke-neutral-400" />
+                <Bitcoin class="w-8 h-8 text-fuente" />
             </AppLink<AdminPanelRoute>>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""
                 route={AdminPanelRoute::Commerces}>
-                <StoreIcon class="w-8 h-8 stroke-neutral-400" />
+                <Store class="w-8 h-8 text-fuente" />
             </AppLink<AdminPanelRoute>>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""
                 route={AdminPanelRoute::Couriers}>
-                <MotoIcon class="w-8 h-8 stroke-neutral-400" />
+                <Truck class="w-8 h-8 text-fuente" />
             </AppLink<AdminPanelRoute>>
             <AppLink<AdminPanelRoute>
                 class="" selected_class=""
-                route={AdminPanelRoute::Consumers}>
-                <UserBadgeIcon class="w-8 h-8 stroke-neutral-400" />
+                route={AdminPanelRoute::Settings}>
+                <Cog class="w-8 h-8 text-fuente" />
             </AppLink<AdminPanelRoute>>
-        </div>
+        </FuenteSidebarTemplate>
     }
 }

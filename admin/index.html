@@ -22,7 +22,7 @@
 
 </head>
 
-<body href="/">
+<body class="font-fuente" href="/">
     <div id="spinner" class="fixed z-50 flex flex-col gap-4 items-center justify-center w-dvw h-dvh bg-white">
         <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <style>
@@ -51,18 +51,6 @@
 </body>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker
-                .register('/service-worker.js')
-                .then((registration) => {
-                    console.log('Service Worker registered with scope: ', registration.scope);
-                })
-                .catch((error) => {
-                    console.error('Service Worker registration failed: ', error);
-                });
-        });
-    }
     window.addEventListener('beforeunload', (event) => {
         // This will trigger before the page is unloaded or refreshed.
         // You can intercept it and reroute to `/`.
