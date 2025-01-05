@@ -1,5 +1,5 @@
-use fuente::mass::AppLink;
-use lucide_yew::{BellPlus, History, House, Settings, Store};
+use fuente::mass::{AppLink, templates::FuenteSidebarTemplate};
+use lucide_yew::{BellPlus, History, Settings, Store};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -46,11 +46,7 @@ pub fn consumer_pages() -> Html {
 #[function_component(HomeSidebar)]
 pub fn home_footer() -> Html {
     html! {
-        <aside class="flex w-16 flex-col items-center space-y-8 border-r border-fuente py-8">
-            <img
-                class={"min-w-10 min-h-10 max-w-10 max-h-10"}
-                src={"/public/assets/img/logo.png"}
-                alt="avatar" />
+        <FuenteSidebarTemplate >
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Home}>
@@ -66,12 +62,11 @@ pub fn home_footer() -> Html {
                 route={CommerceRoute::History}>
                 <History class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
-            // Add settings link (using MenuBarsIcon)
             <AppLink<CommerceRoute>
                 class="" selected_class=""
                 route={CommerceRoute::Settings}>
                 <Settings class="w-8 h-8 stroke-fuente" />
             </AppLink<CommerceRoute>>
-        </aside>
+        </FuenteSidebarTemplate>
     }
 }

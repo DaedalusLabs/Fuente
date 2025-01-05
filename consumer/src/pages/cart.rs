@@ -94,7 +94,8 @@ pub fn cart_pre_total() -> Html {
                 address.clone().unwrap(),
             );
             // sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
-            sender.emit(note);
+            sender.emit(note.1);
+            cart_ctx.dispatch(CartAction::SentOrder(note.0));
             navigator.push(&ConsumerRoute::Checkout);
         })
     };
@@ -123,6 +124,7 @@ pub fn cart_page() -> Html {
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let translations = language_ctx.translations();
+    let order_id = cart_ctx.last_sent_order().unwrap_or_default();
 
     let cart_items = cart_ctx.cart();
     if cart_items.is_empty() {
@@ -142,7 +144,7 @@ pub fn cart_page() -> Html {
             </div>
 
             <div>
-                <CheckoutInvoice />
+                <CheckoutInvoice order_id={order_id} />
                 <CheckoutOrderSummary />
             </div>
         </div>
@@ -346,18 +348,25 @@ pub fn checkout_summary() -> Html {
         </div>
     }
 }
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct OrderInvoiceProps {
+    pub order_id: String,
+}
+
 #[function_component(CheckoutInvoice)]
-pub fn checkout_summary() -> Html {
+pub fn checkout_summary(props: &OrderInvoiceProps) -> Html {
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
     let navigator = use_navigator().unwrap();
     let exchange_rate = admin_ctx.get_exchange_rate();
+    let order_id = props.order_id.clone();
 
     // Effect to watch payment status changes
     {
         let navigator = navigator.clone();
-        use_effect_with(order_ctx.order.clone(), move |order| {
-            if let Some((_, order_state)) = order {
+        use_effect_with(order_ctx.live_orders.clone(), move |order| {
+            if let Some((_, order_state)) = order.last() {
                 match order_state.payment_status {
                     OrderPaymentStatus::PaymentReceived => {
                         // Changed from PaymentPending
@@ -372,7 +381,7 @@ pub fn checkout_summary() -> Html {
         });
     }
 
-    if let Some(order) = order_ctx.order.as_ref() {
+    if let Some(order) = order_ctx.live_orders.iter().find(|o| o.1.order_id() == order_id) {
         html! {
             <OrderInvoiceComponent
                 invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()}

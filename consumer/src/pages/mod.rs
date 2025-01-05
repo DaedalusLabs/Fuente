@@ -6,6 +6,7 @@ mod home;
 mod live_order;
 mod new_user;
 mod settings;
+mod track_packages;
 pub use cart::*;
 pub use commerce::*;
 pub use favorites::*;
@@ -15,6 +16,7 @@ pub use live_order::*;
 use lucide_yew::ArrowLeft;
 pub use new_user::*;
 pub use settings::*;
+pub use track_packages::*;
 
 use fuente::mass::AppLink;
 use yew::prelude::*;

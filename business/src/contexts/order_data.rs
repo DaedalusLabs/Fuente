@@ -2,7 +2,9 @@ use fuente::models::{
     OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_ORDER_STATE,
     TEST_PUB_KEY,
 };
-use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
 use nostro2::{
     notes::NostrNote,
     relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
@@ -54,7 +56,7 @@ pub enum OrderDataAction {
     CheckedDb,
     CheckedRelay,
     UpdateCommerceOrder(NostrNote),
-    LoadOrderHistory(Vec<OrderInvoiceState>),
+    LoadOrderHistory(Vec<OrderStateIdb>),
 }
 
 impl Reducible for OrderData {
@@ -81,16 +83,15 @@ impl Reducible for OrderData {
                 live_orders: {
                     let mut orders = self.live_orders.clone();
                     if let Ok(state) = OrderInvoiceState::try_from(&order) {
-                        match state.order_status {
-                            OrderStatus::Canceled | OrderStatus::Completed => {
-                                let idb = OrderStateIdb::new(order.clone())
-                                    .expect("Failed to create idb");
-                                spawn_local(async move {
-                                    idb.save().await.expect("Failed to save order state idb");
-                                });
-                            }
-                            _ => {}
-                        }
+                        //match state.order_status {
+                        //    OrderStatus::Canceled | OrderStatus::Completed => {
+                        let idb = OrderStateIdb::new(order.clone()).expect("Failed to create idb");
+                        spawn_local(async move {
+                            idb.save().await.expect("Failed to save order state idb");
+                        });
+                        //     }
+                        //     _ => {}
+                        // }
                         orders.retain(|o| o.0.order_id() != state.order_id());
                         orders.push((state, order));
                     }
@@ -100,8 +101,41 @@ impl Reducible for OrderData {
             OrderDataAction::LoadOrderHistory(history) => Rc::new(OrderData {
                 checked_db: self.checked_db,
                 checked_relay: self.checked_relay,
-                live_orders: self.live_orders.clone(),
-                order_history: history,
+                live_orders: {
+                    let mut orders = history.clone();
+                    orders.retain(|o| {
+                        if let Ok(order) = o.parse_order() {
+                            order.order_status != OrderStatus::Completed
+                                && order.order_status != OrderStatus::Canceled
+                        } else {
+                            true
+                        }
+                    });
+                    orders
+                        .iter()
+                        .filter_map(|o| {
+                            Some((
+                                o.parse_order().ok()?,
+                                o.signed_note(),
+                            ))
+                        })
+                        .collect()
+                },
+                order_history: {
+                    let mut orders = history.clone();
+                    orders.retain(|o| {
+                        if let Ok(order) = o.parse_order() {
+                            order.order_status == OrderStatus::Completed
+                                || order.order_status == OrderStatus::Canceled
+                        } else {
+                            false
+                        }
+                    });
+                    orders
+                        .iter()
+                        .map(|o| o.parse_order().expect("could not parse order"))
+                        .collect()
+                },
             }),
         }
     }
@@ -127,7 +161,7 @@ pub fn key_handler(props: &OrderDataChildren) -> Html {
 
     use_effect_with((), move |_| {
         spawn_local(async move {
-            if let Ok(live_orders) = OrderStateIdb::find_history().await {
+            if let Ok(live_orders) = OrderStateIdb::retrieve_all_from_store().await {
                 ctx_clone.dispatch(OrderDataAction::LoadOrderHistory(live_orders));
             };
             ctx_clone.dispatch(OrderDataAction::CheckedDb);
@@ -157,15 +191,15 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(keys) = key_ctx.get_nostr_key() {
             spawn_local(async move {
-                // let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
-                let unix_time = web_sys::js_sys::Date::new_0();
-                let twelve_hours_ago_unix = (unix_time.get_time() as u64  / 1000)- 43200;
+                let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
+                // let unix_time = web_sys::js_sys::Date::new_0();
+                // let twelve_hours_ago_unix = (unix_time.get_time() as u64  / 1000)- 43200;
 
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
                     authors: Some(vec![TEST_PUB_KEY.to_string()]),
-                    since: Some(twelve_hours_ago_unix),
-                    // since: Some(last_save_time as u64),
+                    // since: Some(twelve_hours_ago_unix),
+                    since: Some(last_save_time as u64),
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys.public_key().as_str());

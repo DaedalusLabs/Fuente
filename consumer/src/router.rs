@@ -8,7 +8,7 @@ use crate::{
     contexts::CartStore,
     pages::{
         CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck,
-        SettingsPageComponent,
+        SettingsPageComponent, TrackPackagesPage,
     },
 };
 
@@ -30,6 +30,8 @@ pub enum ConsumerRoute {
     Commerce { commerce_id: String },
     #[at("/order/:order_id")]
     Order { order_id: String },
+    #[at("/track-packages")] // Add this new route
+    TrackPackages,
 }
 
 #[function_component(ConsumerPages)]
@@ -51,7 +53,8 @@ pub fn consumer_pages() -> Html {
                         },
                         ConsumerRoute::Order { order_id: _ } => html!{
                             <LiveOrderCheck />
-                        }
+                        },
+                        ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
                     }
                 }}
             />

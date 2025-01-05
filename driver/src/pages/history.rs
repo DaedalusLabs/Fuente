@@ -1,205 +1,23 @@
-use fuente::models::OrderStateIdb;
-use fuente::models::DRIVER_HUB_PRIV_KEY;
+use fuente::mass::templates::OrderHistoryTemplate;
 use fuente::models::{OrderInvoiceState, OrderStatus};
-use lucide_yew::History;
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore};
 use yew::prelude::*;
 
-#[derive(Clone, PartialEq)]
-enum HistoryFilter {
-    Completed,
-    Canceled,
-}
+use crate::contexts::OrderHubStore;
 
 #[function_component(HistoryPage)]
 pub fn history_page() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    let orders_state = use_state(|| Vec::<OrderInvoiceState>::new());
-    let filter_state = use_state(|| HistoryFilter::Completed);
-    let selected_order = use_state(|| None::<String>);
+    let order_ctx = use_context::<OrderHubStore>().expect("IdbStoreManager not found");
 
-    let orders = orders_state.clone();
-    use_effect_with((), {
-        let orders = orders.clone();
-        move |_| {
-            if let Some(keys) = key_ctx.get_nostr_key() {
-                yew::platform::spawn_local(async move {
-                    // Getting all orders from IDB directly
-                    match OrderStateIdb::retrieve_all_from_store().await {
-                        Ok(all_orders) => {
-                            let mut history_orders = Vec::new();
-
-                            for order_entry in all_orders {
-                                let state_note = order_entry.signed_note();
-                                let hub_keys =
-                                    nostro2::keypair::NostrKeypair::new(DRIVER_HUB_PRIV_KEY)
-                                        .expect("Failed to create hub keys");
-
-                                if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&state_note)
-                                {
-                                    if let Ok(order_state) = OrderInvoiceState::try_from(decrypted)
-                                    {
-                                        if let Some(courier) = order_state.courier.as_ref() {
-                                            if courier.pubkey == keys.public_key() {
-                                                let status = &order_state.order_status;
-                                                if status == &OrderStatus::Completed
-                                                    || status == &OrderStatus::Canceled
-                                                {
-                                                    gloo::console::log!(
-                                                        "Added to history with status:",
-                                                        status.display()
-                                                    );
-                                                    history_orders.push(order_state);
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    gloo::console::warn!(
-                                        "Failed to decrypt order:",
-                                        order_entry.id()
-                                    );
-                                }
-                            }
-                            orders.set(history_orders);
-                        }
-                        Err(e) => {
-                            gloo::console::error!("Failed to retrieve orders from IDB:", e);
-                        }
-                    }
-                });
-            }
-            || {}
-        }
-    });
-
-    let filtered_orders = (*orders)
+    let mut filtered_orders = order_ctx
+        .order_history()
         .iter()
-        .filter(|order| {
-            let status = &order.order_status;
-            let matches = match *filter_state {
-                HistoryFilter::Completed => status == &OrderStatus::Completed,
-                HistoryFilter::Canceled => status == &OrderStatus::Canceled,
-            };
-            matches
-        })
+        .map(|order| order.0.clone())
         .collect::<Vec<_>>();
 
-    if let Some(order_id) = (*selected_order).clone() {
-        if let Some(order) = orders.iter().find(|o| o.order_id() == order_id) {
-            return html! {
-                <OrderDetails
-                    order={order.clone()}
-                    on_back={Callback::from({
-                        let selected = selected_order.clone();
-                        move |_| selected.set(None)
-                    })}
-                />
-            };
-        }
-    }
+    filtered_orders.sort_by(|a, b| b.order.created_at.cmp(&a.order.created_at));
 
     html! {
-        <div class="flex flex-col flex-1">
-            <div class="flex flex-row justify-between items-center p-7">
-                <h2 class="text-4xl font-mplus text-fuente-dark">{"Order History"}</h2>
-                <div class="flex gap-2">
-                    <button
-                        onclick={Callback::from({
-                            let filter = filter_state.clone();
-                            move |_| filter.set(HistoryFilter::Completed)
-                        })}
-                        class={classes!(
-                            if *filter_state == HistoryFilter::Completed {
-                                "bg-fuente text-white"
-                            } else {
-                                "bg-gray-200"
-                            },
-                            "px-4",
-                            "py-2",
-                            "rounded-lg"
-                        )}
-                    >
-                        {"Completed"}
-                    </button>
-                    <button
-                        onclick={Callback::from({
-                            let filter = filter_state.clone();
-                            move |_| filter.set(HistoryFilter::Canceled)
-                        })}
-                        class={classes!(
-                            if *filter_state == HistoryFilter::Canceled {
-                                "bg-fuente text-white"
-                            } else {
-                                "bg-gray-200"
-                            },
-                            "px-4",
-                            "py-2",
-                            "rounded-lg"
-                        )}
-                    >
-                        {"Canceled"}
-                    </button>
-                </div>
-            </div>
-
-            {if filtered_orders.is_empty() {
-                html! {
-                    <div class="flex flex-1 flex-col items-center justify-center text-wrap">
-                        <History class="w-32 h-32 stroke-neutral-200" />
-                        <h4 class="text-xl font-semibold mt-4">{"No deliveries yet"}</h4>
-                        <p class="text-sm text-neutral-400 font-semibold mt-2 max-w-48 text-center text-wrap">
-                            {"Your completed deliveries will appear here"}
-                        </p>
-                    </div>
-                }
-            } else {
-                html! {
-                    <div class="flex flex-col w-full h-full gap-4 p-4 overflow-y-auto">
-                        {filtered_orders.iter().map(|order| {
-                            let order_req = order.get_order_request();
-                            let profile = order_req.profile;
-                            let order_id = order.order_id();
-                            let selected = selected_order.clone();
-
-                            html! {
-                                <div
-                                    onclick={Callback::from(move |_| selected.set(Some(order_id.clone())))}
-                                    class="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-gray-50 shadow-lg"
-                                >
-                                    <div class="flex justify-between items-center">
-                                        <div>
-                                            <h4 class="font-semibold">{profile.nickname}</h4>
-                                            <p class="text-sm text-gray-500">
-                                                {format!("Order #{}", &order.order_id()[..8])}
-                                            </p>
-                                            <p class="text-sm text-gray-500">
-                                                {order_req.address.lookup().display_name()}
-                                            </p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-medium">
-                                                {format!("{:.2} SRD", order_req.products.total())}
-                                            </p>
-                                            <p class={classes!(
-                                                "text-sm",
-                                                if order.order_status == OrderStatus::Completed {
-                                                    "text-green-600"
-                                                } else {
-                                                    "text-red-600"
-                                                }
-                                            )}>
-                                                {order.order_status.display()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        }).collect::<Vec<_>>()}
-                    </div>
-                }
-            }}
-        </div>
+        <OrderHistoryTemplate orders={filtered_orders.clone()} />
     }
 }
 

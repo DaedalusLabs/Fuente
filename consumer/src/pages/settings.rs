@@ -89,7 +89,7 @@ pub fn settings_page() -> Html {
                 <AppLink<ConsumerRoute>
                     class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
                     selected_class=""
-                    route={ConsumerRoute::History}>
+                    route={ConsumerRoute::TrackPackages}> // Changed from History to TrackPackages
                     <Truck class={classes!("text-sm", "text-fuente", "mr-2", "font-bold")} />
                     {&translations["profile_personal_information_packages_button"]}
                 </AppLink<ConsumerRoute>>
@@ -327,14 +327,17 @@ pub fn edit_profile_form(props: &EditProfileFormProps) -> Html {
     let EditProfileFormProps { profile } = props;
     html! {
         <div class="space-y-2">
+            <label for="nickname" class="text-gray-500 text-lg font-bold">{"Nickname"}</label>
             <SimpleInput
                 label={"Nickname"} value={profile.nickname.clone()}
                 id={"nickname"} name={"nickname"}
                 input_type={"text"} required={true} />
+            <label for="email" class="text-gray-500 text-lg font-bold">{"Email"}</label>
             <SimpleInput
                 label={"Email"} value={profile.email.clone()}
                 id={"email"} name={"email"}
                 input_type={"email"} required={true} />
+            <label for="telephone" class="text-gray-500 text-lg font-bold">{"Telephone"}</label>
             <SimpleInput
                 label={"Telephone"} value={profile.telephone.clone()}
                 id={"telephone"} name={"telephone"}
