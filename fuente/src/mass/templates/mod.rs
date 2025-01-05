@@ -138,16 +138,16 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
             <SettingsOptionsButtons {options} />
         </div>
 
-    <main class="container mx-auto flex-grow">
-        <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
-            <SettingsSideBar options={sidebar_options} />
-            <SettingsContent edit_button={content_button} >
-                <>
-                    {children}
-                </>
-            </SettingsContent>
-        </div>
-    </main>
+        <main class="container mx-auto flex-grow">
+            <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
+                <SettingsSideBar options={sidebar_options} />
+                <SettingsContent edit_button={content_button} >
+                    <>
+                        {children}
+                    </>
+                </SettingsContent>
+            </div>
+        </main>
     </>
     }
 }

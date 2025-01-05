@@ -2,6 +2,7 @@ use admin::{AdminPanelPages, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
     mass::{AdminLoginPage, LoadingScreen, MainLayout},
     models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
+    contexts::LanguageConfigsProvider,
 };
 use html::ChildrenProps;
 use nostr_minions::{
@@ -27,11 +28,9 @@ fn app() -> Html {
     html! {
         <BrowserRouter>
            <AppContext>
-               <MainLayout>
-                   <LoginCheck>
+                <LoginCheck>
                     <AdminPanelPages />
-                   </LoginCheck>
-               </MainLayout>
+                </LoginCheck>
            </AppContext>
         </BrowserRouter>
     }
@@ -59,13 +58,15 @@ fn app_context(props: &ChildrenProps) -> Html {
         },
     ];
     html! {
-        <RelayProvider {relays}>
-            <NostrIdProvider>
-                <ServerConfigsProvider>
-                    {props.children.clone()}
-                </ServerConfigsProvider>
-            </NostrIdProvider>
-        </RelayProvider>
+        <LanguageConfigsProvider >
+            <RelayProvider {relays}>
+                <NostrIdProvider>
+                    <ServerConfigsProvider>
+                        {props.children.clone()}
+                    </ServerConfigsProvider>
+                </NostrIdProvider>
+            </RelayProvider>
+        </LanguageConfigsProvider>
     }
 }
 

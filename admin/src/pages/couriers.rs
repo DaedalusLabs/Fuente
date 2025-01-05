@@ -1,65 +1,35 @@
 use fuente::{
-    mass::{DriverDetailsComponent, SimpleFormButton, SimpleInput},
-    models::{AdminConfigurationType, AdminServerRequest, DriverProfile, DRIVER_HUB_PRIV_KEY},
+    contexts::LanguageConfigsStore,
+    mass::{DriverDetailsComponent, SimpleInput},
+    models::{AdminConfigurationType, AdminServerRequest},
 };
+use lucide_yew::Trash;
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{notes::NostrNote, keypair::NostrKeypair};
 use yew::prelude::*;
 
 use crate::ServerConfigsStore;
 
 #[function_component(CourierWhitelistPage)]
-pub fn courier_whitelist_page() -> Html {
-    html! {
-        <div class="flex flex-row gap-4 p-8 items-center">
-            <CourierWhitelistForm />
-            <div class="flex flex-col gap-4">
-            <CourierWhitelistDisplay />
-            <CourierWhitelistProfiles />
-            </div>
-        </div>
-    }
-}
-
-#[function_component(CourierWhitelistDisplay)]
-pub fn courier_whitelist_display() -> Html {
-    let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
-    let sender = relay_ctx.send_note.clone();
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
-    let wl = config_ctx.get_couriers_whitelist();
+pub fn exchange_rate_page() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
+    let translations = language_ctx.translations();
     html! {
         <>
-            <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Courier Whitelist"}</h2>
-            <div class="flex flex-col gap-4">
-                {for wl.iter().map(|id| {
-                    let key_clone = keys.clone();
-                    let wl_clone = wl.clone();
-                    let sender = sender.clone();
-                    let id_clone = id.clone();
-                   let remove_onclick = Callback::from(move |_: MouseEvent| {
-                       let mut new_whitelist = wl_clone.clone();
-                       new_whitelist.retain(|wl_id| *wl_id != id_clone);
-                       let admin_request = AdminServerRequest::new(
-                           AdminConfigurationType::CourierWhitelist,
-                           serde_json::to_string(&new_whitelist).unwrap(),
-                       );
-                       let signed_request = admin_request
-                           .sign_data(&key_clone)
-                           .expect("Failed to sign request");
-                       sender.emit(signed_request);
-                   });
-                    html! {
-                        <div class="flex flex-row gap-4">
-                            <p>{id}</p>
-                            <button onclick={remove_onclick} class="bg-red-500 text-white rounded-lg px-4 py-2">
-                                {"Remove"}
-                            </button>
-                        </div>
-                    }
-                })}
+        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
+            <h3 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
+                {&translations["admin_settings_title_couriers"]}
+            </h3>
+        </div>
+        <main class="container mx-auto flex-grow">
+            <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
+                <div class="flex-1">
+                    <CourierWhitelistForm />
+                </div>
+                <div class="flex-1">
+                    <CourierWhitelistProfiles />
+                </div>
             </div>
+        </main>
         </>
     }
 }
@@ -67,28 +37,49 @@ pub fn courier_whitelist_display() -> Html {
 #[function_component(CourierWhitelistProfiles)]
 pub fn courier_whitelist_display() -> Html {
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
+    let sender = relay_ctx.send_note.clone();
+    let keys = key_ctx.get_nostr_key().expect("No keys found");
     let wl_profiles = config_ctx.get_whitelisted_couriers();
-    let driver_keys = NostrKeypair::new(DRIVER_HUB_PRIV_KEY).unwrap();
     let profiles = wl_profiles.iter().filter_map(|profile| {
-        let pubkey = profile.pubkey.clone();
-        let cleartext = driver_keys.decrypt_nip_04_content(&profile).unwrap();
-        let giftwrapped: NostrNote = cleartext.try_into().unwrap();
-        return match DriverProfile::try_from(giftwrapped.clone()) {
-            Err(_) => None,
-            Ok(profile) => Some((pubkey, profile)),
-        };
+        let pubkey = profile.0.pubkey.clone();
+        Some((pubkey, profile.1.clone()))
     });
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
+    let translations = language_ctx.translations();
     html! {
-        <>
-            <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Courier Profiles"}</h2>
-            <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 p-8 items-center w-full">
+            <h3 class="text-2xl font-bold text-fuente">{&translations["admin_settings_couriers_list"]}</h3>
+            <div class="flex flex-col gap-2 w-full">
                 {for profiles.map(|(pubkey, driver)| {
+                    let key_clone = keys.clone();
+                    let wl_clone = wl_profiles.clone();
+                    let sender = sender.clone();
+                    let id_clone = pubkey.clone();
+                    let remove_onclick = Callback::from(move |_: MouseEvent| {
+                        let mut new_whitelist = wl_clone.clone();
+                        new_whitelist.retain(|wl_id| *wl_id.0.pubkey != id_clone);
+                        let admin_request = AdminServerRequest::new(
+                            AdminConfigurationType::CourierWhitelist,
+                            serde_json::to_string(&new_whitelist).unwrap(),
+                        );
+                        let signed_request = admin_request
+                            .sign_data(&key_clone)
+                            .expect("Failed to sign request");
+                        sender.emit(signed_request);
+                    });
                     html! {
-                        <DriverDetailsComponent {pubkey} {driver} />
+                        <div class="flex flex-row gap-4 w-full">
+                            <DriverDetailsComponent {pubkey} {driver} />
+                            <button onclick={remove_onclick} >
+                                <Trash class="w-6 h-6 text-red-500" />
+                            </button>
+                        </div>
                     }
                 })}
             </div>
-        </>
+        </div>
     }
 }
 
@@ -97,6 +88,8 @@ pub fn courier_whitelist_form() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
+    let translations = language_ctx.translations();
     let sender = relay_ctx.send_note.clone();
     let keys = user_ctx.get_nostr_key();
     let commerce_whitelist = config_ctx.get_couriers_whitelist();
@@ -120,8 +113,8 @@ pub fn courier_whitelist_form() -> Html {
     });
     html! {
         <form {onsubmit}
-            class="flex flex-col gap-8 p-8 items-center">
-            <h2 class="text-2xl px-8 py-4 font-bold text-center">{"Courier Whitelist"}</h2>
+            class="flex flex-col gap-2 p-8 items-center">
+            <h3 class="text-2xl font-bold text-fuente">{&translations["admin_settings_couriers_new"]}</h3>
             <SimpleInput
                 id="courier_id"
                 name="courier_id"
@@ -130,9 +123,10 @@ pub fn courier_whitelist_form() -> Html {
                 input_type="text"
                 required={true}
                 />
-            <SimpleFormButton>
-                {"Add Courier"}
-            </SimpleFormButton>
+            <button type="submit"
+                    class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-fit px-8 py-3 mt-5" >
+                    {&translations["admin_settings_submit"]}
+            </button>
         </form>
     }
 }
