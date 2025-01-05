@@ -28,48 +28,27 @@ use yew_router::prelude::*;
 #[function_component(LiveOrderCheck)]
 pub fn live_order_check(props: &ChildrenProps) -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
-    let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
-    let exchange_rate = admin_ctx.get_exchange_rate();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
 
     let show_rating = use_state(|| false);
 
     let navigator = use_navigator().unwrap();
-    let return_to_cart = {
-        let navigator = navigator.clone();
-        Callback::from(move |_: MouseEvent| {
-            navigator.push(&ConsumerRoute::Cart);
-        })
-    };
 
     // Effect to handle order completion and show rating
     {
         let show_rating = show_rating.clone();
         use_effect_with(order_ctx.clone(), move |order_ctx| {
-            gloo::console::log!("Order context changed");
-
-            if let Some((_, order_state)) = &order_ctx.order {
-                gloo::console::log!(
-                    "Current order status:",
-                    format!("{:?}", order_state.order_status)
-                );
-                gloo::console::log!(
-                    "Current payment status:",
-                    format!("{:?}", order_state.payment_status)
-                );
-
+            if let Some((_, order_state)) = &order_ctx.live_orders.last() {
                 // Show rating only when order is Completed/Canceled AND payment is Success
                 let should_show_rating = (order_state.order_status == OrderStatus::Completed
                     || order_state.order_status == OrderStatus::Canceled)
                     && order_state.payment_status == OrderPaymentStatus::PaymentSuccess;
 
                 if should_show_rating && !*show_rating {
-                    gloo::console::log!("Setting show_rating to true - Order completed/canceled with payment success");
                     show_rating.set(true);
                 } else if !should_show_rating && *show_rating {
-                    gloo::console::log!("Resetting show_rating - Conditions not met");
                     show_rating.set(false);
                 }
             }
@@ -80,8 +59,8 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     // Effect to handle navigation based on payment status
     {
         let navigator = navigator.clone();
-        use_effect_with(order_ctx.order.clone(), move |order| {
-            if let Some((_, state)) = order {
+        use_effect_with(order_ctx.live_orders.clone(), move |order| {
+            if let Some((_, state)) = order.last() {
                 match state.payment_status {
                     OrderPaymentStatus::PaymentFailed => {
                         navigator.push(&ConsumerRoute::Cart);
@@ -107,7 +86,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
         });
     }
 
-    if order_ctx.order.is_none() {
+    if order_ctx.live_orders.is_empty() {
         gloo::console::log!("No order found");
         return html! {};
     }
@@ -115,7 +94,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     // Prepare rating prompt component
     let rating_prompt = if *show_rating {
         gloo::console::log!("Attempting to render rating prompt");
-        if let Some((_, order_state)) = &order_ctx.order {
+        if let Some((_, order_state)) = &order_ctx.live_orders.last() {
             gloo::console::log!("Have order data for rating prompt - creating component");
             let order_ctx_clone = order_ctx.clone();
             let order_id = order_state.order_id();
@@ -147,7 +126,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
         html! {}
     };
 
-    let inside_html = if let Some((_order_note, order_state)) = &order_ctx.order {
+    let inside_html = if let Some((_order_note, order_state)) = &order_ctx.live_orders.last() {
         // First check if order is cancelled
         if order_state.order_status == OrderStatus::Canceled {
             let onclick = {
@@ -234,7 +213,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     let cancel_onclick = {
         let order_ctx = order_ctx.clone();
         Callback::from(move |_| {
-            if let Some((order_note, order_state)) = &order_ctx.order {
+            if let Some((order_note, order_state)) = &order_ctx.live_orders.last() {
                 let keys = key_ctx.get_nostr_key().expect("No user keys found");
                 let update_req = OrderUpdateRequest {
                     order: order_note.clone(),
@@ -261,7 +240,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
             }
         }
         Ok(inside_html) => {
-            let order = order_ctx.order.clone().unwrap().1.clone();
+            let order = order_ctx.live_orders.last().unwrap().1.clone();
 
             gloo::console::log!("Final render - show_rating:", *show_rating);
 

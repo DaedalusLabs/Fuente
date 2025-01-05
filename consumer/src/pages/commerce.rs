@@ -11,8 +11,8 @@ pub struct CommercePageProps {
 
 #[derive(Clone, PartialEq, Copy)]
 pub enum ProductFilter {
-    Price,
-    Brand,
+    Price(bool),
+    Brand(bool),
 }
 
 #[function_component(CommercePage)]
@@ -40,9 +40,13 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
             match product_filter.as_ref() {
-                Some(ProductFilter::Price) => product_filter.set(Some(ProductFilter::Brand)),
-                Some(ProductFilter::Brand) => product_filter.set(None),
-                None => product_filter.set(Some(ProductFilter::Brand)),
+                Some(ProductFilter::Price(_)) => {
+                    product_filter.set(Some(ProductFilter::Brand(true)))
+                }
+                Some(ProductFilter::Brand(forward)) => {
+                    product_filter.set(Some(ProductFilter::Brand(!forward)))
+                }
+                None => product_filter.set(Some(ProductFilter::Brand(true))),
             }
         })
     };
@@ -51,9 +55,13 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
             match product_filter.as_ref() {
-                Some(ProductFilter::Brand) => product_filter.set(Some(ProductFilter::Price)),
-                Some(ProductFilter::Price) => product_filter.set(None),
-                None => product_filter.set(Some(ProductFilter::Price)),
+                Some(ProductFilter::Brand(_)) => {
+                    product_filter.set(Some(ProductFilter::Price(true)))
+                }
+                Some(ProductFilter::Price(forward)) => {
+                    product_filter.set(Some(ProductFilter::Price(!forward)))
+                }
+                None => product_filter.set(Some(ProductFilter::Price(true))),
             }
         })
     };
@@ -69,11 +77,21 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         })
         .collect::<Vec<ProductItem>>();
     match product_filter.as_ref() {
-        Some(ProductFilter::Price) => {
-            all_products.sort_by(|a, b| a.price().partial_cmp(&b.price()).unwrap());
+        Some(ProductFilter::Price(forward)) => {
+            all_products.sort_by(|a, b| {
+                match forward {
+                    true => a.price().partial_cmp(&b.price()).unwrap(),
+                    false => b.price().partial_cmp(&a.price()).unwrap(),
+                }
+            });
         }
-        Some(ProductFilter::Brand) => {
-            all_products.sort_by(|a, b| a.name().partial_cmp(&b.name()).unwrap());
+        Some(ProductFilter::Brand(forward)) => {
+            all_products.sort_by(|a, b| {
+                match forward {
+                    true => a.name().partial_cmp(&b.name()).unwrap(),
+                    false => b.name().partial_cmp(&a.name()).unwrap(),
+                }
+            });
         }
         None => {}
     }
@@ -90,13 +108,13 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
 
                 <div class="xl:relative flex items-center justify-center lg:justify-start gap-10 md:gap-0 bg-fuente rounded-2xl h-32 sm:h-44 lg:h-60 pr-5 w-full">
                     <img src={commerce_profile.banner_url.clone()} alt={commerce_profile.name.clone()}
-                    class="xl:absolute xl:-top-5 xl:left-0 translate-x-10 lg:translate-x-0 2xl:translate-x-28 xl:-translate-y-10 object-contain w-40 min:[470px]:w-[300px] sm:w-[300px] xl:w-[350px]" />
+                    class="w-full h-full object-cover" />
                 </div>
             </section>
 
             <main class="mt-4 container mx-auto">
                 <div class="grid md:grid-cols-[1fr_3fr] gap-10 mt-10 place-content-center justify-items-center md:justify-items-start md:place-items-start">
-                    <aside 
+                    <aside
                         class="flex flex-row lg:flex-col gap-3 bg-gray-100 p-2 sm:p-4 md:p-8 lg:p-10 rounded-2xl h-fit items-center text-center w-fit justify-center">
                         <h3 class="font-semibold text-fuente text-xl">{&translations["detail_store_filter_heading"]}</h3>
                         <div class="flex flex-row gap-3 lg:flex-col">

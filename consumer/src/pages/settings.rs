@@ -89,7 +89,7 @@ pub fn settings_page() -> Html {
                 <AppLink<ConsumerRoute>
                     class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
                     selected_class=""
-                    route={ConsumerRoute::History}>
+                    route={ConsumerRoute::TrackPackages}> // Changed from History to TrackPackages
                     <Truck class={classes!("text-sm", "text-fuente", "mr-2", "font-bold")} />
                     {&translations["profile_personal_information_packages_button"]}
                 </AppLink<ConsumerRoute>>

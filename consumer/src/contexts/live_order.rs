@@ -4,13 +4,15 @@ use fuente::models::{
     OrderInvoiceState, OrderPaymentStatus, OrderStateIdb, OrderStatus, NOSTR_KIND_DRIVER_STATE,
     NOSTR_KIND_ORDER_STATE,
 };
-use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
 use nostro2::{notes::NostrNote, relays::NostrSubscription};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LiveOrder {
-    pub order: Option<(NostrNote, OrderInvoiceState)>,
+    pub live_orders: Vec<(NostrNote, OrderInvoiceState)>,
     pub has_loaded: bool,
 }
 
@@ -18,10 +20,9 @@ impl LiveOrder {}
 
 pub enum LiveOrderAction {
     FinishedLoadingRelay,
-    SetOrder(NostrNote, OrderInvoiceState),
-    ClearOrder,
+    UpdateOrder(NostrNote, OrderInvoiceState),
+    LoadOrders(Vec<(NostrNote, OrderInvoiceState)>),
     CompleteOrder(String),
-    CancelOrder(NostrNote, OrderInvoiceState),
 }
 
 impl Reducible for LiveOrder {
@@ -29,43 +30,31 @@ impl Reducible for LiveOrder {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
-            LiveOrderAction::SetOrder(order, state) => {                
-                Rc::new(LiveOrder {
-                    order: Some((order, state)),
-                    has_loaded: self.has_loaded,
-                })
-            },
-            LiveOrderAction::ClearOrder => {
-                Rc::new(LiveOrder {
-                    order: None,
-                    has_loaded: self.has_loaded,
-                })
-            },
-            LiveOrderAction::CompleteOrder(order_id) => {
-                if let Some(order) = &self.order {
-                    if order.1.order_id() == order_id {
-                        Rc::new(LiveOrder {
-                            order: None,
-                            has_loaded: self.has_loaded,
-                        })
-                    } else {
-                        self
-                    }
-                } else {
-                    self
-                }
-            },
-            LiveOrderAction::FinishedLoadingRelay => Rc::new(LiveOrder {
-                order: self.order.clone(),
-                has_loaded: true,
+            LiveOrderAction::UpdateOrder(order, state) => Rc::new(LiveOrder {
+                has_loaded: self.has_loaded,
+                live_orders: {
+                    let mut orders = self.live_orders.clone();
+                    orders.retain(|o| o.1.order_id() != state.order_id());
+                    orders.push((order, state));
+                    orders
+                },
             }),
-            LiveOrderAction::CancelOrder(note, state) => {
-                // Set the order with cancelled state but don't clear it yet
-                Rc::new(LiveOrder {
-                    order: Some((note, state)),
-                    has_loaded: self.has_loaded,
-                })
-            },
+            LiveOrderAction::CompleteOrder(order_id) => Rc::new(LiveOrder {
+                live_orders: {
+                    let mut orders = self.live_orders.clone();
+                    orders.retain(|o| o.1.order_id() != order_id);
+                    orders
+                },
+                has_loaded: self.has_loaded,
+            }),
+            LiveOrderAction::FinishedLoadingRelay => Rc::new(LiveOrder {
+                has_loaded: true,
+                live_orders: self.live_orders.clone(),
+            }),
+            LiveOrderAction::LoadOrders(orders) => Rc::new(LiveOrder {
+                has_loaded: self.has_loaded,
+                live_orders: orders,
+            }),
         }
     }
 }
@@ -80,8 +69,29 @@ pub struct LiveOrderChildren {
 #[function_component(LiveOrderProvider)]
 pub fn key_handler(props: &LiveOrderChildren) -> Html {
     let ctx = use_reducer(|| LiveOrder {
-        order: None,
         has_loaded: false,
+        live_orders: vec![],
+    });
+
+    let order_ctx = ctx.clone();
+    use_effect_with((), move |_| {
+        let order_ctx = order_ctx.clone();
+        spawn_local(async move {
+            match OrderStateIdb::retrieve_all_from_store().await {
+                Ok(orders) => {
+                    order_ctx.dispatch(LiveOrderAction::LoadOrders(
+                        orders
+                            .iter()
+                            .filter_map(|o| Some((o.signed_note(), o.parse_order().ok()?)))
+                            .collect(),
+                    ));
+                }
+                Err(e) => {
+                    gloo::console::error!("Failed to load live orders:", e);
+                }
+            }
+        });
+        || {}
     });
 
     html! {
@@ -124,8 +134,8 @@ pub fn commerce_data_sync() -> Html {
 
     let keys_clone = keys_ctx.get_nostr_key().clone();
     let subscriber_clone = relay_ctx.subscribe;
-    use_effect_with(ctx.order.clone(), move |order| {
-        if let Some((_note, state)) = order {
+    use_effect_with(ctx.live_orders.clone(), move |order| {
+        if let Some((_note, state)) = order.last() {
             if let Some(_courier_note) = state.courier.clone() {
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
@@ -144,57 +154,41 @@ pub fn commerce_data_sync() -> Html {
                 if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
                     if let Ok(order_note) = NostrNote::try_from(decrypted) {
                         if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
+                            match OrderStateIdb::new(order_note.clone()) {
+                                Ok(order_idb) => {
+                                    spawn_local(async move {
+                                        order_idb
+                                            .save()
+                                            .await
+                                            .expect("Failed to save order state idb");
+                                    });
+                                }
+                                Err(e) => {
+                                    gloo::console::error!(
+                                        "Failed to create order state idb: {:?}",
+                                        e
+                                    );
+                                }
+                            }
                             match (&order_status.payment_status, &order_status.order_status) {
                                 (OrderPaymentStatus::PaymentFailed, _) => {}
                                 (_, OrderStatus::Canceled) => {
                                     // Save to IDB but don't complete the order immediately
-                                    match OrderStateIdb::new(order_note.clone()) {
-                                        Ok(order_idb) => {
-                                            spawn_local(async move {
-                                                order_idb
-                                                    .save()
-                                                    .await
-                                                    .expect("Failed to save order state idb");
-                                            });
-                                        }
-                                        Err(e) => {
-                                            gloo::console::error!(
-                                                "Failed to create order state idb: {:?}",
-                                                e
-                                            );
-                                        }
-                                    }
                                     // Use SetOrder instead of CompleteOrder to keep the order in context
-                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
                                         order_note,
                                         order_status,
                                     ));
                                 }
                                 (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
                                     gloo::console::log!("Setting completed order for rating");
-                                    match OrderStateIdb::new(order_note.clone()) {
-                                        Ok(order_idb) => {
-                                            spawn_local(async move {
-                                                order_idb
-                                                    .save()
-                                                    .await
-                                                    .expect("Failed to save order state idb");
-                                            });
-                                        }
-                                        Err(e) => {
-                                            gloo::console::error!(
-                                                "Failed to create order state idb: {:?}",
-                                                e
-                                            );
-                                        }
-                                    }
-                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
                                         order_note,
                                         order_status,
                                     ));
                                 }
                                 _ => {
-                                    ctx.dispatch(LiveOrderAction::SetOrder(
+                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
                                         order_note,
                                         order_status,
                                     ));
