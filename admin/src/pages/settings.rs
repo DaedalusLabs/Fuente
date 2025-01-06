@@ -45,7 +45,10 @@ pub fn settings_page() -> Html {
                         <KeyRecoverySection />
                     },
                     SettingsPage::Language => html! {
-                        <LanguageToggle />
+                        <>
+                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
+                            <LanguageToggle />
+                        </>
                     },
             }}
             </>

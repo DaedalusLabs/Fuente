@@ -3,13 +3,15 @@ use crate::router::ConsumerRoute;
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::PopupProps;
 use fuente::mass::{
-    templates::SettingsPageTemplate, AddressLookupDetails, AppLink, CardComponent,
-    ImageUploadInput, LanguageToggle, NewAddressForm, NewAddressProps, PopupSection, SimpleInput,
+    templates::{KeyRecoverySection, SettingsPageTemplate},
+    AddressLookupDetails, AppLink, CardComponent, ImageUploadInput, LanguageToggle, NewAddressForm,
+    NewAddressProps, PopupSection, SimpleInput,
 };
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::{ScrollText, SquarePen, Truck, X};
+use lucide_yew::{ScrollText, SquarePen, Trash2, Truck};
+use nostr_minions::key_manager::NostrIdAction;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
@@ -98,18 +100,34 @@ pub fn settings_page() -> Html {
     };
     let profile_popup_handle = use_state(|| false);
     let address_popup_handle = use_state(|| false);
+    let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
+    let key_handle = key_ctx.clone();
     let edit_button = {
         let profile_popup_handle = profile_popup_handle.clone();
         let address_popup_handle = address_popup_handle.clone();
         match *current_page {
             SettingsPage::KeyRecovery => {
+                let delete_key = {
+                    let key_handle = key_handle.clone();
+                    let message =
+                        translations["profile_personal_information_delete_account_confirm"].clone();
+                    Callback::from(move |_| {
+                        match web_sys::window()
+                            .expect("No window found")
+                            .confirm_with_message(message.as_str())
+                        {
+                            Ok(true) => key_handle.dispatch(NostrIdAction::DeleteIdentity),
+                            _ => (),
+                        }
+                    })
+                };
                 html! {
-                    <button
+                    <button onclick={delete_key}
                         type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
-                        <span class="text-red-600 font-bold text-sm">
+                        <span class="text-red-600 font-bold text-xl text-fuente">
                             {&translations["profile_personal_information_delete_account_button"]}
                         </span>
-                        <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
+                        <Trash2 class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
                     </button>
                 }
             }
@@ -176,7 +194,10 @@ pub fn settings_page() -> Html {
                         <KeyRecoverySection />
                     },
                     SettingsPage::Language => html! {
-                        <LanguageToggle />
+                        <>
+                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
+                            <LanguageToggle />
+                        </>
                     },
             }}
             </>
@@ -211,7 +232,7 @@ pub fn my_contact_details() -> Html {
         <div class="flex flex-col gap-4 flex-1 items-center justify-center">
             <img class="w-36 h-36 rounded-lg" src={profile.avatar_url.clone()} />
             <div class="flex justify-center">
-                <button onclick={Callback::from(move |_| profile_popup_handle_clone.set(true))} 
+                <button onclick={Callback::from(move |_| profile_popup_handle_clone.set(true))}
                     class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold text-sm">
                     {&translations["profile_settings_upload"]}
                 </button>
@@ -474,34 +495,6 @@ pub fn new_address_menu(props: &PopupProps) -> Html {
         <>
             <NewAddressForm ..props />
         </>
-    }
-}
-
-#[function_component(KeyRecoverySection)]
-fn key_recovery_section() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
-
-    // Convert secret key bytes to hex string
-    let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
-
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Key Recovery"}</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <p class="mb-4">{"Your private key is very important. Store it safely:"}</p>
-                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
-                    {secret_key_hex}
-                </div>
-                <p class="mt-4 text-sm text-gray-600">
-                    {"Save this key somewhere safe. You'll need it to recover your account."}
-                </p>
-            </div>
-        </div>
     }
 }
 

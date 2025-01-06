@@ -7,8 +7,7 @@ use fuente::mass::AppLink;
 use crate::{
     contexts::CartStore,
     pages::{
-        CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck,
-        SettingsPageComponent, TrackPackagesPage,
+        AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage
     },
 };
 
@@ -26,6 +25,8 @@ pub enum ConsumerRoute {
     Cart,
     #[at("/checkout")]
     Checkout,
+    #[at("/browse-stores")]
+    BrowseStores,
     #[at("/commerce/:commerce_id")]
     Commerce { commerce_id: String },
     #[at("/order/:order_id")]
@@ -48,6 +49,7 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::Favorites => html!{<FavoritesPage />},
                         ConsumerRoute::Cart => html!{<CartPage />},
                         ConsumerRoute::Checkout => html!{<CheckoutPage />},
+                        ConsumerRoute::BrowseStores => html!{<AllCommercesPage />},
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },

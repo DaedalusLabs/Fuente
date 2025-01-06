@@ -1,5 +1,6 @@
 use crate::contexts::{FavoritesAction, RatingsStore};
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
+use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::templates::{
     FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch,
 };
@@ -12,11 +13,25 @@ use yew::prelude::*;
 
 #[function_component(HomePage)]
 pub fn home_page() -> Html {
+    let translations = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = translations.translations();
     html! {
         <div class="space-y-4">
             <CommerceFilters />
             <FuenteStoresBanner/>
-            <FuenteHotCategories />
+            <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative m-2">
+                <div class="flex justify-between items-center lg:mb-4">
+                    <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                    <AppLink<ConsumerRoute>
+                        class="lg:hidden"
+                        selected_class=""
+                        route={ConsumerRoute::BrowseStores}>
+                        <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                    </AppLink<ConsumerRoute>>
+                </div>
+
+                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto lg:absolute lg:bottom-0 lg:right-8" />
+            </div>
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />
             <FuenteBenefits />
@@ -28,24 +43,24 @@ pub fn stores_banner() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let ratings_ctx = use_context::<RatingsStore>().expect("RatingsStore not found");
     let businesses = commerce_ctx.commerces();
-    let scroll_left = Callback::from(|e: MouseEvent| {
-        e.stop_propagation();
-        let carousel = nostr_minions::browser_api::HtmlDocument::new()
-            .expect("Document not found")
-            .find_element_by_id::<HtmlElement>("commerce_carousel")
-            .expect("Element not found");
-        let scroll_amount = carousel.scroll_left() - 200;
-        carousel.set_scroll_left(scroll_amount);
-    });
-    let scroll_right = Callback::from(|e: MouseEvent| {
-        e.stop_propagation();
-        let carousel = nostr_minions::browser_api::HtmlDocument::new()
-            .expect("Document not found")
-            .find_element_by_id::<HtmlElement>("commerce_carousel")
-            .expect("Element not found");
-        let scroll_amount = carousel.scroll_left() + 200;
-        carousel.set_scroll_left(scroll_amount);
-    });
+    // let scroll_left = Callback::from(|e: MouseEvent| {
+    //     e.stop_propagation();
+    //     let carousel = nostr_minions::browser_api::HtmlDocument::new()
+    //         .expect("Document not found")
+    //         .find_element_by_id::<HtmlElement>("commerce_carousel")
+    //         .expect("Element not found");
+    //     let scroll_amount = carousel.scroll_left() - 200;
+    //     carousel.set_scroll_left(scroll_amount);
+    // });
+    // let scroll_right = Callback::from(|e: MouseEvent| {
+    //     e.stop_propagation();
+    //     let carousel = nostr_minions::browser_api::HtmlDocument::new()
+    //         .expect("Document not found")
+    //         .find_element_by_id::<HtmlElement>("commerce_carousel")
+    //         .expect("Element not found");
+    //     let scroll_amount = carousel.scroll_left() + 200;
+    //     carousel.set_scroll_left(scroll_amount);
+    // });
 
     html! {
         <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
@@ -54,10 +69,10 @@ pub fn stores_banner() -> Html {
             </div>
 
             <div class="flex justify-center lg:justify-between items-center mt-10 px-6">
-                <button onclick={scroll_left}>
-                    <ArrowLeft 
-                        class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
-                </button>
+                // <button onclick={scroll_left}>
+                //     <ArrowLeft
+                //         class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
+                // </button>
                 <div class="overflow-x-auto whitespace-nowrap no-scrollbar">
                     <div id="commerce_carousel" class="grid grid-flow-col auto-cols-max gap-10">
                         {businesses.iter().map(|profile| {
@@ -79,10 +94,10 @@ pub fn stores_banner() -> Html {
                         }).collect::<Html>()}
                     </div>
                 </div>
-                <button  onclick={scroll_right}>
-                <ArrowRight
-                    class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
-                </button>
+                // <button  onclick={scroll_right}>
+                // <ArrowRight
+                //     class="w-8 h-8 sm:w-10 sm:h-10 md:h-12 md:w-12 lg:h-16 lg:w-16 text-fuente rounded-full border-4 border-fuente m-2" />
+                // </button>
             </div>
         </section>
     }

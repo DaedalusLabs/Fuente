@@ -14,7 +14,6 @@ use nostr_minions::browser_api::GeolocationCoordinates;
 pub fn track_packages_page() -> Html {
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
-    let navigator = use_navigator().expect("Navigator not found");
     let selected_order = use_state(|| None::<String>);
     let order_popup = use_state(|| false);
     let location_state: UseStateHandle<Option<GeolocationCoordinates>> = use_state(|| None);
@@ -48,7 +47,9 @@ pub fn track_packages_page() -> Html {
 
     html! {
         <div class="container mx-auto p-6">
-            <h1 class="text-2xl font-bold text-fuente-dark mb-6">{"Track Your Packages"}</h1>
+            <h2 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                {"Track Your Packages"}
+            </h2>
             <div class="grid gap-6">
                 {active_orders.into_iter().map(|order| {
                     let order_req = order.get_order_request();
@@ -120,7 +121,7 @@ pub fn track_packages_page() -> Html {
                             if let Some(selected_id) = (*selected_order).clone() {
                                 if selected_id == order_id {
                                     <PopupSection close_handle={order_popup.clone()}>
-                                        <div class="bg-white rounded-2xl p-6 max-w-4xl w-full">
+                                        <div class="bg-white rounded-2xl p-6 max-w-xs sm:max-w-sm md:max-w-md lg:mx-w-lg max-h-96 m-4 overflow-y-auto">
                                             <OrderDetailModal 
                                                 order={order.clone()}
                                                 on_submit={Callback::from(move |_| {})}

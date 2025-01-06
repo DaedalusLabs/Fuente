@@ -1,4 +1,5 @@
 use lucide_yew::{ArrowLeft, ArrowRight, Bitcoin, Headset, ShieldCheck, SquarePen, Truck};
+use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
 use web_sys::HtmlElement;
 use yew::prelude::*;
@@ -25,12 +26,12 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
                     <button
                         type="button"
                         class={classes!(
-                            "flex", 
-                            "items-center", 
+                            "flex",
+                            "items-center",
                             "justify-center",
                             "lg:justify-start",
                             "text-center",
-                            "lg:text-left", 
+                            "lg:text-left",
                             "w-full",
                             "mt-4",
                             "lg:mt-0",
@@ -132,7 +133,7 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     html! {
         <>
         <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
-            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
                 {&heading}
             </h1>
             <SettingsOptionsButtons {options} />
@@ -189,10 +190,10 @@ pub fn login_template(props: &LoginPageProps) -> Html {
                     </div>
                 </div>
 
-                <h2 class="text-white text-[135px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12 left-0 w-full">{&heading}</h2>
+                <h2 class="pointer-events-none text-white text-[42px] font-bold md:tracking-[-1rem] text-center lg:hidden absolute -bottom-4  left-0 w-full">{&heading}</h2>
             </div>
-            <div class="lg:hidden bg-white">
-                <h2 class="text-fuente text-[135px] font-bold tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
+            <div class="pointer-events-none lg:hidden bg-white">
+                <h2 class="text-fuente text-[42px] font-bold md:tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
             </div>
         </main>
     }
@@ -290,7 +291,9 @@ pub fn sales_pitch() -> Html {
         <div class="mx-auto lg:mx-0 lg:ml-auto">
             <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
             <div class="flex justify-center lg:justify-start">
-                <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{&translations["sale_products_button"]}</button>
+                <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
+                    <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{&translations["sale_products_button"]}</button>
+                </a>
             </div>
         </div>
     </div>
@@ -421,7 +424,7 @@ pub fn order_history_template(props: &OrderHistoryTemplateProps) -> Html {
     html! {
         <main class="mt-16 container mx-auto">
             <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
-                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
                     {&translations["profile_address_button_orders"]}
                 </h1>
                 {match *selected_order {
@@ -583,9 +586,9 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let translations = language_ctx.translations();
     html! {
         <>
-            <main 
+            <main
                 class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
-                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
+                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
                     {&translations["favorites_stores_heading"]}
                 </h1>
                 <div class="flex flex-col justify-center items-center lg:items-start lg:flex-row gap-10 mt-5">
@@ -623,5 +626,36 @@ pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
                 alt="avatar" />
             {props.children.clone()}
         </aside>
+    }
+}
+#[function_component(KeyRecoverySection)]
+pub fn key_recovery_section() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
+    let keys = key_ctx.get_nostr_key().expect("No keys found");
+
+    // Convert secret key bytes to hex string
+    let secret_key_bytes = keys.get_secret_key();
+    let secret_key_hex: String = secret_key_bytes
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect();
+
+    html! {
+        <div class="flex flex-col gap-4">
+            <h3 class="text-2xl font-bold text-fuente">
+                {&translations["profile_settings_key"]}
+            </h3>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="mb-4">{&translations["profile_settings_warning"]}</p>
+                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
+                    {secret_key_hex}
+                </div>
+                <p class="mt-4 text-sm text-gray-600">
+                    {&translations["profile_settings_warning_two"]}
+                </p>
+            </div>
+        </div>
     }
 }

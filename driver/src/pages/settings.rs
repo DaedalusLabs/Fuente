@@ -51,7 +51,6 @@ pub fn settings_page() -> Html {
         }
     };
     let profile_popup_handle = use_state(|| false);
-    let address_popup_handle = use_state(|| false);
     let edit_button = {
         let profile_popup_handle = profile_popup_handle.clone();
         match *current_page {
@@ -108,7 +107,10 @@ pub fn settings_page() -> Html {
                         <KeyRecoverySection />
                     },
                     SettingsPage::Language => html! {
-                        <LanguageToggle />
+                        <>
+                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
+                            <LanguageToggle />
+                        </>
                     },
             }}
             </>
