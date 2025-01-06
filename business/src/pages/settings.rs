@@ -32,7 +32,7 @@ pub enum ProfilePageMenu {
 #[function_component(SettingsPageComponent)]
 pub fn settings_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
-    let profile = use_context::<CommerceDataStore>()
+    let _profile = use_context::<CommerceDataStore>()
         .expect("No CommerceDataStore found")
         .profile();
 
@@ -318,7 +318,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
 pub fn new_address_inputs(props: &CommerceProfileProps) -> Html {
     let CommerceProfileProps {
         commerce_data,
-        rating,
+        rating: _,
     } = props;
     html! {
         <div class="flex flex-col px-4 gap-2">

@@ -24,7 +24,6 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No language context found");
     let translations = language_ctx.translations();
 
-    let cart_ctx = use_context::<CartStore>().expect("No cart context found");
     let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
     let commerce_profile = commerce_ctx
         .find_commerce_by_id(commerce_id)
@@ -36,7 +35,6 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
     let commerce_profile = commerce_profile.profile();
 
     let product_handle = use_state(|| None::<ProductItem>);
-    let show_warning = use_state(|| false);
     let product_filter = use_state(|| Option::<ProductFilter>::None);
     let onclick_brand_filter = {
         let product_filter = product_filter.clone();

@@ -5,11 +5,11 @@ use crate::{
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleFormButton, SimpleInput
+        templates::SettingsPageTemplate, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleInput
     },
     models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
-use lucide_yew::{ScrollText, SquarePen, Truck, X};
+use lucide_yew::{ScrollText, SquarePen, X};
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 

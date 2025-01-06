@@ -1,5 +1,5 @@
 use fuente::mass::{templates::FuenteSidebarTemplate, AppLink};
-use lucide_yew::{BellPlus, History, House, UserRound};
+use lucide_yew::{BellPlus, History, UserRound};
 use yew::prelude::*;
 use yew_router::prelude::*;
 

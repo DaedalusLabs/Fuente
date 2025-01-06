@@ -213,7 +213,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     let cancel_onclick = {
         let order_ctx = order_ctx.clone();
         Callback::from(move |_| {
-            if let Some((order_note, order_state)) = &order_ctx.live_orders.last() {
+            if let Some((order_note, _order_state)) = &order_ctx.live_orders.last() {
                 let keys = key_ctx.get_nostr_key().expect("No user keys found");
                 let update_req = OrderUpdateRequest {
                     order: order_note.clone(),
@@ -445,7 +445,7 @@ pub struct RatingPromptProps {
 pub fn rating_prompt(props: &RatingPromptProps) -> Html {
     let RatingPromptProps {
         order_id,
-        commerce_id,
+        commerce_id: _,
         onclose,
     } = props.clone();
     let rating = use_state(|| 5); // Default 5 stars

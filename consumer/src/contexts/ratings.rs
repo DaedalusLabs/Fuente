@@ -2,7 +2,7 @@ use std::rc::Rc;
 use fuente::models::{ParticipantRating, TEST_PUB_KEY};
 use yew::prelude::*;
 use nostr_minions::relay_pool::NostrProps;
-use nostro2::{notes::NostrTag, relays::{NostrSubscription, NoteEvent, RelayEvent}};
+use nostro2::relays::NostrSubscription;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RatingsData {
