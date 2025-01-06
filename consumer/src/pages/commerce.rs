@@ -1,6 +1,9 @@
-use crate::contexts::{CartAction, CartStore, CommerceDataStore};
+use crate::{
+    contexts::{CartAction, CartStore, CommerceDataStore},
+    router::ConsumerRoute,
+};
 
-use fuente::{contexts::LanguageConfigsStore, models::ProductItem};
+use fuente::{contexts::LanguageConfigsStore, mass::AppLink, models::ProductItem};
 use lucide_yew::{ArrowLeft, ShoppingCart};
 use yew::prelude::*;
 
@@ -78,19 +81,15 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         .collect::<Vec<ProductItem>>();
     match product_filter.as_ref() {
         Some(ProductFilter::Price(forward)) => {
-            all_products.sort_by(|a, b| {
-                match forward {
-                    true => a.price().partial_cmp(&b.price()).unwrap(),
-                    false => b.price().partial_cmp(&a.price()).unwrap(),
-                }
+            all_products.sort_by(|a, b| match forward {
+                true => a.price().partial_cmp(&b.price()).unwrap(),
+                false => b.price().partial_cmp(&a.price()).unwrap(),
             });
         }
         Some(ProductFilter::Brand(forward)) => {
-            all_products.sort_by(|a, b| {
-                match forward {
-                    true => a.name().partial_cmp(&b.name()).unwrap(),
-                    false => b.name().partial_cmp(&a.name()).unwrap(),
-                }
+            all_products.sort_by(|a, b| match forward {
+                true => a.name().partial_cmp(&b.name()).unwrap(),
+                false => b.name().partial_cmp(&a.name()).unwrap(),
             });
         }
         None => {}
@@ -218,7 +217,6 @@ pub fn product_page_template(props: &ProductItemProps) -> Html {
         commerce_id,
         product_handle,
     } = props;
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
     let back_to_store = {
         let product_handle = product_handle.clone();
@@ -277,5 +275,52 @@ pub fn product_page_template(props: &ProductItemProps) -> Html {
                 <p class="text-gray-500 leading-6">{product.description()}</p>
             </section>
         </main>
+    }
+}
+
+#[function_component(AllCommercesPage)]
+pub fn settings_template() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let businesses = commerce_ctx.commerces();
+    html! {
+        <>
+        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
+            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
+                {&translations["stores_heading"]}
+            </h1>
+        </div>
+
+        <main class="container mx-auto flex-grow">
+            <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
+                <div class="w-full grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3 content-stretch">
+                    {businesses.iter().map(|profile| {
+                        let commerce_data = profile.profile().clone();
+                        let commerce_id = profile.id().to_string();
+                        html! {
+                            <AppLink<ConsumerRoute>
+                                class="border-2 border-fuente rounded-3xl block object-contain bg-white overflow-clip p-2"
+                                selected_class=""
+                                route={ConsumerRoute::Commerce { commerce_id: commerce_id.clone() }}
+                            >
+                            <div class="flex flex-col md:flex-row items-center justify-center gap-5 w-full h-full">
+                                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-36" />
+                                <div class="space-y-2 flex flex-col items-center">
+                                    <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
+                                    <p class="text-gray-500 font-light text-md line-clamp-3">{&commerce_data.description}</p>
+                                    // <div class="flex items-center gap-2">
+                                    //     <Star class="w-6 h-6 text-fuente" />
+                                    //     <p class="text-gray-500 font-light">{"5.0 Delivery on time"}</p>
+                                    // </div>
+                                </div>
+                            </div>
+                            </AppLink<ConsumerRoute>>
+                        }
+                    }).collect::<Html>()}
+                </div>
+            </div>
+        </main>
+    </>
     }
 }

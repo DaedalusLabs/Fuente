@@ -128,3 +128,29 @@ pub fn order_request_details(props: &ProductMenuListProps) -> Html {
     }
 }
 
+#[derive(Clone, PartialEq, Properties)]
+pub struct ProductListItemProps {
+    pub product: ProductItem,
+    pub count: u32,
+}
+#[function_component(ProductListItem)]
+pub fn product_list_item(props: &ProductListItemProps) -> Html {
+    let ProductListItemProps { product, count } = props;
+    html! {
+        <div class="mt-5 space-y-3 flex items-center justify-between">
+            <div class="flex items-center gap-5">
+                <img src={product.thumbnail_url()} alt={product.name()} class="w-20 block object-contain" />
+                <div>
+                    <p class="text-gray-500 font-bold text-md">{product.name()}</p>
+                    <p class="text-gray-500 font-light line-clamp-3">{product.details()}</p>
+                    <p class="text-gray-500 font-bold text-md uppercase">{product.sku()}</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-2">
+                <p class="text-gray-500 font-bold text-xl">{product.price()}</p>
+                <p class="text-gray-500 font-bold text-md">{format!("x{}", count)}</p>
+            </div>
+        </div>
+    }
+}

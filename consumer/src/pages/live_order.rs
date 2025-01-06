@@ -3,7 +3,6 @@ use crate::router::ConsumerRoute;
 use bright_lightning::LndHodlInvoice;
 use fuente::mass::CheckoutBannerTemplate;
 use fuente::{
-    contexts::AdminConfigsStore,
     mass::{
         DriverDetailsComponent, OrderFailureTemplate, OrderPendingTemplate, OrderSuccessTemplate,
     },
@@ -167,7 +166,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         let onclick = {
                             let navigator = navigator.clone();
                             Callback::from(move |_| {
-                                navigator.push(&ConsumerRoute::History);
+                                navigator.push(&ConsumerRoute::TrackPackages);
                             })
                         };
                         Ok(html! {
@@ -254,7 +253,7 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
     }
 }
 
-use lucide_yew::{Copy, Cross};
+use lucide_yew::Copy;
 #[derive(Properties, Clone, PartialEq)]
 pub struct OrderInvoiceComponentProps {
     pub invoice: LndHodlInvoice,
@@ -332,23 +331,15 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     let map = map_handle.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
-            gloo::console::log!("Received note kind:", note.kind);
-
             // Only process driver state notes
             if note.kind == NOSTR_KIND_DRIVER_STATE {
                 if let Some(keys) = key_ctx.get_nostr_key() {
                     match keys.decrypt_nip_04_content(note) {
                         Ok(decrypted) => {
-                            gloo::console::log!("Decrypted content:", &decrypted);
-
                             // Parse directly as DriverStateUpdate
                             match serde_json::from_str::<DriverStateUpdate>(&decrypted) {
                                 Ok(state_update) => {
                                     let coords = state_update.get_location();
-                                    gloo::console::log!(
-                                        "Got driver coordinates:",
-                                        format!("{:?}", coords)
-                                    );
 
                                     driver_location.set(Some(coords.clone()));
 
@@ -359,10 +350,6 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                                         if let Ok(js_value) = serde_wasm_bindgen::to_value(&latlng)
                                         {
                                             marker.set_lat_lng(&js_value);
-                                            gloo::console::log!(
-                                                "Updated marker position:",
-                                                format!("{:?}", coords)
-                                            );
                                         }
                                     } else {
                                         gloo::console::warn!("Marker or map not initialized");
@@ -373,7 +360,6 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                                         "Failed to parse driver state:",
                                         e.to_string()
                                     );
-                                    gloo::console::log!("Raw decrypted content:", &decrypted);
                                 }
                             }
                         }

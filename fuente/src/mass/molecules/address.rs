@@ -45,13 +45,13 @@ pub struct NewAddressProps {
 pub fn new_address_menu(props: &NewAddressProps) -> Html {
     let NewAddressProps { onclick, .. } = props;
     html! {
-        <div class="mt-4 flex flex-col gap-8">
+        <div class="mt-4 flex flex-col gap-8 items-center">
             <AddressDetails ..props.clone()/>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
             <button
                 {onclick}
-                class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl"
+                class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl self-start"
             >{"Save"}
         </button>
         </div>
@@ -115,8 +115,8 @@ pub fn address_search(props: &NewAddressProps) -> Html {
             <div class="flex w-full items-center space-x-2">
                 <input
                     type="text"
-                    class="w-full p-2 px-4 rounded-3xl shadow-xl bg-transparent placeholder:bg-transparent
-                        focus:outline-none focus:ring-fuente focus:ring-2"
+                    class="w-full p-2 px-4 rounded-3xl shadow-xl bg-transparent placeholder:bg-transparent text-white placeholder:text-white
+                        focus:outline-none focus:ring-fuente focus:ring-2 border-white"
                     placeholder="Search for address"
                     {oninput}
                     {onblur}
@@ -259,7 +259,7 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
                 }
             })}
             style="height: 100%; width: 100%; border-radius: 1rem; border: 2px solid #f0f0f0;"
-            class={classes!["z-50","w-96", "h-96", "min-h-96", "min-w-96", "border-2", "border-fuente", "rounded-3xl", "shadow-xl"]}
+            class={classes!["z-50","w-64", "h-64", "border-2", "border-fuente", "rounded-3xl", "shadow-xl"]}
         />
     }
 }
