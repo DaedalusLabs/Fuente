@@ -1,19 +1,25 @@
 use driver::{
-    contexts::{CommerceDataProvider, DriverDataProvider, DriverDataStore, OrderHubProvider, OrderHubStore},
-    pages::SettingsPageComponent,
+    contexts::{
+        CommerceDataProvider, DriverDataAction, DriverDataProvider, DriverDataStore, OrderHubProvider, OrderHubStore
+    },
+    pages::{NewProfileForm, SettingsPageComponent},
     router::DriverPages,
 };
 use fuente::{
-    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, MainLayout, SimpleFormButton, SimpleInput},
-    models::{init_commerce_db, init_consumer_db},
+    contexts::{
+        AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider, LanguageConfigsStore,
+    },
+    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput},
+    models::{
+        init_commerce_db, init_consumer_db, DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY,
+    },
 };
 use html::ChildrenProps;
 use nostr_minions::{
-    browser_api::{clipboard_copy, HtmlDocument, HtmlForm},
+    browser_api::HtmlForm,
     init_nostr_db,
     key_manager::{NostrIdAction, NostrIdProvider, NostrIdStore, UserIdentity},
-    relay_pool::{RelayProvider, UserRelay},
+    relay_pool::{NostrProps, RelayProvider, UserRelay},
 };
 use nostro2::keypair::NostrKeypair;
 use yew::{platform::spawn_local, prelude::*};
@@ -104,19 +110,14 @@ fn login_check(props: &ChildrenProps) -> Html {
     }
     if key_ctx.get_nostr_key().is_none() {
         return html! {
-            <DriverLoginPage />
+            <LoginPage />
         };
     }
     let wl = admin_ctx.get_courier_whitelist();
     let pubkey = key_ctx.get_nostr_key().unwrap().public_key();
     if !wl.contains(&pubkey) {
-        return html! {
-            <div class="flex flex-col gap-2 justify-center items-center flex-1">
-                <h1>{"You are not authorized to use this service"}</h1>
-                <p>{"Your public key: "}</p>
-                <p>{pubkey}</p>
-            </div>
-        };
+        gloo::console::error!("User not in whitelist", &pubkey);
+        return html! {<LoadingScreen />};
     }
     html! {
         {props.children.clone()}
@@ -127,14 +128,19 @@ fn login_check(props: &ChildrenProps) -> Html {
 fn login_check(props: &ChildrenProps) -> Html {
     let user_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
     let order_ctx = use_context::<OrderHubStore>().expect("OrderHubProvider not found");
+    let bool_handle = use_state(|| false);
     if !user_ctx.finished_loading() || !order_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
     if user_ctx.get_profile().is_none() {
         return html! {
-            <div class="flex justify-center items-center flex-1">
-                <SettingsPageComponent />
-            </div>
+            <LoginPageTemplate
+                heading=""
+                sub_heading=""
+                title="Create Profile"
+                >
+                <NewProfile />
+            </LoginPageTemplate>
         };
     }
     html! {
@@ -142,35 +148,6 @@ fn login_check(props: &ChildrenProps) -> Html {
     }
 }
 
-#[function_component(DriverLoginPage)]
-pub fn admin_login() -> Html {
-    let onclick = Callback::from(move |_| {
-        let new_keys = NostrKeypair::generate(true);
-        let new_keys_str = new_keys.get_secret_key();
-        let mut hex_str = String::new();
-        for byte in new_keys_str.iter() {
-            hex_str.push_str(&format!("{:02x}", byte));
-        }
-        clipboard_copy(&hex_str);
-        let input_element = HtmlDocument::new()
-            .expect("Failed to get document")
-            .find_element_by_id::<web_sys::HtmlInputElement>("password")
-            .expect("Failed to get element");
-        input_element.set_value(&hex_str);
-    });
-    html! {
-        <div class="flex flex-col h-full w-full items-center justify-center gap-4">
-            <div class="flex items-center justify-center select-none">
-                <img src="/public/assets/img/logo.png" alt="Fuente Logo" class="w-24 h-24" />
-            </div>
-            <DriverLoginForm />
-            <button class="text-lg bg-fuente-light rounded-lg w-fit h-fit py-2 px-4 text-white font-bold " {onclick}>
-                {"NewKey"}
-            </button>
-            <p class="text-sm text-gray-500 text-wrap max-w-sm">{"Click the NewKey button to generate a new key and copy it to your clipboard"}</p>
-        </div>
-    }
-}
 #[function_component(DriverLoginForm)]
 pub fn import_user_form() -> Html {
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
@@ -193,7 +170,7 @@ pub fn import_user_form() -> Html {
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center">
+        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center bg-fuente-forms">
             <SimpleInput
                 id="password"
                 name="password"
@@ -202,9 +179,75 @@ pub fn import_user_form() -> Html {
                 input_type="password"
                 required={true}
                 />
-            <SimpleFormButton>
+            <button type="submit"
+                class="bg-fuente text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5">
                 {"Log In"}
-            </SimpleFormButton>
+            </button>
+        </form>
+    }
+}
+#[function_component(NewProfile)]
+pub fn new_profile_form() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
+    let user_ctx = use_context::<DriverDataStore>().expect("No CryptoId Context found");
+    let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
+    let sender = relay_pool.send_note.clone();
+    let onsubmit = Callback::from(move |e: SubmitEvent| {
+        e.prevent_default();
+        let user_ctx = user_ctx.clone();
+        let keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let form_element = HtmlForm::new(e).expect("Failed to get form element");
+        let nickname = form_element
+            .input_value("name")
+            .expect("Failed to get name");
+        let telephone = form_element
+            .input_value("telephone")
+            .expect("Failed to get telephone");
+        let sender = sender.clone();
+        let user_profile = DriverProfile::new(nickname, telephone);
+        let db = DriverProfileIdb::new(user_profile.clone(), &keys);
+
+        // Fix the giftwrapped_data calls by providing the proper parameters
+        let giftwrap = user_profile
+            .giftwrapped_data(&keys, keys.public_key(), keys.public_key())
+            .expect("Failed to giftwrap data");
+        let pool_copy = user_profile
+            .giftwrapped_data(
+                &keys,
+                DRIVER_HUB_PUB_KEY.to_string(),
+                DRIVER_HUB_PUB_KEY.to_string(),
+            )
+            .expect("Failed to giftwrap data");
+
+        sender.emit(giftwrap);
+        sender.emit(pool_copy);
+        user_ctx.dispatch(DriverDataAction::NewProfile(db));
+    });
+
+    html! {
+        <form {onsubmit}
+            class="w-full flex flex-col gap-2 bg-fuente-forms rounded-3xl p-4 items-center">
+                <SimpleInput
+                    id="name"
+                    name="name"
+                    label="Name"
+                    value=""
+                    input_type="text"
+                    required={true}
+                    />
+                <SimpleInput
+                    id="telephone"
+                    name="telephone"
+                    label="Telephone"
+                    value=""
+                    input_type="tel"
+                    required={true}
+                    />
+                <button
+                    type="submit"
+                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl">
+                    {"Save"}
+                </button>
         </form>
     }
 }

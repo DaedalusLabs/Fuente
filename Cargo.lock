@@ -23,6 +23,7 @@ version = "0.1.0"
 dependencies = [
  "fuente",
  "gloo 0.11.0",
+ "lucide-yew",
  "nostr-minions",
  "nostro2",
  "serde",

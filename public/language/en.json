@@ -41,7 +41,8 @@
     "profile_personal_information_heading": "My Profile",
     "profile_personal_information_orders_button": "My Orders",
     "profile_personal_information_packages_button": "Track Packages",
-    "profile_personal_information_delete_account_button": "Delete my key",
+    "profile_personal_information_delete_account_button": "Delete",
+    "profile_personal_information_delete_account_confirm": "Are you sure you want to delete you key? This cannot be undone!",
     "profile_personal_information_button": "Personal Information",
     "profile_personal_information_address_button": "Address",
     "profile_personal_information_name": "Christine Amador Russel",
@@ -52,6 +53,8 @@
     "profile_settings_key": "Key Recovery",
     "profile_settings_language": "Language",
     "profile_settings_upload": "Upload Photo",
+    "profile_settings_warning": "Use this key to recover your account on another device.",
+    "profile_settings_warning_two": "We do not have access to your key, keep it safe.",
 
     "cart_title": "Cart",
     "cart_heading": "My Cart",

@@ -236,18 +236,34 @@ pub fn import_user_form() -> Html {
     });
 
     html! {
-        <form {onsubmit} class="flex flex-col gap-8 p-8 items-center">
-            <SimpleInput
-                id="password"
-                name="password"
-                label="Private Key"
-                value=""
-                input_type="password"
-                required={true}
-                />
-            <SimpleFormButton>
-                {"Log In"}
-            </SimpleFormButton>
-        </form>
+        <LoginPageTemplate 
+            heading={"Admin Login".to_string()} 
+            sub_heading={"Login to access the admin dashboard".to_string()} 
+            title={"Admin Login".to_string()}>
+            <form {onsubmit} class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+                <div class="space-y-1">
+                    <label
+                        for="password"
+                        class="text-white text-lg block text-left"
+                    >
+                        {"Password"}
+                    </label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        class="p-2 w-full rounded-xl"
+                        required={true}
+                    />
+                </div>
+                <div class="space-y-5 flex flex-col mt-5">
+                    <input
+                        type="submit"
+                        class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto"
+                        value={"Login".to_string()}
+                    />
+                </div>
+            </form>
+        </LoginPageTemplate>
     }
 }
