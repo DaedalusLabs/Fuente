@@ -160,7 +160,7 @@ pub fn settings_page() -> Html {
     };
     html! {
         <SettingsPageTemplate
-            heading={"My Profile".to_string()}
+            heading={translations["profile_address_heading"].clone()}
             options={ vec![
                 my_orders_button,
                 track_packages_button,

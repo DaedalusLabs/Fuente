@@ -1,6 +1,7 @@
 use crate::contexts::{CommerceDataExt, CommerceDataStore, LiveOrderAction, LiveOrderStore};
 use crate::router::ConsumerRoute;
 use bright_lightning::LndHodlInvoice;
+use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::CheckoutBannerTemplate;
 use fuente::{
     mass::{
@@ -262,6 +263,8 @@ pub struct OrderInvoiceComponentProps {
 
 #[function_component(OrderInvoiceComponent)]
 pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     let OrderInvoiceComponentProps {
         invoice,
         exchange_rate,
@@ -278,16 +281,18 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
     html! {
         <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3">
             <div class="flex justify-between flex-1">
-                <h3 class="text-fuente text-xl font-bold">{"Total Amount"}</h3>
+                <h3 class="text-fuente text-xl font-bold">{&translations["checkout_summary_price_details_total"]}</h3>
                 <p class="text-gray-400 text-lg">{format!("{:.2} SRD", srd_amount)}</p>
             </div>
             <div class="flex justify-between">
-                <h3 class="text-fuente text-xl font-bold">{"Bitcoin"}</h3>
+                <h3 class="text-fuente text-xl font-bold">
+                    {&translations["checkout_summary_price_details_bitcoin"]}
+                </h3>
                 <p class="text-gray-400 text-lg">{format!("{:.8} BTC", sat_amount as f64 / 100_000_000.0)}</p>
             </div>
             <div class="flex justify-between">
                 <p class="text-xs font-bold text-gray-500">
-                    {"Tap the invoice to open in your wallet."}
+                    {&translations["checkout_summary_price_details_tap"]}
                 </p>
                 <button
                     onclick={onclick_copy} >

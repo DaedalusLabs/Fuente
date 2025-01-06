@@ -18,13 +18,13 @@ pub fn customer_details(props: &CustomerDetailsProps) -> Html {
         <section class="mt-5 space-y-3 border-y border-y-gray-400 py-3 w-full">
             <h3 class="text-gray-500 font-light text-lg">{&translations["store_order_modal_customer"]}</h3>
             <p class="text-gray-500 font-bold text-lg">{&customer.nickname}</p>
-            <div class="w-full flex flex-col md:flex-row gap-2">
-                <div class="flex justify-between">
+            <div class="w-full flex flex-col md:flex-row gap-2 justify-between">
+                <div class="flex flex-col gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_email"]}</p>
                     <p class="text-gray-500">{&customer.email}</p>
                 </div>
 
-                <div class="flex justify-between">
+                <div class="flex flex-col gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_phone"]}</p>
                     <p class="text-gray-500">{&customer.telephone}</p>
                 </div>

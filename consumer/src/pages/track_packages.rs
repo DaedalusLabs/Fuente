@@ -121,7 +121,7 @@ pub fn track_packages_page() -> Html {
                             if let Some(selected_id) = (*selected_order).clone() {
                                 if selected_id == order_id {
                                     <PopupSection close_handle={order_popup.clone()}>
-                                        <div class="bg-white rounded-2xl p-6 max-w-xs sm:max-w-sm md:max-w-md lg:mx-w-lg max-h-96 m-4 overflow-y-auto">
+                                        <div class="bg-white rounded-2xl p-6 max-w-xs sm:max-w-sm md:max-w-md lg:mx-w-4xl max-h-96 sm:max-h-[840px] m-4 overflow-y-auto no-scrollbar">
                                             <OrderDetailModal 
                                                 order={order.clone()}
                                                 on_submit={Callback::from(move |_| {})}

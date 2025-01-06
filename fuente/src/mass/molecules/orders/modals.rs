@@ -1,4 +1,5 @@
 use lucide_yew::{Clock, Hammer, MapPinCheck, Truck};
+use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
 use crate::{
@@ -16,14 +17,20 @@ pub struct OrderDetailModalProps {
 pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let OrderDetailModalProps { order, on_submit } = props;
+    let is_customer = {
+        let keypair = key_ctx.get_nostr_key().expect("Nostr key not found");
+        let pubkey = keypair.public_key();
+        order.order.pubkey == pubkey
+    };
     let request = order.get_order_request();
     let products = request.products.counted_products();
     let order_total = request.products.total();
     let customer_profile = &request.profile;
     let order_status = order.order_status.clone();
     html! {
-        <main class="bg-white rounded-2xl py-auto px-auto">
+        <>
             <div class="flex items-center justify-between border-b border-b-gray-400 pb-3 gap-2">
                 <div>
                     <p class="text-fuente-dark font-bold text-2xl">{format!("#{}", &order.order_id()[..12])}</p>
@@ -56,8 +63,15 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
             </div>
 
             <CustomerDetails customer={customer_profile.clone()} />
-            <OrderModalForm current_status={order.order_status.clone()} on_order_click={on_submit.clone()} />
-        </main>
+            
+            {if !is_customer {
+                html! {
+                    <OrderModalForm current_status={order.order_status.clone()} on_order_click={on_submit.clone()} />
+                }
+            } else {
+                html! {<></>}
+            }}
+        </>
     }
 }
 #[derive(Clone, PartialEq, Properties)]
@@ -76,14 +90,14 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
     let options = match current_status {
         OrderStatus::Pending => Some(html! {
             <>
-                <option class={OrderStatus::Preparing.theme_color()} value={OrderStatus::Preparing.to_string()}>{OrderStatus::Preparing.display()}</option>
                 <option class={OrderStatus::Canceled.theme_color()} value={OrderStatus::Canceled.to_string()}>{OrderStatus::Canceled.display()}</option>
+                <option class={OrderStatus::Preparing.theme_color()} value={OrderStatus::Preparing.to_string()}>{OrderStatus::Preparing.display()}</option>
             </>
         }),
         OrderStatus::Preparing => Some(html! {
             <>
-                <option value={OrderStatus::ReadyForDelivery.to_string()}>{OrderStatus::ReadyForDelivery.display()}</option>
                 <option value={OrderStatus::Canceled.to_string()}>{OrderStatus::Canceled.display()}</option>
+                <option value={OrderStatus::ReadyForDelivery.to_string()}>{OrderStatus::ReadyForDelivery.display()}</option>
             </>
         }),
         OrderStatus::ReadyForDelivery => Some(html! {
