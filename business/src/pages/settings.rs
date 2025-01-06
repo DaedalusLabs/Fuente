@@ -404,7 +404,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
         handle.set(false);
     });
     html! {
-        <form {onsubmit}>
+        <form  class="bg-white rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" {onsubmit}>
             <NewAddressForm ..props />
         </form>
     }

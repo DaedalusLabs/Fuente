@@ -19,18 +19,18 @@ pub fn home_page() -> Html {
         <div class="space-y-4">
             <CommerceFilters />
             <FuenteStoresBanner/>
-            <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative m-2">
+            <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
                 <div class="flex justify-between items-center lg:mb-4">
                     <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
                     <AppLink<ConsumerRoute>
-                        class="lg:hidden"
+                        class=""
                         selected_class=""
                         route={ConsumerRoute::BrowseStores}>
                         <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
                     </AppLink<ConsumerRoute>>
                 </div>
 
-                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto lg:absolute lg:bottom-0 lg:right-8" />
+                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
             </div>
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />
@@ -42,6 +42,8 @@ pub fn home_page() -> Html {
 pub fn stores_banner() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let ratings_ctx = use_context::<RatingsStore>().expect("RatingsStore not found");
+    let languages = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = languages.translations();
     let businesses = commerce_ctx.commerces();
     // let scroll_left = Callback::from(|e: MouseEvent| {
     //     e.stop_propagation();
@@ -65,7 +67,7 @@ pub fn stores_banner() -> Html {
     html! {
         <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
             <div class="flex justify-between items-center container mx-auto">
-                <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{"Our top stores"}</h2>
+                <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{&translations["home_top_stores"]}</h2>
             </div>
 
             <div class="flex justify-center lg:justify-between items-center mt-10 px-6">
