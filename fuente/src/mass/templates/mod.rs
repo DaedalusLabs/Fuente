@@ -66,8 +66,8 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="relative border border-fuente rounded-xl flex items-start justify-between flex-1 gap-5 p-5 lg:p-10">
-            <div class="w-full overflow-clip">
+        <div class="relative border border-fuente rounded-xl flex items-start justify-between h-fit gap-5 p-5 lg:p-10">
+            <div class="w-full h-fit">
                 {children}
             </div>
             {edit_button.clone().unwrap_or_default()}
@@ -200,6 +200,8 @@ pub fn login_template(props: &LoginPageProps) -> Html {
 }
 #[function_component(FuenteBitcoinBanner)]
 pub fn bitcoin_banner() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     html! {
     <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
         <div class="bg-orange-400 w-full rounded-2xl h-fit lg:max-h-52">
@@ -208,7 +210,7 @@ pub fn bitcoin_banner() -> Html {
                     <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
                 </svg>
                 <h2 class="sm:text-3xl pr-2 sm:pr-0 lg:text-5xl tracking-tighter text-white font-semibold max-w-[500px] xl:-mt-14 mx-auto">
-                    {"Shop now, track your package and pay with"}
+                    {&translations["home_bitcoin_heading"]}
                 </h2>
             </div>
         </div>

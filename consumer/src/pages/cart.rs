@@ -4,7 +4,7 @@ use crate::contexts::{
 use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
 use fuente::contexts::{AdminConfigsStore, LanguageConfigsStore};
-use fuente::mass::ThreeBlockSpinner;
+use fuente::mass::{ThreeBlockSpinner, AppLink};
 use fuente::models::{OrderPaymentStatus, ProductItem, ProductOrder};
 use lucide_yew::{ArrowRight, Trash2};
 use nostr_minions::key_manager::NostrIdStore;
@@ -43,26 +43,25 @@ pub fn empty_cart() -> Html {
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let translations = language_ctx.translations();
-    let onclick = {
-        let navigator = use_navigator().expect("No navigator found");
-        Callback::from(move |_| {
-            navigator.push(&ConsumerRoute::Home);
-        })
-    };
     html! {
-        <div class="mt-7 px-16 rounded-3xl flex items-center justify-center flex-col">
-            <h2 class="text-lg text-fuente font-bold p-5">{&translations["cart_empty"]}</h2>
-            <div class="bg-fuente rounded-2xl p-5 flex flex-col lg:justify-between lg:relative">
-                <div class="flex justify-between items-center lg:mb-4">
-                    <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores_find"]}</h2>
-                    <button {onclick}>
-                        <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
-                    </button>
-                </div>
-
-                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto lg:absolute lg:bottom-0 lg:right-8" />
+        <>
+        <h1 class="text-fuente text-2xl pb-4 sm:pb-6 md:pb-10 lg:pb-0 text-center lg:text-3xl font-bold tracking-tighter mb-2"> 
+            {&translations["checkout_product_empty_table_heading"]}
+        </h1>
+        <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
+            <div class="flex justify-between items-center lg:mb-4">
+                <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                <AppLink<ConsumerRoute>
+                    class=""
+                    selected_class=""
+                    route={ConsumerRoute::BrowseStores}>
+                    <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                </AppLink<ConsumerRoute>>
             </div>
+
+            <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
         </div>
+        </>
     }
 }
 

@@ -1,12 +1,13 @@
 use crate::{
-    contexts::{CommerceDataStore, DriverDataAction, DriverDataStore, OrderHubAction, OrderHubStore},
+    contexts::{CommerceDataStore, DriverDataStore, OrderHubAction, OrderHubStore},
     router::DriverRoute,
 };
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{AppLink, LoadingScreen, OrderList, OrderPickup, OrderPickupModal},
     models::{
-        DriverProfile, DriverProfileIdb, OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY, NOSTR_KIND_COURIER_UPDATE
+        OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY,
+        NOSTR_KIND_COURIER_UPDATE,
     },
 };
 use nostr_minions::{
@@ -79,7 +80,7 @@ pub fn home_page() -> Html {
                 <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
                     {&translations["orders_heading"]}
                 </h1>
-                <AppLink<DriverRoute> 
+                <AppLink<DriverRoute>
                     route={DriverRoute::History}
                     class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold"
                     selected_class="">
@@ -124,9 +125,11 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     let keys = key_ctx.get_nostr_key().expect("Failed to get keys");
     let relay_ctx = use_context::<NostrProps>().expect("Failed to get order context");
     let live_order_ctx = use_context::<OrderHubStore>().expect("Failed to get live order context");
+    let location_state: UseStateHandle<Option<GeolocationCoordinates>> = use_state(|| None);
     let sender = relay_ctx.send_note.clone();
     let OrderPickupProps { order, order_note } = props;
     let order_req = order.get_order_request();
+    let order_status = order.order_status.clone();
     let commerce = commerce_ctx
         .find_commerce(&order_req.commerce)
         .expect("Failed to find commerce");
@@ -159,11 +162,21 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     };
 
     html! {
+        <>
         <OrderPickupModal
             order={order.clone()}
             commerce_profile={commerce.profile().clone()}
             on_order_click={onclick}
             />
+            {if order_status == OrderStatus::InDelivery {
+                html! {
+                    <LocationTracker order_id={order.order_id()} location_state={location_state.clone()} />
+                }
+            } else {
+                html! {
+                }
+            }}
+        </>
     }
 }
 
@@ -254,4 +267,3 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
 
     html! { <></> }
 }
-

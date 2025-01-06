@@ -187,6 +187,7 @@
     "checkout_summary_price_details_taxes": "Taxes",
     "checkout_summary_price_details_total": "Total Amount",
     "checkout_summary_price_details_bitcoin": "Bitcoin",
+    "checkout_summary_price_details_tap": "Tap the QR to open in wallet",
 
     "detail_product_title": "Detail - Product",
     "detail_product_menu_home": "Home",

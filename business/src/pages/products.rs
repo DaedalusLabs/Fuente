@@ -610,9 +610,9 @@ pub fn product_list_section() -> Html {
                                         <p class="mt-20">{product.price()}</p>
                                     </td>
                                     <td class="whitespace-nowrap text-center py-8 px-6 flex gap-2 items-center">
-                                        <button onclick={on_edit} class="w-10 h-10 mt-20 text-fuente">
-                                            <SquarePen class="cursor-pointer" />
-                                        </button>
+                                        //<button onclick={on_edit} class="w-10 h-10 mt-20 text-fuente">
+                                        //    <SquarePen class="cursor-pointer" />
+                                        //</button>
                                         <button onclick={on_delete} class="w-10 h-10 mt-20 text-red-600">
                                             <Trash class="cursor-pointer" />
                                         </button>
