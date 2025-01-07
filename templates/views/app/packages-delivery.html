@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{"My orders - Completed"}</title>
+    <title>{"Packages - Track"}</title>
     <link rel="stylesheet" href="../../styles/output.css">
 </head>
 <body class="font-fuente">
@@ -94,70 +94,68 @@
         </div>
     </nav>
 
-    <main class="lg:mt-20 container mx-auto w-full">
-        <h1 class="text-4xl lg:text-6xl text-center lg:text-left font-bold text-fuente tracking-tighter">{"My Orders"}</h1>
+    <main class="container mx-auto lg:mt-20">
+        <h1 class="text-4xl text-center lg:text-left lg:text-6xl font-bold text-fuente tracking-tighter">{"Your Packages"}</h1>
         <div class="mt-5 flex justify-center lg:justify-start gap-4">
-            <button class="border-2 border-green-500 text-green-500 lg:border-none lg:bg-fuente lg:text-white text-center font-bold text-lg rounded-2xl py-4 w-56">{"Completed"}</button>
-            <button class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56">{"Failed"}</button>
+            <a class="border-2 border-orange-500 text-orange-500 lg:border-none lg:bg-fuente lg:text-white text-center font-bold text-lg rounded-2xl py-4 w-56" href="#">{"In Delivery"}</a>
+            <a class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56" href="#">{"Completed"}</a>
         </div>
 
         <table class="table-auto border-collapse mt-5 hidden lg:block lg:overflow-auto">
             <thead class="table w-full">
-                <tr>
-                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Order Number"}</th>
-                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Purchased Date"}</th>
-                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Product Details"}</th>
-                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Driver Assigned"}</th>
-                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Status of Store"}</th>
-                </tr>
+              <tr>
+                <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Order Number"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Purchased Date"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Product Details"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Driver Assigned"}</th>
+                <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">{"Time to Deliver"}</th>
+              </tr>
             </thead>
             <tbody class="bg-gray-100 table w-full">
-                <tr>
-                    <td>
-                        <p class="text-center text-xl font-semibold text-fuente-dark">{"#1234567"}</p>
-                    </td>
-                    <td>
-                        <p class="text-center text-xl font-semibold text-fuente-dark">{"12/12/24"}</p>
-                    </td>
-                    <td class="lg:w-[30%] xl:w-[20%] space-y-7">
-                        <div class="flex gap-5 justify-center pt-5">
-                            <img src="/templates/img/sneaker_2.png" alt="Shoes Image" class="w-20 object-contain">
-                            <div>
-                                <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
-                                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                                <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
-                            </div>
+              <tr>
+                <td>
+                    <p class="text-center text-xl font-semibold text-fuente-dark">{"#1234567"}</p>
+                </td>
+                <td>
+                    <p class="text-center text-xl font-semibold text-fuente-dark">{"12/12/24"}</p>
+                </td>
+                <td class="lg:w-[30%] xl:w-[20%] space-y-7">
+                    <div class="flex gap-5 justify-center pt-5">
+                        <img src="/templates/img/sneaker_2.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
                         </div>
+                    </div>
 
-                        <div class="flex gap-5 justify-center">
-                            <img src="/templates/img/sneaker_1.png" alt="Shoes Image" class="w-20 object-contain">
-                            <div>
-                                <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
-                                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                                <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
-                            </div>
+                    <div class="flex gap-5 justify-center">
+                        <img src="/templates/img/sneaker_1.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
                         </div>
+                    </div>
 
-                        <div class="flex gap-5 justify-center">
-                            <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain pb-5">
-                            <div>
-                                <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
-                                <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
-                                <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
-                            </div>
+                    <div class="flex gap-5 justify-center">
+                        <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain">
+                        <div>
+                            <p class="text-xl text-gray-500 font-bold">{"Brand of shoes"}</p>
+                            <p class="text-gray-500 font-light">{"Woman Rainbow shoes"}</p>
+                            <p class="text-xl text-gray-500 font-bold">{"CODE: 001212"}</p>
                         </div>
-                    </td>
-                    <td>
-                        <p class="text-center text-fuente-dark font-semibold text-xl">{"John Doe"}</p>
-                    </td>
-                    <td>
-                        <p class="text-center text-fuente-dark font-semibold text-xl">{"Delivered"}</p>
-                    </td>
-                </tr>
+                    </div>
+                </td>
+                <td class="text-center text-fuente-dark font-semibold text-xl">{"John Doe"}</td>
+                <td class="text-center text-fuente-dark font-semibold text-xl">{"3:30 PM"}</td>
+              </tr>
             </tbody>
-        </table>
+          </table>
 
-        <div class="bg-green-100 mt-2 rounded-2xl pt-20 pb-5 px-5 lg:hidden">
+          <img src="/templates/img/mapa.png" alt="Mapa image" class="w-full px-40 py-20 mx-auto bg-gray-100 hidden lg:block">
+
+          <div class="bg-orange-100 mt-2 rounded-2xl pt-20 pb-5 px-5 lg:hidden">
             <div class="flex flex-col gap-5">
                 <div class="flex gap-10 items-center">
                     <p class="text-fuente-dark text-md font-bold">{"Order Number"}</p>
