@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"My orders - Failed"}</title>
+    <link rel="stylesheet" href="../../styles/output.css">
+</head>
+<body class="font-fuente">
+    <header class="container mx-auto py-10 flex justify-center lg:justify-between">
+        <a href="/templates/views/app/home.html" class="hidden lg:flex">
+            <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
+                <div class="relative flex items-center w-full">
+                    <input 
+                        type="text" 
+                        class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl"
+                    />
+                    <svg 
+                        class="absolute right-4 h-6 w-6 text-fuente pointer-events-none" 
+                        fill="none" 
+                        height="24" 
+                        stroke="currentColor" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                        stroke-width="2" 
+                        viewBox="0 0 24 24" 
+                        width="24" 
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                    </svg>
+                </div>
+            
+                <button class="lg:hidden">
+                    <svg 
+                        viewBox="0 0 32 32" 
+                        xml:space="preserve" 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        enable-background="new 0 0 32 32" 
+                        class="bg-fuente h-14 w-14 p-2 rounded-xl"
+                    >
+                        <path 
+                            d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                            fill="#ffffff" 
+                            class="fill-000000">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex gap-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+        
+                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                    <rect fill="none" height="256" width="256" />
+                    <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                </svg>
+        
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <nav class="hidden lg:flex lg:justify-center max-w-6xl mx-auto">
+        <div class="flex gap-5 justify-between">
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Hardware"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Pharmacy"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Groceries"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Music"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Movies"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
+        </div>
+    </nav>
+
+    <main class="lg:mt-20 container mx-auto w-full">
+        <h1 class="text-4xl lg:text-6xl text-center lg:text-left font-bold text-fuente tracking-tighter">{"My Orders"}</h1>
+        <div class="mt-5 flex justify-center lg:justify-start gap-4">
+            <button class="bg-gray-100 text-gray-400 text-center font-bold text-lg rounded-2xl py-4 w-56">{"Completed"}</button>
+            <button class="border-2 border-red-500 text-red-500 lg:border-none lg:bg-fuente lg:text-white text-center font-bold text-lg rounded-2xl py-4 w-56">{"Failed"}</button>
+        </div>
+
+        <table class="table-auto border-collapse mt-5 hidden lg:block lg:overflow-auto">
+            <thead class="table w-full">
+                <tr>
+                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">Order Number</th>
+                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">Purchased Date</th>
+                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">Product Details</th>
+                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">Driver Assigned</th>
+                    <th class="text-fuente-dark font-semibold text-center pb-5 text-xl">Status of Store</th>
+                </tr>
+            </thead>
+            <tbody class="bg-gray-100 table w-full">
+                <tr>
+                    <td>
+                        <p class="text-center text-xl font-semibold text-fuente-dark">#1234567</p>
+                    </td>
+                    <td>
+                        <p class="text-center text-xl font-semibold text-fuente-dark">12/12/24</p>
+                    </td>
+                    <td class="lg:w-[30%] xl:w-[20%] space-y-7">
+                        <div class="flex gap-5 justify-center pt-5">
+                            <img src="/templates/img/sneaker_2.png" alt="Shoes Image" class="w-20 object-contain">
+                            <div>
+                                <p class="text-xl text-gray-500 font-bold">Brand of shoes</p>
+                                <p class="text-gray-500 font-light">Woman Rainbow shoes</p>
+                                <p class="text-xl text-gray-500 font-bold">CODE: 001212</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-5 justify-center">
+                            <img src="/templates/img/sneaker_1.png" alt="Shoes Image" class="w-20 object-contain">
+                            <div>
+                                <p class="text-xl text-gray-500 font-bold">Brand of shoes</p>
+                                <p class="text-gray-500 font-light">Woman Rainbow shoes</p>
+                                <p class="text-xl text-gray-500 font-bold">CODE: 001212</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-5 justify-center">
+                            <img src="/templates/img/sneaker_3.png" alt="Shoes Image" class="w-20 object-contain pb-5">
+                            <div>
+                                <p class="text-xl text-gray-500 font-bold">Brand of shoes</p>
+                                <p class="text-gray-500 font-light">Woman Rainbow shoes</p>
+                                <p class="text-xl text-gray-500 font-bold">CODE: 001212</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <p class="text-center text-fuente-dark font-semibold text-xl">John Doe</p>
+                    </td>
+                    <td>
+                        <p class="text-center text-fuente-dark font-semibold text-xl">Delivered</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="bg-red-100 mt-2 rounded-2xl pt-20 pb-5 px-5 lg:hidden">
+            <div class="flex flex-col gap-5">
+                <div class="flex gap-10 items-center">
+                    <p class="text-fuente-dark text-md font-bold">Order Number</p>
+                    <p class="text-gray-500 font-light text-md">#1234567</p>
+                </div>
+
+                <div class="flex gap-10 items-center">
+                    <p class="text-fuente-dark text-md font-bold">Purchased Date</p>
+                    <p class="text-gray-500 font-light text-md">12/12/2024</p>
+                </div>
+
+                <div class="flex gap-10">
+                    <p class="text-fuente-dark text-md font-bold text-nowrap">Product Details</p>
+                    <div class="flex flex-col gap-5">
+                        <p class="text-gray-500 font-light text-md">Brand of shoe 1 / Code: 001212</p>
+                        <p class="text-gray-500 font-light text-md">Brand of shoe 2 / Code: 001212</p>
+                        <p class="text-gray-500 font-light text-md">Brand of shoe 3 / Code: 001212</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-10 items-center">
+                    <p class="text-fuente-dark text-md font-bold">Driver Assigned</p>
+                    <p class="text-gray-500 font-light text-md">Elmer Montoya</p>
+                </div>
+
+                <div class="flex gap-10 items-center">
+                    <p class="text-fuente-dark text-md font-bold">Time to Deliver</p>
+                    <p class="text-gray-500 font-light text-md">3:30 PM</p>
+                </div>
+
+                <img src="/templates/img/mapa.png" alt="Map Image">
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-fuente p-10 lg:p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
+            <a href="/templates//views/app/home.html">
+                <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
+            </a>
+    
+            <svg 
+                viewBox="0 0 32 32" 
+                xml:space="preserve" 
+                xmlns="http://www.w3.org/2000/svg" 
+                enable-background="new 0 0 32 32" 
+                class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden"
+            >
+                <path 
+                    d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                    fill="#ffffff" 
+                    class="fill-000000">
+                </path>
+            </svg>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"About Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"How to sale?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Why is secure?"}</p>
+                </div>
+            </div>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Shipping and collections of orders"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Payment methods"}</p>
+                </div>
+            </div>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"General policies"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Privacy Policy"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Return and exchanges"}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
