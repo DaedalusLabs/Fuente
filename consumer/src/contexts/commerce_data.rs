@@ -124,10 +124,6 @@ pub fn key_handler(props: &CommerceDataChildren) -> Html {
         products_lists: vec![],
     });
 
-    let ctx_clone = ctx.clone();
-    let admin_configs = use_context::<AdminConfigsStore>().expect("NostrProps not found");
-    let commerce_wl = admin_configs.get_commerce_whitelist();
-
     html! {
         <ContextProvider<CommerceDataStore> context={ctx}>
             {props.children.clone()}

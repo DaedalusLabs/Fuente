@@ -1,13 +1,12 @@
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::LoginPageTemplate, ImageUploadInput, NewAddressForm, NewAddressProps,
-        SimpleInput, SimpleTextArea,
+        templates::LoginPageTemplate, SimpleInput,
     },
     models::{CommerceProfile, CommerceProfileIdb},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use yew::{prelude::*, props};
+use yew::prelude::*;
 
 use crate::contexts::{CommerceDataAction, CommerceDataStore};
 

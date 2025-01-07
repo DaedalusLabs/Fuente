@@ -2,13 +2,12 @@ use crate::contexts::{FavoritesAction, RatingsStore};
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::templates::{
-    FuenteBenefits, FuenteBitcoinBanner, FuenteHotCategories, FuenteSalesPitch,
+    FuenteBenefits, FuenteBitcoinBanner, FuenteSalesPitch,
 };
 use fuente::mass::{AppLink, CommerceProfileCard};
 use fuente::models::FavoriteStore;
-use lucide_yew::{ArrowLeft, ArrowRight, Heart};
+use lucide_yew::{ArrowRight, Heart};
 use nostr_minions::key_manager::NostrIdStore;
-use web_sys::HtmlElement;
 use yew::prelude::*;
 
 #[function_component(HomePage)]

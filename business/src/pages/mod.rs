@@ -8,7 +8,6 @@ pub use history::*;
 pub use home::*;
 use lucide_yew::ArrowLeft;
 pub use new_user::*;
-pub use orders::*;
 pub use products::*;
 pub use settings::*;
 

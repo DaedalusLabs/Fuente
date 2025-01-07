@@ -2,12 +2,11 @@ use driver::{
     contexts::{
         CommerceDataProvider, DriverDataAction, DriverDataProvider, DriverDataStore, OrderHubProvider, OrderHubStore
     },
-    pages::{NewProfileForm, SettingsPageComponent},
     router::DriverPages,
 };
 use fuente::{
     contexts::{
-        AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider, LanguageConfigsStore,
+        AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider,
     },
     mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput},
     models::{
@@ -128,7 +127,6 @@ fn login_check(props: &ChildrenProps) -> Html {
 fn login_check(props: &ChildrenProps) -> Html {
     let user_ctx = use_context::<DriverDataStore>().expect("DriverDataStore not found");
     let order_ctx = use_context::<OrderHubStore>().expect("OrderHubProvider not found");
-    let bool_handle = use_state(|| false);
     if !user_ctx.finished_loading() || !order_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }

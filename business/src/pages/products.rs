@@ -2,13 +2,13 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleFormButton, SimpleInput, SimpleTextArea
+        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleInput, SimpleTextArea
     },
     models::{CommerceProfileIdb, ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
 
-use fuente::mass::{ImageUploadInput, ProductCard};
-use lucide_yew::{SquarePen, Trash};
+use fuente::mass::ImageUploadInput;
+use lucide_yew::Trash;
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -539,7 +539,7 @@ pub fn product_list_section() -> Html {
     let handle = commerce_ctx.clone();
     let keys = key_ctx.get_nostr_key();
     let sender = relay_ctx.send_note.clone();
-    let onclick = Callback::from(move |_: MouseEvent| {
+    let _onclick = Callback::from(move |_: MouseEvent| {
         if let (Some(new_menu), Some(key)) = ((*new_menu).clone(), keys.clone()) {
             let db_entry = ProductMenuIdb::new(new_menu, &key);
             sender.emit(db_entry.note());
@@ -587,7 +587,7 @@ pub fn product_list_section() -> Html {
                                 })
                             };
 
-                            let on_edit = {
+                            let _on_edit = {
                                 let editing_product = editing_product.clone();
                                 let product_clone = product.clone();
 
