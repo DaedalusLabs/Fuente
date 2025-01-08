@@ -1,9 +1,11 @@
 use fuente::mass::{templates::FuenteSidebarTemplate, AppLink};
-use lucide_yew::{Bitcoin, House, Store, Truck, UserRound, Cog};
+use lucide_yew::{Bitcoin, Cog, House, Store, Truck};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::pages::{CommerceDisplay, CommercesPage, CourierWhitelistPage, ExchangeRatePage, HomePage, SettingsPage, SettingsPageComponent};
+use crate::pages::{
+    CommercesPage, CourierWhitelistPage, ExchangeRatePage, HomePage, SettingsPageComponent,
+};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum AdminPanelRoute {

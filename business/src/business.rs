@@ -14,11 +14,8 @@ use nostr_minions::{
     key_manager::{NostrIdProvider, NostrIdStore},
     relay_pool::{RelayProvider, UserRelay},
 };
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
-
-// 80748881f453306f3129e3a040de263f3dd62726ba03273c248ac33cac59e0c5
-// 566688e5ae72ee7875376a9f2d6c6032ef0bbac1df9ed3d972eb8135a0f022a0
 
 fn main() {
     yew::Renderer::<App>::new().render();

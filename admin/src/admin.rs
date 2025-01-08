@@ -1,8 +1,8 @@
 use admin::{AdminPanelPages, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
-    mass::{AdminLoginPage, LoadingScreen, MainLayout},
-    models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
     contexts::LanguageConfigsProvider,
+    mass::{AdminLoginPage, LoadingScreen},
+    models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
 };
 use html::ChildrenProps;
 use nostr_minions::{
@@ -10,7 +10,7 @@ use nostr_minions::{
     key_manager::{NostrIdProvider, NostrIdStore},
     relay_pool::{RelayProvider, UserRelay},
 };
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
 
 fn main() {
@@ -23,8 +23,11 @@ fn app() -> Html {
         init_consumer_db().expect("Error initializing Fuente database");
         init_commerce_db().expect("Error initializing Commerce database");
         spawn_local(async move {
-            let sw = nostr_minions::browser_api::AppServiceWorker::new().expect("Error initializing service worker");
-            sw.install("serviceWorker.js").await.expect("Error installing service worker");
+            let sw = nostr_minions::browser_api::AppServiceWorker::new()
+                .expect("Error initializing service worker");
+            sw.install("serviceWorker.js")
+                .await
+                .expect("Error installing service worker");
         });
         || {}
     });
