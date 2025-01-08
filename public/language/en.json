@@ -1,4 +1,5 @@
 {
+    "nav_search": "Search for stores...",
     "nav_books": "Books",
     "nav_tech": "Tech",
     "nav_clothing": "Clothing",
@@ -347,6 +348,7 @@
     "store_products_form_label_total_price": "Total Price",
     "store_products_form_label_category": "Product Category",
     "store_products_form_label_add_button": "Add Product",
+    "store_products_form_label_none": "No products found",
     "store_products_form_label_add_category": "Add Category"
 
 }

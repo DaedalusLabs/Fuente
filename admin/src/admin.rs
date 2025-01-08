@@ -22,6 +22,10 @@ fn app() -> Html {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing Fuente database");
         init_commerce_db().expect("Error initializing Commerce database");
+        spawn_local(async move {
+            let sw = nostr_minions::browser_api::AppServiceWorker::new().expect("Error initializing service worker");
+            sw.install("serviceWorker.js").await.expect("Error installing service worker");
+        });
         || {}
     });
 

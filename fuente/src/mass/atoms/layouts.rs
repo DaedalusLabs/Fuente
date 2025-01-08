@@ -1,3 +1,4 @@
+use crate::mass::ThreeBlockSpinner;
 use html::ChildrenProps;
 use lucide_yew::ChevronRight;
 use yew::prelude::*;
@@ -23,8 +24,9 @@ pub fn layout(props: &ChildrenProps) -> Html {
 #[function_component(LoadingScreen)]
 pub fn loading_screen() -> Html {
     html! {
-        <div class="flex justify-center items-center flex-1 h-full w-full py-8 px-16">
-            <img src="/public/assets/img/logo.jpg" />
+        <div class="flex flex-col gap-8 justify-center items-center flex-1 inset-0 py-8 px-16 fixed">
+            <img src="/public/assets/img/logo.png"  class="max-w-64 max-h-64"/>
+            <ThreeBlockSpinner class="w-16 h-16 text-fuente" />
         </div>
     }
 }

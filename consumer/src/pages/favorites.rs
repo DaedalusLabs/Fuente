@@ -53,17 +53,17 @@ pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
         rating,
     } = props;
     html! {
-        <div class="border-2 border-fuente rounded-2xl p-2">
-            <div class="flex items-center justify-center lg:gap-5">
-                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-20 lg:w-28 xl:w-36 object-contain"/>
-                <div class="lg:space-y-2 flex flex-col items-center">
-                    <h3 class="text-gray-500 text-md xl:text-lg font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
-                    <p class="text-gray-500 font-light text-sm xl:text-md">{&commerce_data.description}</p>
+        <div class="border-2 border-fuente rounded-2xl p-4 shadow-md">
+            <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 lg:gap-8">
+                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-cover rounded-2xl border-2 border-fuente"/>
+                <div class="space-y-2 flex flex-col items-center sm:items-start text-center sm:text-left">
+                    <h3 class="text-gray-700 text-lg sm:text-xl lg:text-2xl font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
+                    <p class="text-gray-600 font-normal text-sm sm:text-base lg:text-lg max-w-md">{&commerce_data.description}</p>
                     {if let Some(rating) = rating {
                         html! {
-                        <div class="flex items-center gap-1">
-                            <Star class="w-7 h-7 text-yellow-400" />
-                            <p class="text-gray-500 font-light text-sm xl:text-base">{&rating.trust_score}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <Star class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                            <p class="text-gray-700 font-medium text-sm sm:text-base lg:text-lg">{&rating.trust_score}</p>
                         </div>
                         }
                     } else {

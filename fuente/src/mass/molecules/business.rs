@@ -1,7 +1,6 @@
 use yew::prelude::*;
 
 use crate::contexts::LanguageConfigsStore;
-use crate::mass::molecules::ratings::RatingDisplay;
 use crate::models::{CommerceProfile, ParticipantRating};
 
 #[derive(Clone, Properties, PartialEq)]
@@ -15,15 +14,21 @@ pub struct CommerceProfileProps {
 pub fn business_card(props: &CommerceProfileProps) -> Html {
     let CommerceProfileProps {
         commerce_data,
-        rating,
+        rating: _,
     } = props;
-    gloo::console::log!("Rendering card with rating:", format!("{:?}", rating));
+    let logo_url = if commerce_data.logo_url.is_empty() {
+        "/public/assets/img/company.png".to_string()
+    } else {
+        commerce_data.logo_url.clone()
+    };
     html! {
-        <div class="flex flex-col">
-            <img src={commerce_data.logo_url.clone()} alt={commerce_data.name.clone()}
-                class="w-full h-full min-h-96 min-w-64" />
-            <div class="mt-2 px-2">
-                <RatingDisplay rating={rating.clone()} />
+        <div class="flex flex-col items-center">
+            <div class="w-full aspect-square overflow-hidden rounded-lg -m-2">
+                <img 
+                    src={logo_url} 
+                    alt={commerce_data.name.clone()}
+                    class="w-full h-full object-cover object-center"
+                />
             </div>
         </div>
     }

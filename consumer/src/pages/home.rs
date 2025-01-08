@@ -1,9 +1,7 @@
 use crate::contexts::{FavoritesAction, RatingsStore};
 use crate::{contexts::CommerceDataStore, contexts::FavoritesStore, router::ConsumerRoute};
 use fuente::contexts::LanguageConfigsStore;
-use fuente::mass::templates::{
-    FuenteBenefits, FuenteBitcoinBanner, FuenteSalesPitch,
-};
+use fuente::mass::templates::{FuenteBenefits, FuenteBitcoinBanner, FuenteSalesPitch};
 use fuente::mass::{AppLink, CommerceProfileCard};
 use fuente::models::FavoriteStore;
 use lucide_yew::{ArrowRight, Heart};
@@ -29,7 +27,7 @@ pub fn home_page() -> Html {
                     </AppLink<ConsumerRoute>>
                 </div>
 
-                <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+                <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
             </div>
             <FuenteBitcoinBanner />
             <FuenteSalesPitch />

@@ -1,13 +1,16 @@
-use lucide_yew::{Heart, House, Menu, Search, ShoppingCart, UserRound};
+use lucide_yew::{Heart, House, Menu, Search, ShoppingCart, UserRound, X};
+use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::mass::AppLink;
+use fuente::{contexts::LanguageConfigsStore, mass::AppLink};
 
 use crate::{
-    contexts::CartStore,
+    contexts::{CartStore, CommerceDataStore},
     pages::{
-        AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage, HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage
+        AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
+        HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage,
     },
 };
 
@@ -75,18 +78,12 @@ pub fn header() -> Html {
            class="hidden lg:flex"
            selected_class=""
            route={ConsumerRoute::Home}>
-               <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
+               <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
        </AppLink<ConsumerRoute>>
 
         <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
             <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
-                <div class="relative flex items-center w-full">
-                    <input
-                        type="text"
-                        class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl"
-                    />
-                    <Search class="absolute right-4 h-6 w-6 text-fuente pointer-events-none" />
-                </div>
+                <SearchBar />
 
                 <AppLink<ConsumerRoute>
                     class="lg:hidden"
@@ -171,5 +168,131 @@ pub fn footer() -> Html {
             </div>
         </div>
     </footer>
+    }
+}
+#[function_component(SearchBar)]
+pub fn commerce_filters() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
+    let businesses = use_state(|| vec![]);
+    let is_open = use_state(|| false);
+    let wrapper_ref = use_node_ref();
+    let search_term = use_state(|| String::new());
+
+    {
+        let wrapper_clone = wrapper_ref.clone();
+        let is_open_clone = is_open.clone();
+        use_effect_with(wrapper_ref.clone(), |div_ref| {
+            let div = div_ref
+                .cast::<HtmlElement>()
+                .expect("div_ref not attached to div element");
+
+            let handler = Closure::wrap(Box::new(move |event: MouseEvent| {
+                if let Some(wrapper) = wrapper_clone.get() {
+                    if !wrapper.contains(Some(&event.target_unchecked_into())) {
+                        is_open_clone.set(false);
+                    }
+                }
+            }) as Box<dyn FnMut(_)>);
+            let handler_ref = handler.as_ref().unchecked_ref();
+            web_sys::window()
+                .expect("Window not found")
+                .add_event_listener_with_callback("mousedown", handler_ref)
+                .expect("Failed to add event listener");
+
+            move || {
+                div.remove_event_listener_with_callback("click", handler.as_ref().unchecked_ref())
+                    .unwrap();
+            }
+        });
+    }
+
+    let businesses_clone = businesses.clone();
+    use_effect_with(search_term.clone(), move |search_term| {
+        let search_term = search_term.clone();
+        businesses_clone.set(
+            commerce_ctx
+                .commerces()
+                .iter()
+                .filter(|profile| {
+                    profile
+                        .profile()
+                        .name
+                        .to_lowercase()
+                        .contains(&*search_term.to_lowercase())
+                })
+                .cloned()
+                .collect(),
+        );
+        || {}
+    });
+
+    let set_search_term = {
+        let search_term = search_term.clone();
+        let is_open = is_open.clone();
+        Callback::from(move |e: InputEvent| {
+            let value = e.target_unchecked_into::<HtmlInputElement>().value();
+            search_term.set(value);
+            is_open.set(true);
+        })
+    };
+    let clear_search = {
+        let search_term = search_term.clone();
+        let is_open = is_open.clone();
+        Callback::from(move |_| {
+            search_term.set(String::new());
+            is_open.set(false);
+        })
+    };
+    html! {
+    <div ref={wrapper_ref} class="relative w-full max-w-2xl mx-auto">
+        <div class="relative">
+            <input
+                type="text"
+                value={(*search_term).clone()}
+                oninput={set_search_term}
+                placeholder={translations["nav_search"].clone()}
+                class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
+            />
+            {if search_term.is_empty() {
+                html! {
+                    <div class="absolute top-3 right-4 text-fuente pointer-events-none" >
+                        <Search class="w-6 h-6 text-fuente" />
+                    </div>
+                }
+            } else { html! {
+                    <button
+                        type="button"
+                        onclick={clear_search}
+                        class="absolute inset-y-0 right-0 flex items-center pr-3"
+                        >
+                        <X class="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                    </button>
+            } }}
+        </div>
+        {if *is_open && businesses.len() > 0 {
+            html! {
+                <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <ul class="py-1">
+                        {businesses.iter().map(|profile| {
+                            let commerce_data = profile.profile().clone();
+                            let commerce_id = profile.id().to_string();
+                            html! {
+                                <li class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-fuente font-semibold">
+                                    <AppLink<ConsumerRoute>
+                                        class="block"
+                                        selected_class=""
+                                        route={ConsumerRoute::Commerce { commerce_id: commerce_id.clone() }}>
+                                        {commerce_data.name}
+                                    </AppLink<ConsumerRoute>>
+                                </li>
+                            }
+                        }).collect::<Html>()}
+                    </ul>
+                </div>
+            }
+        } else { html! {} }}
+    </div>
     }
 }

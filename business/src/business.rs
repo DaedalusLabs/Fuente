@@ -30,6 +30,13 @@ fn app() -> Html {
         init_commerce_db().unwrap();
         init_consumer_db().unwrap();
         init_nostr_db().unwrap();
+        spawn_local(async move {
+            let sw = nostr_minions::browser_api::AppServiceWorker::new()
+                .expect("Error initializing service worker");
+            sw.install("serviceWorker.js")
+                .await
+                .expect("Error installing service worker");
+        });
         || {}
     });
     html! {

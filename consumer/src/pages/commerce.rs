@@ -28,10 +28,7 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
     let commerce_profile = commerce_ctx
         .find_commerce_by_id(commerce_id)
         .expect("No commerce found");
-    let products = commerce_ctx
-        .find_product_list_by_id(commerce_id)
-        .expect("No products found");
-    let products = products.menu();
+    let products = commerce_ctx.find_product_list_by_id(commerce_id);
     let commerce_profile = commerce_profile.profile();
 
     let product_handle = use_state(|| None::<ProductItem>);
@@ -66,17 +63,22 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
             }
         })
     };
-    let mut all_products = products
-        .categories()
-        .iter()
-        .flat_map(|category| {
-            category
-                .products()
-                .iter()
-                .map(|product| product.clone())
-                .collect::<Vec<ProductItem>>()
-        })
-        .collect::<Vec<ProductItem>>();
+    let mut all_products = if let Some(products) = products {
+        products
+            .menu()
+            .categories()
+            .iter()
+            .flat_map(|category| {
+                category
+                    .products()
+                    .iter()
+                    .map(|product| product.clone())
+                    .collect::<Vec<ProductItem>>()
+            })
+            .collect::<Vec<ProductItem>>()
+    } else {
+        vec![]
+    };
     match product_filter.as_ref() {
         Some(ProductFilter::Price(forward)) => {
             all_products.sort_by(|a, b| match forward {
@@ -103,9 +105,16 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
                     {&commerce_profile.name}
                 </h1>
 
-                <div class="xl:relative flex items-center justify-center lg:justify-start gap-10 md:gap-0 bg-fuente rounded-2xl h-32 sm:h-44 lg:h-60 pr-5 w-full">
-                    <img src={commerce_profile.banner_url.clone()} alt={commerce_profile.name.clone()}
-                    class="w-full h-full object-cover" />
+                <div class="relative flex items-center justify-center lg:justify-start gap-10 md:gap-0 bg-fuente rounded-2xl h-32 sm:h-44 lg:h-60 pr-5 w-full overflow-hidden">
+                    <img
+                        src={if commerce_profile.banner_url.is_empty() {
+                            "/public/assets/img/company.png".to_string()
+                        } else {
+                            commerce_profile.banner_url.clone()
+                        }}
+                        alt={commerce_profile.name.clone()}
+                        class="absolute inset-0 w-full h-full object-cover object-center"
+                    />
                 </div>
             </section>
 

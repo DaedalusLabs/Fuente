@@ -1,4 +1,5 @@
 {
+    "nav_search": "Zoek naar winkels...",
     "nav_books": "Boeken",
     "nav_tech": "Techniek",
     "nav_clothing": "Kleding",
@@ -347,5 +348,6 @@
     "store_products_form_label_total_price": "Totaalprijs",
     "store_products_form_label_category": "Productcategorie",
     "store_products_form_label_add_button": "Voeg Product Toe",
+    "store_products_form_label_none": "Geen producten gevonden",
     "store_products_form_label_add_category": "Voeg Categorie Toe"
 }

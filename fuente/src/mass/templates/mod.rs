@@ -285,9 +285,9 @@ pub fn sales_pitch() -> Html {
     html! {
     <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-7">
         <div class="flex">
-            <img src="templates/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10" />
-            <img src="templates/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20" />
-            <img src="templates/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex"/>
+            <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10" />
+            <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20" />
+            <img src="/public/assets/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex"/>
         </div>
 
         <div class="mx-auto lg:mx-0 lg:ml-auto">

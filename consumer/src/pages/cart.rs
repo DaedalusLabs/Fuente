@@ -59,7 +59,7 @@ pub fn empty_cart() -> Html {
                 </AppLink<ConsumerRoute>>
             </div>
 
-            <img src="/templates/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+            <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
         </div>
         </>
     }
@@ -357,11 +357,11 @@ pub struct OrderInvoiceProps {
 pub fn checkout_summary(props: &OrderInvoiceProps) -> Html {
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let order_ctx = use_context::<LiveOrderStore>().expect("LiveOrderStore not found");
+    let cart_ctx = use_context::<CartStore>().expect("CartStore not found");
     let navigator = use_navigator().unwrap();
     let exchange_rate = admin_ctx.get_exchange_rate();
     let order_id = props.order_id.clone();
 
-    // Effect to watch payment status changes
     {
         let navigator = navigator.clone();
         use_effect_with(order_ctx.live_orders.clone(), move |order| {
@@ -370,6 +370,7 @@ pub fn checkout_summary(props: &OrderInvoiceProps) -> Html {
                     OrderPaymentStatus::PaymentReceived => {
                         // Changed from PaymentPending
                         if let Some(order_id) = order_state.order.id.clone() {
+                            cart_ctx.dispatch(CartAction::ClearCart);
                             navigator.push(&ConsumerRoute::Order { order_id });
                         }
                     }
