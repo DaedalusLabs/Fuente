@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{"Store - Orders Ready to Delivery"}</title>
+    <link rel="stylesheet" href="../../../styles/output.css">
+</head>
+<body class="font-fuente">
+    <header class="container hidden mx-auto py-10 lg:flex justify-center lg:justify-between">
+        <a href="/templates/views/app/home.html" class="hidden lg:flex">
+            <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
+        </a>
+    
+        <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
+                <div class="relative flex items-center w-full">
+                    <input 
+                        type="text" 
+                        class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl"
+                    />
+                    <svg 
+                        class="absolute right-4 h-6 w-6 text-fuente pointer-events-none" 
+                        fill="none" 
+                        height="24" 
+                        stroke="currentColor" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                        stroke-width="2" 
+                        viewBox="0 0 24 24" 
+                        width="24" 
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                    </svg>
+                </div>
+            
+                <button class="lg:hidden">
+                    <svg 
+                        viewBox="0 0 32 32" 
+                        xml:space="preserve" 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        enable-background="new 0 0 32 32" 
+                        class="bg-fuente h-14 w-14 p-2 rounded-xl"
+                    >
+                        <path 
+                            d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                            fill="#ffffff" 
+                            class="fill-000000">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex gap-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+        
+                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                    <rect fill="none" height="256" width="256" />
+                    <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                </svg>
+        
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <nav class="hidden lg:flex lg:justify-center max-w-6xl mx-auto">
+        <div class="flex gap-5 justify-between">
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Hardware"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Pharmacy"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Groceries"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Music"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Movies"}</a>
+            <a href="#" class="text-fuente-dark font-semibold text-xl">{"Furniture"}</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto lg:mt-10">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+            <h1 class="text-fuente text-4xl text-center lg:text-left py-10 lg:pb-0 lg:text-6xl tracking-tighter font-bold">{"My Orders"}</h1>
+            <button class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
+        </div>
+
+        <div class="mt-5 lg:hidden w-full flex flex-wrap justify-between gap-1">
+            <button class="bg-gray-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M16 31C7.729 31 1 24.271 1 16S7.729 1 16 1s15 6.729 15 15-6.729 15-15 15zm0-28C8.832 3 3 8.832 3 16s5.832 13 13 13 13-5.832 13-13S23.168 3 16 3z" fill="#ffffff" class="fill-000000"></path><path d="M16 8.799a1 1 0 0 1-1-1V6.308a1 1 0 1 1 2 0v1.49a1 1 0 0 1-1 1zM16 26.692a1 1 0 0 1-1-1v-1.49a1 1 0 1 1 2 0v1.49a1 1 0 0 1-1 1zM21.799 11.2a1 1 0 0 1-.707-1.708l1.054-1.053a1 1 0 1 1 1.415 1.415l-1.055 1.054a.997.997 0 0 1-.707.293zM9.146 23.854a1 1 0 0 1-.707-1.707l1.055-1.055a1 1 0 1 1 1.414 1.415L9.854 23.56a.997.997 0 0 1-.708.293zM25.692 17h-1.49a1 1 0 1 1 0-2h1.49a1 1 0 1 1 0 2zM7.799 17H6.308a1 1 0 1 1 0-2h1.49a1 1 0 1 1 0 2zM22.854 23.854a.997.997 0 0 1-.708-.293l-1.054-1.054a1 1 0 0 1 1.414-1.415l1.055 1.054a1 1 0 0 1-.707 1.708zM10.201 11.2a.997.997 0 0 1-.707-.292L8.44 9.854a1 1 0 1 1 1.415-1.415l1.054 1.054a1 1 0 0 1-.707 1.708z" fill="#ffffff" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <button class="bg-orange-500 rounded-lg md:rounded-xl p-2">
+                <svg data-name="Layer 1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M12 13.41 13.41 12 8.46 7.05 7.05 8.46Zm7.07-8.48A9.93 9.93 0 0 0 12 2h-1v4h2V4.06a8 8 0 1 1-6.66 2.28l.71-.7-1.41-1.42-.71.71a10 10 0 1 0 14.14 14.14 10 10 0 0 0 0-14.14Z" fill="#ffffff" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <div class="border-2 border-sky-500 p-2 rounded-lg flex items-center justify-center">
+                <p class="text-sky-500 font-bold text-md text-center">{"In Delivery"}</p>
+            </div>
+
+            <button class="bg-orange-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <g data-name="14. Delivery Truck"><path d="M7 5h6v3.88A1.12 1.12 0 0 1 11.88 10H8.12A1.12 1.12 0 0 1 7 8.88V5Z" fill="#ffffff" class="fill-77acf1"></path><path d="m31.41 17-1.54-1.54-1.69-5.09A2 2 0 0 0 26.28 9H20V7a3 3 0 0 0-3-3H3a3 3 0 0 0-3 3v15a3 3 0 0 0 3 3h1.14a4 4 0 1 0 0-2H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v16h-3a1 1 0 0 0 0 2h6.14a4 4 0 0 0 7.72 0H30a2 2 0 0 0 2-2v-4.59a2 2 0 0 0-.59-1.41ZM8 22a2 2 0 1 1-2 2 2 2 0 0 1 2-2Zm19.61-7H24v-4h2.28ZM25 26a2 2 0 1 1 2-2 2 2 0 0 1-2 2Zm5-3h-1.14a4 4 0 0 0-7.72 0H20V11h2v5a1 1 0 0 0 1 1h5.59L30 18.41Z" fill="#ffffff" class="fill-04009a"></path></g>
+                </svg>
+            </button>
+
+            <button class="bg-green-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 18 15" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M6 10.7 1.8 6.5.4 7.9 6 13.5l12-12L16.6.1 6 10.7Z" fill="#ffffff" fill-rule="evenodd" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <button class="bg-red-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path fill-rule="evenodd" d="m8 9.414-4.293 4.293-1.414-1.414L6.586 8 2.293 3.707l1.414-1.414L8 6.586l4.293-4.293 1.414 1.414L9.414 8l4.293 4.293-1.414 1.414L8 9.414z" fill="#ffffff" class="fill-000000"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="lg:hidden bg-sky-100 h-[500px] overflow-y-scroll mt-5 rounded-2xl px-2 py-2 space-y-3">
+            <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                <div class="flex">
+                    <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                    <p class="font-bold">|</p>
+                    <p class="font-bold">{"Order #1234567"}</p>
+                </div>
+                <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+            </div>
+
+            <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                <div class="flex">
+                    <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                    <p class="font-bold">|</p>
+                    <p class="font-bold">{"Order #1234567"}</p>
+                </div>
+                <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+            </div>
+        </div>
+
+        <div class="hidden lg:flex justify-center gap-10 mt-10 min-h-96">
+            <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-gray-500 rounded-2xl py-3 px-2">
+                        <p class="text-gray-500 text-lg font-semibold text-center">{"Pending"}</p>
+                    </div>
+
+                    <div class="bg-gray-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+                        
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-orange-500 rounded-2xl py-3 px-2">
+                        <p class="text-orange-500 text-lg font-semibold text-center">{"Preparing"}</p>
+                    </div>
+
+                    <div class="bg-orange-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 lg:w-[65%] xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-sky-500 rounded-2xl py-3 px-2">
+                        <p class="text-sky-500 text-lg font-semibold text-center">{"Ready to Delivery"}</p>
+                    </div>
+
+                    <div class="bg-sky-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-orange-500 rounded-2xl py-3 px-2">
+                        <p class="text-orange-500 text-lg font-semibold text-center">{"In Delivery"}</p>
+                    </div>
+
+                    <div class="bg-orange-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-green-500 rounded-2xl py-3 px-2">
+                        <p class="text-green-500 text-lg font-semibold text-center">{"Completed"}</p>
+                    </div>
+
+                    <div class="bg-green-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2">
+                        <p class="text-red-500 text-lg font-semibold text-center">{"Canceled"}</p>
+                    </div>
+
+                    <div class="bg-red-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <nav class="w-[98%] mx-auto lg:hidden bg-white shadow-2xl shadow-gray-900 py-5 px-10 rounded-2xl flex items-center justify-between gap-5 mt-10 mb-1">
+        <button class="bg-white">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="m20 8-6-5.26a3 3 0 0 0-4 0L4 8a3 3 0 0 0-1 2.26V19a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8.75A3 3 0 0 0 20 8Zm-6 12h-4v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1Zm5-1a1 1 0 0 1-1 1h-2v-5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v5H6a1 1 0 0 1-1-1v-8.75a1 1 0 0 1 .34-.75l6-5.25a1 1 0 0 1 1.32 0l6 5.25a1 1 0 0 1 .34.75Z" fill="#4167e8" class="fill-6563ff"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" xml:space="preserve" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" class="h-8 w-8">
+                <path d="M31 3a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V3Zm-4 2v22H5V5h22ZM31 35a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V35Zm-4 2v22H5V37h22ZM63 3a2 2 0 0 0-2-2H35a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V3Zm-4 2v22H37V5h22ZM63 41.297A8.297 8.297 0 0 0 54.704 33H41.296A8.297 8.297 0 0 0 33 41.297v13.406A8.297 8.297 0 0 0 41.296 63h13.408A8.297 8.297 0 0 0 63 54.703V41.297Zm-4 0v13.406A4.297 4.297 0 0 1 54.704 59H41.296A4.297 4.297 0 0 1 37 54.703V41.297A4.297 4.297 0 0 1 41.296 37h13.408A4.297 4.297 0 0 1 59 41.297Z" fill="#4167e8" class="fill-000000"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg viewBox="0 0 20 21" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="M10.5.5C7 .5 3.9 2.4 2.3 5.3L0 3v6.5h6.5L3.7 6.7C5 4.2 7.5 2.5 10.5 2.5c4.1 0 7.5 3.4 7.5 7.5s-3.4 7.5-7.5 7.5c-3.3 0-6-2.1-7.1-5H1.3c1.1 4 4.8 7 9.2 7 5.3 0 9.5-4.3 9.5-9.5S15.7.5 10.5.5ZM9 5.5v5.1l4.7 2.8.8-1.3-4-2.4V5.5H9Z" fill="#4167e8" opacity=".9" fill-rule="evenodd" class="fill-000000"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32" class="h-8 w-8">
+                <path d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" fill="#4167e8" class="fill-000000 fill-ffffff"></path>
+            </svg>
+        </button>
+    
+        <button>
+            <svg data-name="Layer 1" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="M24 21a10 10 0 1 1 10-10 10 10 0 0 1-10 10Zm0-16a6 6 0 1 0 6 6 6 6 0 0 0-6-6ZM42 47H6a2 2 0 0 1-2-2v-6a16 16 0 0 1 16-16h8a16 16 0 0 1 16 16v6a2 2 0 0 1-2 2ZM8 43h32v-4a12 12 0 0 0-12-12h-8A12 12 0 0 0 8 39Z" fill="#2aa1e2" class="fill-000000"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <footer class="hidden lg:block bg-fuente p-10 lg:p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
+            <a href="/templates//views/app/home.html">
+                <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
+            </a>
+    
+            <svg 
+                viewBox="0 0 32 32" 
+                xml:space="preserve" 
+                xmlns="http://www.w3.org/2000/svg" 
+                enable-background="new 0 0 32 32" 
+                class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden"
+            >
+                <path 
+                    d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                    fill="#ffffff" 
+                    class="fill-000000">
+                </path>
+            </svg>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"About Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"How to sale?"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Why is secure?"}</p>
+                </div>
+            </div>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Shipping and collections of orders"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Payment methods"}</p>
+                </div>
+            </div>
+    
+            <div class="hidden lg:block">
+                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
+                <div class="mt-5 space-y-3">
+                    <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"General policies"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Privacy Policy"}</p>
+                    <p class="text-white font-light text-lg">&gt; {"Return and exchanges"}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
