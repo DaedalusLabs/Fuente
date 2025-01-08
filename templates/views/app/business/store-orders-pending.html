@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{Store Profile - Address}</title>
+    <title>{"Store - Orders Pending"}</title>
     <link rel="stylesheet" href="../../../styles/output.css">
 </head>
-<body class="min-h-screen flex flex-col font-fuente">
-    <header class="hidden container mx-auto py-10 lg:flex justify-center lg:justify-between">
+<body class="font-fuente">
+    <header class="container hidden mx-auto py-10 lg:flex justify-center lg:justify-between">
         <a href="/templates/views/app/home.html" class="hidden lg:flex">
             <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
         </a>
@@ -79,7 +79,7 @@
             </div>
         </div>
     </header>
-    
+
     <nav class="hidden lg:flex lg:justify-center max-w-6xl mx-auto">
         <div class="flex gap-5 justify-between">
             <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
@@ -94,67 +94,180 @@
         </div>
     </nav>
 
-    <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row justify-between">
-        <h1 class="text-fuente py-5 text-4xl text-center lg:text-left lg:text-6xl font-bold tracking-tighter">{"My Store Profile"}</h1>
-
-        <div class="flex items-center justify-center lg:justify-start gap-4 py-5 lg:py-0">
-            <div class="flex justify-center items-center">
-                <button type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
-
-                    <svg viewBox="0 0 30 30" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 30 30" class="h-8 w-8"><path d="M7 22V4h18v18a4 4 0 0 1-4 4" fill="none" stroke="#4167e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M17 22h0H4h0a4 4 0 0 0 4 4h13a4 4 0 0 1-4-4z" fill="none" stroke="#4167e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M15 13h6M11 13h2M15 17h6M11 17h2M15 9h6M11 9h2" fill="none" stroke="#4167e8" stroke-width="2" stroke-linejoin="round" stroke-miterlimit="10" class="stroke-000000"></path><path d="M17 22H4a4 4 0 0 0 4 4h13a4 4 0 0 1-4-4z" fill="#4167e8" class="fill-000000"></path></svg>
-
-                    <span class="text-lg font-bold text-center">{"My Orders"}</span>
-                </button>
-            </div>
-            <div class="lg:flex justify-center items-center hidden">
-                <button type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
-                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
-                        <g data-name="14. Delivery Truck"><path d="M7 5h6v3.88A1.12 1.12 0 0 1 11.88 10H8.12A1.12 1.12 0 0 1 7 8.88V5Z" fill="#4167e8" class="fill-77acf1"></path><path d="m31.41 17-1.54-1.54-1.69-5.09A2 2 0 0 0 26.28 9H20V7a3 3 0 0 0-3-3H3a3 3 0 0 0-3 3v15a3 3 0 0 0 3 3h1.14a4 4 0 1 0 0-2H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v16h-3a1 1 0 0 0 0 2h6.14a4 4 0 0 0 7.72 0H30a2 2 0 0 0 2-2v-4.59a2 2 0 0 0-.59-1.41ZM8 22a2 2 0 1 1-2 2 2 2 0 0 1 2-2Zm19.61-7H24v-4h2.28ZM25 26a2 2 0 1 1 2-2 2 2 0 0 1-2 2Zm5-3h-1.14a4 4 0 0 0-7.72 0H20V11h2v5a1 1 0 0 0 1 1h5.59L30 18.41Z" fill="#4167e8" class="fill-04009a"></path></g>
-                    </svg>
-
-                    <span class="text-lg font-bold text-center">{"Track Packages"}</span>
-                </button>
-            </div>
-
-            <div class="flex justify-center items-center">
-                <button type="button" class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
-                        <path d="M5.4 24h13.2a4 4 0 0 0 3.968-4.5l-1.25-10A4.005 4.005 0 0 0 17.352 6H17V5A5 5 0 0 0 7 5v1h-.352A4.005 4.005 0 0 0 2.68 9.5l-1.25 10A4 4 0 0 0 5.4 24ZM9 5a3 3 0 0 1 6 0v1H9ZM3.414 19.752l1.25-10A2 2 0 0 1 6.648 8H7v2a1 1 0 0 0 2 0V8h6v2a1 1 0 0 0 2 0V8h.352a2 2 0 0 1 1.984 1.752l1.25 10A2 2 0 0 1 18.6 22H5.4a2 2 0 0 1-1.984-2.248Z" fill="#4167e8" class="fill-232323"></path>
-                    </svg>
-
-                    <span class="text-lg font-bold text-center">{"My Store"}</span>
-                </button>
-            </div>
+    <main class="container mx-auto lg:mt-10">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+            <h1 class="text-fuente text-4xl text-center lg:text-left py-10 lg:pb-0 lg:text-6xl tracking-tighter font-bold">{"My Orders"}</h1>
+            <button class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold">{"View Historic"}</button>
         </div>
-    </div>
-    
-    <main class="container mx-auto flex-grow">
-        <div class="flex flex-col lg:flex-row gap-10">
-            <aside class="flex lg:flex-col gap-3">
-                <a class="flex items-center justify-center lg:justify-start text-center lg:text-left w-full mt-4 lg:mt-0 py-4 px-8 rounded-2xl font-bold text-md lg:text-lg bg-gray-100 text-gray-500 tracking-wide" href="/templates/views/app/profile-address.html">
-                    {"Store Information"}
-                </a>
-                <a class="text-center lg:text-left w-full mt-4 py-4 px-8 rounded-2xl font-bold text-md lg:text-lg bg-fuente text-white tracking-wide flex items-center justify-center" href="/templates/views/app/profile-personal.html">
-                    {"Address"}
-                </a>
-            </aside>
 
-            <div class="border border-fuente rounded-xl flex-1 p-5 lg:p-10">
-                <button type="button" class="flex justify-end mb-5 lg:mb-0 w-full gap-4 tracking-wide">
-                    <span class="text-fuente font-bold text-xl">{"Edit"}</span>
-                    <svg class="feather feather-edit text-fuente" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                </button>
-                <div class="w-full">
-                    <p class="text-xl font-bold text-gray-500">{"Address Registered"}</p>
-                    <span class="text-xl font-thin text-gray-500">{"Cali Street, New York, United States, 11232"}</span>
+        <div class="mt-5 lg:hidden w-full flex flex-wrap justify-between gap-1">
+            <div class="border-2 border-gray-400 p-2 rounded-lg flex items-center justify-center">
+                <p class="text-gray-400 font-bold text-md text-center">{"Pending"}</p>
+            </div>
+
+            <button class="bg-orange-500 rounded-lg md:rounded-xl p-2">
+                <svg data-name="Layer 1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M12 13.41 13.41 12 8.46 7.05 7.05 8.46Zm7.07-8.48A9.93 9.93 0 0 0 12 2h-1v4h2V4.06a8 8 0 1 1-6.66 2.28l.71-.7-1.41-1.42-.71.71a10 10 0 1 0 14.14 14.14 10 10 0 0 0 0-14.14Z" fill="#ffffff" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <button class="bg-sky-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M5.9 8.1 4.5 9.5 9 14 19 4l-1.4-1.4L9 11.2 5.9 8.1ZM18 10c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8c.8 0 1.5.1 2.2.3L13.8.7C12.6.3 11.3 0 10 0 4.5 0 0 4.5 0 10s4.5 10 10 10 10-4.5 10-10h-2Z" fill="#ffffff" fill-rule="evenodd" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <button class="bg-orange-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <g data-name="14. Delivery Truck"><path d="M7 5h6v3.88A1.12 1.12 0 0 1 11.88 10H8.12A1.12 1.12 0 0 1 7 8.88V5Z" fill="#ffffff" class="fill-77acf1"></path><path d="m31.41 17-1.54-1.54-1.69-5.09A2 2 0 0 0 26.28 9H20V7a3 3 0 0 0-3-3H3a3 3 0 0 0-3 3v15a3 3 0 0 0 3 3h1.14a4 4 0 1 0 0-2H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v16h-3a1 1 0 0 0 0 2h6.14a4 4 0 0 0 7.72 0H30a2 2 0 0 0 2-2v-4.59a2 2 0 0 0-.59-1.41ZM8 22a2 2 0 1 1-2 2 2 2 0 0 1 2-2Zm19.61-7H24v-4h2.28ZM25 26a2 2 0 1 1 2-2 2 2 0 0 1-2 2Zm5-3h-1.14a4 4 0 0 0-7.72 0H20V11h2v5a1 1 0 0 0 1 1h5.59L30 18.41Z" fill="#ffffff" class="fill-04009a"></path></g>
+                </svg>
+            </button>
+
+            <button class="bg-green-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 18 15" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path d="M6 10.7 1.8 6.5.4 7.9 6 13.5l12-12L16.6.1 6 10.7Z" fill="#ffffff" fill-rule="evenodd" class="fill-000000"></path>
+                </svg>
+            </button>
+
+            <button class="bg-red-500 rounded-lg md:rounded-xl p-2">
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8">
+                    <path fill-rule="evenodd" d="m8 9.414-4.293 4.293-1.414-1.414L6.586 8 2.293 3.707l1.414-1.414L8 6.586l4.293-4.293 1.414 1.414L9.414 8l4.293 4.293-1.414 1.414L8 9.414z" fill="#ffffff" class="fill-000000"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="lg:hidden bg-gray-100 h-[500px] overflow-y-scroll mt-5 rounded-2xl px-2 py-2 space-y-3">
+            <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                <div class="flex">
+                    <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                    <p class="font-bold">|</p>
+                    <p class="font-bold">{"Order #1234567"}</p>
                 </div>
+                <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+            </div>
+
+            <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                <div class="flex">
+                    <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                    <p class="font-bold">|</p>
+                    <p class="font-bold">{"Order #1234567"}</p>
+                </div>
+                <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
             </div>
         </div>
 
-        <div class="w-full lg:flex lg:justify-end my-5">
-            <button class="w-full lg:w-fit font-bold text-lg bg-fuente-buttons text-fuente py-3 px-7 rounded-full">{"Add new address"}</button>
+        <div class="hidden lg:flex justify-center gap-10 mt-10 min-h-96">
+            <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-gray-500 rounded-2xl py-3 px-2">
+                        <p class="text-gray-500 text-lg font-semibold text-center">{"Pending"}</p>
+                    </div>
+
+                    <div class="bg-gray-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+
+                        <div class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+                            <p class="text-fuente font-bold text-md">{"Christine Amador"}</p>
+                            <p class="font-bold">{"Order #1234567"}</p>
+                            <p class="text-gray-500 text-xs">{"16/12/2024 | 1:20PM"}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-orange-500 rounded-2xl py-3 px-2">
+                        <p class="text-orange-500 text-lg font-semibold text-center">{"Preparing"}</p>
+                    </div>
+
+                    <div class="bg-orange-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 lg:w-[65%] xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-sky-500 rounded-2xl py-3 px-2">
+                        <p class="text-sky-500 text-lg font-semibold text-center">{"Ready to Delivery"}</p>
+                    </div>
+
+                    <div class="bg-sky-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-orange-500 rounded-2xl py-3 px-2">
+                        <p class="text-orange-500 text-lg font-semibold text-center">{"In Delivery"}</p>
+                    </div>
+
+                    <div class="bg-orange-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
+                <section>
+                    <div class="border-2 border-green-500 rounded-2xl py-3 px-2">
+                        <p class="text-green-500 text-lg font-semibold text-center">{"Completed"}</p>
+                    </div>
+
+                    <div class="bg-green-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+
+                <section>
+                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2">
+                        <p class="text-red-500 text-lg font-semibold text-center">{"Canceled"}</p>
+                    </div>
+
+                    <div class="bg-red-100 h-[500px] overflow-y-scroll mt-2 rounded-2xl px-2 py-2 space-y-3">
+
+                    </div>
+                </section>
+            </div>
         </div>
     </main>
 
@@ -190,7 +303,7 @@
         </button>
     </nav>
 
-    <footer class="bg-fuente hidden lg:block p-10 lg:p-20 mt-40">
+    <footer class="hidden lg:block bg-fuente p-10 lg:p-20 mt-40">
         <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
             <a href="/templates//views/app/home.html">
                 <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>

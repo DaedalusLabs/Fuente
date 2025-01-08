@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="../styles/output.css">
+
 <main class="bg-white rounded-2xl py-5 px-10 max-w-xl ml-auto">
     <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
         <div>
@@ -5,9 +7,15 @@
             <p class="text-gray-500 font-light text-lg">{"Order details"}</p>
         </div>
 
-        <button
-            class="border-2 border-sky-400 text-sky-400 bg-white rounded-2xl py-3 px-4 text-center font-semibold">{"Ready
-            to Delivery"}</button>
+        <div class="flex items-center gap-5">
+            <button
+                class="border-2 border-sky-400 text-sky-400 bg-white rounded-2xl py-3 px-4 text-center font-semibold">{"Ready to Delivery"}
+            </button>
+
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="lg:hidden h-6 w-6">
+                <path fill-rule="evenodd" d="m8 9.414-4.293 4.293-1.414-1.414L6.586 8 2.293 3.707l1.414-1.414L8 6.586l4.293-4.293 1.414 1.414L9.414 8l4.293 4.293-1.414 1.414L8 9.414z" fill="#4167e8" class="fill-000000"></path>
+            </svg>
+        </div>
     </div>
 
     <h3 class="text-gray-500 mt-5 font-light">{"Products"}</h3>
@@ -76,7 +84,7 @@
     </section>
 
     <form class="mt-5">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col lg:flex-row justify-between items-center">
             <label for="status" class="text-gray-500 font-light text-lg w-full">{"Status order"}</label>
             <select id="status" class="py-3 px-5 rounded-xl border border-gray-500 w-full text-gray-500">
                 <option value="">{"Select status"}</option>
