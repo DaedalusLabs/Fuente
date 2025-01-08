@@ -26,6 +26,7 @@ fn app() -> Html {
     });
 
     html! {
+        <LanguageConfigsProvider >
         <BrowserRouter>
            <AppContext>
                 <LoginCheck>
@@ -33,6 +34,7 @@ fn app() -> Html {
                 </LoginCheck>
            </AppContext>
         </BrowserRouter>
+        </LanguageConfigsProvider>
     }
 }
 
@@ -58,7 +60,6 @@ fn app_context(props: &ChildrenProps) -> Html {
         },
     ];
     html! {
-        <LanguageConfigsProvider >
             <RelayProvider {relays}>
                 <NostrIdProvider>
                     <ServerConfigsProvider>
@@ -66,7 +67,6 @@ fn app_context(props: &ChildrenProps) -> Html {
                     </ServerConfigsProvider>
                 </NostrIdProvider>
             </RelayProvider>
-        </LanguageConfigsProvider>
     }
 }
 
@@ -80,9 +80,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     let keys = key_ctx.get_nostr_key();
     if keys.is_none() {
         return html! {
-            <div class="flex justify-center items-center flex-1">
-                <AdminLoginPage />
-            </div>
+            <AdminLoginPage />
         };
     }
     if !server_ctx.is_loaded() {

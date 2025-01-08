@@ -173,26 +173,28 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
 
     use_effect_with((), move |_| || {});
     let subscriber = relay_ctx.subscribe.clone();
-    use_effect_with((), move |_| {
-        let mut courier_filter = nostro2::relays::NostrSubscription {
-            kinds: Some(vec![NOSTR_KIND_CONSUMER_GIFTWRAP]),
-            ..Default::default()
-        };
-        courier_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
-        subscriber.emit(courier_filter.relay_subscription());
-        let commerce_filter = nostro2::relays::NostrSubscription {
-            kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
-            ..Default::default()
-        };
-        subscriber.emit(commerce_filter.relay_subscription());
-        let filter = nostro2::relays::NostrSubscription {
-            kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
-            authors: Some(vec![TEST_PUB_KEY.to_string()]),
-            ..Default::default()
-        };
-        let subscription = filter.relay_subscription();
-        sub_handler.set(Some(subscription.1.clone()));
-        subscriber.emit(subscription);
+    use_effect_with(user_ctx.get_nostr_key().clone(), move |key| {
+        if let Some(_) = key {
+            let mut courier_filter = nostro2::relays::NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_CONSUMER_GIFTWRAP]),
+                ..Default::default()
+            };
+            courier_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
+            subscriber.emit(courier_filter.relay_subscription());
+            let commerce_filter = nostro2::relays::NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
+                ..Default::default()
+            };
+            subscriber.emit(commerce_filter.relay_subscription());
+            let filter = nostro2::relays::NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
+                authors: Some(vec![TEST_PUB_KEY.to_string()]),
+                ..Default::default()
+            };
+            let subscription = filter.relay_subscription();
+            sub_handler.set(Some(subscription.1.clone()));
+            subscriber.emit(subscription);
+        }
         || {}
     });
 

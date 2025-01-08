@@ -205,16 +205,15 @@ pub fn new_user_form(props: &AuthPageProps) -> Html {
 #[function_component(AdminLoginPage)]
 pub fn admin_login() -> Html {
     html! {
-        <div class="flex flex-col h-full sm:max-w-sm md:max-w-md lg:max-w-lg items-center justify-center gap-4">
-            <div class="flex items-center justify-center select-none">
-                <img src="/public/assets/img/logo.png" alt="Fuente Logo" class="w-24 h-24" />
-            </div>
-            <AdminLoginForm />
+        <div class="h-dvh w-dvw">
+        <AdminLoginForm />
         </div>
     }
 }
 #[function_component(AdminLoginForm)]
 pub fn import_user_form() -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
+    let translations = language_ctx.translations();
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
@@ -236,10 +235,10 @@ pub fn import_user_form() -> Html {
 
     html! {
         <LoginPageTemplate 
-            heading={"Admin Login".to_string()} 
-            sub_heading={"Login to access the admin dashboard".to_string()} 
-            title={"Admin Login".to_string()}>
-            <form {onsubmit} class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
+            heading={"".to_string()}
+            sub_heading={"".to_string()}
+            title={translations["auth_login_title"].clone()}>
+            <form {onsubmit} class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative">
                 <div class="space-y-1">
                     <label
                         for="password"

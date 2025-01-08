@@ -56,7 +56,7 @@ pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 pub const STORE_NAME_CONSUMER_FAVORITES: &str = "consumer_favorites";
 
 pub const ADMIN_WHITELIST: [&str; 1] = [
-    "63295e2ea1fffdc000b851c7298d1723c317e1f7d488241536f41feb420d0acd",
+    "f6e2f850a7f9e6ba6fd1e7f60bd68bbf2e0b3c0a1f27bb8edf802baadb7cbf51",
 ];
 
 pub fn init_consumer_db() -> Result<(), JsValue> {
