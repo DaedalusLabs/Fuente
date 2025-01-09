@@ -3,18 +3,15 @@ mod registries;
 mod state;
 mod uploads;
 
-const RELAY_URLS: [&str; 2] = ["wss://relay.illuminodes.com", "wss://relay.arrakis.lat"];
-
 use anyhow::anyhow;
 use fuente::models::{
-    AdminServerRequest, CommerceProfile, DriverProfile, OrderInvoiceState, OrderParticipant,
-    OrderPaymentStatus, OrderRequest, OrderStatus, OrderUpdateRequest, ProductMenu,
-    DRIVER_HUB_PUB_KEY, NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS,
-    NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_CANCEL,
-    NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE,
-    NOSTR_KIND_COURIER_UPDATE, NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ,
-    NOSTR_KIND_PRESIGNED_URL_RESP, NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST,
-    TEST_PRIV_KEY, TEST_PUB_KEY,
+    CommerceProfile, DriverProfile, OrderInvoiceState, OrderParticipant, OrderPaymentStatus,
+    OrderRequest, OrderStatus, OrderUpdateRequest, ProductMenu, DRIVER_HUB_PUB_KEY,
+    NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_COMMERCE_PRODUCTS, NOSTR_KIND_COMMERCE_PROFILE,
+    NOSTR_KIND_COMMERCE_UPDATE, NOSTR_KIND_CONSUMER_CANCEL, NOSTR_KIND_CONSUMER_ORDER_REQUEST,
+    NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_COURIER_UPDATE,
+    NOSTR_KIND_ORDER_STATE, NOSTR_KIND_PRESIGNED_URL_REQ, NOSTR_KIND_PRESIGNED_URL_RESP,
+    NOSTR_KIND_SERVER_CONFIG, NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY,
 };
 use invoicer::Invoicer;
 use nostro2::{
@@ -23,27 +20,24 @@ use nostro2::{
     relays::{NostrRelayPool, NostrSubscription, NoteEvent, PoolRelayBroadcaster, RelayEvent},
 };
 use state::InvoicerStateLock;
-use tracing::{error, info, Level};
 use upload_things::UtRecord;
 use uploads::UtSigner;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::fmt()
-        .with_max_level(Level::INFO)
+        .with_max_level(tracing::Level::INFO)
         .init();
-    let vec_strings = RELAY_URLS.iter().map(|s| s.to_string()).collect();
+    let vec_strings = include_str!("relays.txt")
+        .trim()
+        .lines()
+        .map(|x| x.trim().to_string())
+        .collect();
     let relay_pool = NostrRelayPool::new(vec_strings).await?;
     let bot = InvoicerBot::new(relay_pool.writer.clone()).await?;
-    info!("Bot created");
-    let relay_future = bot.read_relay_pool(relay_pool);
-    loop {
-        tokio::select! {
-            _ = relay_future => {
-                error!("Relay pool task ended");
-                break;
-            }
-        }
+    tracing::info!("Bot created");
+    if let Err(relay_future) = bot.read_relay_pool(relay_pool).await {
+        tracing::error!("{:?}", relay_future);
     }
     Err(anyhow!("Bot ended"))
 }
@@ -51,7 +45,6 @@ pub async fn main() -> anyhow::Result<()> {
 #[derive(Clone)]
 pub struct InvoicerBot {
     server_keys: NostrKeypair,
-    driver_hub_keys: NostrKeypair,
     bot_state: InvoicerStateLock,
     broadcaster: PoolRelayBroadcaster,
     invoicer: Invoicer,
@@ -60,15 +53,10 @@ pub struct InvoicerBot {
 
 impl InvoicerBot {
     pub async fn new(broadcaster: PoolRelayBroadcaster) -> anyhow::Result<Self> {
-        // TODO
-        // make this env variable
-        let server_keys = NostrKeypair::new(TEST_PRIV_KEY)?;
-        let driver_hub_keys = NostrKeypair::new(DRIVER_HUB_PUB_KEY)?;
-        info!("Relay pool started");
+        let server_keys = NostrKeypair::new(&std::env::var("FUENTE_PRIV_KEY")?)?;
         Ok(Self {
             invoicer: Invoicer::new().await?,
             server_keys,
-            driver_hub_keys,
             broadcaster,
             uploader: UtSigner::default(),
             bot_state: InvoicerStateLock::default(),
@@ -120,7 +108,7 @@ impl InvoicerBot {
         while let Some(signed_note) = relays.listener.recv().await {
             if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
                 if let Err(e) = self.note_processor(note).await {
-                    error!("{:?}", e);
+                    tracing::error!("{:?}", e);
                 }
             }
         }
@@ -132,7 +120,7 @@ impl InvoicerBot {
                 let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 if let Err(e) = self.handle_server_requests(inner_note, signed_note).await {
-                    error!("{:?}", e);
+                    tracing::error!("{:?}", e);
                 }
             }
             NOSTR_KIND_ADMIN_REQUEST => {
@@ -154,14 +142,14 @@ impl InvoicerBot {
                 let inner_note = NostrNote::try_from(decrypted)?;
                 let _ = OrderInvoiceState::try_from(&inner_note)?;
                 self.bot_state.update_live_order(inner_note).await?;
-                info!("Order state updated");
+                tracing::info!("Order state updated");
             }
             _ => {
                 if let Err(e) = self
                     .handle_public_notes(signed_note.kind, signed_note)
                     .await
                 {
-                    error!("{:?}", e);
+                    tracing::error!("{:?}", e);
                 }
             }
         }
@@ -176,19 +164,19 @@ impl InvoicerBot {
             NOSTR_KIND_COMMERCE_PROFILE => {
                 CommerceProfile::try_from(signed_note.clone())?;
                 self.bot_state.add_commerce_profile(signed_note).await?;
-                info!("Added commerce profile");
+                tracing::info!("Added commerce profile");
             }
             NOSTR_KIND_COMMERCE_PRODUCTS => {
                 ProductMenu::try_from(signed_note.clone())?;
                 self.bot_state.add_commerce_menu(signed_note).await?;
-                info!("Added menu");
+                tracing::info!("Added menu");
             }
             NOSTR_KIND_COURIER_PROFILE => {
                 let inner_note = self.server_keys.decrypt_nip_04_content(&signed_note)?;
                 let driver_note = NostrNote::try_from(inner_note)?;
                 DriverProfile::try_from(&driver_note)?;
                 self.bot_state.add_courier_profile(driver_note).await?;
-                info!("Added courier profile");
+                tracing::info!("Added courier profile");
             }
             NOSTR_KIND_SERVER_CONFIG => {
                 let decrypted = match self.server_keys.decrypt_nip_04_content(&signed_note) {
@@ -239,7 +227,7 @@ impl InvoicerBot {
                     .cloned()
                     .ok_or(anyhow!("No invoice"))?;
                 if let Err(e) = self.invoicer.cancel_htlc(invoice).await {
-                    error!("{:?}", e);
+                    tracing::error!("{:?}", e);
                 }
                 invoice_state.order_status = OrderStatus::Canceled;
                 let (update, giftwrap) = invoice_state
@@ -249,7 +237,7 @@ impl InvoicerBot {
                 let (_, commerce_giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
                 self.broadcaster.broadcast_note(commerce_giftwrap).await?;
-                info!("Order canceled");
+                tracing::info!("Order canceled");
             }
             NOSTR_KIND_COMMERCE_UPDATE => {
                 self.handle_commerce_updates(inner_note, outer_note).await?;
@@ -268,7 +256,7 @@ impl InvoicerBot {
                         .is_commerce_whitelisted(&outer_note.pubkey)
                         .await
                 {
-                    error!("Unauthorized request");
+                    tracing::error!("Unauthorized request {}", outer_note.pubkey);
                 }
                 if let Ok(presigned_url) = self.uploader.sign_url(inner_note.content.try_into()?) {
                     let ut_record = UtRecord {
@@ -361,7 +349,7 @@ impl InvoicerBot {
             .ok_or(anyhow!("Order not found"))?;
         let courier_profile = self
             .bot_state
-            .find_whitelsited_courier(outer_note.pubkey.as_str())
+            .find_whitelisted_courier(outer_note.pubkey.as_str())
             .await?;
         let has_driver_assigned = live_order.courier.is_some();
         if !has_driver_assigned {

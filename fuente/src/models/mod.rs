@@ -25,10 +25,6 @@ pub use products::*;
 pub use favorites::*;
 pub use ratings::*;
 
-// pub mod sync;
-// // TODO 
-// replace these keys with reading keys from pem file
-pub const TEST_PRIV_KEY: &str = "874f9683a6a2342693da781b3dd6cd3fcda7436375b5301a8a96f433b4795d2d";
 pub const TEST_PUB_KEY: &str = "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 pub const DRIVER_HUB_PRIV_KEY: &str =
     "874f9683a6a2342693da781b3dd6cd3fcda7436375b5301a8a96f433b4795d2d";
@@ -54,10 +50,6 @@ pub const STORE_NAME_CONSUMER_ADDRESSES: &str = "consumer_address";
 pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 pub const STORE_NAME_CONSUMER_FAVORITES: &str = "consumer_favorites";
-
-pub const ADMIN_WHITELIST: [&str; 1] = [
-    "f6e2f850a7f9e6ba6fd1e7f60bd68bbf2e0b3c0a1f27bb8edf802baadb7cbf51",
-];
 
 pub fn init_consumer_db() -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();

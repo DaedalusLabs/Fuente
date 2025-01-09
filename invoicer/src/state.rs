@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use fuente::models::{
     AdminConfiguration, AdminConfigurationType, AdminServerRequest, CommerceProfile,
-    OrderInvoiceState, ProductMenu, ADMIN_WHITELIST, TEST_PUB_KEY,
+    OrderInvoiceState, ProductMenu,
 };
 use nostro2::{
     keypair::NostrKeypair,
@@ -26,12 +26,17 @@ struct InvoicerState {
     admin_config: AdminConfiguration,
 }
 impl InvoicerState {
+    fn read_whitelist() -> Vec<String> {
+        let whitelist = include_str!("whitelist.txt");
+        whitelist
+            .trim()
+            .lines()
+            .map(|x| x.trim().to_string())
+            .collect()
+    }
     pub fn new() -> Self {
         let mut admin_config = AdminConfiguration::default();
-        // TODO
-        // make this env variables
-        admin_config.set_admin_whitelist(ADMIN_WHITELIST.map(|x| x.to_string()).to_vec());
-        info!("Admin whitelist set to {:?}", ADMIN_WHITELIST);
+        admin_config.set_admin_whitelist(Self::read_whitelist());
         Self {
             consumer_profiles: ConsumerRegistry::default(),
             courier_profiles: CourierRegistry::default(),
@@ -55,7 +60,7 @@ impl InvoicerStateLock {
     async fn lock_owned(&self) -> InvoicerState {
         self.0.read().await.clone()
     }
-    pub async fn find_whitelsited_courier(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
+    pub async fn find_whitelisted_courier(&self, pubkey: &str) -> anyhow::Result<NostrNote> {
         let profiles = self.lock().await;
         profiles.admin_config.check_couriers_whitelist(pubkey)?;
         let courier = profiles
@@ -63,27 +68,6 @@ impl InvoicerStateLock {
             .find_courier(pubkey)
             .ok_or(anyhow!("Courier not found"))?;
         Ok(courier)
-    }
-    pub async fn add_courier(&self, pubkey: NostrNote) -> anyhow::Result<()> {
-        let mut profiles = self.lock().await;
-        profiles
-            .admin_config
-            .check_couriers_whitelist(&pubkey.pubkey)?;
-        profiles.courier_profiles.insert_courier(
-            pubkey.pubkey.clone(),
-            CourierRegistryEntry {
-                profile: pubkey,
-                ..Default::default()
-            },
-        );
-        Ok(())
-    }
-    pub async fn is_courier_whitelisted(&self, pubkey: &str) -> bool {
-        self.lock_owned()
-            .await
-            .admin_config
-            .check_couriers_whitelist(pubkey)
-            .is_ok()
     }
     pub async fn is_commerce_whitelisted(&self, pubkey: &str) -> bool {
         self.lock_owned()

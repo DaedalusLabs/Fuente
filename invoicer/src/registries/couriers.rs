@@ -1,4 +1,3 @@
-use fuente::models::DriverProfile;
 use nostro2::notes::NostrNote;
 use std::collections::HashMap;
 
@@ -14,9 +13,6 @@ impl Default for CourierRegistry {
     }
 }
 impl CourierRegistry {
-    pub fn is_registered(&self, courier_id: &str) -> bool {
-        self.couriers.contains_key(courier_id)
-    }
     pub fn insert_courier(&mut self, courier_id: String, entry: CourierRegistryEntry) {
         self.couriers.insert(courier_id, entry);
     }

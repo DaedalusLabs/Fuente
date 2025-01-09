@@ -12,6 +12,7 @@ services:
     environment:
       - LND_ADDRESS=${LND_ADDRESS}
       - LND_MACAROON=${LND_MACAROON}
+      - FUENTE_PRIV_KEY=${FUENTE_PRIV_KEY}
       - UT_API_KEY=${UT_API_KEY}
       - UT_APP_ID=${UT_APP_ID}
       - UT_CALLBACK_DOMAIN=${UT_CALLBACK_DOMAIN}

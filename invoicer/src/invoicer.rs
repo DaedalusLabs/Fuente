@@ -9,7 +9,6 @@ use fuente::models::{
 };
 use nostro2::{keypair::NostrKeypair, notes::NostrNote, relays::PoolRelayBroadcaster};
 use tokio_stream::StreamExt;
-use tracing::{error, warn};
 
 use crate::state::InvoicerStateLock;
 pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
@@ -49,25 +48,15 @@ impl Invoicer {
         commerce_profile: &CommerceProfile,
         exchange_rate: f64,
     ) -> anyhow::Result<(LnAddressPaymentRequest, LndHodlInvoice)> {
-        // TODO
-        // verify products agains signed prodcut list
-
         let invoice_total_srd = order.products.total();
         let invoice_satoshi_amount = invoice_total_srd / exchange_rate * SATOSHIS_IN_ONE_BTC;
-        let invoice = match commerce_profile
+        let invoice = commerce_profile
             .ln_address()
             .get_invoice(
                 &self.rest_client,
                 invoice_satoshi_amount as u64 * MILISATOSHIS_IN_ONE_SATOSHI,
             )
-            .await
-        {
-            Ok(invoice) => invoice,
-            Err(e) => {
-                error!("{:?}", e);
-                return Err(anyhow!("Could not create invoice"));
-            }
-        };
+            .await?;
         let hodl_amount = invoice_satoshi_amount as u64 + ILLUMINODES_FEES + FUENTE_FEES;
         let hodl_invoice = self
             .lightning_wallet
@@ -142,8 +131,7 @@ impl Invoicer {
                         break;
                     }
                 },
-                LndWebsocketMessage::Error(e) => {
-                    error!("{:?}", e);
+                LndWebsocketMessage::Error(_e) => {
                     self.cancel_htlc(invoice.clone()).await?;
                     let mut new_order = order_invoice.clone();
                     new_order.order_status = OrderStatus::Canceled;
@@ -162,7 +150,7 @@ impl Invoicer {
                 _ => {
                     ping_counter += 1;
                     if ping_counter > 5 {
-                        warn!("Canceling HTLC due to inactivity");
+                        tracing::warn!("Canceling HTLC due to inactivity");
                         self.cancel_htlc(invoice.clone()).await?;
                         let mut new_order = order_invoice.clone();
                         new_order.order_status = OrderStatus::Canceled;
@@ -229,7 +217,6 @@ impl Invoicer {
                         self.lightning_wallet
                             .settle_htlc(payment_status.preimage())
                             .await?;
-                        tracing::info!("Settled HTLC");
                         break;
                     }
                 }
@@ -240,7 +227,7 @@ impl Invoicer {
                     }
                 }
                 LndWebsocketMessage::Error(e) => {
-                    error!("{:?}", e);
+                    tracing::error!("Error settling invoice {:?}", e);
                     break;
                 }
             }
