@@ -7,45 +7,76 @@
     <link rel="stylesheet" href="../../../styles/output.css">
 </head>
 <body class="font-fuente">
-    <header class="container mx-auto py-10 flex justify-between">
-        <a href="/templates/views/app/home.html">
+    <header class="container mx-auto py-10 hidden lg:flex justify-center lg:justify-between">
+        <a href="/templates/views/app/home.html" class="hidden lg:flex">
             <img src="/templates/img/Logo Fuente.jpeg" alt="Logo Fuente" class="w-40">
         </a>
     
-        <div class="flex gap-4 flex-1 items-center justify-end w-full">
-            <div class="relative flex justify-between items-center w-full">
-                <input type="text" class="w-96 ml-auto pl-10 pr-4 py-3 border-2 border-fuente rounded-xl">
-                <svg class="feather feather-search absolute right-3 h-8 w-8 text-fuente" fill="none" height="24"
-                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" x2="16.65" y1="21" y2="16.65" />
+        <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
+            <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
+                <div class="relative flex items-center w-full">
+                    <input 
+                        type="text" 
+                        class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl"
+                    />
+                    <svg 
+                        class="absolute right-4 h-6 w-6 text-fuente pointer-events-none" 
+                        fill="none" 
+                        height="24" 
+                        stroke="currentColor" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                        stroke-width="2" 
+                        viewBox="0 0 24 24" 
+                        width="24" 
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                    </svg>
+                </div>
+            
+                <button class="lg:hidden">
+                    <svg 
+                        viewBox="0 0 32 32" 
+                        xml:space="preserve" 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        enable-background="new 0 0 32 32" 
+                        class="bg-fuente h-14 w-14 p-2 rounded-xl"
+                    >
+                        <path 
+                            d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                            fill="#ffffff" 
+                            class="fill-000000">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex gap-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+        
+                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
+                    <rect fill="none" height="256" width="256" />
+                    <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="16" />
+                    <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
+                </svg>
+        
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                 </svg>
             </div>
-    
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-            </svg>
-    
-            <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuente hover:cursor-pointer">
-                <rect fill="none" height="256" width="256" />
-                <path d="M184,184H69.8L41.9,30.6A8,8,0,0,0,34.1,24H16" fill="none" stroke="currentColor"
-                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
-                <circle cx="80" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
-                    stroke-linejoin="round" stroke-width="16" />
-                <circle cx="184" cy="204" fill="none" r="20" stroke="currentColor" stroke-linecap="round"
-                    stroke-linejoin="round" stroke-width="16" />
-                <path d="M62.5,144H188.1a15.9,15.9,0,0,0,15.7-13.1L216,64H48" fill="none" stroke="currentColor"
-                    stroke-linecap="round" stroke-linejoin="round" stroke-width="16" />
-            </svg>
-    
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                class="size-6 w-10 h-10 text-fuente hover:cursor-pointer">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
         </div>
     </header>
 
@@ -63,19 +94,23 @@
         </div>
     </nav>
 
-    <div class="container mx-auto py-10 flex items-center justify-between">
-        <h1 class="text-fuente text-6xl font-bold tracking-tighter">{"My Store"}</h1>
+    <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center justify-between">
+        <h1 class="text-fuente text-4xl text-center lg:text-left lg:text-6xl font-bold tracking-tighter mt-10 mb-5 lg:mt-0 lg:mb-0">{"My Store"}</h1>
 
-        <div class="flex items-center gap-4">
-            <div class="flex justify-center items-center">
-                <button type="button" class="flex items-center bg-fuente-buttons px-10 py-4 rounded-full text-fuente-forms space-x-2 font-bold">{"Add new banner"}</button>
+        <select class="lg:hidden w-full border-2 border-fuente rounded-2xl py-3 px-5 text-fuente text-lg">
+            <option>{"Banners of your store"}</option>
+        </select>
+
+        <div class="mt-3 lg:mt-0 flex w-full lg:w-fit items-center gap-4">
+            <div class="flex w-full justify-center items-center">
+                <button type="button" class="flex justify-center lg:justify-start items-center bg-fuente-buttons px-7 py-4 rounded-full text-fuente-forms space-x-2 font-bold w-full text-center">{"Add new banner"}</button>
             </div>
         </div>
     </div>
 
     <main class="container mx-auto">
         <div class="flex lg:flex-col xl:flex-row gap-10">
-            <aside class="flex flex-col gap-3 flex-1">
+            <aside class="hidden lg:flex flex-col gap-3 flex-1">
                 <a class="py-4 lg:text-center px-8 rounded-2xl font-bold text-lg bg-gray-100 text-gray-500 xl:text-left tracking-wide" href="/templates/views/app/business/store-new-products.html">
                     {"New products"}
                 </a>
@@ -93,46 +128,34 @@
                 </a>
             </aside>
 
-            <div class="border border-fuente mt-10 px-16 rounded-3xl flex-[3] flex flex-col justify-center items-center py-10">
-                <div class="w-full flex items-center gap-10 border-b border-b-gray-400 pb-5">
-                    <div class="w-full">
-                        <div class="w-full xl:relative flex items-center justify-center bg-fuente rounded-2xl h-32 lg:pr-5 2xl:pr-20">
-                            <img src="/templates/img/sneaker_2.png" alt="Sneaker Product" class="xl:absolute xl:top-2 xl:right-40 2xl:right-72 xl:-translate-x-10 xl:-translate-y-10 block object-contain w-56">
-                            <p class="text-2xl text-white font-bold tracking-tighter text-wrap ml-auto w-full max-w-40 2xl:max-w-64 leading-none 2xl:pr-20 xl:pr-10">
-                                50% Off Only today!
-                                <span class="text-xs tracking-normal font-semibold block mt-3 uppercase">In evany store</span>
-                            </p>
-                        </div>
-
-                        <p class="mt-5 text-sm text-gray-500">Uploaded 15/12/2024</p>
+            <div class="border-2 border-fuente px-1 lg:px-16 rounded-3xl flex-[3] py-5 h-fit mt-3 lg:mt-0 overflow-hidden">
+                <div class="flex justify-between gap-10">
+                    <div class="bg-fuente w-full rounded-2xl flex items-center justify-center gap-5 h-32">
+                        <img
+                            src="/templates/img/sneaker_2.png"
+                            alt="Product Image"
+                            class="object-contain w-40 lg:w-56"
+                        >
+                        <p class="text-white font-bold text-2xl min-[600px]:text-4xl text-center">
+                            50% Off
+                            <span class="block">Only today!</span>
+                            <span class="block text-sm font-semibold uppercase">In Evany Store</span>
+                        </p>
                     </div>
 
-                    <button class="border border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">Main Banner</button>
-
-                    <button>
-                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10">
+                    <button class="hidden lg:block">
+                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:h-10 md:w-10">
                             <path fill="none" d="M0 0h256v256H0z"></path><path fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="M216 56H40M104 104v64M152 104v64M200 56v152a8 8 0 0 1-8 8H64a8 8 0 0 1-8-8V56M168 56V40a16 16 0 0 0-16-16h-48a16 16 0 0 0-16 16v16" class="stroke-000000"></path>
                         </svg>
                     </button>
                 </div>
 
-                <div class="w-full flex items-center mt-10 gap-10">
-                    <div class="w-full">
-                        <div class="w-full xl:relative flex items-center justify-center bg-fuente rounded-2xl h-32 lg:pr-5 2xl:pr-20">
-                            <img src="/templates/img/hp.jpg" alt="Harry Potter Product" class="xl:absolute xl:top-10 xl:right-40 2xl:right-72 xl:-translate-x-10 xl:-translate-y-10 block object-contain w-36">
-                            <p class="text-2xl text-white font-bold tracking-tighter text-wrap ml-auto w-full max-w-40 2xl:max-w-64 leading-none 2xl:pr-20 xl:pr-10">
-                                Free Shipping Only today!
-                                <span class="text-xs tracking-normal font-semibold block mt-3 uppercase">Only buying books</span>
-                            </p>
-                        </div>
+                <p class="text-gray-500 mt-5 hidden lg:block">Uploaded 15/12/2024</p>
 
-                        <p class="mt-5 text-sm text-gray-500">Uploaded 15/12/2024</p>
-                    </div>
-
-                    <button class="border border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">Deactivated</button>
-
+                <div class="lg:hidden w-full flex items-center justify-between mt-3 px-5">
+                    <p class="text-gray-500">Uploaded 15/12/2024</p>
                     <button>
-                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10">
+                        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:h-10 md:w-10">
                             <path fill="none" d="M0 0h256v256H0z"></path><path fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="M216 56H40M104 104v64M152 104v64M200 56v152a8 8 0 0 1-8 8H64a8 8 0 0 1-8-8V56M168 56V40a16 16 0 0 0-16-16h-48a16 16 0 0 0-16 16v16" class="stroke-000000"></path>
                         </svg>
                     </button>
@@ -141,13 +164,59 @@
         </div>
     </main>
 
-    <footer class="bg-fuente p-20 mt-40">
-        <div class="container mx-auto flex justify-between items-center lg:gap-4 xl:gap-0">
+    <nav class="w-[98%] mx-auto lg:hidden bg-white shadow-2xl shadow-gray-900 py-5 px-10 rounded-2xl flex items-center justify-between gap-5 mb-1 fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50">
+        <button class="bg-white">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="m20 8-6-5.26a3 3 0 0 0-4 0L4 8a3 3 0 0 0-1 2.26V19a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8.75A3 3 0 0 0 20 8Zm-6 12h-4v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1Zm5-1a1 1 0 0 1-1 1h-2v-5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v5H6a1 1 0 0 1-1-1v-8.75a1 1 0 0 1 .34-.75l6-5.25a1 1 0 0 1 1.32 0l6 5.25a1 1 0 0 1 .34.75Z" fill="#4167e8" class="fill-6563ff"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" xml:space="preserve" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" class="h-8 w-8">
+                <path d="M31 3a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V3Zm-4 2v22H5V5h22ZM31 35a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V35Zm-4 2v22H5V37h22ZM63 3a2 2 0 0 0-2-2H35a2 2 0 0 0-2 2v26a2 2 0 0 0 2 2h26a2 2 0 0 0 2-2V3Zm-4 2v22H37V5h22ZM63 41.297A8.297 8.297 0 0 0 54.704 33H41.296A8.297 8.297 0 0 0 33 41.297v13.406A8.297 8.297 0 0 0 41.296 63h13.408A8.297 8.297 0 0 0 63 54.703V41.297Zm-4 0v13.406A4.297 4.297 0 0 1 54.704 59H41.296A4.297 4.297 0 0 1 37 54.703V41.297A4.297 4.297 0 0 1 41.296 37h13.408A4.297 4.297 0 0 1 59 41.297Z" fill="#4167e8" class="fill-000000"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg viewBox="0 0 20 21" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="M10.5.5C7 .5 3.9 2.4 2.3 5.3L0 3v6.5h6.5L3.7 6.7C5 4.2 7.5 2.5 10.5 2.5c4.1 0 7.5 3.4 7.5 7.5s-3.4 7.5-7.5 7.5c-3.3 0-6-2.1-7.1-5H1.3c1.1 4 4.8 7 9.2 7 5.3 0 9.5-4.3 9.5-9.5S15.7.5 10.5.5ZM9 5.5v5.1l4.7 2.8.8-1.3-4-2.4V5.5H9Z" fill="#4167e8" opacity=".9" fill-rule="evenodd" class="fill-000000"></path>
+            </svg>
+        </button>
+    
+        <button class="bg-white">
+            <svg viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32" class="h-8 w-8">
+                <path d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" fill="#4167e8" class="fill-000000 fill-ffffff"></path>
+            </svg>
+        </button>
+    
+        <button>
+            <svg data-name="Layer 1" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8">
+                <path d="M24 21a10 10 0 1 1 10-10 10 10 0 0 1-10 10Zm0-16a6 6 0 1 0 6 6 6 6 0 0 0-6-6ZM42 47H6a2 2 0 0 1-2-2v-6a16 16 0 0 1 16-16h8a16 16 0 0 1 16 16v6a2 2 0 0 1-2 2ZM8 43h32v-4a12 12 0 0 0-12-12h-8A12 12 0 0 0 8 39Z" fill="#2aa1e2" class="fill-000000"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <footer class="hidden lg:block bg-fuente p-10 lg:p-20 mt-40">
+        <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
             <a href="/templates//views/app/home.html">
-                <h3 class="text-white font-bold text-5xl">{"Fuente"}</h3>
+                <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
             </a>
     
-            <div>
+            <svg 
+                viewBox="0 0 32 32" 
+                xml:space="preserve" 
+                xmlns="http://www.w3.org/2000/svg" 
+                enable-background="new 0 0 32 32" 
+                class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden"
+            >
+                <path 
+                    d="M4 10h24a2 2 0 0 0 0-4H4a2 2 0 0 0 0 4zm24 4H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4zm0 8H4a2 2 0 0 0 0 4h24a2 2 0 0 0 0-4z" 
+                    fill="#ffffff" 
+                    class="fill-000000">
+                </path>
+            </svg>
+    
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"About Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"How to buy?"}</p>
@@ -156,7 +225,7 @@
                 </div>
             </div>
     
-            <div>
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"Our benefits"}</p>
@@ -165,7 +234,7 @@
                 </div>
             </div>
     
-            <div>
+            <div class="hidden lg:block">
                 <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
                 <div class="mt-5 space-y-3">
                     <p class="text-white font-light text-lg">&gt; {"Terms and conditions"}</p>
