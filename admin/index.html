@@ -10,8 +10,8 @@
     <link data-trunk rel="copy-file" href="manifest.json">
     <link data-trunk rel="copy-file" href="serviceWorker.js">
 
-    <title>Fuente.ai Admin</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Fuente Admin</title>
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/public/assets/img/logo.png" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -22,30 +22,65 @@
 
 </head>
 
-<body class="font-fuente" href="/">
-    <div id="spinner" class="fixed z-50 flex flex-col gap-4 items-center justify-center w-dvw h-dvh bg-white">
-        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<body class="font-fuente no-scrollbar" href="/">
+    <div id="spinner" class="flex flex-col gap-8 justify-center items-center flex-1 inset-0 py-8 px-16 fixed">
+        <img src="/public/assets/img/logo.png" class="max-w-64 max-h-64" />
+        <svg class="w-16 h-16 text-fuente" width="64" height="64" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
             <style>
-                .spinner_HIK5 {
-                    transform-origin: center;
-                    animation: spinner_XVY9 1s cubic-bezier(0.36, .6, .31, 1) infinite
+                .spinner_9y7u {
+                    animation: spinner_fUkk 2.4s linear infinite;
+                    animation-delay: -2.4s
                 }
 
-                @keyframes spinner_XVY9 {
-                    50% {
-                        transform: rotate(180deg)
+                .spinner_DF2s {
+                    animation-delay: -1.6s
+                }
+
+                .spinner_q27e {
+                    animation-delay: -.8s
+                }
+
+                @keyframes spinner_fUkk {
+                    8.33% {
+                        x: 13px;
+                        y: 1px
                     }
 
-                    100% {
-                        transform: rotate(360deg)
+                    25% {
+                        x: 13px;
+                        y: 1px
+                    }
+
+                    33.3% {
+                        x: 13px;
+                        y: 13px
+                    }
+
+                    50% {
+                        x: 13px;
+                        y: 13px
+                    }
+
+                    58.33% {
+                        x: 1px;
+                        y: 13px
+                    }
+
+                    75% {
+                        x: 1px;
+                        y: 13px
+                    }
+
+                    83.33% {
+                        x: 1px;
+                        y: 1px
                     }
                 }
             </style>
-            <circle cx="12" cy="12" r="3" />
-            <g class="spinner_HIK5">
-                <circle cx="4" cy="12" r="3" />
-                <circle cx="20" cy="12" r="3" />
-            </g>
+            <rect class="spinner_9y7u" x="1" y="1" rx="1" width="10" height="10" />
+            <rect class="spinner_9y7u spinner_DF2s" x="1" y="1" rx="1" width="10" height="10" />
+            <rect class="spinner_9y7u spinner_q27e" x="1" y="1" rx="1" width="10" height="10" />
         </svg>
     </div>
 </body>

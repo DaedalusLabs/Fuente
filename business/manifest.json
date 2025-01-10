@@ -1,50 +1,31 @@
 {
-    "name": "Ruta App",
-    "short_name": "LaRuta",
-    "icons": [
+    "id": "/",
+    "start_url": "/",
+    "name": "My Fuente e-Commerce Store",
+    "short_name": "Fuente Store",
+    "description": "A Nostr and Bitcoin based e-Commerce platform bringing secure and private shopping to Suriname.",
+    "theme_color": "#4167e8",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "screenshots": [
         {
-            "src": "./assets/logo.png",
-            "sizes": "48x48",
-            "type": "image/png"
+            "src": "/public/assets/img/screenshot1.png",
+            "sizes": "640x320",
+            "type": "image/png",
+            "label": "Fuente Home"
         },
         {
-            "src": "./assets/logo.png",
-            "sizes": "48x48",
-            "sizes": "72x72",
-            "type": "image/png"
-        },
-        {
-            "src": "./assets/logo.png",
-            "sizes": "48x48",
-            "sizes": "96x96",
-            "type": "image/png"
-        },
-        {
-            "src": "./assets/logo.png",
-            "sizes": "48x48",
-            "sizes": "144x144",
-            "type": "image/png"
-        },
-        {
-            "src": "./assets/logo.png",
-            "sizes": "48x48",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "./assets/logo.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "./assets/logo.png",
-            "sizes": "768x768",
-            "type": "image/png"
+            "src": "/public/assets/img/screenshot2.png",
+            "sizes": "640x320",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Checkout"
         }
     ],
-    "lang": "en-US",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#800080",
-    "theme_color": "white"
+    "icons": [
+        {
+            "src": "/public/assets/img/logo.png",
+            "sizes": "any"
+        }
+    ]
 }
