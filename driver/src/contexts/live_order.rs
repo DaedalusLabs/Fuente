@@ -187,7 +187,7 @@ pub fn commerce_data_sync() -> Html {
                     ..Default::default()
                 };
                 filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
-                let sub = filter.relay_subscription();
+                let sub: nostro2::relays::SubscribeEvent = filter.into();
                 id_handle.set(sub.1.clone());
                 subscriber.emit(sub);
             }
@@ -240,10 +240,7 @@ pub fn commerce_data_sync() -> Html {
 
     use_effect_with(relay_ctx.relay_events.clone(), move |events| {
         if let Some(event) = events.last() {
-            if let nostro2::relays::RelayEvent::EndOfSubscription(
-                nostro2::relays::EndOfSubscriptionEvent(_, id),
-            ) = event
-            {
+            if let nostro2::relays::RelayEvent::EndOfSubscription((_, id)) = event {
                 if id == &(*sub_id) {
                     ctx_clone.dispatch(OrderHubAction::FinishedLoadingRelays);
                 }

@@ -1,8 +1,8 @@
-use std::rc::Rc;
 use fuente::models::{ParticipantRating, TEST_PUB_KEY};
-use yew::prelude::*;
 use nostr_minions::relay_pool::NostrProps;
 use nostro2::relays::NostrSubscription;
+use std::rc::Rc;
+use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RatingsData {
@@ -20,12 +20,12 @@ impl RatingsData {
     }
 
     pub fn get_business_rating(&self, pubkey: &str) -> Option<ParticipantRating> {
-        gloo::console::log!("Checking ratings for business:", pubkey);
-        gloo::console::log!("Available ratings:", format!("{:?}", self.ratings));
-        self.ratings.iter().find(|r| {
-            r.pubkey == pubkey && r.participant == fuente::models::OrderParticipant::Commerce
-        })
-        .cloned()
+        self.ratings
+            .iter()
+            .find(|r| {
+                r.pubkey == pubkey && r.participant == fuente::models::OrderParticipant::Commerce
+            })
+            .cloned()
     }
 }
 
@@ -55,7 +55,7 @@ impl Reducible for RatingsData {
                     has_loaded: self.has_loaded,
                     ratings,
                 })
-            },
+            }
             RatingsAction::LoadRatings(ratings) => Rc::new(RatingsData {
                 has_loaded: self.has_loaded,
                 ratings,
@@ -96,30 +96,26 @@ fn ratings_sync() -> Html {
     let id_handle = sub_id.clone();
 
     use_effect_with((), move |_| {
-        gloo::console::log!("Setting up ratings subscription");
-        let filter = NostrSubscription {
+        let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
             kinds: Some(vec![fuente::models::NOSTR_KIND_PARTICIPANT_RATING]),
             authors: Some(vec![TEST_PUB_KEY.to_string()]), // Add this line
             ..Default::default()
-        }.relay_subscription();
-    
+        }
+        .into();
+
         id_handle.set(filter.1.clone());
         subscriber.emit(filter);
         || {}
-    });    
+    });
 
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
             if note.kind == fuente::models::NOSTR_KIND_PARTICIPANT_RATING {
-                gloo::console::log!("Received note kind in RatingsSync:", note.kind);
-                gloo::console::log!("Processing participant rating note:", &note.content);
                 match ParticipantRating::try_from(note.clone()) {
                     Ok(rating) => {
-                        let pubkey_clone = rating.pubkey.clone();
-                        gloo::console::log!("Successfully parsed rating for:", pubkey_clone);
                         ctx_clone.dispatch(RatingsAction::UpdateRating(rating));
-                    },
+                    }
                     Err(e) => {
                         gloo::console::error!("Failed to parse rating:", e.to_string());
                     }
@@ -134,11 +130,8 @@ fn ratings_sync() -> Html {
     let id_handle = sub_id.clone();
     use_effect_with(relay_ctx.relay_events.clone(), move |events| {
         if let Some(event) = events.last() {
-            if let nostro2::relays::RelayEvent::EndOfSubscription(
-                nostro2::relays::EndOfSubscriptionEvent(_, id)
-            ) = event {
+            if let nostro2::relays::RelayEvent::EndOfSubscription((_, id)) = event {
                 if id == &(*id_handle) {
-                    gloo::console::log!("Received EOSE for ratings subscription");
                     ctx_clone.dispatch(RatingsAction::SetLoaded);
                 }
             }

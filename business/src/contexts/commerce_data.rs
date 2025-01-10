@@ -2,8 +2,10 @@ use fuente::models::{
     CommerceProfile, CommerceProfileIdb, ProductMenu, ProductMenuIdb, NOSTR_KIND_COMMERCE_PRODUCTS,
     NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_PRESIGNED_URL_RESP, TEST_PUB_KEY,
 };
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::NostrIdStore, relay_pool::NostrProps,
+};
+use nostro2::relays::{NostrSubscription, RelayEvent};
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
@@ -165,7 +167,7 @@ pub fn commerce_data_sync() -> Html {
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
         if let Some(key) = key_ctx.get_nostr_key() {
-            let filter1 = NostrSubscription {
+            let filter1: nostro2::relays::SubscribeEvent = NostrSubscription {
                 kinds: Some(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
@@ -173,18 +175,16 @@ pub fn commerce_data_sync() -> Html {
                 authors: Some(vec![key.public_key()]),
                 ..Default::default()
             }
-            .relay_subscription();
+            .into();
             id_handle.set(filter1.1.clone());
             subscriber.emit(filter1);
-        
+
             let filter2 = NostrSubscription {
                 kinds: Some(vec![NOSTR_KIND_PRESIGNED_URL_RESP]),
                 authors: Some(vec![TEST_PUB_KEY.to_string()]),
                 ..Default::default()
-            }
-            .relay_subscription();
-            id_handle.set(filter2.1.clone());
-            subscriber.emit(filter2);
+            };
+            subscriber.emit(filter2.into());
         }
         || {}
     });
@@ -192,7 +192,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(CommerceDataAction::CheckedRelay);
             }

@@ -8,7 +8,7 @@ use fuente::{
     },
 };
 use nostr_minions::relay_pool::NostrProps;
-use nostro2::relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent};
+use nostro2::relays::{NostrSubscription, RelayEvent};
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -38,13 +38,16 @@ impl CommerceData {
         self.products_lists
             .iter()
             .find(|p| p.id() == commerce_id)
-            .and_then(|p| p.menu().categories().iter().fold(None, |acc, c| {
-                acc.or_else(|| {
-                    c.products().iter().find(|i| i.id() == product_id).map(|i| i.clone())
+            .and_then(|p| {
+                p.menu().categories().iter().fold(None, |acc, c| {
+                    acc.or_else(|| {
+                        c.products()
+                            .iter()
+                            .find(|i| i.id() == product_id)
+                            .map(|i| i.clone())
+                    })
                 })
-
-            }))
-
+            })
     }
 }
 
@@ -145,14 +148,14 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with((), move |_| {
-        let filter = NostrSubscription {
+        let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
             kinds: Some(vec![
                 NOSTR_KIND_COMMERCE_PROFILE,
                 NOSTR_KIND_COMMERCE_PRODUCTS,
             ]),
             ..Default::default()
         }
-        .relay_subscription();
+        .into();
         id_handle.set(filter.1.clone());
         subscriber.emit(filter);
         || {}
@@ -161,7 +164,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if *id == *id_handle {
                 ctx_clone.dispatch(CommerceDataAction::FinishedLoadingRelays);
             }

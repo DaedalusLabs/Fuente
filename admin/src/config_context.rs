@@ -9,7 +9,6 @@ use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
     keypair::NostrKeypair,
     notes::{NostrNote, NostrTag},
-    relays::EndOfSubscriptionEvent,
 };
 use yew::prelude::*;
 
@@ -180,20 +179,20 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                 ..Default::default()
             };
             courier_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
-            subscriber.emit(courier_filter.relay_subscription());
+            subscriber.emit(courier_filter.into());
             let commerce_filter = nostro2::relays::NostrSubscription {
                 kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
                 ..Default::default()
             };
-            subscriber.emit(commerce_filter.relay_subscription());
+            subscriber.emit(commerce_filter.into());
             let filter = nostro2::relays::NostrSubscription {
                 kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
                 authors: Some(vec![TEST_PUB_KEY.to_string()]),
                 ..Default::default()
             };
-            let subscription = filter.relay_subscription();
+            let subscription: nostro2::relays::SubscribeEvent = filter.into();
             sub_handler.set(Some(subscription.1.clone()));
-            subscriber.emit(subscription);
+            subscriber.emit(subscription.into());
         }
         || {}
     });
@@ -259,9 +258,7 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let sub_id = subscription_id.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(nostro2::relays::RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) =
-            events.last()
-        {
+        if let Some(nostro2::relays::RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if id == sub_id.as_ref().unwrap() {
                 ctx_clone.dispatch(ServerConfigsAction::FinishLoading);
             }

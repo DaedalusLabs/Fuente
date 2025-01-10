@@ -124,7 +124,7 @@ pub fn commerce_data_sync() -> Html {
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys.public_key().as_str());
-                let sub = filter.relay_subscription();
+                let sub: nostro2::relays::SubscribeEvent = filter.into();
                 id_handle.set(sub.1.clone());
                 subscriber.emit(sub);
             });
@@ -142,7 +142,7 @@ pub fn commerce_data_sync() -> Html {
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
-                subscriber_clone.emit(filter.relay_subscription());
+                subscriber_clone.emit(filter.into());
             }
         }
         || {}
@@ -204,10 +204,7 @@ pub fn commerce_data_sync() -> Html {
 
     use_effect_with(relay_ctx.relay_events.clone(), move |events| {
         if let Some(event) = events.last() {
-            if let nostro2::relays::RelayEvent::EndOfSubscription(
-                nostro2::relays::EndOfSubscriptionEvent(_, id),
-            ) = event
-            {
+            if let nostro2::relays::RelayEvent::EndOfSubscription((_, id)) = event {
                 if id == &(*sub_id) {
                     ctx_clone.dispatch(LiveOrderAction::FinishedLoadingRelay);
                 }

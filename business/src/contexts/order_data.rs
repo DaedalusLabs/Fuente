@@ -7,7 +7,7 @@ use nostr_minions::{
 };
 use nostro2::{
     notes::NostrNote,
-    relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
+    relays::{NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
@@ -113,12 +113,7 @@ impl Reducible for OrderData {
                     });
                     orders
                         .iter()
-                        .filter_map(|o| {
-                            Some((
-                                o.parse_order().ok()?,
-                                o.signed_note(),
-                            ))
-                        })
+                        .filter_map(|o| Some((o.parse_order().ok()?, o.signed_note())))
                         .collect()
                 },
                 order_history: {
@@ -203,9 +198,9 @@ pub fn commerce_data_sync() -> Html {
                     ..Default::default()
                 };
                 filter.add_tag("#p", keys.public_key().as_str());
-                let relay_sub = filter.relay_subscription();
+                let relay_sub: nostro2::relays::SubscribeEvent = filter.into();
                 id_handle.set(relay_sub.1.clone());
-                subscriber.emit(relay_sub);
+                subscriber.emit(relay_sub.into());
             });
         }
         || {}
@@ -214,7 +209,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(OrderDataAction::CheckedRelay);
             }

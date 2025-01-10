@@ -202,7 +202,7 @@ impl InvoicerBot {
                 let registered_commerce = self
                     .bot_state
                     .find_commerce(order_req.commerce.as_str())
-                    .await?;
+                    .await;
                 self.invoicer
                     .new_order_invoice(
                         order_req,

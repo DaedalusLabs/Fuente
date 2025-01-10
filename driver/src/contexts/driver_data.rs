@@ -4,7 +4,7 @@ use nostr_minions::{
 };
 use nostro2::{
     notes::NostrNote,
-    relays::{EndOfSubscriptionEvent, NostrSubscription, RelayEvent},
+    relays::{NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
@@ -140,12 +140,12 @@ pub fn commerce_data_sync() -> Html {
             if &(*id_handle) == "" {
                 let pubkey = keys.public_key();
                 spawn_local(async move {
-                    let filter = NostrSubscription {
+                    let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
                         kinds: Some(vec![NOSTR_KIND_COURIER_PROFILE]),
                         authors: Some(vec![pubkey.clone()]),
                         ..Default::default()
                     }
-                    .relay_subscription();
+                    .into();
                     id_handle.set(filter.1.clone());
                     subscriber.emit(filter);
                 });
@@ -168,7 +168,7 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     let id_handle = sub_id.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) = events.last() {
+        if let Some(RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if id == &(*id_handle) {
                 ctx_clone.dispatch(DriverDataAction::FinishedLoadingRelays);
             }

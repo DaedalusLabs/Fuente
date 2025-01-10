@@ -1,5 +1,5 @@
 use nostr_minions::relay_pool::NostrProps;
-use nostro2::{notes::NostrTag, relays::EndOfSubscriptionEvent};
+use nostro2::notes::NostrTag;
 use std::rc::Rc;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -90,11 +90,11 @@ fn admin_config_sync() -> Html {
     let subscription_id = use_state(|| None::<String>);
     let id_handler = subscription_id.clone();
     use_effect_with((), move |_| {
-        let filter = nostro2::relays::NostrSubscription {
+        let filter: nostro2::relays::SubscribeEvent = nostro2::relays::NostrSubscription {
             kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
             ..Default::default()
         }
-        .relay_subscription();
+        .into();
         id_handler.set(Some(filter.1.clone()));
         subscriber.emit(filter);
         || {}
@@ -104,7 +104,6 @@ fn admin_config_sync() -> Html {
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_SERVER_CONFIG {
-                gloo::console::log!("AdminConfigSync effect");
                 if let Some(conf_type_str) = note.tags.find_tags(NostrTag::Parameterized).get(2) {
                     let conf_type = AdminConfigurationType::try_from(conf_type_str.as_str())
                         .expect("Failed to parse conf type");
@@ -114,13 +113,11 @@ fn admin_config_sync() -> Html {
                                 ctx_handler.dispatch(AdminConfigsAction::UpdateExchangeRate(
                                     rate.to_string(),
                                 ));
-                                gloo::console::log!("Exchange rate updated");
                             }
                         }
                         AdminConfigurationType::CommerceWhitelist => {
                             match serde_json::from_str::<Vec<String>>(&note.content) {
                                 Ok(whitelist) => {
-                                    gloo::console::log!("Commerce whitelist updated to: {:?}", format!("{:?}", &whitelist));
                                     ctx_handler.dispatch(
                                         AdminConfigsAction::UpdateCommerceWhitelist(whitelist),
                                     );
@@ -140,7 +137,6 @@ fn admin_config_sync() -> Html {
                                 ctx_handler.dispatch(AdminConfigsAction::UpdateCourierWhitelist(
                                     whitelist,
                                 ));
-                                gloo::console::log!("Courier whitelist updated");
                             }
                         }
                         _ => {}
@@ -155,9 +151,7 @@ fn admin_config_sync() -> Html {
     let sub_id = subscription_id.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_events, move |events| {
-        if let Some(nostro2::relays::RelayEvent::EndOfSubscription(EndOfSubscriptionEvent(_, id))) =
-            events.last()
-        {
+        if let Some(nostro2::relays::RelayEvent::EndOfSubscription((_, id))) = events.last() {
             if id == sub_id.as_ref().unwrap() {
                 ctx_clone.dispatch(AdminConfigsAction::FinishLoading);
             }

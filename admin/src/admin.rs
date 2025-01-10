@@ -2,7 +2,7 @@ use admin::{AdminPanelPages, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
     contexts::LanguageConfigsProvider,
     mass::{AdminLoginPage, LoadingScreen},
-    models::{init_commerce_db, init_consumer_db, ADMIN_WHITELIST},
+    models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
 use nostr_minions::{
@@ -13,6 +13,7 @@ use nostr_minions::{
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
 
+const ADMIN_WHITELIST: &str = include_str!("whitelist.txt");
 fn main() {
     yew::Renderer::<App>::new().render();
 }
@@ -93,7 +94,12 @@ fn login_check(props: &ChildrenProps) -> Html {
     if !server_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
-    if !ADMIN_WHITELIST.contains(&keys.unwrap().public_key().as_str()) {
+    let pubkey = keys.as_ref().unwrap().public_key();
+    if !ADMIN_WHITELIST
+        .trim()
+        .lines()
+        .any(|line| line.trim() == pubkey)
+    {
         return html! {
             <div class="flex justify-center items-center flex-1">
                 <h2 class="text-2xl px-8 py-4 font-bold text-center">{"You are not authorized to access this page"}</h2>
