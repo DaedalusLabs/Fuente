@@ -47,12 +47,12 @@ pub fn business_details(props: &CommerceProfileProps) -> Html {
             <h3 class="text-gray-500 font-light text-lg">{&translations["stores_settings_option_information"]}</h3>
             <p class="text-gray-500 font-bold text-lg">{&commerce_data.name}</p>
             <div class="w-96 space-y-2">
-                <div class="flex justify-between">
+                <div class="flex flex-col md:flex-row lg:justify-between gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_email"]}</p>
                     <p class="text-gray-500">{&commerce_data.web}</p>
                 </div>
 
-                <div class="flex justify-between">
+                <div class="flex flex-col md:flex-row lg:justify-between gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_phone"]}</p>
                     <p class="text-gray-500">{&commerce_data.telephone}</p>
                 </div>

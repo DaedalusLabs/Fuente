@@ -18,22 +18,16 @@ pub enum DriverRoute {
 #[function_component(DriverPages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="flex h-screen ">
+        <div class="flex flex-col lg:flex-row h-screen overflow-hidden">
             <NavigationBar/>
-            <main class="flex-1">
-                <div class="h-full no-scrollbar">
-                    <div class="container mx-auto p-6">
-                        <Switch<DriverRoute> render = { move |switch: DriverRoute| {
-                                match switch {
-                                    DriverRoute::Home => html!{<HomePage />},
-                                    DriverRoute::History => html!{<HistoryPage />},
-                                    DriverRoute::Settings => html!{<SettingsPageComponent />},
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            </main>
+            <Switch<DriverRoute> render = { move |switch: DriverRoute| {
+                    match switch {
+                        DriverRoute::Home => html!{<HomePage />},
+                        DriverRoute::History => html!{<HistoryPage />},
+                        DriverRoute::Settings => html!{<SettingsPageComponent />},
+                    }
+                }}
+            />
         </div>
     }
 }

@@ -5,11 +5,11 @@ use crate::{
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleInput
+        templates::{KeyRecoverySection, SettingsPageTemplate}, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleInput
     },
     models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
-use lucide_yew::{ScrollText, SquarePen, X};
+use lucide_yew::{Key, Phone, ScrollText, SquarePen, X};
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use yew::prelude::*;
 
@@ -39,14 +39,21 @@ pub fn settings_page() -> Html {
     };
     let my_orders_button = {
         html! {
-            <div class="flex justify-center items-center">
+            <div class="flex items-center gap-4">
+                <div class="flex justify-center items-center">
                 <AppLink<DriverRoute>
-                    class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
+                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
-                    route={DriverRoute::History}>
-                    <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2", "font-bold")} />
-                    {&translations["profile_personal_information_orders_button"]}
+                    route={DriverRoute::History} >
+                    <span class="hidden lg:block text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
                 </AppLink<DriverRoute>>
+                <AppLink<DriverRoute>
+                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    selected_class=""
+                    route={DriverRoute::History} >
+                    <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
+                </AppLink<DriverRoute>>
+                </div>
             </div>
         }
     };
@@ -96,88 +103,26 @@ pub fn settings_page() -> Html {
             <>
             {match *current_page {
                     SettingsPage::Profile => html! {
-                        <>
+                        <div class="w-full">
                             <MyContactDetails />
                             <PopupSection close_handle={profile_popup_handle.clone()}>
                                 <NewProfileForm close_handle={profile_popup_handle.clone()} />
                             </PopupSection>
-                        </>
+                        </div>
                     },
                     SettingsPage::KeyRecovery => html! {
-                        <KeyRecoverySection />
+                        <div class="w-full">
+                            <KeyRecoverySection />
+                        </div>
                     },
                     SettingsPage::Language => html! {
-                        <>
-                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
+                        <div class="w-full">
                             <LanguageToggle />
-                        </>
+                        </div>
                     },
             }}
             </>
         </SettingsPageTemplate>
-    }
-}
-#[function_component(SettingsPageComponent2)]
-pub fn settings_page() -> Html {
-    let current_page = use_state(|| SettingsPage::Profile);
-
-    html! {
-        <div class="h-full w-full flex flex-col">
-            <h2 class="text-4xl mb-6 p-4">{"Settings"}</h2>
-
-            <div class="flex flex-row h-full">
-                // Settings Menu
-                <div class="w-64 border-r p-4">
-                    <div class="flex flex-col gap-4">
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::Profile))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Profile Settings"}
-                        </button>
-                        <button
-                            onclick={let page = current_page.clone();
-                                Callback::from(move |_| page.set(SettingsPage::KeyRecovery))}
-                            class="text-left p-2 hover:bg-gray-100 rounded">
-                            {"Key Recovery"}
-                        </button>
-                    </div>
-                </div>
-
-                // Content Area
-                <div class="flex-1 p-4">
-                </div>
-            </div>
-        </div>
-    }
-}
-
-// Key Recovery Section
-#[function_component(KeyRecoverySection)]
-fn key_recovery_section() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
-
-    // Convert secret key bytes to hex string
-    let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
-
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Key Recovery"}</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <p class="mb-4">{"Your private key is very important. Store it safely:"}</p>
-                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
-                    {secret_key_hex}
-                </div>
-                <p class="mt-4 text-sm text-gray-600">
-                    {"Save this key somewhere safe. You'll need it to recover your account."}
-                </p>
-            </div>
-        </div>
     }
 }
 
@@ -189,17 +134,37 @@ pub fn my_contact_details() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
     let translations = language_ctx.translations();
 
-    html! {
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 h-full">
-        <div class="space-y-3">
-            <h3 class="text-gray-500 text-2xl font-semibold">{profile.nickname()}</h3>
+    let pubkey = match user_ctx.get_profile_note() {
+        Some(note) => note.pubkey[..12].to_string(),
+        None => "No public key found".to_string(),
+    };
 
-            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
-                <p class="text-gray-500 font-light">{&profile.telephone()}</p>
+    html! {
+        <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 h-full p-6 rounded-lg">
+                <div class="space-y-6">
+                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                        {profile.nickname()}
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <Phone class="text-gray-500 w-5 h-5" />
+                            <div>
+                                <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                                <p class="text-gray-600">{&profile.telephone()}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <Key class="text-gray-500 w-5 h-5" />
+                            <div>
+                                <p class="text-gray-700 text-lg font-bold">{&translations["admin_courier_details_key"]}</p>
+                                <p class="text-gray-600">{&pubkey}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
     }
 }
 
@@ -245,8 +210,7 @@ pub fn new_profile_form(props: &PopupProps) -> Html {
 
     html! {
         <form {onsubmit}
-            class="w-full flex flex-col gap-2 bg-white rounded-3xl p-4 items-center">
-                <label class="text-gray-500 text-lg font-bold" for="name">{"Name"}</label>
+            class="w-full h-full flex flex-col gap-4 rounded-3xl p-4 bg-fuente-dark">
                 <SimpleInput
                     id="name"
                     name="name"
@@ -255,7 +219,6 @@ pub fn new_profile_form(props: &PopupProps) -> Html {
                     input_type="text"
                     required={true}
                     />
-                <label class="text-gray-500 text-lg font-bold" for="telephone">{"Telephone"}</label>
                 <SimpleInput
                     id="telephone"
                     name="telephone"

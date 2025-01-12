@@ -10,6 +10,7 @@ use fuente::{
         NOSTR_KIND_COURIER_UPDATE,
     },
 };
+use lucide_yew::ScrollText;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
     key_manager::NostrIdStore,
@@ -75,22 +76,28 @@ pub fn home_page() -> Html {
         };
     }
     html! {
-        <main class="container mx-auto mt-10">
-            <div class="flex justify-between items-center">
-                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
-                    {&translations["orders_heading"]}
-                </h1>
-                <AppLink<DriverRoute>
-                    route={DriverRoute::History}
-                    class="border-2 border-fuente rounded-full py-3 px-10 text-center text-xl text-fuente font-semibold"
-                    selected_class="">
-                    <span>{&translations["orders_historic"]}</span>
-                </AppLink<DriverRoute>>
-            </div>
+        <main class="flex-1 overflow-hidden">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                        {&translations["orders_heading"]}
+                    </h1>
+                    <AppLink<DriverRoute>
+                        route={DriverRoute::History}
+                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                        selected_class="">
+                            <ScrollText class="w-6 h-6 text-fuente" />
+                    </AppLink<DriverRoute>>
+                    <AppLink<DriverRoute>
+                        route={DriverRoute::History}
+                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                        selected_class="">
+                        <span>{&translations["orders_historic"]}</span>
+                    </AppLink<DriverRoute>>
+                </div>
 
-            <div class="flex justify-center gap-10 mt-10 min-h-96">
-                <div class="grid grid-cols-1 gap-2 lg:w-1/2 xl:w-[40%] 2xl:w-[30%]">
-                    <section>
+                <div class="flex flex-col flex-1 overflow-hidden">
+                    <div class="flex-1 overflow-hidden mt-4 px-4 flex justify-center">
                         <OrderList title={OrderStatus::ReadyForDelivery}>
                             {orders.iter().filter(|o| o.0.order_status == OrderStatus::ReadyForDelivery && o.0.courier.is_none()
                                 ).map(|order| {
@@ -105,7 +112,7 @@ pub fn home_page() -> Html {
                                 }
                             }).collect::<Html>()}
                         </OrderList>
-                    </section>
+                    </div>
                 </div>
             </div>
         </main>
@@ -217,21 +224,10 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
 
                         match DriverStateUpdate::new(driver_profile.clone()).await {
                             Ok(state_update) => {
-                                let coords = state_update.get_location();
-                                gloo::console::log!(
-                                    "Created state update with coords:",
-                                    format!("{:?}", coords)
-                                );
-
                                 // Send to driver hub
                                 if let Ok(final_note) = state_update
                                     .to_encrypted_note(&keys, DRIVER_HUB_PUB_KEY.to_string())
                                 {
-                                    gloo::console::log!("Sending to hub, kind:", final_note.kind);
-                                    gloo::console::log!(
-                                        "Hub encrypted content length:",
-                                        final_note.content.len()
-                                    );
                                     sender.emit(final_note);
                                 }
 
@@ -239,14 +235,6 @@ pub fn location_tracker(props: &LocationTrackerProps) -> Html {
                                 if let Ok(final_note) =
                                     state_update.to_encrypted_note(&keys, customer_pubkey)
                                 {
-                                    gloo::console::log!(
-                                        "Sending to customer, kind:",
-                                        final_note.kind
-                                    );
-                                    gloo::console::log!(
-                                        "Customer encrypted content length:",
-                                        final_note.content.len()
-                                    );
                                     sender.emit(final_note);
                                 }
                             }

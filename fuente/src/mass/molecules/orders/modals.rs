@@ -70,14 +70,6 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
             </div>
 
             <CustomerDetails customer={customer_profile.clone()} />
-
-            {if !is_customer {
-                html! {
-                    <OrderModalForm current_status={order.order_status.clone()} on_order_click={on_submit.clone()} />
-                }
-            } else {
-                html! {<></>}
-            }}
             {if let Some(Ok(driver)) = driver_profile {
                 html! {
                     <div class="mt-5">
@@ -89,6 +81,13 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                             </div>
                         </div>
                     </div>
+                }
+            } else {
+                html! {<></>}
+            }}
+            {if !is_customer {
+                html! {
+                    <OrderModalForm current_status={order.order_status.clone()} on_order_click={on_submit.clone()} />
                 }
             } else {
                 html! {<></>}
