@@ -22,24 +22,18 @@ pub enum CommerceRoute {
 #[function_component(CommercePages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="flex h-screen ">
+        <div class="flex flex-col lg:flex-row h-screen overflow-hidden">
             <HomeSidebar />
-            <main class="flex-1">
-                <div class="h-full no-scrollbar">
-                    <div class="container mx-auto p-6">
-                        <Switch<CommerceRoute> render = { move |switch: CommerceRoute| {
-                                match switch {
-                                    CommerceRoute::Home => html!{<HomePage />},
-                                    CommerceRoute::History => html!{<HistoryPage />},
-                                    CommerceRoute::Settings => html!{<SettingsPageComponent />},
-                                    CommerceRoute::Products => html!{<ProductsPage />},
-                                    CommerceRoute::Orders => html!{<></>},
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            </main>
+            <Switch<CommerceRoute> render = { move |switch: CommerceRoute| {
+                    match switch {
+                        CommerceRoute::Home => html!{<HomePage />},
+                        CommerceRoute::History => html!{<HistoryPage />},
+                        CommerceRoute::Settings => html!{<SettingsPageComponent />},
+                        CommerceRoute::Products => html!{<ProductsPage />},
+                        CommerceRoute::Orders => html!{<></>},
+                    }
+                }}
+            />
         </div>
     }
 }

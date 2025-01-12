@@ -1,5 +1,5 @@
 use html::ChildrenProps;
-use lucide_yew::Plus;
+use lucide_yew::{Globe, Plus};
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use upload_things::{UtPreSignedUrl, UtUpload};
 use wasm_bindgen::JsCast;
@@ -54,16 +54,15 @@ pub fn simple_textarea(props: &SimpleInputProps) -> Html {
     let label = props.label.clone();
     html! {
         <div class="w-full">
-            <label class="text-xs font-bold text-neutral-400"
+            <label 
+                class="text-white text-lg block text-left"
                 for={id.clone()}>{label}</label>
             <textarea
                 {id}
                 {name}
                 {value}
                 {required}
-                class="w-full border-b-2 border-neutral-400 p-0 py-2 pr-2 text-sm
-                truncate bg-transparent border-0 focus:outline-none focus:border-b-2 focus:bg-transparent
-                focus:ring-0 focus:ring-transparent tracking-widest focus:border-fuente-dark"
+                class="p-3 w-full rounded-xl"
                 />
         </div>
     }
@@ -439,49 +438,58 @@ pub fn language_toggle() -> Html {
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("LanguageConfigsStore not found");
     let current_locale = language_ctx.current_locale();
+    let translations = language_ctx.translations();
 
     html! {
-        <div class="flex items-center gap-2 mt-4">
-            <button
-                onclick={
-                    let language_ctx = language_ctx.clone();
-                    Callback::from(move |_| {
-                        language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::English));
-                    })
-                }
-                class={classes!(
-                    "px-4",
-                    "py-2",
-                    "rounded-lg",
-                    if matches!(current_locale, AppLocale::English) {
-                        "bg-fuente text-white"
-                    } else {
-                        "bg-gray-100 hover:bg-gray-200"
+        <div class="p-6 space-y-6">
+            <div class="flex items-center space-x-3 border-b pb-2">
+                <Globe class="text-fuente w-6 h-6" />
+                <h2 class="text-2xl font-bold text-fuente">
+                  {&translations["profile_settings_language"]}
+                </h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    onclick={
+                        let language_ctx = language_ctx.clone();
+                        Callback::from(move |_| {
+                            language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::English));
+                        })
                     }
-                )}
-            >
-                {"EN"}
-            </button>
-            <button
-                onclick={
-                    let language_ctx = language_ctx.clone();
-                    Callback::from(move |_| {
-                        language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::Dutch));
-                    })
-                }
-                class={classes!(
-                    "px-4",
-                    "py-2",
-                    "rounded-lg",
-                    if matches!(current_locale, AppLocale::Dutch) {
-                        "bg-fuente text-white"
-                    } else {
-                        "bg-gray-100 hover:bg-gray-200"
+                    class={classes!(
+                        "px-4",
+                        "py-2",
+                        "rounded-lg",
+                        if matches!(current_locale, AppLocale::English) {
+                            "bg-fuente text-white"
+                        } else {
+                            "bg-gray-100 hover:bg-gray-200"
+                        }
+                    )}
+                >
+                    {"EN"}
+                </button>
+                <button
+                    onclick={
+                        let language_ctx = language_ctx.clone();
+                        Callback::from(move |_| {
+                            language_ctx.dispatch(LanguageConfigsAction::ChangeLocale(AppLocale::Dutch));
+                        })
                     }
-                )}
-            >
-                {"NL"}
-            </button>
+                    class={classes!(
+                        "px-4",
+                        "py-2",
+                        "rounded-lg",
+                        if matches!(current_locale, AppLocale::Dutch) {
+                            "bg-fuente text-white"
+                        } else {
+                            "bg-gray-100 hover:bg-gray-200"
+                        }
+                    )}
+                >
+                    {"NL"}
+                </button>
+            </div>
         </div>
     }
 }

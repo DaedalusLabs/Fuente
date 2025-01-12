@@ -1,6 +1,7 @@
 use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use crate::router::CommerceRoute;
 use fuente::contexts::LanguageConfigsStore;
+use fuente::mass::templates::KeyRecoverySection;
 use fuente::mass::{
     templates::SettingsPageTemplate, AppLink, PopupProps, PopupSection, SimpleInput, SimpleTextArea,
 };
@@ -8,7 +9,9 @@ use fuente::mass::{
     CommerceProfileProps, ImageUploadInput, LanguageToggle, NewAddressForm, NewAddressProps,
 };
 use fuente::models::CommerceProfileIdb;
-use lucide_yew::{ScrollText, ShoppingBag, SquarePen, X};
+use lucide_yew::{
+    Compass, Mail, MapPin, Phone, ScrollText, ShoppingBag, SquarePen, Upload, Zap, X,
+};
 use nostr_minions::browser_api::HtmlForm;
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
@@ -56,27 +59,41 @@ pub fn settings_page() -> Html {
     };
     let my_orders_button = {
         html! {
-            <div class="flex justify-center items-center">
+            <div class="flex items-center gap-4">
+                <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2"
+                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::History} >
-                    <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
-                    <span class="text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
+                    <span class="hidden lg:block text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
                 </AppLink<CommerceRoute>>
+                <AppLink<CommerceRoute>
+                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    selected_class=""
+                    route={CommerceRoute::History} >
+                    <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
+                </AppLink<CommerceRoute>>
+                </div>
             </div>
         }
     };
     let my_store_button = {
         html! {
-            <div class="flex justify-center items-center">
+            <div class="flex items-center gap-4">
+                <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="flex items-center bg-white border-2 border-fuente px-10 py-3 rounded-full text-fuente space-x-2"
+                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::Products} >
-                    <ShoppingBag class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2")} />
-                    <span class="text-lg font-bold text-center">{&translations["admin_store_new_products_heading"]}</span>
+                    <span class="hidden lg:block text-lg font-bold text-center">{&translations["admin_store_new_products_heading"]}</span>
                 </AppLink<CommerceRoute>>
+                <AppLink<CommerceRoute>
+                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    selected_class=""
+                    route={CommerceRoute::Products} >
+                    <ShoppingBag class={classes!("h-6", "w-6", "stroke-fuente")} />
+                </AppLink<CommerceRoute>>
+                </div>
             </div>
         }
     };
@@ -88,11 +105,12 @@ pub fn settings_page() -> Html {
         match *current_page {
             SettingsPage::KeyRecovery => {
                 html! {
-                    <button type="button" class="flex gap-4 tracking-wide">
-                        <span class="text-red-600 font-bold text-sm">
+                    <button type="button"
+                        class="absolute top-1 right-1 sm:top-4 sm:right-4 p-2 rounded-full transition duration-300">
+                        <span class="text-red-600 font-bold text-xl flex gap-1 items-top">
                             {&translations["profile_personal_information_delete_account_button"]}
+                            <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
                         </span>
-                        <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
                     </button>
                 }
             }
@@ -102,22 +120,24 @@ pub fn settings_page() -> Html {
             SettingsPage::Address => {
                 html! {
                     <button onclick={Callback::from(move |_| address_popup_handle.set(true))}
-                        type="button" class="flex gap-4 tracking-wide">
-                        <span class="text-fuente font-bold text-xl">
+                        type="button"
+                        class="absolute top-1 right-1 sm:top-4 sm:right-4 p-2 rounded-full transition duration-300">
+                        <span class="text-fuente font-bold text-xl flex gap-1 items-top">
                             {&translations["profile_personal_information_edit_button"]}
+                            <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
                         </span>
-                        <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
                     </button>
                 }
             }
             SettingsPage::Profile => {
                 html! {
                     <button onclick={Callback::from(move |_| profile_popup_handle.set(true))}
-                        type="button" class="flex gap-4 tracking-wide">
-                        <span class="text-fuente font-bold text-xl">
+                        type="button"
+                        class="absolute top-1 right-1 sm:top-4 sm:right-4 p-2 rounded-full transition duration-300">
+                        <span class="text-fuente font-bold text-xl flex gap-1 items-top">
                             {&translations["profile_personal_information_edit_button"]}
+                            <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
                         </span>
-                        <SquarePen class={classes!("feather", "feather-plus", "text-fuente","w-6", "h-6")} />
                     </button>
                 }
             }
@@ -140,29 +160,30 @@ pub fn settings_page() -> Html {
             <>
             {match *current_page {
                     SettingsPage::Profile => html! {
-                        <>
+                        <div class="w-full">
                         <MyContactDetails />
                         <PopupSection close_handle={profile_popup_handle.clone()}>
                             <EditCommerceModal close_handle={profile_popup_handle.clone()} />
                         </PopupSection>
-                        </>
+                        </div>
                     },
                     SettingsPage::Address => html! {
-                        <>
+                        <div class="w-full">
                         <MyBusinessAddress />
                         <PopupSection close_handle={address_popup_handle.clone()}>
                             <EditAddressModal close_handle={address_popup_handle.clone()} />
                         </PopupSection>
-                        </>
+                        </div>
                     },
                     SettingsPage::KeyRecovery => html! {
+                        <div class="w-full">
                         <KeyRecoverySection />
+                        </div>
                     },
                     SettingsPage::Language => html! {
-                        <>
-                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
-                            <LanguageToggle />
-                        </>
+                        <div class="w-full">
+                        <LanguageToggle />
+                        </div>
                     },
             }}
             </>
@@ -181,37 +202,56 @@ fn my_contact_details() -> Html {
     let logo_popup_handle = use_state(|| false);
     let logo_popup_handle_clone = logo_popup_handle.clone();
     html! {
-        <div class="w-full">
-            <div class="grid grid-cols-2 gap-10 h-full">
-                <div class="space-y-3">
-                    <h3 class="text-gray-500 text-2xl font-semibold">{&profile.name}</h3>
+        <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 h-full p-6 rounded-lg">
+                <div class="space-y-6">
+                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                        {&profile.name}
+                    </h3>
 
-                    <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                        <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
-                        <p class="text-gray-500 font-light">{&profile.web}</p>
+                  <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                      <Mail class="text-gray-500 w-5 h-5" />
+                      <div>
+                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
+                        <p class="text-gray-600">{&profile.web}</p>
+                      </div>
                     </div>
 
-                    <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                        <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
-                        <p class="text-gray-500 font-light">{&profile.telephone}</p>
+                    <div class="flex items-center space-x-3">
+                      <Phone class="text-gray-500 w-5 h-5" />
+                      <div>
+                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                        <p class="text-gray-600">{&profile.telephone}</p>
+                      </div>
                     </div>
 
-                    <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                        <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_ln_address"]}</p>
-                        <p class="text-gray-500 font-light">{&profile.ln_address}</p>
+                    <div class="flex items-center space-x-3">
+                      <Zap class="text-gray-500 w-5 h-5" />
+                      <div>
+                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_ln_address"]}</p>
+                        <p class="text-gray-600">{&profile.ln_address}</p>
+                      </div>
                     </div>
+                  </div>
                 </div>
 
-                <div class="h-full">
-                    <img src={profile.logo_url.clone()}
-                        class="border border-dashed border-fuente bg-gray-100 rounded-3xl lg:h-40 xl:h-full flex lg:max-w-40 xl:max-w-56 mx-auto" />
+                <div class="flex flex-col items-center justify-center space-y-6">
+                  <div class="relative w-full max-w-xs aspect-square">
+                    <img
+                      src={profile.logo_url.clone()}
+                      alt="Profile Logo"
+                      class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full"
+                    />
+                  </div>
 
-                    <div class="flex justify-center mt-5">
-                        <button onclick={Callback::from(move |_| logo_popup_handle_clone.set(true))}
-                            class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold">
-                            {&translations["profile_settings_upload"]}
-                        </button>
-                    </div>
+                  <button
+                    onclick={Callback::from(move |_| logo_popup_handle_clone.set(true))}
+                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
+                  >
+                    <Upload class="w-5 h-5" />
+                    <span>{&translations["profile_settings_upload"]}</span>
+                  </button>
                 </div>
             </div>
             <PopupSection close_handle={logo_popup_handle.clone()}>
@@ -250,7 +290,7 @@ pub fn edit_avatar(props: &PopupProps) -> Html {
     });
     html! {
         <form {onsubmit}
-            class="w-full flex flex-col gap-2 bg-white rounded-3xl p-4 items-center">
+            class="w-full flex flex-col gap-2 bg-fuente-dark rounded-3xl p-4 items-center">
             <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} input_id="user-profile-upload" />
             <button
                 type="submit"
@@ -267,10 +307,37 @@ fn my_business_address() -> Html {
     let user_ctx = use_context::<CommerceDataStore>().expect("No CommerceDataStore found");
     let profile = user_ctx.profile().expect("No user profile found");
     html! {
-            <div>
-                <p class="text-xl font-bold text-gray-500">{&translations["profile_address_address_registered"]}</p>
-                <span class="text-xl font-thin text-gray-500">{&profile.lookup.display_name()}</span>
+        <div class="max-w-full flex flex-col p-6 rounded-lg space-y-6 overflow-hidden">
+            <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+              {&translations["profile_address_registered"]}
+            </h3>
+
+            <div class="space-y-4">
+              <div class="flex items-start space-x-3">
+                <MapPin class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                <div class="flex-grow">
+                  <p class="text-gray-700 text-lg font-bold">
+                    {&translations["profile_address_registered"]}
+                  </p>
+                  <p class="text-gray-600 text-xl font-light break-words max-w-xs sm:max-w-sm">
+                    {&profile.lookup.display_name()}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3">
+                <Compass class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                <div class="flex-grow">
+                  <p class="text-gray-700 text-lg font-bold">
+                    {&translations["profile_address_coordinates"]}
+                  </p>
+                  <p class="text-gray-600 text-xl font-light">
+                    {format!("Latitude: {:.2} Longitude: {:.2}", &profile.lookup.lat_as_f64(), &profile.lookup.long_as_f64())}
+                  </p>
+                </div>
+              </div>
             </div>
+        </div>
     }
 }
 
@@ -304,7 +371,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     });
     html! {
         <form {onsubmit}
-            class="w-full h-full flex flex-col gap-4 rounded-3xl p-4 bg-white">
+            class="w-full h-full flex flex-col gap-4 rounded-3xl p-4 bg-fuente-dark">
                 <EditProfileInputs commerce_data={profile.clone()} />
                 <button
                     type="submit"
@@ -404,76 +471,8 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
         handle.set(false);
     });
     html! {
-        <form  class="bg-white rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" {onsubmit}>
+        <form  class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" {onsubmit}>
             <NewAddressForm ..props />
         </form>
-    }
-}
-// Key Recovery Section
-#[function_component(KeyRecoverySection)]
-fn key_recovery_section() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
-
-    // Convert secret key bytes to hex string
-    let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
-
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Key Recovery"}</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <p class="mb-4">{"Your private key is very important. Store it safely:"}</p>
-                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
-                    {secret_key_hex}
-                </div>
-                <p class="mt-4 text-sm text-gray-600">
-                    {"Save this key somewhere safe. You'll need it to recover your account."}
-                </p>
-            </div>
-        </div>
-    }
-}
-
-// FAQ Section
-#[function_component(FAQSection)]
-fn faq_section() -> Html {
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Frequently Asked Questions"}</h2>
-            <div class="space-y-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-bold mb-2">{"How do I manage my products?"}</h3>
-                    <p>{"Use the Products section to add, edit, or remove items from your menu."}</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-bold mb-2">{"How do orders work?"}</h3>
-                    <p>{"You'll receive orders in real-time. Accept them to begin processing."}</p>
-                </div>
-            </div>
-        </div>
-    }
-}
-
-// Legal Section
-#[function_component(LegalSection)]
-fn legal_section() -> Html {
-    html! {
-        <div class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold">{"Legal Information"}</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-bold mb-2">{"Terms of Service"}</h3>
-                <p class="mb-4">{"By using our service, you agree to these terms..."}</p>
-
-                <h3 class="font-bold mb-2">{"Privacy Policy"}</h3>
-                <p class="mb-4">{"We respect your privacy and protect your data..."}</p>
-
-                <h3 class="font-bold mb-2">{"Refund Policy"}</h3>
-                <p>{"Our refund policy details..."}</p>
-            </div>
-        </div>
     }
 }

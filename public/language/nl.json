@@ -34,7 +34,8 @@
     "profile_address_new_address_button": "Nieuw Adres",
     "profile_address_personal_information_button": "Persoonlijke Informatie",
     "profile_address_address_button": "Adres",
-    "profile_address_address_registered": "Adres Geregistreerd",
+    "profile_address_registered": "Adres Geregistreerd",
+    "profile_address_coordinates": "Coördinaten",
     "profile_address_details": "Cali Street, New York, Verenigde Staten, 11232",
     "profile_address_edit_button": "Bewerken",
 
@@ -70,6 +71,7 @@
     "cart_pre_total": "Subtotaal",
     "cart_checkout": "Ga naar Afrekenen",
 
+    "store_products_form_label_banner": "Winkel Banner",
     "payment_title": "Betaling",
     "payment_step_1": "Betaling",
     "payment_step_2": "Bevestiging",

@@ -34,7 +34,8 @@
     "profile_address_new_address_button": "New Address",
     "profile_address_personal_information_button": "Personal Information",
     "profile_address_address_button": "Address",
-    "profile_address_address_registered": "Address Registered",
+    "profile_address_registered": "Address Registered",
+    "profile_address_coordinates": "Coordinates",
     "profile_address_details": "Cali Street, New York, United States, 11232",
     "profile_address_edit_button": "Edit",
 
@@ -261,9 +262,9 @@
     "stores_settings_option_information": "Store Information",
 
     "admin_store_new_products_title": "Store - New Products",
-    "admin_store_new_products_heading": "My Store",
+    "admin_store_new_products_heading": "My Products",
 
-    "admin_store_profile_heading": "My Store Profile",
+    "admin_store_profile_heading": "My Store",
 
     "admin_store_add_product_button": "Add new product",
     "admin_store_new_products_button": "New products",
@@ -342,12 +343,14 @@
     "store_products_form_label_details": "Details of your product",
     "store_products_form_label_description": "Description of your product",
     "store_products_form_label_photos": "Add photos of your product",
+    "store_products_form_label_banner": "Add a new banner",
     "store_products_form_label_price_info": "Price information",
     "store_products_form_label_original_price": "Original price",
     "store_products_form_label_discount": "Discount",
     "store_products_form_label_total_price": "Total Price",
     "store_products_form_label_category": "Product Category",
     "store_products_form_label_add_button": "Add Product",
+    "store_products_form_label_add_banner": "Add Banner",
     "store_products_form_label_none": "No products found",
     "store_products_form_label_add_category": "Add Category"
 

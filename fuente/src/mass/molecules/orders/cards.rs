@@ -28,9 +28,9 @@ pub fn order_state_card(props: &OrderStateCardProps) -> Html {
     let locale_time = timestamp.to_locale_time_string("nl-SR");
     html! {
         <div onclick={props.on_click.clone()} id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
-            <p class="text-fuente font-bold text-md">{profile.nickname}</p>
-            <p class="font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
-            <p class="text-gray-500 text-xs">{format!("{} | {}", locale_date, locale_time)}</p>
+            <p class="pointer-events-none text-fuente font-bold text-md">{profile.nickname}</p>
+            <p class="pointer-events-none font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
+            <p class="pointer-events-none text-gray-500 text-xs">{format!("{} | {}", locale_date, locale_time)}</p>
         </div>
     }
 }
@@ -54,7 +54,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         <OrderStateCard order={props.order.clone()} on_click={open_popup} />
         <PopupSection close_handle={order_popup.clone()}>
             <main 
-                class="bg-white rounded-2xl p-6 max-w-xs sm:max-w-sm md:max-w-md lg:mx-w-4xl max-h-96 sm:max-h-[840px] m-4 overflow-y-auto scrollbar-none">
+                class="bg-white rounded-2xl p-4 max-h-screen m-4 overflow-y-auto scrollbar-none">
                 <OrderDetailModal order={props.order.clone()} on_submit={props.on_click.clone()} />
             </main>
         </PopupSection>

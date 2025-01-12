@@ -5,7 +5,7 @@ use yew::prelude::*;
 use crate::{
     contexts::LanguageConfigsStore,
     mass::{CustomerDetails, ProductListItem},
-    models::{OrderInvoiceState, OrderStatus},
+    models::{DriverProfile, OrderInvoiceState, OrderStatus},
 };
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderDetailModalProps {
@@ -29,6 +29,13 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
     let order_total = request.products.total();
     let customer_profile = &request.profile;
     let order_status = order.order_status.clone();
+    let driver_profile = {
+        let driver = order
+            .courier
+            .as_ref()
+            .map(|courier| DriverProfile::try_from(courier));
+        driver
+    };
     html! {
         <>
             <div class="flex items-center justify-between border-b border-b-gray-400 pb-3 gap-2">
@@ -63,10 +70,25 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
             </div>
 
             <CustomerDetails customer={customer_profile.clone()} />
-            
+
             {if !is_customer {
                 html! {
                     <OrderModalForm current_status={order.order_status.clone()} on_order_click={on_submit.clone()} />
+                }
+            } else {
+                html! {<></>}
+            }}
+            {if let Some(Ok(driver)) = driver_profile {
+                html! {
+                    <div class="mt-5">
+                        <h3 class="text-gray-500 font-light">{&translations["packages_track_table_heading_driver"]}</h3>
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <p class="text-fuente font-bold text-lg">{driver.nickname()}</p>
+                                <p class="text-gray-500 font-light text-md">{driver.telephone()}</p>
+                            </div>
+                        </div>
+                    </div>
                 }
             } else {
                 html! {<></>}

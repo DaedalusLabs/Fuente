@@ -6,7 +6,7 @@ use crate::models::{DRIVER_HUB_PUB_KEY, NOSTR_KIND_ORDER_STATE};
 
 use super::request::OrderRequest;
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize, Copy)]
 pub enum OrderStatus {
     Pending,
     Preparing,

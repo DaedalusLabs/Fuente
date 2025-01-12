@@ -1,4 +1,4 @@
-use lucide_yew::{ArrowLeft, ArrowRight, Bitcoin, Headset, ShieldCheck, SquarePen, Truck};
+use lucide_yew::{ArrowLeft, ArrowRight, Bitcoin, Headset, Key, ShieldCheck, SquarePen, Truck, TriangleAlert};
 use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
 use web_sys::HtmlElement;
@@ -20,35 +20,40 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
     let selected_class = classes!("bg-fuente", "text-white");
     let unselected_class = classes!("bg-gray-100", "text-gray-500");
     html! {
-        <aside class="flex lg:flex-col gap-3 overflow-x-auto no-scrollbar">
-            {for options.iter().map(|(name, onclick, selected)| {
-                html! {
-                    <button
-                        type="button"
-                        class={classes!(
-                            "flex",
-                            "items-center",
-                            "justify-center",
-                            "lg:justify-start",
-                            "text-center",
-                            "lg:text-left",
-                            "w-full",
-                            "mt-4",
-                            "lg:mt-0",
-                            "py-4",
-                            "px-8",
-                            "rounded-2xl",
-                            "font-bold",
-                            "text-md",
-                            "lg:text-lg",
-                            "tracking-wide",
-                            if *selected { selected_class.clone() } else { unselected_class.clone() }
-                        )}
-                        {onclick}>
-                        {name.as_str()}
-                    </button>
-                }
-            })}
+        <aside class="flex-shrink-0 px-4 overflow-auto no-scrollbar">
+            <div class="flex flex-row lg:flex-col gap-3">
+                {for options.iter().map(|(name, onclick, selected)| {
+                    html! {
+                        <button
+                            type="button"
+                            class={classes!(
+                                "flex",
+                                "items-center",
+                                "justify-center",
+                                "py-2",
+                                "px-4",
+                                "text-sm",
+                                "text-center",
+                                "w-full",
+                                "rounded-2xl",
+                                "font-bold",
+                                "md:text-md",
+                                "md:py-3",
+                                "md:px-6",
+                                "lg:py-4",
+                                "lg:px-8",
+                                "lg:justify-start",
+                                "lg:text-left",
+                                "lg:text-lg",
+                                "tracking-wide",
+                                if *selected { selected_class.clone() } else { unselected_class.clone() }
+                            )}
+                            {onclick}>
+                            {name.as_str()}
+                        </button>
+                    }
+                })}
+            </div>
         </aside>
     }
 }
@@ -66,11 +71,11 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="relative border border-fuente rounded-xl flex items-start justify-between h-fit gap-5 p-5 lg:p-10">
-            <div class="w-full h-fit">
+        <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+            <div class="h-full overflow-auto border border-fuente rounded-xl no-scrollbar relative">
                 {children}
+                {edit_button.clone().unwrap_or_default()}
             </div>
-            {edit_button.clone().unwrap_or_default()}
         </div>
     }
 }
@@ -132,24 +137,22 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     } = props.clone();
     html! {
         <>
-        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
-            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
-                {&heading}
-            </h1>
-            <SettingsOptionsButtons {options} />
-        </div>
+        <main class="flex flex-col h-screen overflow-hidden w-full">
+            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                    {&heading}
+                </h1>
+                <SettingsOptionsButtons {options} />
+            </div>
 
-        <main class="container mx-auto flex-grow">
-            <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
                 <SettingsSideBar options={sidebar_options} />
                 <SettingsContent edit_button={content_button} >
-                    <>
-                        {children}
-                    </>
+                    {children}
                 </SettingsContent>
             </div>
         </main>
-    </>
+        </>
     }
 }
 
@@ -621,13 +624,26 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
 #[function_component(FuenteSidebarTemplate)]
 pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
     html! {
-        <aside class="flex w-16 flex-col items-center space-y-8 border-r border-fuente py-8">
-            <img
-                class={"min-w-10 min-h-10 max-w-10 max-h-10"}
-                src={"/public/assets/img/logo.png"}
-                alt="avatar" />
-            {props.children.clone()}
-        </aside>
+        <>
+            <aside class="hidden lg:flex flex-col items-center w-16 h-screen bg-white border-r border-gray-200">
+                <div class="flex-shrink-0 py-4">
+                    <img
+                        class={"min-w-10 min-h-10 max-w-10 max-h-10"}
+                        src={"/public/assets/img/logo.png"}
+                        alt="avatar" />
+                </div>
+                <nav class="flex-1 flex flex-col justify-center space-y-8">
+                    {props.children.clone()}
+                </nav>
+                <div class="flex-shrink-0 py-4">
+                </div>
+            </aside>
+            <nav class="w-full lg:hidden bg-white shadow-lg py-3 px-6 rounded-t-xl order-last">
+                <ul class="flex items-center justify-evenly">
+                    {props.children.clone()}
+                </ul>
+            </nav>
+        </>
     }
 }
 #[function_component(KeyRecoverySection)]
@@ -645,19 +661,42 @@ pub fn key_recovery_section() -> Html {
         .collect();
 
     html! {
-        <div class="flex flex-col gap-4">
+         <div class="p-6 rounded-lg space-y-6">
+          <div class="flex items-center space-x-3 border-b pb-2">
+            <Key class="text-fuente w-6 h-6" />
             <h3 class="text-2xl font-bold text-fuente">
-                {&translations["profile_settings_key"]}
+              {&translations["profile_settings_key"]}
             </h3>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <p class="mb-4">{&translations["profile_settings_warning"]}</p>
-                <div class="bg-gray-100 p-4 rounded-lg break-all select-all">
-                    {secret_key_hex}
-                </div>
-                <p class="mt-4 text-sm text-gray-600">
-                    {&translations["profile_settings_warning_two"]}
-                </p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-start space-x-3">
+              <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
+              <p class="text-gray-700">
+                {&translations["profile_settings_warning"]}
+              </p>
             </div>
+
+            <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
+                {secret_key_hex}
+              </pre>
+            </div>
+
+            <div class="flex items-start space-x-3">
+              <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
+              <p class="text-sm text-gray-600">
+                {&translations["profile_settings_warning_two"]}
+              </p>
+            </div>
+          </div>
+
+          // <div class="mt-6">
+          //   <button 
+          //     class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300">
+          //     <Key class="w-5 h-5" />
+          //   </button>
+          // </div>
         </div>
     }
 }

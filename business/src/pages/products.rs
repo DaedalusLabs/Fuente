@@ -8,7 +8,7 @@ use fuente::{
 };
 
 use fuente::mass::ImageUploadInput;
-use lucide_yew::Trash;
+use lucide_yew::{Library, Shirt, Trash};
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -56,9 +56,14 @@ pub fn home_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                     <button
-                        type="button" onclick={onclick_new_product}
-                        class="flex items-center bg-fuente-buttons px-7 py-4 rounded-full text-fuente-forms space-x-2 font-bold">
+                        type="button" onclick={onclick_new_product.clone()}
+                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["admin_store_add_product_button"]}
+                    </button>
+                    <button
+                        type="button" onclick={onclick_new_product}
+                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        <Shirt class="w-6 h-6 stroke-fuente" />
                     </button>
                 </div>
             </div>
@@ -75,9 +80,14 @@ pub fn home_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                     <button
-                        type="button" onclick={onclick_new_category}
-                        class="flex items-center bg-fuente-buttons px-7 py-4 rounded-full text-fuente-forms space-x-2 font-bold">
+                        type="button" onclick={onclick_new_category.clone()}
+                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["store_products_form_label_add_category"]}
+                    </button>
+                    <button
+                        type="button" onclick={onclick_new_category}
+                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        <Library class="w-6 h-6 stroke-fuente" />
                     </button>
                 </div>
             </div>
@@ -235,15 +245,11 @@ pub fn add_product_form() -> Html {
 
     html! {
         <main class="bg-white rounded-2xl p-10 w-fit h-fit mx-auto">
-            <form {onsubmit} class="grid grid-cols-2 gap-20">
+            <form {onsubmit} class="grid grid-cols-1 gap-4 md:gap-10 lg:gap-20">
                 <div>
-                    <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_photos"]}</p>
-                    <div class="grid grid-cols-2 mt-2 gap-5">
-                        // Large Image Upload
-                        <div class="w-full flex flex-col gap-2">
-                            <label class="text-xs font-bold text-neutral-400">
-                                {"Product Image (Large)"}
-                            </label>
+                    <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_banner"]}</p>
+                    <div class="grid grid-cols-1 mt-2 gap-5 items-center">
+                        <div class="w-full flex flex-col gap-2 justify-center items-center">
                             <ImageUploadInput
                                 url_handle={image_url.clone()}
                                 nostr_keys={nostr_keys.clone()}
@@ -260,11 +266,11 @@ pub fn add_product_form() -> Html {
                             }}
                         </div>
                     </div>
-                    <div class="mt-10">
+                    <div>
                         <button
                             type="submit"
                             class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
-                            {&translations["store_products_form_label_add_button"]}
+                            {&translations["store_products_form_label_add_banner"]}
                         </button>
                     </div>
                 </div>
@@ -298,10 +304,6 @@ pub fn add_product_form() -> Html {
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-
-            gloo::console::log!("Form submitting with:");
-            gloo::console::log!("Image URL:", format!("{:?}", *image_url));
-            gloo::console::log!("Thumbnail URL:", format!("{:?}", *thumbnail_url));
 
             let form = HtmlForm::new(e).expect("Failed to get form element");
             let product_category = form
@@ -390,8 +392,8 @@ pub fn add_product_form() -> Html {
     };
 
     html! {
-        <main class="bg-white rounded-2xl p-10 max-w-6xl mx-auto flex-1">
-            <form {onsubmit} class="grid grid-cols-2 gap-20">
+        <main class="bg-white rounded-2xl p-4 md:p-5 lg:p-10 max-w-6xl mx-auto flex-1 max-h-screen m-2 overflow-y-auto no-scrollbar">
+            <form {onsubmit} class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-20">
                 <div>
                     <div class="space-y-2">
                         <label for="product_name" class="text-gray-400 font-light block text-md">{&translations["store_products_form_label_name"]}</label>
@@ -513,7 +515,7 @@ pub fn banner_details_section(props: &BannerDetailsProps) -> Html {
     let profile = commerce_ctx.profile().clone().expect("No profile found");
     let onclick = props.onclick.clone();
     html! {
-            <div class="w-full flex items-center gap-10 pb-5">
+            <div class="w-full flex flex-col md:flex-row items-center gap-5 p-2">
                 <div class="w-full">
                     <div class="w-full xl:relative flex items-center justify-center bg-fuente rounded-2xl h-32 lg:pr-5 2xl:pr-20">
                         <img src={profile.banner_url.clone()} alt={profile.name.clone()}
@@ -547,87 +549,79 @@ pub fn product_list_section() -> Html {
         }
     });
     html! {
-        <table class="table-auto w-full border-collapse">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th class=" py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</th>
-                    <th class=" py-3 text-center text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    if let Some(menu) = menu_state.as_ref() {
-                    menu.categories().iter().map(|category| {
-                        {category.products().iter().map(|product| {
-                            let menu_handle = menu_state.clone();
+        <div class="min-w-max">
+        <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
+           <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center lg:mt-10 xl:mt-5 ">
+               <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
+               <p class="" ></p>
+               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</p>
+               <p class="" ></p>
+           </div>
+           {
+               if let Some(menu) = menu_state.as_ref() {
+               menu.categories().iter().map(|category| {
+                   {category.products().iter().map(|product| {
+                       let menu_handle = menu_state.clone();
 
-                            // Delete handler
-                            let on_delete = {
-                                let product_id = product.id();
-                                let category_id = category.id();
-                                let menu_handle = menu_handle.clone();
-                                let handle = commerce_ctx.clone();  // Get commerce context
-                                let keys = key_ctx.get_nostr_key().expect("No user keys found");
-                                let sender = relay_ctx.send_note.clone();
+                       // Delete handler
+                       let on_delete = {
+                           let product_id = product.id();
+                           let category_id = category.id();
+                           let menu_handle = menu_handle.clone();
+                           let handle = commerce_ctx.clone();  // Get commerce context
+                           let keys = key_ctx.get_nostr_key().expect("No user keys found");
+                           let sender = relay_ctx.send_note.clone();
 
-                                Callback::from(move |_: MouseEvent| {
-                                    if let Some(mut menu) = (*menu_handle).clone() {
-                                        menu.remove_product(&category_id, &product_id);
+                           Callback::from(move |_: MouseEvent| {
+                               if let Some(mut menu) = (*menu_handle).clone() {
+                                   menu.remove_product(&category_id, &product_id);
 
-                                        // Create ProductMenuIdb and broadcast changes
-                                        let db_entry = ProductMenuIdb::new(menu.clone(), &keys);
-                                        sender.emit(db_entry.note());
-                                        handle.dispatch(CommerceDataAction::UpdateProductList(db_entry.clone()));
+                                   // Create ProductMenuIdb and broadcast changes
+                                   let db_entry = ProductMenuIdb::new(menu.clone(), &keys);
+                                   sender.emit(db_entry.note());
+                                   handle.dispatch(CommerceDataAction::UpdateProductList(db_entry.clone()));
 
-                                        // Update local state
-                                        menu_handle.set(Some(menu));
-                                    }
-                                })
-                            };
+                                   // Update local state
+                                   menu_handle.set(Some(menu));
+                               }
+                           })
+                       };
 
-                            let _on_edit = {
-                                let editing_product = editing_product.clone();
-                                let product_clone = product.clone();
+                       let _on_edit = {
+                           let editing_product = editing_product.clone();
+                           let product_clone = product.clone();
 
-                                Callback::from(move |_: MouseEvent| {
-                                    editing_product.set(Some(product_clone.clone()));
-                                })
-                            };
+                           Callback::from(move |_: MouseEvent| {
+                               editing_product.set(Some(product_clone.clone()));
+                           })
+                       };
 
-                            html! {
-                                <tr>
-                                    <td class="py-8 pt-4 whitespace-nowrap">
-                                        <img src={product.thumbnail_url()} alt="Product Image" class="w-32 bg-gray-200 rounded-2xl" />
-                                    </td>
-                                    <td class="px-6 py-8 whitespace-nowrap max-w-48">
-                                        <p class="font-bold text-gray-500 mt-8">{product.name()}</p>
-                                        <p class="font-thin text-gray-500 mt-3 text-wrap line-clamp-4">{product.details()}</p>
-                                        <p class="font-bold text-gray-500">{product.sku()}</p>
-                                    </td>
-                                    <td class="px-6 py-8 whitespace-nowrap text-right text-4xl text-fuente font-semibold">
-                                        <p class="mt-20">{product.price()}</p>
-                                    </td>
-                                    <td class="whitespace-nowrap text-center py-8 px-6 flex gap-2 items-center">
-                                        //<button onclick={on_edit} class="w-10 h-10 mt-20 text-fuente">
-                                        //    <SquarePen class="cursor-pointer" />
-                                        //</button>
-                                        <button onclick={on_delete} class="w-10 h-10 mt-20 text-red-600">
-                                            <Trash class="cursor-pointer" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        }).collect::<Html>()}
-                    }).collect::<Html>()}
-                    else {
-                        html! {}
-                    }
-                }
-
-            </tbody>
-        </table>
+                       html! {
+                           <div class="grid grid-cols-4 gap-5 md:gap-20 mt-10 items-center">
+                               <img src={product.thumbnail_url()} alt="Product Image" 
+                                   class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block" />
+                               <div class="text-left flex flex-col w-32 justify-start">
+                                   <p class="font-bold text-gray-500">{product.name()}</p>
+                                   <p class="font-thin text-gray-500 mt-2 text-wrap line-clamp-2 sm:line-clamp-3 md:line-clamp-4">{product.details()}</p>
+                                   <p class="font-bold text-gray-500">{product.sku()}</p>
+                               </div>
+                               <p class="text-2xl md:text-4xl text-fuente font-bold">
+                                   {product.price()}
+                               </p>
+                               <button onclick={on_delete} 
+                                   class="w-8 h-8 md:h-10 md:w-10 text-red-500">
+                                   <Trash class="cursor-pointer" />
+                               </button>
+                           </div>
+                       }
+                   }).collect::<Html>()}
+               }).collect::<Html>()}
+               else {
+                   html! {}
+               }
+           }
+        </div>
+        </div>
 
     }
 }

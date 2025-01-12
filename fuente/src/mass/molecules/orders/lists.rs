@@ -12,13 +12,11 @@ pub struct OrderListProps {
 pub fn order_list(props: &OrderListProps) -> Html {
     let column_id = props.title.to_string();
     let button_class = classes!(
-        "text-sm",
-        "font-bold",
         "px-2",
         "py-3",
         "border-2",
+        "rounded-2xl",
         props.title.border_color(),
-        "rounded-lg"
     );
     let button_text_class = classes!(
         "text-lg",
@@ -28,7 +26,7 @@ pub fn order_list(props: &OrderListProps) -> Html {
         props.title.text_color()
     );
     let column_class = classes!(
-        "h-[500px]",
+        "flex-1",
         "overflow-y-scroll",
         "mt-2",
         "rounded-2xl",
@@ -40,7 +38,7 @@ pub fn order_list(props: &OrderListProps) -> Html {
     );
 
     html! {
-        <section>
+        <section class="flex-shrink-0 flex flex-col w-full lg:w-[250px] h-full">
             <div class={button_class}>
                 <p class={button_text_class}>
                     {&props.title.display()}

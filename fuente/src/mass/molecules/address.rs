@@ -45,7 +45,7 @@ pub struct NewAddressProps {
 pub fn new_address_menu(props: &NewAddressProps) -> Html {
     let NewAddressProps { onclick, .. } = props;
     html! {
-        <div class="mt-4 flex flex-col gap-8 items-center">
+        <div class="mt-4 flex flex-col gap-8 items-center text-white">
             <AddressDetails ..props.clone()/>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
@@ -203,9 +203,7 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
     let marker = props.marker_handle.clone();
     use_effect_with(map.clone(), move |map_handle| {
         if let Some(map) = map_handle.as_ref() {
-            gloo::console::log!("Map created and adding event listener");
             let map_closure = move |e: MouseEvent| {
-                gloo::console::log!("Map event triggered", &e);
                 let leaflet_event = LatLng::try_from(e).expect("Could not parse event");
                 let coordinates: GeolocationCoordinates = leaflet_event.clone().into();
                 geo_handler_clone.set(Some(coordinates.clone()));
@@ -224,7 +222,6 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
                 });
             };
             map.add_closure("dblclick", map_closure);
-            gloo::console::log!("Map event listener added");
         }
         || {}
     });
@@ -249,7 +246,6 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
             on_location_name_changed={Callback::from({
                 // let location_name = location_name.clone();
                 move |lookup: NominatimLookup| {
-                    gloo::console::log!("Location name changed: ", lookup.display_name());
                     lookup_handle.set(Some(lookup));
                 }
             })}
