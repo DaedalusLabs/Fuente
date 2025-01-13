@@ -15,14 +15,16 @@ pub fn exchange_rate_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
     let translations = language_ctx.translations();
     html! {
-        <>
-        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
-            <h3 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
-                {&translations["admin_settings_title_commerces"]}
-            </h3>
-        </div>
-        <CommerceDisplay />
-        </>
+        <main class="flex-1 overflow-hidden">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                        {&translations["admin_settings_title_commerces"]}
+                    </h1>
+                </div>
+                <CommerceDisplay />
+            </div>
+        </main>
     }
 }
 
@@ -65,8 +67,6 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
 
 #[function_component(CommerceDisplay)]
 pub fn unregistered_commerces() -> Html {
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
-    let translations = language_ctx.translations();
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let unregistered_commerces: UseStateHandle<Vec<NostrNote>> = use_state(|| vec![]);
     let registered_commerces: UseStateHandle<Vec<NostrNote>> = use_state(|| vec![]);
@@ -74,7 +74,6 @@ pub fn unregistered_commerces() -> Html {
     let unregistered = unregistered_commerces.clone();
     let registered = registered_commerces.clone();
     use_effect_with(config_ctx, move |configs| {
-        gloo::console::log!("CommerceDisplay effect");
         let not_in_wl = configs.get_unregistered_commerces();
         let in_wl = configs.get_whitelisted_commerces();
         unregistered.set(not_in_wl);
@@ -122,38 +121,147 @@ pub fn unregistered_commerces() -> Html {
         sender.emit(signed_request);
     });
     html! {
-        <main class="container mx-auto mt-10 max-h-full pb-4 overflow-y-clip no-scrollbar">
-            <div class="flex flex-col md:flex-row gap-10 mt-10 min-h-96">
-                <div class="flex-flex-col gap-4">
-                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit">
-                        <p class="text-red-500 text-lg font-semibold text-center">{&translations["admin_settings_commerces_unregistered"]}</p>
-                    </div>
+        <>
+            <CommerceRegistrationMobile
+                whitelisted_commerces={(*registered).clone()}
+                unregistered_commerces={(*unregistered).clone()}
+                register_onclick={register_onclick.clone()}
+                unregister_onclick={unregister_onclick.clone()}
+            />
+            <CommerceRegistrationDesktop
+                whitelisted_commerces={(*registered).clone()}
+                unregistered_commerces={(*unregistered).clone()}
+                register_onclick={register_onclick}
+                unregister_onclick={unregister_onclick}
+            />
+        </>
+    }
+}
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 auto-cols-fr gap-8 bg-red-100 rounded-2xl mt-2 px-2 py-2 w-full max-h-[24rem] sm:max-h-[36rem] overflow-y-auto no-scrollbar" >
-                        {for unregistered.iter().map(|id| {
-                            html! {
-                                <CommerceDetails commerce_id={id.clone()} onclick={register_onclick.clone()} action={translations["admin_settings_commerces_register"].clone()} />
+#[derive(Clone, PartialEq)]
+pub enum CommerceStatus {
+    Registered,
+    Unregistered,
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct CommerceRegistrationProps {
+    pub whitelisted_commerces: Vec<NostrNote>,
+    pub unregistered_commerces: Vec<NostrNote>,
+    pub register_onclick: Callback<MouseEvent>,
+    pub unregister_onclick: Callback<MouseEvent>,
+}
+
+#[function_component(CommerceRegistrationMobile)]
+pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No language context found");
+    let translations = language_ctx.translations();
+    let filter = use_state(|| CommerceStatus::Registered);
+    let CommerceRegistrationProps {
+        whitelisted_commerces,
+        unregistered_commerces,
+        register_onclick,
+        unregister_onclick,
+    } = props;
+    let bg_color = match *filter {
+        CommerceStatus::Registered => "bg-green-100",
+        CommerceStatus::Unregistered => "bg-red-100",
+    };
+    html! {
+        <div class="flex lg:hidden flex-1 overflow-hidden">
+            <div class="flex flex-1 justify-evenly gap-4 h-full p-4 overflow-hidden">
+                <div class="flex flex-col gap-2 w-full h-full overflow-hidden">
+                    <div class="grid grid-flow-col justify-stretch gap-2 w-full">
+                        <div
+                            onclick={Callback::from({
+                                let filter = filter.clone();
+                                move |_| filter.set(CommerceStatus::Registered)
+                            })}
+                            class={classes!("border-green-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
+                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-green-500")}>
+                                {&translations["admin_settings_commerces_registered"]}
+                            </p>
+                        </div>
+                        <div
+                            onclick={Callback::from({
+                                let filter = filter.clone();
+                                move |_| filter.set(CommerceStatus::Unregistered)
+                            })}
+                            class={classes!("border-red-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
+                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-red-500")}>
+                                {&translations["admin_settings_commerces_unregistered"]}
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        class={classes!("flex-1", "rounded-2xl", "mt-2", "px-2", "py-2", "overflow-y-auto", "no-scrollbar", bg_color)}>
+                        <div class="grid grid-cols-1 gap-4">
+                        {
+                            match *filter {
+                                CommerceStatus::Registered => {
+                                    whitelisted_commerces.iter().map(|id| {
+                                        html! { <CommerceDetails commerce_id={id.clone()} onclick={unregister_onclick.clone()} action={translations["admin_settings_commerces_unregister"].clone()} />}
+                                    }).collect::<Html>()
+                                },
+                                CommerceStatus::Unregistered => {
+                                    unregistered_commerces.iter().map(|id| {
+                                        html! { <CommerceDetails commerce_id={id.clone()} onclick={register_onclick.clone()} action={translations["admin_settings_commerces_register"].clone()} />}
+                                    }).collect::<Html>()
+                                },
                             }
-                        })}
+                        }
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex-flex-col gap-4">
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[function_component(CommerceRegistrationDesktop)]
+pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
+    let language_ctx = use_context::<LanguageConfigsStore>().expect("No language context found");
+    let translations = language_ctx.translations();
+    let CommerceRegistrationProps {
+        whitelisted_commerces,
+        unregistered_commerces,
+        register_onclick,
+        unregister_onclick,
+    } = props;
+    html! {
+        <div class="hidden lg:flex flex-1 overflow-hidden">
+            <div class="flex flex-1 justify-evenly gap-4 h-full p-4 overflow-hidden">
+                <div class="flex flex-col gap-2 w-1/2 h-full overflow-hidden">
                     <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit">
                         <p class="text-green-500 text-lg font-semibold text-center">{&translations["admin_settings_commerces_registered"]}</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 auto-cols-fr gap-8 bg-green-100 rounded-2xl mt-2 max-h-[24rem] max-h-[36rem] px-2 py-2 w-full overflow-y-auto no-scrollbar" >
-                        {for registered.iter().map(|id| {
-                            html! {
-                                <CommerceDetails commerce_id={id.clone()} onclick={unregister_onclick.clone()} action={translations["admin_settings_commerces_unregister"].clone()} />
-                            }
-                        })}
+                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-green-100"}>
+                        <div class="grid grid-cols-1 gap-4">
+                        {whitelisted_commerces.iter().map(|id| {
+                            html! { <CommerceDetails commerce_id={id.clone()} onclick={unregister_onclick.clone()} action={translations["admin_settings_commerces_unregister"].clone()} />}
+                        }).collect::<Html>()}
+                        </div>
                     </div>
 
                 </div>
 
+                <div class="flex flex-col gap-2 w-1/2 h-full overflow-hidden">
+                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit">
+                        <p class="text-red-500 text-lg font-semibold text-center">{&translations["admin_settings_commerces_unregistered"]}</p>
+                    </div>
+
+                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-red-100"}>
+                        <div class="grid grid-cols-1 gap-4">
+                        {unregistered_commerces.iter().map(|id| {
+                            html! { <CommerceDetails commerce_id={id.clone()} onclick={register_onclick.clone()} action={translations["admin_settings_commerces_register"].clone()} />}
+                        }).collect::<Html>()}
+                        </div>
+                    </div>
+                </div>
             </div>
-        </main>
+        </div>
     }
 }
+

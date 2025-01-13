@@ -26,37 +26,31 @@ pub enum AdminPanelRoute {
 #[function_component(AdminPanelPages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="flex h-screen ">
+        <div class="flex flex-col lg:flex-row h-screen overflow-hidden">
             <HomeSidebar />
-            <main class="flex-1">
-                <div class="h-full no-scrollbar">
-                    <div class="container mx-auto p-6">
-                        <Switch<AdminPanelRoute> render = { move |switch: AdminPanelRoute| {
-                                match switch {
-                                    AdminPanelRoute::Home => html!{
-                                        <HomePage />
-                                    },
-                                    AdminPanelRoute::Settings => html!{
-                                        <SettingsPageComponent />
-                                    },
-                                    AdminPanelRoute::Exchange => html! {
-                                        <ExchangeRatePage />
-                                    },
-                                    AdminPanelRoute::Commerces => html! {
-                                        <CommercesPage />
-                                    },
-                                    AdminPanelRoute::Couriers => html! {
-                                        <CourierWhitelistPage />
-                                    },
-                                    AdminPanelRoute::Consumers => html!{
-                                        <></>
-                                    },
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            </main>
+            <Switch<AdminPanelRoute> render = { move |switch: AdminPanelRoute| {
+                    match switch {
+                        AdminPanelRoute::Home => html!{
+                            <HomePage />
+                        },
+                        AdminPanelRoute::Settings => html!{
+                            <SettingsPageComponent />
+                        },
+                        AdminPanelRoute::Exchange => html! {
+                            <ExchangeRatePage />
+                        },
+                        AdminPanelRoute::Commerces => html! {
+                            <CommercesPage />
+                        },
+                        AdminPanelRoute::Couriers => html! {
+                            <CourierWhitelistPage />
+                        },
+                        AdminPanelRoute::Consumers => html!{
+                            <></>
+                        },
+                    }
+                }}
+            />
         </div>
     }
 }

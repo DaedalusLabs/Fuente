@@ -199,10 +199,6 @@ impl OrderInvoiceState {
             nostro2::notes::NostrTag::Custom("status"),
             &self.order_status.to_string(),
         );
-        new_note.tags.add_custom_tag(
-            nostro2::notes::NostrTag::Custom("status"),
-            &self.payment_status.to_string(),
-        );
         let receiver = match participant_type {
             OrderParticipant::Consumer => self.order.pubkey.clone(),
             OrderParticipant::Commerce => self.get_commerce_pubkey(),

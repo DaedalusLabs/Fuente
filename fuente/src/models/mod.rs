@@ -32,10 +32,10 @@ pub const DRIVER_HUB_PUB_KEY: &str =
     "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 
 pub const DB_NAME_FUENTE: &str = "fuente_db";
-pub const DB_VERSION_FUENTE: u32 = 5;
+pub const DB_VERSION_FUENTE: u32 = 6;
 
 pub const DB_NAME_COMMERCE: &str = "commerce_db";
-pub const DB_VERSION_COMMERCE: u32 = 5;
+pub const DB_VERSION_COMMERCE: u32 = 6;
 
 // ADMIN MODELS
 pub const STORE_NAME_CONFIGS: &str = "configs";
@@ -99,6 +99,10 @@ fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
     }
     if !db.object_store_names().contains(STORE_NAME_CONSUMER_FAVORITES) {
         FavoriteStore::create_data_store(&db)?;
+        gloo::console::log!("Favorites store created");
+    }
+    if !db.object_store_names().contains("stats") {
+        PlatformStatIdb::create_data_store(&db)?;
         gloo::console::log!("Favorites store created");
     }
     gloo::console::log!("Fuente database upgraded");

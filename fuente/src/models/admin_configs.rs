@@ -1,19 +1,13 @@
-// Admins need to control the configuration of the server
-// This includes the following:
-// 1. Admin whitelist
-// 2. Commerces whitelist
-// 3. Consumer blacklist
-// 4. User registrations
-// 5. Exchange rates
-
 use std::hash::{DefaultHasher, Hash, Hasher};
 
+use nostr_minions::browser_api::IdbStoreManager;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsValue;
 
 use super::{
     nostr_kinds::{NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_SERVER_CONFIG},
-    TEST_PUB_KEY,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE, TEST_PUB_KEY,
 };
 
 #[derive(Serialize, Deserialize, Clone, Hash)]
@@ -380,5 +374,79 @@ impl TryFrom<NostrNote> for AdminServerRequest {
             .clone();
         let config_type = AdminConfigurationType::try_from(config_type)?;
         Ok(AdminServerRequest::new(config_type, config_str))
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct PlatformStatIdb {
+    note_id: String,
+    state_note: NostrNote,
+}
+impl Default for PlatformStatIdb {
+    fn default() -> Self {
+        let note_id = NostrKeypair::generate(false).public_key();
+        let order = NostrNote::default();
+        Self {
+            note_id,
+            state_note: order,
+        }
+    }
+}
+impl Into<JsValue> for PlatformStatIdb {
+    fn into(self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self).unwrap()
+    }
+}
+impl TryFrom<JsValue> for PlatformStatIdb {
+    type Error = JsValue;
+    fn try_from(value: JsValue) -> Result<Self, Self::Error> {
+        Ok(serde_wasm_bindgen::from_value(value)?)
+    }
+}
+impl PlatformStatIdb {
+    pub fn new(order: NostrNote) -> Result<Self, JsValue> {
+        Ok(Self {
+            note_id: order.id.clone().ok_or(JsValue::from_str("No id"))?,
+            state_note: order,
+        })
+    }
+    pub async fn find_history() -> Result<Vec<NostrNote>, JsValue> {
+        let db_entries = Self::retrieve_all_from_store().await?;
+        let order_states = db_entries
+            .iter()
+            .map(|entry| entry.signed_note())
+            .collect::<Vec<NostrNote>>();
+        Ok(order_states)
+    }
+    pub async fn save(&self) -> Result<(), JsValue> {
+        self.clone().save_to_store().await
+    }
+    pub fn signed_note(&self) -> NostrNote {
+        self.state_note.clone()
+    }
+    pub fn id(&self) -> String {
+        self.state_note.id.clone().unwrap_or_default()
+    }
+    pub async fn last_saved_timestamp() -> anyhow::Result<i64> {
+        let db_entries = Self::retrieve_all_from_store()
+            .await
+            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+        let last_entry = db_entries
+            .iter()
+            .max_by(|a, b| a.state_note.created_at.cmp(&b.state_note.created_at))
+            .ok_or_else(|| anyhow::anyhow!("No entries found"))?;
+        Ok(last_entry.state_note.created_at)
+    }
+}
+impl IdbStoreManager for PlatformStatIdb {
+    fn config() -> nostr_minions::browser_api::IdbStoreConfig {
+        nostr_minions::browser_api::IdbStoreConfig {
+            db_name: DB_NAME_FUENTE,
+            db_version: DB_VERSION_FUENTE,
+            store_name: "stats",
+            document_key: "note_id",
+        }
+    }
+    fn key(&self) -> JsValue {
+        JsValue::from_str(&self.state_note.id.clone().unwrap_or_default())
     }
 }

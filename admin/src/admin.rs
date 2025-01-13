@@ -1,4 +1,4 @@
-use admin::{AdminPanelPages, ServerConfigsProvider, ServerConfigsStore};
+use admin::{AdminPanelPages, PlatformStatsProvider, PlatformStatsStore, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
     contexts::LanguageConfigsProvider,
     mass::{AdminLoginPage, LoadingScreen},
@@ -35,23 +35,17 @@ fn app() -> Html {
 
     html! {
         <LanguageConfigsProvider >
-        <BrowserRouter>
-           <AppContext>
-                <LoginCheck>
-                    <AdminPanelPages />
-                </LoginCheck>
-           </AppContext>
-        </BrowserRouter>
+            <BrowserRouter>
+               <AppContext>
+                    <LoginCheck>
+                        <AdminPanelPages />
+                    </LoginCheck>
+               </AppContext>
+            </BrowserRouter>
         </LanguageConfigsProvider>
     }
 }
 
-#[function_component(RelayProviderComponent)]
-fn relay_pool_component(props: &ChildrenProps) -> Html {
-    html! {
-            {props.children.clone()}
-    }
-}
 
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
@@ -71,7 +65,9 @@ fn app_context(props: &ChildrenProps) -> Html {
             <RelayProvider {relays}>
                 <NostrIdProvider>
                     <ServerConfigsProvider>
-                        {props.children.clone()}
+                        <PlatformStatsProvider>
+                            {props.children.clone()}
+                        </PlatformStatsProvider>
                     </ServerConfigsProvider>
                 </NostrIdProvider>
             </RelayProvider>
@@ -82,6 +78,7 @@ fn app_context(props: &ChildrenProps) -> Html {
 fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let server_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
+    let stats_ctx = use_context::<PlatformStatsStore>().expect("No language context found");
     if !key_ctx.finished_loading() {
         return html! {<LoadingScreen />};
     }
@@ -91,7 +88,7 @@ fn login_check(props: &ChildrenProps) -> Html {
             <AdminLoginPage />
         };
     }
-    if !server_ctx.is_loaded() {
+    if server_ctx.loading() || stats_ctx.loading() {
         return html! {<LoadingScreen />};
     }
     let pubkey = keys.as_ref().unwrap().public_key();
