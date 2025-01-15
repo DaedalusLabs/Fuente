@@ -79,6 +79,7 @@ pub enum CommerceDataAction {
     FinishedLoadingRelays,
     UpdateCommerceProfile(CommerceProfileIdb),
     UpdateProductList(ProductMenuIdb),
+    FilterWhiteList(Vec<String>),
 }
 
 impl Reducible for CommerceData {
@@ -107,6 +108,16 @@ impl Reducible for CommerceData {
             CommerceDataAction::FinishedLoadingRelays => Rc::new(CommerceData {
                 has_loaded: true,
                 ..(*self).clone()
+            }),
+            CommerceDataAction::FilterWhiteList(wl) => Rc::new({
+                let mut self_clone = (*self).clone();
+                self_clone
+                    .commerces
+                    .retain(|p| wl.contains(&p.signed_note().pubkey));
+                self_clone
+                    .products_lists
+                    .retain(|p| wl.contains(&p.note().pubkey));
+                self_clone
             }),
         }
     }
@@ -172,35 +183,47 @@ pub fn commerce_data_sync() -> Html {
         || {}
     });
     let ctx_clone = ctx.clone();
-    let admin_wl = admin_configs.get_commerce_whitelist();
-    use_effect_with(unique_notes, move |notes| {
-        if let Some(note) = notes.last() {
-            match note.kind {
-                NOSTR_KIND_COMMERCE_PROFILE => {
-                    if admin_wl.contains(&note.pubkey) {
-                        match note.clone().try_into() {
-                            Ok(profile) => {
-                                ctx_clone
-                                    .dispatch(CommerceDataAction::UpdateCommerceProfile(profile));
-                            }
-                            Err(e) => {
-                                gloo::console::error!(
-                                    "Error in commerce profile",
-                                    format!("{:?}", e)
-                                );
+
+    use_effect_with(
+        (admin_configs.get_commerce_whitelist(), unique_notes),
+        move |(admin_wl, notes)| {
+            if let Some(note) = notes.last() {
+                match note.kind {
+                    NOSTR_KIND_COMMERCE_PROFILE => {
+                        if admin_wl.contains(&note.pubkey) {
+                            match note.clone().try_into() {
+                                Ok(profile) => {
+                                    ctx_clone.dispatch(CommerceDataAction::UpdateCommerceProfile(
+                                        profile,
+                                    ));
+                                }
+                                Err(e) => {
+                                    gloo::console::error!(
+                                        "Error in commerce profile",
+                                        format!("{:?}", e)
+                                    );
+                                }
                             }
                         }
                     }
-                }
-                NOSTR_KIND_COMMERCE_PRODUCTS => {
-                    if admin_wl.contains(&note.pubkey) {
-                        if let Ok(products) = note.clone().try_into() {
-                            ctx_clone.dispatch(CommerceDataAction::UpdateProductList(products));
+                    NOSTR_KIND_COMMERCE_PRODUCTS => {
+                        if admin_wl.contains(&note.pubkey) {
+                            if let Ok(products) = note.clone().try_into() {
+                                ctx_clone.dispatch(CommerceDataAction::UpdateProductList(products));
+                            }
                         }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
+            || {}
+        },
+    );
+    let ctx_clone = ctx.clone();
+    use_effect_with(admin_configs, move |wl| {
+        let wl = wl.get_commerce_whitelist();
+        if !wl.is_empty() {
+            ctx_clone.dispatch(CommerceDataAction::FilterWhiteList(wl));
         }
         || {}
     });

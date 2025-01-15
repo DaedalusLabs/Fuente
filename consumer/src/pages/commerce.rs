@@ -299,16 +299,15 @@ pub fn settings_template() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let businesses = commerce_ctx.commerces();
     html! {
-        <>
-        <div class="container mx-auto lg:py-10 flex flex-col lg:flex-row items-center lg:justify-between">
-            <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
-                {&translations["stores_heading"]}
-            </h1>
-        </div>
+        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
+                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                    {&translations["stores_heading"]}
+                </h1>
+            </div>
 
-        <main class="container mx-auto flex-grow">
-            <div class="flex flex-col lg:flex-row gap-5 lg:gap-10">
-                <div class="w-full grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3 content-stretch">
+            <div class="flex-1 w-full flex flex-col lg:flex-row overflow-hidden mt-2 mx-2 md:mx-4">
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto flex-1">
                     {businesses.iter().map(|profile| {
                         let commerce_data = profile.profile().clone();
                         let commerce_id = profile.id().to_string();
@@ -335,6 +334,5 @@ pub fn settings_template() -> Html {
                 </div>
             </div>
         </main>
-    </>
     }
 }
