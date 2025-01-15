@@ -99,61 +99,64 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
             <ProductPage product={product.clone()} commerce_id={commerce_id.clone()} product_handle={product_handle.clone()} />
         },
         None => html! {
-            <>
-            <section class="grid lg:grid-cols-[1fr_2fr] gap-5 container mx-auto lg:mt-20 place-items-center">
-                <h1 class="text-4xl lg:text-9xl uppercase text-fuente tracking-tighter font-bold text-center">
-                    {&commerce_profile.name}
-                </h1>
+            <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+                <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
+                    <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                        {&commerce_profile.name}
+                    </h1>
 
-                <div class="relative flex items-center justify-center lg:justify-start gap-10 md:gap-0 bg-fuente rounded-2xl h-32 sm:h-44 lg:h-60 pr-5 w-full overflow-hidden">
-                    <img
-                        src={if commerce_profile.banner_url.is_empty() {
-                            "/public/assets/img/company.png".to_string()
-                        } else {
-                            commerce_profile.banner_url.clone()
-                        }}
-                        alt={commerce_profile.name.clone()}
-                        class="absolute inset-0 w-full h-full object-cover object-center"
-                    />
+                    <div class="relative flex items-center justify-center lg:justify-start gap-10 md:gap-0 bg-fuente rounded-2xl pr-5 w-full h-full overflow-hidden max-h-64 min-h-24">
+                        <img
+                            src={if commerce_profile.banner_url.is_empty() {
+                                "/public/assets/img/company.png".to_string()
+                            } else {
+                                commerce_profile.banner_url.clone()
+                            }}
+                            alt={commerce_profile.name.clone()}
+                            class="absolute inset-0 w-full h-full object-cover object-center"
+                        />
+                    </div>
                 </div>
-            </section>
 
-            <main class="mt-4 container mx-auto">
-                <div class="grid md:grid-cols-[1fr_3fr] gap-10 mt-10 place-content-center justify-items-center md:justify-items-start md:place-items-start">
-                    <aside
-                        class="flex flex-row lg:flex-col gap-3 bg-gray-100 p-2 sm:p-4 md:p-8 lg:p-10 rounded-2xl h-fit items-center text-center w-fit justify-center">
-                        <h3 class="font-semibold text-fuente text-xl">{&translations["detail_store_filter_heading"]}</h3>
-                        <div class="flex flex-row gap-3 lg:flex-col">
-                            <p onclick={onclick_price_filter}
-                                class="text-fuente p-2 font-light text-lg border-b border-r-fuente lg:border-r-0 lg:border-b-fuente select-none cursor-pointer">
-                                {&translations["detail_store_filter_price"]}
-                            </p>
-                            <p onclick={onclick_brand_filter}
-                                class="text-fuente p-2 font-light text-lg select-none cursor-pointer">
-                                {&translations["detail_store_filter_brand"]}
-                            </p>
+                <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+                    <aside class="flex-shrink-0 px-4 lg:px-10 overflow-auto no-scrollbar items-center justify-center flex">
+                        <div class="flex flex-row lg:flex-col gap-3 bg-gray-100 items-center rounded-2xl p-2 m-2">
+                            <h3 class="font-semibold text-fuente text-xl">{&translations["detail_store_filter_heading"]}</h3>
+                            <div class="flex flex-row gap-3 lg:flex-col">
+                                <p onclick={onclick_price_filter}
+                                    class="text-fuente p-2 font-light text-lg border-b border-r-fuente lg:border-r-0 lg:border-b-fuente select-none cursor-pointer">
+                                    {&translations["detail_store_filter_price"]}
+                                </p>
+                                <p onclick={onclick_brand_filter}
+                                    class="text-fuente p-2 font-light text-lg select-none cursor-pointer">
+                                    {&translations["detail_store_filter_brand"]}
+                                </p>
+                            </div>
                         </div>
                     </aside>
 
-                    <div class="flex-1 grid lg:grid-cols-2 xl:grid-cols-3 gap-5 place-items-center">
-                        {all_products.iter().map(|product| {
-                                let onclick = {
-                                    let product_handle = product_handle.clone();
-                                    let product = product.clone();
-                                    Callback::from(move |_e: MouseEvent| {
-                                        product_handle.set(Some(product.clone()));
-                                    })
-                                };
-                                html! {
-                                    <button {onclick}>
-                                        <ProductItemCard product={product.clone()} commerce_id={commerce_id.clone()} product_handle={product_handle.clone()} />
-                                    </button>
-                                }
-                        }).collect::<Html>()}
+                    <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                        <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
+                            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-5 place-items-center overflow-y-auto">
+                                {all_products.iter().map(|product| {
+                                        let onclick = {
+                                            let product_handle = product_handle.clone();
+                                            let product = product.clone();
+                                            Callback::from(move |_e: MouseEvent| {
+                                                product_handle.set(Some(product.clone()));
+                                            })
+                                        };
+                                        html! {
+                                            <button {onclick}>
+                                                <ProductItemCard product={product.clone()} commerce_id={commerce_id.clone()} product_handle={product_handle.clone()} />
+                                            </button>
+                                        }
+                                }).collect::<Html>()}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
-            </>
         },
     }
 }
@@ -201,8 +204,10 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
     html! {
         <div class="border border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
             <div class="relative">
-                <img onclick={image_onclick} src={product.image_url()} alt="Favorites Image"
-                class="object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl" />
+                <img onclick={image_onclick.clone()} src={product.image_url()} alt="Favorites Image"
+                class="hidden lg:block object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl" />
+                <img onclick={image_onclick} src={product.thumbnail_url()} alt="Favorites Image"
+                class="block lg:hidden object-contain w-full max-h-24 mx-auto bg-gray-100 rounded-2xl" />
                 // add favorite items?
             </div>
             <h2 class="font-bold text-lg text-gray-500 text-center mt-3">{product.name()}</h2>
@@ -240,47 +245,49 @@ pub fn product_page_template(props: &ProductItemProps) -> Html {
         })
     };
     html! {
-        <main class="mt-20 container mx-auto">
+        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
             <button onclick={back_to_store}
                 class="flex gap-3">
                 <ArrowLeft class="w-8 h-8 text-fuente" />
                 <p class="text-fuente text-lg font-semibold">{"Back to store"}</p>
             </button>
 
-            <div class="grid grid-cols-[3fr_1fr] items-center mt-10">
-                <div class="grid grid-cols-[3fr_1fr] place-items-center">
-                    <img src={product.image_url()} alt={product.name()} class="bg-gray-100 rounded-2xl w-5/6 object-contain h-full" />
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden mt-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 items-center overflow-y-auto w-full gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 place-items-center gap-2">
+                        <img src={product.image_url()} alt={product.name()} class="hidden lg:block bg-gray-100 rounded-2xl w-5/6 object-contain h-full max-h-96" />
 
-                    <div class="flex flex-col gap-4 justify-between">
-                        <img src={product.thumbnail_url()} alt="Sneaker Product" class="w-40 bg-gray-100 rounded-2xl block object-contain flex-1" />
+                        <div class="flex flex-col gap-4 justify-between">
+                            <img src={product.thumbnail_url()} alt="Sneaker Product" class="w-40 bg-gray-100 rounded-2xl block object-contain flex-1" />
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <h2 class="text-gray-500 text-2xl font-bold">{product.name()}</h2>
-                    <p class="font-light text-gray-500 text-xl mt-3">{product.description()}</p>
-                    <p class="font-bold text-gray-500 uppercase text-2xl">{format!("SKU {}", product.sku())}</p>
-                    // <div class="flex items-center gap-1 mt-10">
-                    //     <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 ">
-                    //         <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
-                    //     </svg>
-                    //     <p class="text-gray-500 text-2xl">{"5.0 (30 reviews)"}</p>
-                    // </div>
+                    <div class="mx-5 my-3">
+                        <h2 class="text-gray-500 text-2xl font-bold">{product.name()}</h2>
+                        <p class="font-light text-gray-500 text-xl mt-3 text-xs sm:text-sm md:text-lg line-clamp-3">{product.details()}</p>
+                        <p class="font-bold text-gray-500 uppercase text-2xl">{format!("{}", product.sku())}</p>
+                        // <div class="flex items-center gap-1 mt-10">
+                        //     <svg baseProfile="tiny" version="1.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 ">
+                        //         <path d="m9.362 9.158-5.268.584c-.19.023-.358.15-.421.343s0 .394.14.521c1.566 1.429 3.919 3.569 3.919 3.569-.002 0-.646 3.113-1.074 5.19a.496.496 0 0 0 .734.534c1.844-1.048 4.606-2.624 4.606-2.624l4.604 2.625c.168.092.378.09.541-.029a.5.5 0 0 0 .195-.505l-1.071-5.191 3.919-3.566a.499.499 0 0 0-.28-.865c-2.108-.236-5.269-.586-5.269-.586l-2.183-4.83a.499.499 0 0 0-.909 0l-2.183 4.83z" fill="#4167e8" class="fill-000000"></path>
+                        //     </svg>
+                        //     <p class="text-gray-500 text-2xl">{"5.0 (30 reviews)"}</p>
+                        // </div>
 
-                    <div class="flex flex-col mt-10 px-5 gap-5">
-                        <p class="text-5xl font-bold text-fuente">{format!("SRD {}", product.price())}</p>
-                        <button onclick={add_cart}
-                            class="bg-fuente-orange text-white py-4 px-10 rounded-full flex items-center justify-center gap-2 w-5/6">
-                            <ShoppingCart class="w-8 h-8" />
-                            <p class="font-semibold text-xl text-center">{"Shop Now"}</p>
-                        </button>
+                        <div class="flex flex-row lg:flex-col mt-5 lg:mt-10 gap-5">
+                            <p class="text-3xl md:text-4xl lg:text-5xl font-bold text-fuente">{format!("SRD {}", product.price())}</p>
+                            <button onclick={add_cart}
+                                class="bg-fuente-orange text-white p-2  lg:py-4 lg:px-10 rounded-full flex items-center justify-center gap-2 flex-1">
+                                <ShoppingCart class="w-8 h-8" />
+                                <p class="hidden md:block font-semibold text-xl text-center">{"Shop Now"}</p>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <section class="bg-gray-100 px-10 py-16 rounded-2xl mt-5 space-y-7">
-                <p class="text-gray-500 leading-6">{product.description()}</p>
+            <section class="bg-gray-100 p-4 rounded-2xl mb-5 mx-auto space-y-7">
+                <p class="text-gray-500 leading-6 text-xs sm:text-sm md:text-lg line-clamp-2">{product.description()}</p>
             </section>
+
         </main>
     }
 }

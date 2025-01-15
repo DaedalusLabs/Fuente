@@ -27,22 +27,24 @@ pub fn favorites_page() -> Html {
 
     html! {
         <FavoritesPageTemplate >
-            {favorite_businesses.iter().map(|commerce| {
-                html! {
-                    <AppLink<ConsumerRoute>
-                        route={ConsumerRoute::Commerce {
-                            commerce_id: commerce.id().to_string()
-                        }}
-                        class="w-full"
-                        selected_class=""
-                    >
-                        <div class="relative">
+            <div class="w-full grid grid-col-flow gap-4 sm:gap-6 lg:gap-8 justify-center lg:justify-start">
+                {favorite_businesses.iter().map(|commerce| {
+                    html! {
+                        <AppLink<ConsumerRoute>
+                            route={ConsumerRoute::Commerce {
+                                commerce_id: commerce.id().to_string()
+                            }}
+                            class="w-full"
+                            selected_class=""
+                        >
+                        <div class="relative border-2 border-fuente rounded-2xl p-4 md:p-10 lg:p-16 shadow-md w-fit">
                             <FavoriteCommerceTemplate commerce_data={commerce.profile().clone()} />
                             <FavoriteButton commerce_id={commerce.id().to_string()} />
                         </div>
-                    </AppLink<ConsumerRoute>>
-                }
-            }).collect::<Html>()}
+                        </AppLink<ConsumerRoute>>
+                    }
+                }).collect::<Html>()}
+            </div>
         </FavoritesPageTemplate>
     }
 }
@@ -53,25 +55,23 @@ pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
         rating,
     } = props;
     html! {
-        <div class="border-2 border-fuente rounded-2xl p-4 shadow-md">
-            <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 lg:gap-8">
-                <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-cover rounded-2xl border-2 border-fuente"/>
-                <div class="space-y-2 flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <h3 class="text-gray-700 text-lg sm:text-xl lg:text-2xl font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
-                    <p class="text-gray-600 font-normal text-sm sm:text-base lg:text-lg max-w-md">{&commerce_data.description}</p>
-                    {if let Some(rating) = rating {
-                        html! {
-                        <div class="flex items-center gap-2 mt-2">
-                            <Star class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
-                            <p class="text-gray-700 font-medium text-sm sm:text-base lg:text-lg">{&rating.trust_score}</p>
-                        </div>
-                        }
-                    } else {
-                        html! {}
-                    }}
-                </div>
-            </div>
-        </div>
+       <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 lg:gap-8 w-fit">
+           <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-cover rounded-2xl border-2 border-fuente"/>
+           <div class="space-y-2 flex flex-col items-center sm:items-start text-center sm:text-left">
+               <h3 class="text-gray-700 text-lg sm:text-xl lg:text-2xl font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
+               <p class="text-gray-600 font-normal text-sm sm:text-base lg:text-lg max-w-md">{&commerce_data.description}</p>
+               {if let Some(rating) = rating {
+                   html! {
+                   <div class="flex items-center gap-2 mt-2">
+                       <Star class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                       <p class="text-gray-700 font-medium text-sm sm:text-base lg:text-lg">{&rating.trust_score}</p>
+                   </div>
+                   }
+               } else {
+                   html! {}
+               }}
+           </div>
+       </div>
     }
 }
 

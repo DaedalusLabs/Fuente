@@ -279,7 +279,7 @@ pub fn order_invoice_details(props: &OrderInvoiceComponentProps) -> Html {
         })
     };
     html! {
-        <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3">
+        <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 mx-2 lg:mx-4">
             <div class="flex justify-between flex-1">
                 <h3 class="text-fuente text-xl font-bold">{&translations["checkout_summary_price_details_total"]}</h3>
                 <p class="text-gray-400 text-lg">{format!("{:.2} SRD", srd_amount)}</p>

@@ -27,14 +27,17 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-    <main 
-        class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
-        <h1 class="text-fuente text-4xl pb-4 sm:pb-6 md:pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
-            {&translations["cart_heading"]}
-        </h1>
-        <CartTemplate order={ProductOrder::new(cart_items)} />
-        <CartPreTotal />
-    </main>
+        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
+                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                    {&translations["cart_heading"]}
+                </h1>
+            </div>
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+               <CartTemplate order={ProductOrder::new(cart_items)} />
+               <CartPreTotal />
+            </div>
+        </main>
     }
 }
 
@@ -44,27 +47,72 @@ pub fn empty_cart() -> Html {
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let translations = language_ctx.translations();
     html! {
-        <>
-        <h1 class="text-fuente text-2xl pb-4 sm:pb-6 md:pb-10 lg:pb-0 text-center lg:text-3xl font-bold tracking-tighter mb-2"> 
-            {&translations["checkout_product_empty_table_heading"]}
-        </h1>
-        <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
-            <div class="flex justify-between items-center lg:mb-4">
-                <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
-                <AppLink<ConsumerRoute>
-                    class=""
-                    selected_class=""
-                    route={ConsumerRoute::BrowseStores}>
-                    <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
-                </AppLink<ConsumerRoute>>
+        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
+                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                    {&translations["checkout_product_empty_table_heading"]}
+                </h1>
             </div>
+            <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
+                <div class="flex justify-between items-center lg:mb-4">
+                    <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                    <AppLink<ConsumerRoute>
+                        class=""
+                        selected_class=""
+                        route={ConsumerRoute::BrowseStores}>
+                        <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                    </AppLink<ConsumerRoute>>
+                </div>
 
-            <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
-        </div>
-        </>
+                <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+            </div>
+        </main>
     }
 }
 
+#[derive(Properties, Clone, PartialEq)]
+pub struct CartTemplateProps {
+    pub order: ProductOrder,
+}
+
+#[function_component(CartTemplate)]
+pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
+    let CartTemplateProps { order } = props;
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let translations = language_ctx.translations();
+    let counted_products = order.counted_products();
+    if counted_products.is_empty() {
+        return html! {
+            <div class="border border-fuente mt-7 px-16 rounded-3xl flex items-center justify-center">
+                <h2 class="text-lg text-fuente font-bold p-5">{&translations["checkout_product_empty_table_heading"]}</h2>
+            </div>
+        };
+    }
+    html! {
+        <div class="flex-1 overflow-hidden px-4 py-2 lg:py-4 w-full">
+            <div class="h-full overflow-auto border border-fuente rounded-xl no-scrollbar relative p-2">
+                <h2 class=" bg-white flex text-2xl text-fuente font-bold pt-5 sticky top-0">{&translations["cart_text"]}</h2>
+
+                <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
+                    <h3></h3>
+                    <h3 class="text-fuente lg:pl-16 xl:pl-40">{&translations["cart_table_heading_details"]}</h3>
+                    <h3 class="text-fuente lg:pl-0 xl:pl-5">{&translations["cart_table_heading_quantity"]}</h3>
+                    <h3 class="text-fuente lg:pr-10 xl:pr-32">{&translations["cart_table_heading_price"]}</h3>
+                    <h3></h3>
+                </div>
+                {order.counted_products().iter().map(|(item, count)| {
+
+                    html! {
+                        <CartItemDetails
+                            item={item.clone()}
+                            count={*count} />
+                    }
+                }).collect::<Html>()}
+            </div>
+        </div>
+    }
+}
 #[function_component(CartPreTotal)]
 pub fn cart_pre_total() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
@@ -99,21 +147,21 @@ pub fn cart_pre_total() -> Html {
         })
     };
     html! {
-        <>
-        <div class="bg-gray-100 py-5 px-5 lg:px-40 mt-5 rounded-2xl flex justify-end items-center">
-            <p class="text-center text-fuente text-lg flex items-center gap-10">
-                {&translations["cart_pre_total"]}
-                <span class="font-bold text-3xl md:text-5xl">{format!("SRD {:.2}", order.total())}</span>
-            </p>
-        </div>
+        <div class="flex flex-col gap-4 mx-auto">
+            <div class="bg-gray-100 p-5 lg:px-12 m-5 rounded-2xl flex justify-end items-center">
+                <p class="text-center text-fuente text-lg flex items-center gap-10">
+                    {&translations["cart_pre_total"]}
+                    <span class="font-bold text-2xl md:text-3xl">{format!("SRD {:.2}", order.total())}</span>
+                </p>
+            </div>
 
-        <div class="lg:flex lg:justify-end mt-5 px-5 lg:px-40">
-            <button onclick={send_order_request}
-                class="bg-fuente-buttons text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-fuente-forms">
-                {&translations["cart_checkout"]}
-            </button>
+            <div class="lg:flex lg:justify-center my-3 px-5 lg:px-12">
+                <button onclick={send_order_request}
+                    class="bg-fuente-buttons text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-fuente-forms">
+                    {&translations["cart_checkout"]}
+                </button>
+            </div>
         </div>
-        </>
     }
 }
 
@@ -131,64 +179,26 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-       <main 
-           class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
-           <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter"> 
-            {&translations["checkout_title"]}
-            </h1>
-        <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5">
-            <div>
-                <CheckoutClientInfo />
-                <CartTemplate order={ProductOrder::new(cart_items)} />
+        <main class="flex flex-col h-screen overflow-hidden w-full">
+            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
+                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                    {&translations["checkout_title"]}
+                </h1>
             </div>
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+                <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5 overflow-y-auto">
+                    <div>
+                        <CheckoutClientInfo />
+                        <CartTemplate order={ProductOrder::new(cart_items)} />
+                    </div>
 
-            <div>
-                <CheckoutInvoice order_id={order_id} />
-                <CheckoutOrderSummary />
+                    <div>
+                        <CheckoutInvoice order_id={order_id} />
+                        <CheckoutOrderSummary />
+                    </div>
+                </div>
             </div>
-        </div>
-    </main>
-    }
-}
-#[derive(Properties, Clone, PartialEq)]
-pub struct CartTemplateProps {
-    pub order: ProductOrder,
-}
-
-#[function_component(CartTemplate)]
-pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
-    let CartTemplateProps { order } = props;
-    let language_ctx =
-        use_context::<LanguageConfigsStore>().expect("No language context not found");
-    let translations = language_ctx.translations();
-    let counted_products = order.counted_products();
-    if counted_products.is_empty() {
-        return html! {
-            <div class="border border-fuente mt-7 px-16 rounded-3xl flex items-center justify-center">
-                <h2 class="text-lg text-fuente font-bold p-5">{&translations["checkout_product_empty_table_heading"]}</h2>
-            </div>
-        };
-    }
-    html! {
-        <div class="border border-fuente mt-10 px-5 rounded-3xl">
-            <h2 class="flex text-2xl text-fuente font-bold pt-5">{&translations["cart_text"]}</h2>
-
-            <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
-                <h3></h3>
-                <h3 class="text-fuente lg:pl-16 xl:pl-40">{&translations["cart_table_heading_details"]}</h3>
-                <h3 class="text-fuente lg:pl-0 xl:pl-5">{&translations["cart_table_heading_quantity"]}</h3>
-                <h3 class="text-fuente lg:pr-10 xl:pr-32">{&translations["cart_table_heading_price"]}</h3>
-                <h3></h3>
-            </div>
-            {order.counted_products().iter().map(|(item, count)| {
-
-                html! {
-                    <CartItemDetails
-                        item={item.clone()}
-                        count={*count} />
-                }
-            }).collect::<Html>()}
-        </div>
+        </main>
     }
 }
 
@@ -265,7 +275,7 @@ pub fn checkout_summary() -> Html {
     let user_address = user_ctx.get_default_address();
     if let (Some(profile), Some(address)) = (user_profile, user_address) {
         html! {
-            <div class="border border-fuente rounded-2xl py-5 px-10">
+            <div class="border border-fuente rounded-2xl py-5 px-10 mx-2 lg:mx-4">
                 <h2 class="text-fuente text-3xl font-semibold">{&translations["checkout_client_information"]}</h2>
                 <div class="flex items-center justify-between mt-5 flex-wrap gap-5">
                     <div>
@@ -308,7 +318,7 @@ pub fn checkout_summary() -> Html {
         .expect("No business found");
     let business = business.profile();
     html! {
-        <div class="bg-zinc-100 py-7 px-10 rounded-2xl mt-7">
+        <div class="bg-zinc-100 py-7 px-10 rounded-2xl mt-7 mx-2 lg:mx-4">
             <h2 class="text-fuente text-3xl font-bold mt-7">{&translations["checkout_summary_heading"]}</h2>
 
             <div class="border-y border-y-fuente mt-7 space-y-5 py-5">

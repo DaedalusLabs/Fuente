@@ -1,4 +1,4 @@
-use lucide_yew::{Heart, House, Menu, Search, ShoppingCart, UserRound, X};
+use lucide_yew::{Heart, House, Search, ShieldQuestion, ShoppingCart, UserRound, X};
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
@@ -41,9 +41,8 @@ pub enum ConsumerRoute {
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
     html! {
-        <div class="min-h-screen flex flex-col">
-        <FuenteHeader />
-        <div class="flex-1" >
+        <div class="flex flex-col h-screen overflow-hidden">
+            <FuenteHeader />
             <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                     match switch {
                         ConsumerRoute::Home => html!{<HomePage />},
@@ -63,8 +62,7 @@ pub fn consumer_pages() -> Html {
                     }
                 }}
             />
-        </div>
-        <FuenteFooter />
+            <FuenteFooter />
         </div>
     }
 }
@@ -73,7 +71,7 @@ pub fn header() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
     let cart_len = cart_ctx.cart().len();
     html! {
-    <header class="container mx-auto py-10 flex justify-center lg:justify-between">
+    <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
        <AppLink<ConsumerRoute>
            class="hidden lg:flex"
            selected_class=""
@@ -92,7 +90,7 @@ pub fn header() -> Html {
                     <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
                 </AppLink<ConsumerRoute>>
             </div>
-            <div class="flex gap-5">
+            <div class="flex gap-5 mb-2">
                 <AppLink<ConsumerRoute>
                     class=""
                     selected_class=""
@@ -131,43 +129,55 @@ pub fn header() -> Html {
 #[function_component(FuenteFooter)]
 pub fn footer() -> Html {
     html! {
-    <footer class="bg-fuente p-10 lg:p-20 mt-40">
-        <div class="container mx-auto flex justify-between items-center gap-4 xl:gap-0">
-            <a href="#">
-                <h3 class="text-white font-bold text-4xl lg:text-5xl">{"Fuente"}</h3>
-            </a>
+        <footer class="bg-fuente-dark p-2 lg:p-4">
+            <div class="container mx-auto">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="w-auto lg:mb-4  items-center">
+                        <a href="#" class="inline-block text-center">
+                            <h3 class="text-white font-bold text-2xl sm:text-3xl">{"Fuente"}</h3>
+                        </a>
+                    </div>
+                    <ShieldQuestion class="bg-fuente h-8 w-8 p-2 rounded-xl lg:hidden text-white" />
 
-            <Menu class="bg-fuente h-14 w-14 p-2 rounded-xl lg:hidden text-white" />
+                    <details class="group w-full sm:w-auto hidden lg:block">
+                        <summary class="text-lg text-white cursor-pointer list-none">
+                            {"About Fuente"}
+                            <span class="ml-2 group-open:rotate-180 inline-block transition-transform">{"▼"}</span>
+                        </summary>
+                        <ul class="mt-2 space-y-1">
+                            <li><a href="#" class="text-white text-sm hover:underline">{"How to buy?"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"How to sell?"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Why is it secure?"}</a></li>
+                        </ul>
+                    </details>
 
-            <div class="hidden lg:block">
-                <h3 class="text-xl text-white">{"About Fuente"}</h3>
-                <div class="mt-5 space-y-3">
-                    <p class="text-white font-light text-lg">{"> How to buy?"}</p>
-                    <p class="text-white font-light text-lg">{"> How to sale?"}</p>
-                    <p class="text-white font-light text-lg">{"> Why is secure?"}</p>
+                    <details class="group w-full sm:w-auto hidden lg:block">
+                        <summary class="text-lg text-white cursor-pointer list-none">
+                            {"Benefits"}
+                            <span class="ml-2 group-open:rotate-180 inline-block transition-transform">{"▼"}</span>
+                        </summary>
+                        <ul class="mt-2 space-y-1">
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Our benefits"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Shipping and collections"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Payment methods"}</a></li>
+                        </ul>
+                    </details>
+
+                    <details class="group w-full sm:w-auto hidden lg:block">
+                        <summary class="text-lg text-white cursor-pointer list-none">
+                            {"Policies"}
+                            <span class="ml-2 group-open:rotate-180 inline-block transition-transform">{"▼"}</span>
+                        </summary>
+                        <ul class="mt-2 space-y-1">
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Terms and conditions"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"General policies"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Privacy Policy"}</a></li>
+                            <li><a href="#" class="text-white text-sm hover:underline">{"Returns and exchanges"}</a></li>
+                        </ul>
+                    </details>
                 </div>
             </div>
-
-            <div class="hidden lg:block">
-                <h3 class="text-xl text-white">{"Benefits of Fuente"}</h3>
-                <div class="mt-5 space-y-3">
-                    <p class="text-white font-light text-lg">{"> Our benefits"}</p>
-                    <p class="text-white font-light text-lg">{"> Shipping and collections of orders"}</p>
-                    <p class="text-white font-light text-lg">{"> Payment methods"}</p>
-                </div>
-            </div>
-
-            <div class="hidden lg:block">
-                <h3 class="text-xl text-white">{"Politics of Fuente"}</h3>
-                <div class="mt-5 space-y-3">
-                    <p class="text-white font-light text-lg">{"> Terms and conditions"}</p>
-                    <p class="text-white font-light text-lg">{"> General policies"}</p>
-                    <p class="text-white font-light text-lg">{"> Privacy Policy"}</p>
-                    <p class="text-white font-light text-lg">{"> Return and exchanges"}</p>
-                </div>
-            </div>
-        </div>
-    </footer>
+        </footer>
     }
 }
 #[function_component(SearchBar)]

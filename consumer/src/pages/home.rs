@@ -13,26 +13,28 @@ pub fn home_page() -> Html {
     let translations = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = translations.translations();
     html! {
-        <div class="space-y-4">
+        <main class="flex flex-col flex-1 overflow-hidden w-full mx-auto">
             <CommerceFilters />
-            <FuenteStoresBanner/>
-            <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
-                <div class="flex justify-between items-center lg:mb-4">
-                    <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
-                    <AppLink<ConsumerRoute>
-                        class=""
-                        selected_class=""
-                        route={ConsumerRoute::BrowseStores}>
-                        <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
-                    </AppLink<ConsumerRoute>>
-                </div>
+            <div class="grid grid-cols-1 gap-4 overflow-y-auto">
+                <FuenteStoresBanner/>
+                <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
+                    <div class="flex justify-between items-center lg:mb-4">
+                        <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                        <AppLink<ConsumerRoute>
+                            class=""
+                            selected_class=""
+                            route={ConsumerRoute::BrowseStores}>
+                            <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                        </AppLink<ConsumerRoute>>
+                    </div>
 
-                <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+                    <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+                </div>
+                <FuenteBitcoinBanner />
+                <FuenteSalesPitch />
+                <FuenteBenefits />
             </div>
-            <FuenteBitcoinBanner />
-            <FuenteSalesPitch />
-            <FuenteBenefits />
-        </div>
+        </main>
     }
 }
 #[function_component(FuenteStoresBanner)]
@@ -62,7 +64,7 @@ pub fn stores_banner() -> Html {
     // });
 
     html! {
-        <section class="container mx-auto bg-sky-200 rounded-2xl mt-10 py-10">
+        <section class="container mx-auto bg-sky-200 rounded-2xl py-10">
             <div class="flex justify-between items-center container mx-auto">
                 <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{&translations["home_top_stores"]}</h2>
             </div>
@@ -154,8 +156,8 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
 #[function_component(CommerceFilters)]
 pub fn commerce_filters() -> Html {
     html! {
-        <nav class="hidden lg:flex lg:max-w-4xl xl:max-w-6xl mx-auto">
-            <div class="flex justify-evenly w-full">
+        <nav class="hidden lg:flex w-full mx-auto items-center justify-center mb-2">
+            <div class="flex justify-evenly  lg:max-w-4xl xl:max-w-6xl w-full">
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Clothing"}</a>

@@ -10,7 +10,7 @@ use fuente::mass::{
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::{ScrollText, SquarePen, Trash2, Truck};
+use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck, Upload};
 use nostr_minions::key_manager::NostrIdAction;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
@@ -75,13 +75,21 @@ pub fn settings_page() -> Html {
     let my_orders_button = {
         html! {
             <div class="flex justify-center items-center">
-                <AppLink<ConsumerRoute>
-                    class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
-                    selected_class=""
-                    route={ConsumerRoute::History}>
-                    <ScrollText class={classes!("text-sm", "text-fuente", "scale-x-[-1]", "mr-2", "font-bold")} />
+            <AppLink<ConsumerRoute>
+                class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                selected_class=""
+                route={ConsumerRoute::History}>
+                <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
+                    <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
                     {&translations["profile_personal_information_orders_button"]}
-                </AppLink<ConsumerRoute>>
+                </span>
+            </AppLink<ConsumerRoute>>
+            <AppLink<ConsumerRoute>
+                class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                selected_class=""
+                route={ConsumerRoute::History}>
+                <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
+            </AppLink<ConsumerRoute>>
             </div>
         }
     };
@@ -89,11 +97,19 @@ pub fn settings_page() -> Html {
         html! {
             <div class="flex justify-center items-center">
                 <AppLink<ConsumerRoute>
-                    class="flex items-center bg-white border-2 border-fuente outline-fuente px-10 py-3 rounded-full text-fuente space-x-2 font-bold"
+                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={ConsumerRoute::TrackPackages}> // Changed from History to TrackPackages
-                    <Truck class={classes!("text-sm", "text-fuente", "mr-2", "font-bold")} />
-                    {&translations["profile_personal_information_packages_button"]}
+                    <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
+                        <Truck class={classes!("text-sm", "text-fuente", "mr-2", "font-bold")} />
+                        {&translations["profile_personal_information_packages_button"]}
+                    </span>
+                </AppLink<ConsumerRoute>>
+                <AppLink<ConsumerRoute>
+                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    selected_class=""
+                    route={ConsumerRoute::TrackPackages}>
+                    <Truck class={classes!("h-6", "w-6", "stroke-fuente")} />
                 </AppLink<ConsumerRoute>>
             </div>
         }
@@ -175,29 +191,30 @@ pub fn settings_page() -> Html {
             <>
             {match *current_page {
                     SettingsPage::Profile => html! {
-                        <>
-                        <MyContactDetails />
-                        <PopupSection close_handle={profile_popup_handle.clone()}>
-                            <EditProfileMenu close_handle={profile_popup_handle.clone()} />
-                        </PopupSection>
-                        </>
+                        <div class="w-full">
+                            <MyContactDetails />
+                            <PopupSection close_handle={profile_popup_handle.clone()}>
+                                <EditProfileMenu close_handle={profile_popup_handle.clone()} />
+                            </PopupSection>
+                        </div>
                     },
                     SettingsPage::Address => html! {
-                        <>
-                        <MyAddressDetails />
-                        <PopupSection close_handle={address_popup_handle.clone()}>
-                            <NewAddressMenu close_handle={address_popup_handle.clone()} />
-                        </PopupSection>
-                        </>
+                        <div class="w-full">
+                            <MyAddressDetails />
+                            <PopupSection close_handle={address_popup_handle.clone()}>
+                                <NewAddressMenu close_handle={address_popup_handle.clone()} />
+                            </PopupSection>
+                        </div>
                     },
                     SettingsPage::KeyRecovery => html! {
-                        <KeyRecoverySection />
+                        <div class="w-full">
+                            <KeyRecoverySection />
+                        </div>
                     },
                     SettingsPage::Language => html! {
-                        <>
-                            <h2 class="text-2xl font-bold text-fuente">{"Language"}</h2>
+                        <div class="w-full">
                             <LanguageToggle />
-                        </>
+                        </div>
                     },
             }}
             </>
@@ -216,32 +233,55 @@ pub fn my_contact_details() -> Html {
     let profile_popup_handle = use_state(|| false);
     let profile_popup_handle_clone = profile_popup_handle.clone();
     html! {
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 h-full">
-        <div class="space-y-3">
-            <h3 class="text-gray-500 text-2xl font-semibold">{profile.nickname.clone()}</h3>
+        <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 lg:gap-32 h-full p-6 rounded-lg">
+                <div class="space-y-6">
+                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                        {&profile.nickname}
+                    </h3>
 
-            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
-                <p class="text-gray-500 font-light">{&profile.email}</p>
+                  <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                      <Mail class="text-gray-500 w-5 h-5" />
+                      <div>
+                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
+                        <p class="text-gray-600 font-light">{&profile.email}</p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                      <Phone class="text-gray-500 w-5 h-5" />
+                      <div>
+                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                        <p class="text-gray-600">{&profile.telephone}</p>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center space-y-6">
+                  <div class="relative w-full max-w-xs aspect-square">
+                    <img
+                        src={profile.avatar_url.clone()}
+                        alt="Profile Logo"
+                        class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
+                    />
+                  </div>
+
+                  <button
+                    onclick={Callback::from(move |_| profile_popup_handle_clone.set(true))}
+                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
+                  >
+                    <Upload class="w-5 h-5" />
+                    <span>{&translations["profile_settings_upload"]}</span>
+                  </button>
+                </div>
             </div>
-            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
-                <p class="text-gray-500 font-light">{&profile.telephone}</p>
-            </div>
+            <PopupSection close_handle={profile_popup_handle.clone()}>
+                <EditProfileAvatarPopup close_handle={profile_popup_handle.clone()} />
+            </PopupSection>
         </div>
-        <div class="flex flex-col gap-4 flex-1 items-center justify-center">
-            <img class="w-36 h-36 rounded-lg" src={profile.avatar_url.clone()} />
-            <div class="flex justify-center">
-                <button onclick={Callback::from(move |_| profile_popup_handle_clone.set(true))}
-                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold text-sm">
-                    {&translations["profile_settings_upload"]}
-                </button>
-            </div>
-        </div>
-        <PopupSection close_handle={profile_popup_handle.clone()}>
-            <EditProfileAvatarPopup close_handle={profile_popup_handle.clone()} />
-        </PopupSection>
-    </div>
     }
 }
 
@@ -379,17 +419,45 @@ pub fn my_address_details() -> Html {
     let default_address = addresses.iter().find(|a| a.is_default());
     html! {
         {if let Some(address) = default_address {
+            let lookup = address.address().lookup(); 
             html! {
-                <div>
-                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_address_registered"]}</p>
-                    <span class="text-xl font-thin text-gray-500">{address.address().lookup().display_name()}</span>
+                <div class="max-w-full flex flex-col p-6 rounded-lg space-y-6 overflow-hidden">
+                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                      {&translations["profile_address_registered"]}
+                    </h3>
+
+                    <div class="space-y-4">
+                      <div class="flex items-start space-x-3">
+                        <MapPin class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                        <div class="flex-grow">
+                          <p class="text-gray-700 text-lg font-bold">
+                            {&translations["profile_address_registered"]}
+                          </p>
+                          <p class="text-gray-600 text-xl font-light break-words max-w-xs sm:max-w-sm">
+                            {&lookup.display_name()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-start space-x-3">
+                        <Compass class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                        <div class="flex-grow">
+                          <p class="text-gray-700 text-lg font-bold">
+                            {&translations["profile_address_coordinates"]}
+                          </p>
+                          <p class="text-gray-600 text-xl font-light">
+                            {format!("Latitude: {:.2} Longitude: {:.2}", &lookup.lat_as_f64(), &lookup.long_as_f64())}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                 </div>
             }
         } else {
             html! {
                 <div>
-                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_address_registered"]}</p>
-                    <span class="text-xl font-thin text-gray-500">{&translations["profile_address_no_address_registered"]}</span>
+                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_registered"]}</p>
+                    <span class="text-xl font-thin text-gray-500">{&translations["profile_no_address_registered"]}</span>
                 </div>
             }
         }}

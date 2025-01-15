@@ -8,6 +8,7 @@ ratings = { path = "ratings" }
 
 # ILLUMINODES stack
 nostr-minions = "0.1.6"
+#nostr-minions = { path = "../minions" }
 bright-lightning = "0.1.5"
 # bright-lightning = { path = "../bright-lightning" }
 nostro2 = "0.2.4"

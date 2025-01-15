@@ -1,4 +1,6 @@
-use lucide_yew::{ArrowLeft, ArrowRight, Bitcoin, Headset, Key, ShieldCheck, SquarePen, Truck, TriangleAlert};
+use lucide_yew::{
+    ArrowLeft, ArrowRight, Bitcoin, Headset, Key, ShieldCheck, SquarePen, TriangleAlert, Truck,
+};
 use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
 use web_sys::HtmlElement;
@@ -20,7 +22,7 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
     let selected_class = classes!("bg-fuente", "text-white");
     let unselected_class = classes!("bg-gray-100", "text-gray-500");
     html! {
-        <aside class="flex-shrink-0 px-4 overflow-auto no-scrollbar">
+        <aside class="flex-shrink-0 px-4 overflow-auto no-scrollbar lg:px-10">
             <div class="flex flex-row lg:flex-col gap-3">
                 {for options.iter().map(|(name, onclick, selected)| {
                     html! {
@@ -138,7 +140,7 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     html! {
         <>
         <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+            <div class="flex flex-row justify-between items-center px-4 lg:p-10">
                 <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                     {&heading}
                 </h1>
@@ -590,35 +592,25 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-        <>
-            <main
-                class="container mx-auto lg:py-10 flex flex-col items-center lg:justify-between lg:items-start">
-                <h1 class="text-fuente text-4xl pb-10 lg:pb-0 text-center lg:text-left lg:text-6xl font-bold tracking-tighter">
+        <main class="flex flex-col h-screen overflow-hidden w-full">
+            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                     {&translations["favorites_stores_heading"]}
                 </h1>
-                <div class="flex flex-col justify-center items-center lg:items-start lg:flex-row gap-10 mt-5">
-                        <aside class="flex flex-grow lg:flex-col gap-3 lg:max-w-72 mx-auto">
-                            <button
-                            type="button"
-                            class={classes!(
-                                "py-4",
-                                "px-8",
-                                "rounded-2xl",
-                                "font-bold",
-                                "text-lg",
-                                "bg-fuente",
-                                "text-white"
-                            )}
-                            >
-                                {&translations["favorites_stores_stores_button"]}
-                            </button>
-                        </aside>
-                    <div class="grid sm:grid-cols-2 flex-1 gap-5">
-                        {props.children.clone()}
+            </div>
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+                <SettingsSideBar options={
+                    vec![
+                        (translations["favorites_stores_stores_button"].clone(), Callback::noop(), true),
+                    ]
+                } />
+                <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                    <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
+                    {props.children.clone()}
                     </div>
                 </div>
-            </main>
-    </>
+            </div>
+        </main>
     }
 }
 #[function_component(FuenteSidebarTemplate)]
@@ -692,7 +684,7 @@ pub fn key_recovery_section() -> Html {
           </div>
 
           // <div class="mt-6">
-          //   <button 
+          //   <button
           //     class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300">
           //     <Key class="w-5 h-5" />
           //   </button>
