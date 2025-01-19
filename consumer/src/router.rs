@@ -288,8 +288,11 @@ pub fn commerce_filters() -> Html {
                         {businesses.iter().map(|profile| {
                             let commerce_data = profile.profile().clone();
                             let commerce_id = profile.id().to_string();
+                            let is_open_clone = is_open.clone();
                             html! {
-                                <li class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-fuente font-semibold">
+                                <li class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-fuente font-semibold"
+                                    onclick={Callback::from(move |_| is_open_clone.set(false))}
+                                >
                                     <AppLink<ConsumerRoute>
                                         class="block"
                                         selected_class=""
