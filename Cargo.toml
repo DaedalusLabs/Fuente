@@ -30,7 +30,7 @@ serde-wasm-bindgen = "0.6.5"
 wasm-bindgen = "0.2.95"
 wasm-bindgen-futures = "0.4.45"
 wasm-bindgen-test = "0.3.42"
-web-sys = { version = "0.3.70", features = ["HtmlInputElement", "HtmlFormElement", "SubtleCrypto", "CryptoKey", 
+web-sys = { version = "0.3.70", features = ["HtmlInputElement", "HtmlFormElement", "SubtleCrypto", "CryptoKey", "MediaQueryList",
 "Window", "Crypto", "AesKeyGenParams", "AesGcmParams", "IdbFactory", "IdbOpenDbOptions", "HtmlSelectElement", "Clipboard",
 "IdbOpenDbRequest", "IdbTransaction", "IdbRequest", "IdbDatabase", "IdbObjectStore", "IdbRequestReadyState", "Navigator",
 "HtmlAudioElement", "HtmlMediaElement", "Geolocation", "Response", "ReadableStream", "PositionOptions", "DomStringList",

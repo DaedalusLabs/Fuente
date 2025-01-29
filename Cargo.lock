@@ -417,6 +417,7 @@ dependencies = [
  "serde_json",
  "upload-things",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
  "yew",
  "yew-router",
