@@ -8,7 +8,7 @@ use consumer::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage},
+    mass::{LoadingScreen, LoginPage, ToastProvider},
     models::init_consumer_db,
 };
 use html::ChildrenProps;
@@ -94,7 +94,9 @@ fn app_context(props: &ChildrenProps) -> Html {
                     <LiveOrderProvider>
                         <FavoritesProvider>
                             <RatingsProvider>
-                                {props.children.clone()}
+                                <ToastProvider>
+                                    {props.children.clone()}
+                                </ToastProvider>
                             </RatingsProvider>
                         </FavoritesProvider>
                     </LiveOrderProvider>

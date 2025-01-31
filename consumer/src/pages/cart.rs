@@ -4,7 +4,7 @@ use crate::contexts::{
 use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
 use fuente::contexts::{AdminConfigsStore, LanguageConfigsStore};
-use fuente::mass::{ThreeBlockSpinner, AppLink};
+use fuente::mass::{AppLink, ThreeBlockSpinner, Toast, ToastAction, ToastContext, ToastType};
 use fuente::models::{OrderPaymentStatus, ProductItem, ProductOrder};
 use lucide_yew::{ArrowRight, Trash2};
 use nostr_minions::key_manager::NostrIdStore;
@@ -215,22 +215,37 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
     let remove_one_item = {
         let cart_ctx = cart_ctx.clone();
         let item_clone = item.clone();
+        let toast_ctx = use_context::<ToastContext>().expect("No toast context");
         Callback::from(move |_: MouseEvent| {
             cart_ctx.dispatch(CartAction::RemoveProduct(item_clone.clone()));
+            toast_ctx.dispatch(ToastAction::Show(Toast {
+                message: format!("1 {} removed from cart", item_clone.name()),
+                toast_type: ToastType::Error,
+            }));
         })
     };
     let add_one_item = {
         let cart_ctx = cart_ctx.clone();
         let item_clone = item.clone();
+        let toast_ctx = use_context::<ToastContext>().expect("No toast context");
         Callback::from(move |_: MouseEvent| {
             cart_ctx.dispatch(CartAction::AddOne(item_clone.clone()));
+            toast_ctx.dispatch(ToastAction::Show(Toast {
+                message: format!("{} added to cart", item_clone.name()),
+                toast_type: ToastType::Success,
+            }));
         })
     };
     let clear_product = {
         let cart_ctx = cart_ctx.clone();
         let item_clone = item.clone();
+        let toast_ctx = use_context::<ToastContext>().expect("No toast context");
         Callback::from(move |_: MouseEvent| {
             cart_ctx.dispatch(CartAction::ClearProduct(item_clone.clone()));
+            toast_ctx.dispatch(ToastAction::Show(Toast {
+                message: format!("All {} removed from cart", item_clone.name()),
+                toast_type: ToastType::Error,
+            }));
         })
     };
     let price = item.price().parse::<f64>().unwrap() * *count as f64;
