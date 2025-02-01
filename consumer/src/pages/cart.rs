@@ -1,5 +1,5 @@
 use crate::contexts::{
-    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore, LoginPrompt,
+    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore, LoginStateAction, LoginStateStore,
 };
 use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
@@ -19,6 +19,7 @@ pub fn cart_page() -> Html {
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("No key context not found");
     let translations = language_ctx.translations();
+    let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
 
     let cart_items = cart_ctx.cart();
     if cart_items.is_empty() {
@@ -28,8 +29,12 @@ pub fn cart_page() -> Html {
     }
 
     if key_ctx.get_nostr_key().is_none() {
+        // Show login modal and return placeholder
+        login_state.dispatch(LoginStateAction::Show);
         return html! {
-            <LoginPrompt />
+            <div class="h-screen flex items-center justify-center">
+                <p>{"Please log in to access your cart"}</p>
+            </div>
         };
     }
 

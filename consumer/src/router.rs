@@ -8,13 +8,12 @@ use yew_router::prelude::*;
 use fuente::{contexts::LanguageConfigsStore, mass::AppLink};
 
 use crate::{
-    contexts::{CartStore, CommerceDataStore, LoginPrompt},
+    contexts::{CartStore, CommerceDataStore, LoginModal, LoginStateAction, LoginStateStore, RequireAuth},
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
         HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage,
     },
 };
-use crate::contexts::auth::ProtectedRoute;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -42,17 +41,6 @@ pub enum ConsumerRoute {
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    
-    // If keys are still loading, show loading screen
-    if !key_ctx.finished_loading() {
-        return html! {
-            <div class="h-screen flex items-center justify-center">
-                <span class="text-lg">{"Loading..."}</span>
-            </div>
-        };
-    }
-
     html! {
         <div class="flex flex-col h-screen overflow-hidden">
             <FuenteHeader />
@@ -66,42 +54,22 @@ pub fn consumer_pages() -> Html {
                             <CommercePage {commerce_id} />
                         },
                         
-                        // Protected routes
+                        // Protected routes - for now just render normally
                         ConsumerRoute::Cart => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                            <RequireAuth>
                                 <CartPage />
-                            </ProtectedRoute>
+                            </RequireAuth>
                         },
-                        ConsumerRoute::Checkout => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
-                                <CheckoutPage />
-                            </ProtectedRoute>
-                        },
-                        ConsumerRoute::History => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
-                                <HistoryPage />
-                            </ProtectedRoute>
-                        },
+                        ConsumerRoute::Checkout => html!{<CheckoutPage />},
+                        ConsumerRoute::History => html!{<HistoryPage />},
                         ConsumerRoute::Settings => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                            <RequireAuth>
                                 <SettingsPageComponent />
-                            </ProtectedRoute>
+                            </RequireAuth>
                         },
-                        ConsumerRoute::Favorites => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
-                                <FavoritesPage />
-                            </ProtectedRoute>
-                        },
-                        ConsumerRoute::Order { order_id: _ } => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
-                                <LiveOrderCheck />
-                            </ProtectedRoute>
-                        },
-                        ConsumerRoute::TrackPackages => html!{
-                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
-                                <TrackPackagesPage />
-                            </ProtectedRoute>
-                        },
+                        ConsumerRoute::Favorites => html!{<FavoritesPage />},
+                        ConsumerRoute::Order { order_id: _ } => html!{<LiveOrderCheck />},
+                        ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
                     }
                 }}
                 />
@@ -110,27 +78,40 @@ pub fn consumer_pages() -> Html {
         </div>
     }
 }
+
+#[function_component(LoginButton)]
+fn login_button() -> Html {
+    let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
+    
+    html! {
+        <button 
+            onclick={
+                let login_state = login_state.clone();
+                Callback::from(move |_| {
+                    login_state.dispatch(LoginStateAction::Show);
+                })
+            }
+            class="flex items-center gap-2 bg-fuente text-white px-4 py-2 rounded-lg"
+        >
+            {"Login"}
+        </button>
+    }
+}
 #[function_component(FuenteHeader)]
 pub fn header() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let cart_len = cart_ctx.cart().len();
-
-    // Return empty while loading to prevent flash
-    if !key_ctx.finished_loading() {
-        return html! {};
-    }
-
     let is_authenticated = key_ctx.get_nostr_key().is_some();
 
     html! {
         <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
-            <AppLink<ConsumerRoute>
+           <AppLink<ConsumerRoute>
                class="hidden lg:flex"
                selected_class=""
                route={ConsumerRoute::Home}>
                    <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
-            </AppLink<ConsumerRoute>>
+           </AppLink<ConsumerRoute>>
 
             <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
                 <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
@@ -143,6 +124,8 @@ pub fn header() -> Html {
                         <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
                     </AppLink<ConsumerRoute>>
                 </div>
+
+                // Auth-required buttons section
                 <div class="flex gap-5 mb-2">
                     {if is_authenticated {
                         html! {
@@ -158,17 +141,18 @@ pub fn header() -> Html {
                                     class=""
                                     selected_class=""
                                     route={ConsumerRoute::Cart}>
-                                    {match cart_len {
-                                        0 => html! {<ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />},
-                                        _ => html! {
-                                            <div class="relative">
-                                                <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
+                                    <div class="relative">
+                                        <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
+                                        {if cart_len > 0 {
+                                            html! {
                                                 <span class="absolute -top-2 -right-2 bg-red-500 text-[12px] text-white rounded-full w-5 h-5 p-1 font-bold flex justify-center items-center">
                                                     {cart_len}
                                                 </span>
-                                            </div>
-                                        }
-                                    }}
+                                            }
+                                        } else {
+                                            html! {}
+                                        }}
+                                    </div>
                                 </AppLink<ConsumerRoute>>
 
                                 <AppLink<ConsumerRoute>
@@ -180,7 +164,9 @@ pub fn header() -> Html {
                             </>
                         }
                     } else {
-                        html! {}
+                        html! {
+                            <LoginButton />
+                        }
                     }}
                 </div>
             </div>

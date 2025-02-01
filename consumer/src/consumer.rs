@@ -1,7 +1,6 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
-        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, RatingsProvider
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, LoginModal, LoginProvider, RatingsProvider
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
@@ -26,12 +25,12 @@ fn main() {
 
 #[function_component(App)]
 fn app() -> Html {
-    // Handle initialization
     use_effect_with((), move |_| {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing consumer database");
         spawn_local(async move {
-            let sw = nostr_minions::browser_api::AppServiceWorker::new().expect("Error initializing service worker");
+            let sw = nostr_minions::browser_api::AppServiceWorker::new()
+                .expect("Error initializing service worker");
             sw.install("serviceWorker.js").await.expect("Error installing service worker");
         });
         || {}
@@ -43,7 +42,12 @@ fn app() -> Html {
                 <RelayPoolComponent>
                     <NostrIdProvider>
                         <AdminConfigsProvider>
-                            <AuthenticationCheck />
+                            <LoginProvider>
+                                <AppContext>
+                                    <ConsumerPages />
+                                    <LoginModal />
+                                </AppContext>
+                            </LoginProvider>
                         </AdminConfigsProvider>
                     </NostrIdProvider>
                 </RelayPoolComponent>
