@@ -1,4 +1,5 @@
 use lucide_yew::{Heart, House, Search, ShieldQuestion, ShoppingCart, UserRound, X};
+use nostr_minions::key_manager::NostrIdStore;
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
@@ -7,12 +8,13 @@ use yew_router::prelude::*;
 use fuente::{contexts::LanguageConfigsStore, mass::AppLink};
 
 use crate::{
-    contexts::{CartStore, CommerceDataStore},
+    contexts::{CartStore, CommerceDataStore, LoginPrompt},
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
         HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage,
     },
 };
+use crate::contexts::auth::ProtectedRoute;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ConsumerRoute {
@@ -40,28 +42,70 @@ pub enum ConsumerRoute {
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    
+    // If keys are still loading, show loading screen
+    if !key_ctx.finished_loading() {
+        return html! {
+            <div class="h-screen flex items-center justify-center">
+                <span class="text-lg">{"Loading..."}</span>
+            </div>
+        };
+    }
+
     html! {
         <div class="flex flex-col h-screen overflow-hidden">
             <FuenteHeader />
-            <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
+            <main class="flex-1 overflow-y-auto">
+                <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                     match switch {
+                        // Public routes
                         ConsumerRoute::Home => html!{<HomePage />},
-                        ConsumerRoute::History => html!{<HistoryPage />},
-                        ConsumerRoute::Settings => html!{<SettingsPageComponent />},
-                        ConsumerRoute::Favorites => html!{<FavoritesPage />},
-                        ConsumerRoute::Cart => html!{<CartPage />},
-                        ConsumerRoute::Checkout => html!{<CheckoutPage />},
                         ConsumerRoute::BrowseStores => html!{<AllCommercesPage />},
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },
-                        ConsumerRoute::Order { order_id: _ } => html!{
-                            <LiveOrderCheck />
+                        
+                        // Protected routes
+                        ConsumerRoute::Cart => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <CartPage />
+                            </ProtectedRoute>
                         },
-                        ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
+                        ConsumerRoute::Checkout => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <CheckoutPage />
+                            </ProtectedRoute>
+                        },
+                        ConsumerRoute::History => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <HistoryPage />
+                            </ProtectedRoute>
+                        },
+                        ConsumerRoute::Settings => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <SettingsPageComponent />
+                            </ProtectedRoute>
+                        },
+                        ConsumerRoute::Favorites => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <FavoritesPage />
+                            </ProtectedRoute>
+                        },
+                        ConsumerRoute::Order { order_id: _ } => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <LiveOrderCheck />
+                            </ProtectedRoute>
+                        },
+                        ConsumerRoute::TrackPackages => html!{
+                            <ProtectedRoute fallback={html!{<LoginPrompt />}}>
+                                <TrackPackagesPage />
+                            </ProtectedRoute>
+                        },
                     }
                 }}
-            />
+                />
+            </main>
             <FuenteFooter />
         </div>
     }
@@ -69,61 +113,78 @@ pub fn consumer_pages() -> Html {
 #[function_component(FuenteHeader)]
 pub fn header() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let cart_len = cart_ctx.cart().len();
+
+    // Return empty while loading to prevent flash
+    if !key_ctx.finished_loading() {
+        return html! {};
+    }
+
+    let is_authenticated = key_ctx.get_nostr_key().is_some();
+
     html! {
-    <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
-       <AppLink<ConsumerRoute>
-           class="hidden lg:flex"
-           selected_class=""
-           route={ConsumerRoute::Home}>
-               <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
-       </AppLink<ConsumerRoute>>
+        <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
+            <AppLink<ConsumerRoute>
+               class="hidden lg:flex"
+               selected_class=""
+               route={ConsumerRoute::Home}>
+                   <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
+            </AppLink<ConsumerRoute>>
 
-        <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
-            <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
-                <SearchBar />
+            <div class="flex flex-col lg:flex-row gap-4 flex-1 items-center justify-end w-full">
+                <div class="relative flex items-center w-full max-w-sm mx-auto lg:ml-auto lg:mx-0 gap-4">
+                    <SearchBar />
 
-                <AppLink<ConsumerRoute>
-                    class="lg:hidden"
-                    selected_class=""
-                    route={ConsumerRoute::Home}>
-                    <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
-                </AppLink<ConsumerRoute>>
-            </div>
-            <div class="flex gap-5 mb-2">
-                <AppLink<ConsumerRoute>
-                    class=""
-                    selected_class=""
-                    route={ConsumerRoute::Settings}>
-                    <UserRound class="size-6 w-10 h-10 text-fuente hover:cursor-pointer" />
-                </AppLink<ConsumerRoute>>
+                    <AppLink<ConsumerRoute>
+                        class="lg:hidden"
+                        selected_class=""
+                        route={ConsumerRoute::Home}>
+                        <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
+                    </AppLink<ConsumerRoute>>
+                </div>
+                <div class="flex gap-5 mb-2">
+                    {if is_authenticated {
+                        html! {
+                            <>
+                                <AppLink<ConsumerRoute>
+                                    class=""
+                                    selected_class=""
+                                    route={ConsumerRoute::Settings}>
+                                    <UserRound class="size-6 w-10 h-10 text-fuente hover:cursor-pointer" />
+                                </AppLink<ConsumerRoute>>
 
-                <AppLink<ConsumerRoute>
-                    class=""
-                    selected_class=""
-                    route={ConsumerRoute::Cart}>
-                    {match cart_len {
-                        0 => html! {<ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />},
-                        _ => html! {
-                            <div class="relative">
-                                <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
-                                <span class="absolute -top-2 -right-2 bg-red-500 text-[12px] text-white rounded-full w-5 h-5 p-1 font-bold flex justify-center items-center">
-                                    {cart_len}
-                                </span>
-                            </div>
+                                <AppLink<ConsumerRoute>
+                                    class=""
+                                    selected_class=""
+                                    route={ConsumerRoute::Cart}>
+                                    {match cart_len {
+                                        0 => html! {<ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />},
+                                        _ => html! {
+                                            <div class="relative">
+                                                <ShoppingCart class="h-10 w-10 text-fuente hover:cursor-pointer" />
+                                                <span class="absolute -top-2 -right-2 bg-red-500 text-[12px] text-white rounded-full w-5 h-5 p-1 font-bold flex justify-center items-center">
+                                                    {cart_len}
+                                                </span>
+                                            </div>
+                                        }
+                                    }}
+                                </AppLink<ConsumerRoute>>
+
+                                <AppLink<ConsumerRoute>
+                                    class=""
+                                    selected_class=""
+                                    route={ConsumerRoute::Favorites}>
+                                    <Heart class="size-6 w-10 h-10 text-fuente hover:cursor-pointer" />
+                                </AppLink<ConsumerRoute>>
+                            </>
                         }
+                    } else {
+                        html! {}
                     }}
-                </AppLink<ConsumerRoute>>
-
-                <AppLink<ConsumerRoute>
-                    class=""
-                    selected_class=""
-                    route={ConsumerRoute::Favorites}>
-                    <Heart class="size-6 w-10 h-10 text-fuente hover:cursor-pointer" />
-                </AppLink<ConsumerRoute>>
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
     }
 }
 #[function_component(FuenteFooter)]

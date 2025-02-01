@@ -1,5 +1,5 @@
 use crate::contexts::{
-    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore,
+    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore, LoginPrompt,
 };
 use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
@@ -17,12 +17,19 @@ pub fn cart_page() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
     let language_ctx =
         use_context::<LanguageConfigsStore>().expect("No language context not found");
+    let key_ctx = use_context::<NostrIdStore>().expect("No key context not found");
     let translations = language_ctx.translations();
 
     let cart_items = cart_ctx.cart();
     if cart_items.is_empty() {
         return html! {
             <EmptyCart />
+        };
+    }
+
+    if key_ctx.get_nostr_key().is_none() {
+        return html! {
+            <LoginPrompt />
         };
     }
 

@@ -26,6 +26,7 @@ fn main() {
 
 #[function_component(App)]
 fn app() -> Html {
+    // Handle initialization
     use_effect_with((), move |_| {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing consumer database");
@@ -35,22 +36,48 @@ fn app() -> Html {
         });
         || {}
     });
+
     html! {
-    <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayPoolComponent>
-                <AuthContext>
-                    <LoginCheck>
-                        <AppContext>
-                            <ProfileCheck>
-                                <ConsumerPages />
-                            </ProfileCheck>
-                        </AppContext>
-                    </LoginCheck>
-                </AuthContext>
-            </RelayPoolComponent>
-        </BrowserRouter>
-    </LanguageConfigsProvider>
+        <LanguageConfigsProvider>
+            <BrowserRouter>
+                <RelayPoolComponent>
+                    <NostrIdProvider>
+                        <AdminConfigsProvider>
+                            <AuthenticationCheck />
+                        </AdminConfigsProvider>
+                    </NostrIdProvider>
+                </RelayPoolComponent>
+            </BrowserRouter>
+        </LanguageConfigsProvider>
+    }
+}
+
+// New component to handle authentication checks
+#[function_component(AuthenticationCheck)]
+fn authentication_check() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+
+    // Show loading state while context is initializing
+    if !key_ctx.finished_loading() {
+        return html! {
+            <div class="h-screen flex items-center justify-center">
+                <span class="text-lg">{"Loading..."}</span>
+            </div>
+        };
+    }
+
+    // Show login page or main app based on authentication
+    if key_ctx.get_nostr_key().is_none() {
+        return html! {
+            <LoginPage />
+        };
+    }
+
+    // Main app content when authenticated
+    html! {
+        <AppContext>
+            <ConsumerPages />
+        </AppContext>
     }
 }
 
