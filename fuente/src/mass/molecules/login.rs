@@ -1,6 +1,6 @@
 use crate::{
     contexts::LanguageConfigsStore,
-    mass::templates::LoginPageTemplate,
+    mass::{templates::LoginPageTemplate, Toast, ToastAction, ToastContext, ToastProvider, ToastType},
 };
 use lucide_yew::Copy;
 use nostr_minions::{
@@ -44,15 +44,17 @@ pub fn login_template() -> Html {
         AuthPage::Register => &translations["auth_register_heading"],
     };
     html! {
-        <LoginPageTemplate 
-            heading={heading.to_string()} 
-            sub_heading={translations["auth_register_heading_now"].clone()} 
-            title={title.to_string()}>
-                {match *login_type {
-                    AuthPage::Login => html! {<LoginForm login_handle={register} />},
-                    AuthPage::Register => html! {<RegisterUserForm login_handle={login} />},
-                }}
-        </LoginPageTemplate>
+        <ToastProvider>
+            <LoginPageTemplate 
+                heading={heading.to_string()} 
+                sub_heading={translations["auth_register_heading_now"].clone()} 
+                title={title.to_string()}>
+                    {match *login_type {
+                        AuthPage::Login => html! {<LoginForm login_handle={register} />},
+                        AuthPage::Register => html! {<RegisterUserForm login_handle={login} />},
+                    }}
+            </LoginPageTemplate>
+        </ToastProvider>
     }
 }
 #[function_component(LoginForm)]
@@ -129,27 +131,33 @@ pub fn new_user_form(props: &AuthPageProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
     let translations = language_ctx.translations();
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
-    let new_keys = NostrKeypair::generate(true);
+    let new_keys = use_state(|| NostrKeypair::generate(true));
+    let toast_ctx = use_context::<ToastContext>().expect("No toast context");
     let private_key = new_keys
         .get_secret_key()
         .iter()
         .map(|x| format!("{:02x}", x))
         .collect::<String>();
-    let onsubmit = Callback::from(move |e: SubmitEvent| {
-        e.prevent_default();
+    let onsubmit = {
         let user_ctx = user_ctx.clone();
-        let new_keys = new_keys.clone();
-        spawn_local(async move {
-            let user_identity = UserIdentity::from_new_keys(new_keys)
-                .await
-                .expect("Failed to create user identity");
-            let keys = user_identity
-                .get_user_keys()
-                .await
-                .expect("Failed to get user keys");
-            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
-        });
-    });
+        let new_keys = (*new_keys).clone();
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            let user_ctx = user_ctx.clone();
+            let new_keys = new_keys.clone();
+            spawn_local(async move {
+                let user_identity = UserIdentity::from_new_keys(new_keys)
+                    .await
+                    .expect("Failed to create user identity");
+                let keys = user_identity
+                    .get_user_keys()
+                    .await
+                    .expect("Failed to get user keys");
+                user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+            });
+        })
+    };
+
     let key_clone = private_key.clone();
     html! {
         <form   {onsubmit}
@@ -175,9 +183,17 @@ pub fn new_user_form(props: &AuthPageProps) -> Html {
                             />
                         <button
                             type="button"
-                            onclick={Callback::from(move |_: MouseEvent| {
-                                 clipboard_copy(&key_clone);
-                            })}>
+                            onclick={
+                                let key_clone = key_clone.clone();
+                                let toast_ctx = toast_ctx.clone();
+                                Callback::from(move |_: MouseEvent| {
+                                    clipboard_copy(&key_clone);
+                                    toast_ctx.dispatch(ToastAction::Show(Toast {
+                                        message: "Private key copied to clipboard".into(),
+                                        toast_type: ToastType::Success,
+                                    }));
+                                })
+                            }>
                             <Copy class="w-8 h-8 text-white" />
                         </button>
                     </span>
