@@ -3,7 +3,7 @@ use crate::{
     router::ConsumerRoute,
 };
 
-use fuente::{contexts::LanguageConfigsStore, mass::AppLink, models::ProductItem};
+use fuente::{contexts::LanguageConfigsStore, mass::{AppLink, Toast, ToastAction, ToastContext, ToastType}, models::ProductItem};
 use lucide_yew::{ArrowLeft, ShoppingCart};
 use yew::prelude::*;
 
@@ -182,16 +182,26 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
         let cart_ctx = cart_ctx.clone();
         let show_warning = show_warning.clone();
         let product = product.clone();
+        let toast_ctx = use_context::<ToastContext>().expect("No toast context");
+        
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
             if !cart_ctx.can_add_from_business(&commerce_id) {
                 show_warning.set(true);
+                toast_ctx.dispatch(ToastAction::Show(Toast {
+                    message: "Can't add items from different stores".into(),
+                    toast_type: ToastType::Error,
+                }));
                 return;
             }
             cart_ctx.dispatch(CartAction::AddProduct(
                 product.clone(),
                 commerce_id.to_string(),
             ));
+            toast_ctx.dispatch(ToastAction::Show(Toast {
+                message: format!("{} added to cart", product.name()),
+                toast_type: ToastType::Success,
+            }));
         })
     };
     let image_onclick = {

@@ -1,14 +1,14 @@
 use lucide_yew::{
-    ArrowLeft, ArrowRight, Bitcoin, Headset, Key, ShieldCheck, SquarePen, TriangleAlert, Truck,
+    ArrowLeft, ArrowRight, Bitcoin, Copy as CopyIcon, Headset, Key, ShieldCheck, SquarePen, TriangleAlert, Truck,
 };
 use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
 use web_sys::HtmlElement;
 use yew::prelude::*;
+use web_sys::window;
 
 use crate::{
-    contexts::LanguageConfigsStore,
-    models::{DriverProfile, OrderInvoiceState, OrderStatus},
+    contexts::LanguageConfigsStore, mass::{Toast, ToastAction, ToastContext, ToastType}, models::{DriverProfile, OrderInvoiceState, OrderStatus}
 };
 
 #[derive(Clone, PartialEq, Properties)]
@@ -643,6 +643,7 @@ pub fn key_recovery_section() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
+    let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
     let keys = key_ctx.get_nostr_key().expect("No keys found");
 
     // Convert secret key bytes to hex string
@@ -652,36 +653,58 @@ pub fn key_recovery_section() -> Html {
         .map(|b| format!("{:02x}", b))
         .collect();
 
+    let onclick_copy = {
+        let secret_key = secret_key_hex.clone();
+        let toast_ctx = toast_ctx.clone();
+        Callback::from(move |_| {
+            if let Some(window) = window() {
+                let navigator = window.navigator();
+                let clipboard = navigator.clipboard();
+                let _ = clipboard.write_text(&secret_key);
+                toast_ctx.dispatch(ToastAction::Show(Toast {
+                    message: "Key copied to clipboard".into(),
+                    toast_type: ToastType::Success,
+                }));
+            }
+        })
+    };
+
     html! {
-         <div class="p-6 rounded-lg space-y-6">
-          <div class="flex items-center space-x-3 border-b pb-2">
-            <Key class="text-fuente w-6 h-6" />
-            <h3 class="text-2xl font-bold text-fuente">
-              {&translations["profile_settings_key"]}
-            </h3>
-          </div>
+        <div class="p-6 rounded-lg space-y-6">
+         <div class="flex items-center space-x-3 border-b pb-2">
+           <Key class="text-fuente w-6 h-6" />
+           <h3 class="text-2xl font-bold text-fuente">
+             {&translations["profile_settings_key"]}
+           </h3>
+         </div>
 
-          <div class="space-y-4">
-            <div class="flex items-start space-x-3">
-              <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
-              <p class="text-gray-700">
-                {&translations["profile_settings_warning"]}
-              </p>
-            </div>
+         <div class="space-y-4">
+           <div class="flex items-start space-x-3">
+             <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
+             <p class="text-gray-700">
+               {&translations["profile_settings_warning"]}
+             </p>
+           </div>
 
-            <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
-                {secret_key_hex}
-              </pre>
-            </div>
+           <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto relative">
+             <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
+               {secret_key_hex}
+             </pre>
+             <button 
+               onclick={onclick_copy}
+               class="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded-lg"
+             >
+               <CopyIcon class="w-5 h-5 text-gray-600" />
+             </button>
+           </div>
 
-            <div class="flex items-start space-x-3">
-              <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
-              <p class="text-sm text-gray-600">
-                {&translations["profile_settings_warning_two"]}
-              </p>
-            </div>
-          </div>
+           <div class="flex items-start space-x-3">
+             <TriangleAlert class="text-yellow-500 w-5 h-5 mt-1 flex-shrink-0" />
+             <p class="text-sm text-gray-600">
+               {&translations["profile_settings_warning_two"]}
+             </p>
+           </div>
+         </div>
 
           // <div class="mt-6">
           //   <button
