@@ -104,13 +104,25 @@ pub fn key_handler(props: &LiveOrderChildren) -> Html {
 
 #[function_component(LiveOrderSync)]
 pub fn commerce_data_sync() -> Html {
-    let ctx = use_context::<LiveOrderStore>().expect("Commerce context not found");
-    let relay_ctx = use_context::<NostrProps>().expect("Nostr context not found");
-    let sub_id = use_state(|| "".to_string());
+    // Get all required contexts first, returning early if they're not available
+    let ctx = match use_context::<LiveOrderStore>() {
+        Some(ctx) => ctx,
+        None => return html! {},  // Return empty if context not found
+    };
+    
+    let relay_ctx = match use_context::<NostrProps>() {
+        Some(ctx) => ctx,
+        None => return html! {},  // Return empty if context not found
+    };
+    
+    let keys_ctx = match use_context::<NostrIdStore>() {
+        Some(ctx) => ctx,
+        None => return html! {},  // Return empty if context not found
+    };
 
+    let sub_id = use_state(|| "".to_string());
     let subscriber = relay_ctx.subscribe.clone();
     let unique_notes = relay_ctx.unique_notes.clone();
-    let keys_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let ctx_clone = ctx.clone();
 
     let id_handle = sub_id.clone();
@@ -132,16 +144,17 @@ pub fn commerce_data_sync() -> Html {
         || {}
     });
 
-    let keys_clone = keys_ctx.get_nostr_key().clone();
     let subscriber_clone = relay_ctx.subscribe;
+    let keys_ctx_clone = keys_ctx.clone();
     use_effect_with(ctx.live_orders.clone(), move |order| {
-        if let Some((_note, state)) = order.last() {
+        if let (Some((_note, state)), Some(keys)) = 
+        (order.last(), keys_ctx_clone.get_nostr_key()) {
             if let Some(_courier_note) = state.courier.clone() {
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
                     ..Default::default()
                 };
-                filter.add_tag("#p", keys_clone.as_ref().unwrap().public_key().as_str());
+                filter.add_tag("#p", keys.public_key().as_str());
                 subscriber_clone.emit(filter.into());
             }
         }

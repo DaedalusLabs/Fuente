@@ -1,4 +1,5 @@
 use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
+use crate::pages::NewProfilePage;
 use crate::router::ConsumerRoute;
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::PopupProps;
@@ -54,8 +55,14 @@ pub struct AddressListItemProps {
 #[function_component(SettingsPageComponent)]
 pub fn settings_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
+    let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
     let translations = language_ctx.translations();
     let current_page = use_state(|| SettingsPage::Profile);
+    if user_ctx.get_profile().is_none() {
+        return html! {
+            <NewProfilePage />
+        };
+    }
     let go_to_profile = {
         let page = current_page.clone();
         Callback::from(move |_| page.set(SettingsPage::Profile))
@@ -225,66 +232,73 @@ pub fn settings_page() -> Html {
 #[function_component(MyContactDetails)]
 pub fn my_contact_details() -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
-    let profile = user_ctx.get_profile().expect("No user profile found");
-
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
     let translations = language_ctx.translations();
-
     let profile_popup_handle = use_state(|| false);
     let profile_popup_handle_clone = profile_popup_handle.clone();
-    html! {
-        <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 lg:gap-32 h-full p-6 rounded-lg">
-                <div class="space-y-6">
-                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
-                        {&profile.nickname}
-                    </h3>
+    
+    // Get profile safely
+    match user_ctx.get_profile() {
+        Some(profile) => {
+            html! {
+                <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 lg:gap-32 h-full p-6 rounded-lg">
+                        <div class="space-y-6">
+                            <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                                {&profile.nickname}
+                            </h3>
 
-                  <div class="space-y-4">
-                    <div class="flex items-center space-x-3">
-                      <Mail class="text-gray-500 w-5 h-5" />
-                      <div>
-                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
-                        <p class="text-gray-600 font-light">{&profile.email}</p>
-                      </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-3">
+                                    <Mail class="text-gray-500 w-5 h-5" />
+                                    <div>
+                                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
+                                        <p class="text-gray-600 font-light">{&profile.email}</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-3">
+                                    <Phone class="text-gray-500 w-5 h-5" />
+                                    <div>
+                                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                                        <p class="text-gray-600">{&profile.telephone}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center space-y-6">
+                            <div class="relative w-full max-w-xs aspect-square">
+                                <img 
+                                    src={profile.avatar_url.clone()}
+                                    alt="Profile Logo"
+                                    class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
+                                />
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="flex items-center space-x-3">
-                      <Phone class="text-gray-500 w-5 h-5" />
-                      <div>
-                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
-                        <p class="text-gray-600">{&profile.telephone}</p>
-                      </div>
-                    </div>
-
-                  </div>
+                    <PopupSection close_handle={profile_popup_handle.clone()}>
+                        <EditProfileAvatarPopup close_handle={profile_popup_handle.clone()} />
+                    </PopupSection>
                 </div>
-
-                <div class="flex flex-col items-center justify-center space-y-6">
-                  <div class="relative w-full max-w-xs aspect-square">
-                    <img
-                        src={profile.avatar_url.clone()}
-                        alt="Profile Logo"
-                        class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
-                    />
-                  </div>
-
-                  <button
-                    onclick={Callback::from(move |_| profile_popup_handle_clone.set(true))}
-                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
-                  >
-                    <Upload class="w-5 h-5" />
-                    <span>{&translations["profile_settings_upload"]}</span>
-                  </button>
+            }
+        },
+        None => {
+            html! {
+                <div class="flex flex-col items-center justify-center p-8">
+                    <h2 class="text-2xl font-semibold mb-4">{&translations["profile_not_setup"]}</h2>
+                    <p class="text-gray-600 mb-4">{&translations["profile_setup_required"]}</p>
+                    <AppLink<ConsumerRoute> 
+                        class="bg-fuente text-white px-6 py-2 rounded-lg"
+                        selected_class=""
+                        route={ConsumerRoute::Home}>
+                        {&*translations["back_to_home"]}
+                    </AppLink<ConsumerRoute>>
                 </div>
-            </div>
-            <PopupSection close_handle={profile_popup_handle.clone()}>
-                <EditProfileAvatarPopup close_handle={profile_popup_handle.clone()} />
-            </PopupSection>
-        </div>
+            }
+        }
     }
 }
-
 #[function_component(EditProfileAvatarPopup)]
 pub fn edit_avatar(props: &PopupProps) -> Html {
     let close_handle = props.close_handle.clone();

@@ -1,7 +1,6 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
-        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, RatingsProvider
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, LoginModal, LoginProvider, RatingsProvider
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
@@ -30,27 +29,59 @@ fn app() -> Html {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing consumer database");
         spawn_local(async move {
-            let sw = nostr_minions::browser_api::AppServiceWorker::new().expect("Error initializing service worker");
+            let sw = nostr_minions::browser_api::AppServiceWorker::new()
+                .expect("Error initializing service worker");
             sw.install("serviceWorker.js").await.expect("Error installing service worker");
         });
         || {}
     });
+
     html! {
-    <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayPoolComponent>
-                <AuthContext>
-                    <LoginCheck>
-                        <AppContext>
-                            <ProfileCheck>
-                                <ConsumerPages />
-                            </ProfileCheck>
-                        </AppContext>
-                    </LoginCheck>
-                </AuthContext>
-            </RelayPoolComponent>
-        </BrowserRouter>
-    </LanguageConfigsProvider>
+        <LanguageConfigsProvider>
+            <BrowserRouter>
+                <RelayPoolComponent>
+                    <NostrIdProvider>
+                        <AdminConfigsProvider>
+                            <LoginProvider>
+                                <AppContext>
+                                    <ConsumerPages />
+                                    <LoginModal />
+                                </AppContext>
+                            </LoginProvider>
+                        </AdminConfigsProvider>
+                    </NostrIdProvider>
+                </RelayPoolComponent>
+            </BrowserRouter>
+        </LanguageConfigsProvider>
+    }
+}
+
+// New component to handle authentication checks
+#[function_component(AuthenticationCheck)]
+fn authentication_check() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+
+    // Show loading state while context is initializing
+    if !key_ctx.finished_loading() {
+        return html! {
+            <div class="h-screen flex items-center justify-center">
+                <span class="text-lg">{"Loading..."}</span>
+            </div>
+        };
+    }
+
+    // Show login page or main app based on authentication
+    if key_ctx.get_nostr_key().is_none() {
+        return html! {
+            <LoginPage />
+        };
+    }
+
+    // Main app content when authenticated
+    html! {
+        <AppContext>
+            <ConsumerPages />
+        </AppContext>
     }
 }
 
