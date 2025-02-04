@@ -1,14 +1,14 @@
 use consumer::{
     contexts::{
         CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
-        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, RatingsProvider
+        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, RatingsProvider,
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage},
+    mass::{LoadingScreen, LoginPage, PwaInstall},
     models::init_consumer_db,
 };
 use html::ChildrenProps;
@@ -30,27 +30,33 @@ fn app() -> Html {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing consumer database");
         spawn_local(async move {
-            let sw = nostr_minions::browser_api::AppServiceWorker::new().expect("Error initializing service worker");
-            sw.install("serviceWorker.js").await.expect("Error installing service worker");
+            let sw = nostr_minions::browser_api::AppServiceWorker::new()
+                .expect("Error initializing service worker");
+            if let Err(e) = sw.install("serviceWorker.js").await {
+                gloo::console::error!("Error installing service worker: {:?}", e);
+            }
         });
         || {}
     });
     html! {
-    <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayPoolComponent>
-                <AuthContext>
-                    <LoginCheck>
-                        <AppContext>
-                            <ProfileCheck>
-                                <ConsumerPages />
-                            </ProfileCheck>
-                        </AppContext>
-                    </LoginCheck>
-                </AuthContext>
-            </RelayPoolComponent>
-        </BrowserRouter>
-    </LanguageConfigsProvider>
+        <>
+        <LanguageConfigsProvider>
+            <BrowserRouter>
+                <RelayPoolComponent>
+                    <AuthContext>
+                        <LoginCheck>
+                            <AppContext>
+                                <ProfileCheck>
+                                    <ConsumerPages />
+                                </ProfileCheck>
+                            </AppContext>
+                        </LoginCheck>
+                    </AuthContext>
+                </RelayPoolComponent>
+            </BrowserRouter>
+        </LanguageConfigsProvider>
+        <PwaInstall />
+        </>
     }
 }
 
@@ -88,20 +94,20 @@ fn app_context(props: &ChildrenProps) -> Html {
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
-        <ConsumerDataProvider>
-            <CommerceDataProvider>
-                <CartProvider>
-                    <LiveOrderProvider>
-                        <FavoritesProvider>
-                            <RatingsProvider>
-                                {props.children.clone()}
-                            </RatingsProvider>
-                        </FavoritesProvider>
-                    </LiveOrderProvider>
-                </CartProvider>
-            </CommerceDataProvider>
-        </ConsumerDataProvider>
-     }
+       <ConsumerDataProvider>
+           <CommerceDataProvider>
+               <CartProvider>
+                   <LiveOrderProvider>
+                       <FavoritesProvider>
+                           <RatingsProvider>
+                               {props.children.clone()}
+                           </RatingsProvider>
+                       </FavoritesProvider>
+                   </LiveOrderProvider>
+               </CartProvider>
+           </CommerceDataProvider>
+       </ConsumerDataProvider>
+    }
 }
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {

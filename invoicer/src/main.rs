@@ -17,9 +17,10 @@ use invoicer::Invoicer;
 use nostro2::{
     keypair::NostrKeypair,
     notes::NostrNote,
-    relays::{NostrRelayPool, NostrSubscription, NoteEvent, PoolRelayBroadcaster, RelayEvent},
+    relays::{NostrRelayPool, NostrSubscription, RelayEvent},
 };
 use state::InvoicerStateLock;
+use tokio::sync::broadcast::Sender;
 use upload_things::UtRecord;
 use uploads::UtSigner;
 
@@ -34,7 +35,7 @@ pub async fn main() -> anyhow::Result<()> {
         .map(|x| x.trim().to_string())
         .collect();
     let relay_pool = NostrRelayPool::new(vec_strings).await?;
-    let bot = InvoicerBot::new(relay_pool.writer.clone()).await?;
+    let bot = InvoicerBot::new(relay_pool.broadcaster.clone()).await?;
     tracing::info!("Bot created");
     if let Err(relay_future) = bot.read_relay_pool(relay_pool).await {
         tracing::error!("{:?}", relay_future);
@@ -46,13 +47,15 @@ pub async fn main() -> anyhow::Result<()> {
 pub struct InvoicerBot {
     server_keys: NostrKeypair,
     bot_state: InvoicerStateLock,
-    broadcaster: PoolRelayBroadcaster,
+    broadcaster: Sender<nostro2::relays::WebSocketMessage>,
     invoicer: Invoicer,
     uploader: UtSigner,
 }
 
 impl InvoicerBot {
-    pub async fn new(broadcaster: PoolRelayBroadcaster) -> anyhow::Result<Self> {
+    pub async fn new(
+        broadcaster: Sender<nostro2::relays::WebSocketMessage>,
+    ) -> anyhow::Result<Self> {
         let server_keys = NostrKeypair::new(&std::env::var("FUENTE_PRIV_KEY")?)?;
         Ok(Self {
             invoicer: Invoicer::new().await?,
@@ -92,21 +95,15 @@ impl InvoicerBot {
             authors: Some(vec![TEST_PUB_KEY.to_string()]),
             ..Default::default()
         };
-        relays.writer.subscribe(filter.relay_subscription()).await?;
-        relays
-            .writer
-            .subscribe(commerces_filter.relay_subscription())
-            .await?;
-        relays
-            .writer
-            .subscribe(live_filter.relay_subscription())
-            .await?;
-        relays
-            .writer
-            .subscribe(config_filter.relay_subscription())
-            .await?;
-        while let Some(signed_note) = relays.listener.recv().await {
-            if let RelayEvent::NewNote(NoteEvent(_, _, note)) = signed_note.1 {
+        relays.send_to_relay(filter.into()).await?;
+        relays.send_to_relay(commerces_filter.into()).await?;
+        relays.send_to_relay(live_filter.into()).await?;
+        relays.send_to_relay(config_filter.into()).await?;
+        loop {
+            if relays.reader.is_closed() {
+                break;
+            }
+            if let Some((_, RelayEvent::NewNote((_, _, note)))) = relays.reader.recv().await {
                 if let Err(e) = self.note_processor(note).await {
                     tracing::error!("{:?}", e);
                 }
@@ -130,7 +127,7 @@ impl InvoicerBot {
                     .bot_state
                     .sign_updated_config(inner_note, &self.server_keys)
                     .await?;
-                self.broadcaster.broadcast_note(update_note).await?;
+                self.broadcaster.send(update_note.into())?;
             }
             NOSTR_KIND_CONSUMER_REGISTRY => {
                 let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
@@ -202,7 +199,7 @@ impl InvoicerBot {
                 let registered_commerce = self
                     .bot_state
                     .find_commerce(order_req.commerce.as_str())
-                    .await;
+                    .await?;
                 self.invoicer
                     .new_order_invoice(
                         order_req,
@@ -233,10 +230,10 @@ impl InvoicerBot {
                 let (update, giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
                 self.bot_state.update_live_order(update).await?;
-                self.broadcaster.broadcast_note(giftwrap).await?;
+                self.broadcaster.send(giftwrap.into())?;
                 let (_, commerce_giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
-                self.broadcaster.broadcast_note(commerce_giftwrap).await?;
+                self.broadcaster.send(commerce_giftwrap.into())?;
                 tracing::info!("Order canceled");
             }
             NOSTR_KIND_COMMERCE_UPDATE => {
@@ -272,7 +269,7 @@ impl InvoicerBot {
                         };
                         self.server_keys
                             .sign_nip_04_encrypted(&mut new_url_note, outer_note.pubkey)?;
-                        self.broadcaster.broadcast_note(new_url_note).await?;
+                        self.broadcaster.send(new_url_note.into())?;
                     }
                 }
             }
@@ -311,9 +308,9 @@ impl InvoicerBot {
                 let (_, courier_giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
                 self.bot_state.update_live_order(update).await?;
-                self.broadcaster.broadcast_note(giftwrap).await?;
-                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
-                self.broadcaster.broadcast_note(courier_giftwrap).await?;
+                self.broadcaster.send(giftwrap.into())?;
+                self.broadcaster.send(consumer_giftwrap.into())?;
+                self.broadcaster.send(courier_giftwrap.into())?;
             }
             OrderStatus::Canceled => {
                 invoice_state.order_status = OrderStatus::Canceled;
@@ -324,9 +321,9 @@ impl InvoicerBot {
                 let (_, courier_giftwrap) = invoice_state
                     .giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
                 self.bot_state.update_live_order(update).await?;
-                self.broadcaster.broadcast_note(giftwrap).await?;
-                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
-                self.broadcaster.broadcast_note(courier_giftwrap).await?;
+                self.broadcaster.send(giftwrap.into())?;
+                self.broadcaster.send(consumer_giftwrap.into())?;
+                self.broadcaster.send(courier_giftwrap.into())?;
             }
             _ => return Err(anyhow!("Invalid order status")),
         }
@@ -357,13 +354,13 @@ impl InvoicerBot {
             let (update, giftwrap) =
                 live_order.giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
             self.bot_state.update_live_order(update).await?;
-            self.broadcaster.broadcast_note(giftwrap).await?;
+            self.broadcaster.send(giftwrap.into())?;
             let (_, consumer_giftwrap) =
                 live_order.giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
-            self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+            self.broadcaster.send(consumer_giftwrap.into())?;
             let (_, commerce_giftwrap) =
                 live_order.giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
-            self.broadcaster.broadcast_note(commerce_giftwrap).await?;
+            self.broadcaster.send(commerce_giftwrap.into())?;
             return Ok(());
         }
         match (&live_order.payment_status, &live_order.order_status) {
@@ -375,13 +372,13 @@ impl InvoicerBot {
                 let (update, giftwrap) =
                     live_order.giftwrapped_order(OrderParticipant::Courier, &self.server_keys)?;
                 self.bot_state.update_live_order(update).await?;
-                self.broadcaster.broadcast_note(giftwrap).await?;
+                self.broadcaster.send(giftwrap.into())?;
                 let (_, consumer_giftwrap) =
                     live_order.giftwrapped_order(OrderParticipant::Consumer, &self.server_keys)?;
-                self.broadcaster.broadcast_note(consumer_giftwrap).await?;
+                self.broadcaster.send(consumer_giftwrap.into())?;
                 let (_, commerce_giftwrap) =
                     live_order.giftwrapped_order(OrderParticipant::Commerce, &self.server_keys)?;
-                self.broadcaster.broadcast_note(commerce_giftwrap).await?;
+                self.broadcaster.send(commerce_giftwrap.into())?;
                 return Ok(());
             }
         }
