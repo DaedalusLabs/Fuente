@@ -44,24 +44,6 @@ pub fn stores_banner() -> Html {
     let languages = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = languages.translations();
     let businesses = commerce_ctx.commerces();
-    // let scroll_left = Callback::from(|e: MouseEvent| {
-    //     e.stop_propagation();
-    //     let carousel = nostr_minions::browser_api::HtmlDocument::new()
-    //         .expect("Document not found")
-    //         .find_element_by_id::<HtmlElement>("commerce_carousel")
-    //         .expect("Element not found");
-    //     let scroll_amount = carousel.scroll_left() - 200;
-    //     carousel.set_scroll_left(scroll_amount);
-    // });
-    // let scroll_right = Callback::from(|e: MouseEvent| {
-    //     e.stop_propagation();
-    //     let carousel = nostr_minions::browser_api::HtmlDocument::new()
-    //         .expect("Document not found")
-    //         .find_element_by_id::<HtmlElement>("commerce_carousel")
-    //         .expect("Element not found");
-    //     let scroll_amount = carousel.scroll_left() + 200;
-    //     carousel.set_scroll_left(scroll_amount);
-    // });
 
     html! {
         <section class="container mx-auto bg-sky-200 rounded-2xl py-10">
@@ -77,6 +59,7 @@ pub fn stores_banner() -> Html {
                 <div class="overflow-x-auto whitespace-nowrap no-scrollbar">
                     <div id="commerce_carousel" class="grid grid-flow-col auto-cols-max gap-10">
                         {businesses.iter().map(|profile| {
+                            gloo::console::log!("Profile");
                             let commerce_data = profile.profile().clone();
                             let commerce_id = profile.id().to_string();
                             let rating = ratings_ctx.get_business_rating(&commerce_id);
@@ -114,6 +97,9 @@ pub struct HomeFavoriteButtonProps {
 fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    if key_ctx.get_nostr_key().is_none() {
+        return html! {};
+    }
 
     let is_favorite = favorites_ctx.is_favorite(&props.commerce_id);
 

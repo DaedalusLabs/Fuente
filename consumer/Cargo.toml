@@ -22,3 +22,4 @@ yew.workspace = true
 yew-router.workspace = true
 upload-things.workspace = true
 lucide-yew.workspace = true
+wasm-bindgen-futures.workspace = true

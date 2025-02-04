@@ -158,17 +158,19 @@ pub fn commerce_data_sync() -> Html {
     let relay_events = relay_ctx.relay_events.clone();
 
     let id_handle = sub_id.clone();
-    use_effect_with((), move |_| {
-        let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
-            kinds: Some(vec![
-                NOSTR_KIND_COMMERCE_PROFILE,
-                NOSTR_KIND_COMMERCE_PRODUCTS,
-            ]),
-            ..Default::default()
+    use_effect_with(admin_configs.clone(), move |configs| {
+        if configs.is_loaded() {
+            let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
+                kinds: Some(vec![
+                    NOSTR_KIND_COMMERCE_PROFILE,
+                    NOSTR_KIND_COMMERCE_PRODUCTS,
+                ]),
+                ..Default::default()
+            }
+            .into();
+            id_handle.set(filter.1.clone());
+            subscriber.emit(filter);
         }
-        .into();
-        id_handle.set(filter.1.clone());
-        subscriber.emit(filter);
         || {}
     });
 

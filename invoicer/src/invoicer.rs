@@ -7,8 +7,8 @@ use fuente::models::{
     CommerceProfile, OrderInvoiceState, OrderParticipant, OrderPaymentStatus, OrderRequest,
     OrderStatus,
 };
-use nostro2::{keypair::NostrKeypair, notes::NostrNote, relays::PoolRelayBroadcaster};
-use tokio_stream::StreamExt;
+use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use tokio::sync::broadcast::Sender;
 
 use crate::state::InvoicerStateLock;
 pub const SATOSHIS_IN_ONE_BTC: f64 = 100_000_000.0;
@@ -69,26 +69,26 @@ impl Invoicer {
         order_invoice: OrderInvoiceState,
         keys: NostrKeypair,
         state_clone: InvoicerStateLock,
-        broadcaster: PoolRelayBroadcaster,
+        broadcaster: Sender<nostro2::relays::WebSocketMessage>,
     ) -> anyhow::Result<()> {
         let invoice = order_invoice
             .commerce_invoice
             .as_ref()
             .ok_or(anyhow!("No invoice"))?;
-        let mut subscriber = self
+        let subscriber = self
             .lightning_wallet
             .subscribe_to_invoice(invoice.r_hash_url_safe()?)
             .await?;
-        let mut iter = subscriber.event_stream::<LndHodlInvoiceState>();
+        let iter = subscriber.receiver;
         let mut ping_counter = 0;
-        while let Some(payment_response) = iter.next().await {
+        while let Some(payment_response) = iter.read::<LndHodlInvoiceState>().await {
             match payment_response {
                 LndWebsocketMessage::Response(invoice_state) => match invoice_state.state() {
                     HodlState::OPEN => {
                         let (signed_update, giftwrapped) =
                             order_invoice.giftwrapped_order(OrderParticipant::Consumer, &keys)?;
                         state_clone.update_live_order(signed_update).await?;
-                        broadcaster.broadcast_note(giftwrapped).await?;
+                        broadcaster.send(giftwrapped.into())?;
                     }
                     HodlState::ACCEPTED => {
                         let mut new_order = order_invoice.clone();
@@ -99,8 +99,8 @@ impl Invoicer {
                         let (_, giftwrapped_commerce) =
                             new_order.giftwrapped_order(OrderParticipant::Commerce, &keys)?;
                         state_clone.update_live_order(signed_update).await?;
-                        broadcaster.broadcast_note(giftwrapped).await?;
-                        broadcaster.broadcast_note(giftwrapped_commerce).await?;
+                        broadcaster.send(giftwrapped.into())?;
+                        broadcaster.send(giftwrapped_commerce.into())?;
                     }
                     HodlState::SETTLED => {
                         let mut new_order = order_invoice.clone();
@@ -111,8 +111,8 @@ impl Invoicer {
                         let (_, giftwrapped_commerce) =
                             new_order.giftwrapped_order(OrderParticipant::Commerce, &keys)?;
                         state_clone.update_live_order(signed_update).await?;
-                        broadcaster.broadcast_note(giftwrapped).await?;
-                        broadcaster.broadcast_note(giftwrapped_commerce).await?;
+                        broadcaster.send(giftwrapped.into())?;
+                        broadcaster.send(giftwrapped_commerce.into())?;
                         break;
                     }
                     HodlState::CANCELED => {
@@ -126,8 +126,8 @@ impl Invoicer {
                         state_clone
                             .remove_live_order(new_order.order_id().as_str())
                             .await?;
-                        broadcaster.broadcast_note(giftwrapped).await?;
-                        broadcaster.broadcast_note(giftwrapped_commerce).await?;
+                        broadcaster.send(giftwrapped.into())?;
+                        broadcaster.send(giftwrapped_commerce.into())?;
                         break;
                     }
                 },
@@ -143,8 +143,8 @@ impl Invoicer {
                     state_clone
                         .remove_live_order(new_order.order_id().as_str())
                         .await?;
-                    broadcaster.broadcast_note(giftwrapped).await?;
-                    broadcaster.broadcast_note(giftwrapped_commerce).await?;
+                    broadcaster.send(giftwrapped.into())?;
+                    broadcaster.send(giftwrapped_commerce.into())?;
                     break;
                 }
                 _ => {
@@ -162,8 +162,8 @@ impl Invoicer {
                         state_clone
                             .remove_live_order(new_order.order_id().as_str())
                             .await?;
-                        broadcaster.broadcast_note(giftwrapped).await?;
-                        broadcaster.broadcast_note(giftwrapped_commerce).await?;
+                        broadcaster.send(giftwrapped.into())?;
+                        broadcaster.send(giftwrapped_commerce.into())?;
                         break;
                     }
                 }
@@ -179,7 +179,7 @@ impl Invoicer {
         exchange_rate: f64,
         keys: NostrKeypair,
         state_clone: InvoicerStateLock,
-        broadcaster: PoolRelayBroadcaster,
+        broadcaster: Sender<nostro2::relays::WebSocketMessage>,
     ) -> anyhow::Result<OrderInvoiceState> {
         let invoice = self
             .create_order_invoice(&order, &commerce, exchange_rate)
@@ -206,11 +206,11 @@ impl Invoicer {
     }
     pub async fn settle_htlc(&self, invoice: LnAddressPaymentRequest) -> anyhow::Result<()> {
         let payment_req = LndPaymentRequest::new(invoice.pr, 1000, 150.to_string(), false);
-        let mut lnd_ws = self.lightning_wallet.invoice_channel().await?;
+        let lnd_ws = self.lightning_wallet.invoice_channel().await?;
         lnd_ws.sender.send(payment_req).await?;
-        let mut event_stream = lnd_ws.event_stream::<LndPaymentResponse>();
+        let event_stream = lnd_ws.receiver;
         let mut ping_counter = 0;
-        while let Some(ws_msg) = event_stream.next().await {
+        while let Some(ws_msg) = event_stream.read::<LndPaymentResponse>().await {
             match ws_msg {
                 LndWebsocketMessage::Response(payment_status) => {
                     if payment_status.status() == InvoicePaymentState::Succeeded {

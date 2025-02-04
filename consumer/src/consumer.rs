@@ -1,13 +1,15 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, LoginModal, LoginProvider, RatingsProvider
+        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
+        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, LoginModal,
+        LoginProvider, RatingsProvider,
     },
     pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage, ToastProvider},
+    mass::{LoadingScreen, LoginPage, PwaInstall, ToastProvider},
     models::init_consumer_db,
 };
 use html::ChildrenProps;
@@ -31,7 +33,9 @@ fn app() -> Html {
         spawn_local(async move {
             let sw = nostr_minions::browser_api::AppServiceWorker::new()
                 .expect("Error initializing service worker");
-            sw.install("serviceWorker.js").await.expect("Error installing service worker");
+            if let Err(e) = sw.install("serviceWorker.js").await {
+                gloo::console::error!("Error installing service worker: {:?}", e);
+            }
         });
         || {}
     });
@@ -43,10 +47,15 @@ fn app() -> Html {
                     <NostrIdProvider>
                         <AdminConfigsProvider>
                             <LoginProvider>
-                                <AppContext>
-                                    <ConsumerPages />
-                                    <LoginModal />
-                                </AppContext>
+                                <CommerceDataProvider>
+                                    <RatingsProvider>
+                                    <AppContext>
+                                        <ConsumerPages />
+                                        <LoginModal />
+                                        <PwaInstall />
+                                    </AppContext>
+                                    </RatingsProvider>
+                                </CommerceDataProvider>
                             </LoginProvider>
                         </AdminConfigsProvider>
                     </NostrIdProvider>
@@ -64,9 +73,7 @@ fn authentication_check() -> Html {
     // Show loading state while context is initializing
     if !key_ctx.finished_loading() {
         return html! {
-            <div class="h-screen flex items-center justify-center">
-                <span class="text-lg">{"Loading..."}</span>
-            </div>
+            <LoadingScreen />
         };
     }
 
@@ -81,6 +88,7 @@ fn authentication_check() -> Html {
     html! {
         <AppContext>
             <ConsumerPages />
+            <PwaInstall />
         </AppContext>
     }
 }
@@ -116,25 +124,22 @@ fn app_context(props: &ChildrenProps) -> Html {
         </NostrIdProvider>
     }
 }
+
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
     html! {
-        <ConsumerDataProvider>
-            <CommerceDataProvider>
-                <CartProvider>
-                    <LiveOrderProvider>
-                        <FavoritesProvider>
-                            <RatingsProvider>
-                                <ToastProvider>
-                                    {props.children.clone()}
-                                </ToastProvider>
-                            </RatingsProvider>
-                        </FavoritesProvider>
-                    </LiveOrderProvider>
-                </CartProvider>
-            </CommerceDataProvider>
-        </ConsumerDataProvider>
-     }
+       <ConsumerDataProvider>
+          <CartProvider>
+              <LiveOrderProvider>
+                  <FavoritesProvider>
+                          <ToastProvider>
+                              {props.children.clone()}
+                          </ToastProvider>
+                  </FavoritesProvider>
+              </LiveOrderProvider>
+          </CartProvider>
+       </ConsumerDataProvider>
+    }
 }
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
