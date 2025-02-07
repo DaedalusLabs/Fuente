@@ -169,7 +169,7 @@ pub fn cart_pre_total() -> Html {
 
             <div class="lg:flex lg:justify-center my-3 px-5 lg:px-12">
                 <button onclick={send_order_request}
-                    class="bg-fuente-buttons text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-fuente-forms">
+                    class="bg-fuente-light text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-white">
                     {&translations["cart_checkout"]}
                 </button>
             </div>

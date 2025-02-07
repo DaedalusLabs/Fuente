@@ -117,7 +117,7 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
               <input
                   {onclick}
                   type="submit"
-                  class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto"
+                  class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto"
                   value={translations["auth_login_link_button"].clone()}
               />
           </div>
@@ -210,7 +210,7 @@ pub fn new_user_form(props: &AuthPageProps) -> Html {
                     class="text-center text-white font-thin underline cursor-pointer hover:text-fuente-buttons">{"I have an account - Login"}</a>
                 <input
                     type="submit"
-                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
                     value={translations["auth_register_link_button"].clone()}
                 />
             </div>

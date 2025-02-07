@@ -107,7 +107,7 @@ pub fn header() -> Html {
     html! {
         <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
            <AppLink<ConsumerRoute>
-               class="hidden lg:flex"
+               class=""
                selected_class=""
                route={ConsumerRoute::Home}>
                    <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
@@ -310,7 +310,7 @@ pub fn commerce_filters() -> Html {
                 value={(*search_term).clone()}
                 oninput={set_search_term}
                 placeholder={translations["nav_search"].clone()}
-                class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
+                class="w-full pl-5 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
             />
             {if search_term.is_empty() {
                 html! {

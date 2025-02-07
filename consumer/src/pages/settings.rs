@@ -83,19 +83,19 @@ pub fn settings_page() -> Html {
         html! {
             <div class="flex justify-center items-center">
             <AppLink<ConsumerRoute>
-                class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                class="lg:block hidden flex items-center bg-fuente-light px-6 py-3 rounded-full text-white space-x-2 font-bold text-sm md:text-md lg:text-lg"
                 selected_class=""
                 route={ConsumerRoute::History}>
                 <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
-                    <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
+                    <ScrollText class={classes!("h-6", "w-6", "stroke-white")} />
                     {&translations["profile_personal_information_orders_button"]}
                 </span>
             </AppLink<ConsumerRoute>>
             <AppLink<ConsumerRoute>
-                class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                class="block lg:hidden flex items-center bg-fuente-light p-2 rounded-xl"
                 selected_class=""
                 route={ConsumerRoute::History}>
-                <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
+                <ScrollText class={classes!("h-6", "w-6", "stroke-white")} />
             </AppLink<ConsumerRoute>>
             </div>
         }
@@ -104,19 +104,19 @@ pub fn settings_page() -> Html {
         html! {
             <div class="flex justify-center items-center">
                 <AppLink<ConsumerRoute>
-                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-fuente-light px-6 py-3 rounded-full text-white space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={ConsumerRoute::TrackPackages}> // Changed from History to TrackPackages
                     <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
-                        <Truck class={classes!("text-sm", "text-fuente", "mr-2", "font-bold")} />
+                        <Truck class={classes!("text-sm", "text-white", "mr-2", "font-bold")} />
                         {&translations["profile_personal_information_packages_button"]}
                     </span>
                 </AppLink<ConsumerRoute>>
                 <AppLink<ConsumerRoute>
-                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-fuente-light p-2 rounded-xl"
                     selected_class=""
                     route={ConsumerRoute::TrackPackages}>
-                    <Truck class={classes!("h-6", "w-6", "stroke-fuente")} />
+                    <Truck class={classes!("h-6", "w-6", "stroke-white")} />
                 </AppLink<ConsumerRoute>>
             </div>
         }
