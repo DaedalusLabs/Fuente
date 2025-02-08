@@ -100,8 +100,8 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         },
         None => html! {
             <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-                <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                    <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto gap-4">
+                    <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                         {&commerce_profile.name}
                     </h1>
 
@@ -118,9 +118,9 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
                     </div>
                 </div>
 
-                <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                    <aside class="flex-shrink-0 px-4 lg:px-10 overflow-auto no-scrollbar items-center justify-center flex">
-                        <div class="flex flex-row lg:flex-col gap-3 bg-gray-100 items-center rounded-2xl p-2 m-2">
+                <div class="flex-grow flex flex-col lg:flex-row overflow-hidden container mx-auto mt-5 gap-5">
+                    <aside class="flex-shrink-0 overflow-auto no-scrollbar items-start justify-center flex">
+                        <div class="flex flex-row lg:flex-col gap-3 bg-gray-100 items-center rounded-2xl p-2 lg:p-5 lg:w-full">
                             <h3 class="font-semibold text-fuente text-xl">{&translations["detail_store_filter_heading"]}</h3>
                             <div class="flex flex-row gap-3 lg:flex-col">
                                 <p onclick={onclick_price_filter}
@@ -135,9 +135,9 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
                         </div>
                     </aside>
 
-                    <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                    <div class="flex-grow overflow-hidden w-full">
                         <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
-                            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-5 place-items-center overflow-y-auto">
+                            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-5 overflow-y-auto">
                                 {all_products.iter().map(|product| {
                                         let onclick = {
                                             let product_handle = product_handle.clone();
@@ -309,14 +309,14 @@ pub fn settings_template() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let businesses = commerce_ctx.commerces();
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+        <main class="flex flex-col h-full overflow-hidden container mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["stores_heading"]}
                 </h1>
             </div>
 
-            <div class="flex-1 w-full flex flex-col lg:flex-row overflow-hidden mt-2 mx-2 md:mx-4">
+            <div class="flex-1 w-full flex flex-col lg:flex-row overflow-hidden mt-2">
                 <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto flex-1">
                     {businesses.iter().map(|profile| {
                         let commerce_data = profile.profile().clone();

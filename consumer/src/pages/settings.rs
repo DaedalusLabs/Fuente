@@ -83,19 +83,19 @@ pub fn settings_page() -> Html {
         html! {
             <div class="flex justify-center items-center">
             <AppLink<ConsumerRoute>
-                class="lg:block hidden flex items-center bg-fuente-light px-6 py-3 rounded-full text-white space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                 selected_class=""
                 route={ConsumerRoute::History}>
                 <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
-                    <ScrollText class={classes!("h-6", "w-6", "stroke-white")} />
+                    <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
                     {&translations["profile_personal_information_orders_button"]}
                 </span>
             </AppLink<ConsumerRoute>>
             <AppLink<ConsumerRoute>
-                class="block lg:hidden flex items-center bg-fuente-light p-2 rounded-xl"
+                class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl"
                 selected_class=""
                 route={ConsumerRoute::History}>
-                <ScrollText class={classes!("h-6", "w-6", "stroke-white")} />
+                <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
             </AppLink<ConsumerRoute>>
             </div>
         }
@@ -104,19 +104,19 @@ pub fn settings_page() -> Html {
         html! {
             <div class="flex justify-center items-center">
                 <AppLink<ConsumerRoute>
-                    class="lg:block hidden flex items-center bg-fuente-light px-6 py-3 rounded-full text-white space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={ConsumerRoute::TrackPackages}> // Changed from History to TrackPackages
                     <span class="hidden lg:flex text-lg font-bold text-center items-center gap-2">
-                        <Truck class={classes!("text-sm", "text-white", "mr-2", "font-bold")} />
+                        <Truck class={classes!("text-sm", "mr-2", "font-bold", "stroke-fuente")} />
                         {&translations["profile_personal_information_packages_button"]}
                     </span>
                 </AppLink<ConsumerRoute>>
                 <AppLink<ConsumerRoute>
-                    class="block lg:hidden flex items-center bg-fuente-light p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl"
                     selected_class=""
                     route={ConsumerRoute::TrackPackages}>
-                    <Truck class={classes!("h-6", "w-6", "stroke-white")} />
+                    <Truck class={classes!("h-6", "w-6", "stroke-fuente")} />
                 </AppLink<ConsumerRoute>>
             </div>
         }
@@ -244,7 +244,7 @@ pub fn my_contact_details() -> Html {
                 <div class="w-full lg:mt-6 lg:mr-6 flex flex-1 lg:items-center">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 lg:gap-32 h-full p-6 rounded-lg">
                         <div class="space-y-6">
-                            <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                            <h3 class="text-gray-500 text-2xl font-semibold border-b pb-2">
                                 {&profile.nickname}
                             </h3>
 
@@ -252,7 +252,7 @@ pub fn my_contact_details() -> Html {
                                 <div class="flex items-center space-x-3">
                                     <Mail class="text-gray-500 w-5 h-5" />
                                     <div>
-                                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
+                                        <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_email"]}</p>
                                         <p class="text-gray-600 font-light">{&profile.email}</p>
                                     </div>
                                 </div>
@@ -260,7 +260,7 @@ pub fn my_contact_details() -> Html {
                                 <div class="flex items-center space-x-3">
                                     <Phone class="text-gray-500 w-5 h-5" />
                                     <div>
-                                        <p class="text-gray-700 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
+                                        <p class="text-gray-500 text-lg font-bold">{&translations["checkout_client_information_heading_phone"]}</p>
                                         <p class="text-gray-600">{&profile.telephone}</p>
                                     </div>
                                 </div>
@@ -469,7 +469,7 @@ pub fn my_address_details() -> Html {
             }
         } else {
             html! {
-                <div>
+                <div class="p-10 ">
                     <p class="text-xl font-bold text-gray-500">{&translations["profile_address_registered"]}</p>
                     <span class="text-xl font-thin text-gray-500">{&translations["profile_no_address_registered"]}</span>
                 </div>
