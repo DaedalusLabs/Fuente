@@ -315,7 +315,7 @@ pub fn benefits() -> Html {
     <section class="mt-5 container mx-auto">
         <div class="grid lg:grid-cols-3 gap-5 bg-gray-100 p-12 rounded-2xl place-content-center lg:place-items-center">
             <div class="flex items-center gap-5">
-                <Headset class="w-20 h-20 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
+                <Headset class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_support_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_support_text"]}</p>
@@ -323,7 +323,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <Truck class="w-20 h-20 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
+                <Truck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_track_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_track_text"]}</p>
@@ -331,7 +331,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <ShieldCheck class="w-20 h-20 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
+                <ShieldCheck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_secure_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_secure_text"]}</p>

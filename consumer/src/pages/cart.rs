@@ -262,7 +262,7 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
     };
     let price = item.price().parse::<f64>().unwrap() * *count as f64;
     html! {
-        <div class="flex flex-col min-[450px]:flex-row justify-center sm:justify-between md:justify-center items-center gap-5 mt-10 py-10">
+        <div class="flex flex-col min-[450px]:flex-row justify-center sm:justify-between items-center gap-5 mt-10 py-10">
             <img
                 src={item.thumbnail_url()}
                 alt="Product Image"

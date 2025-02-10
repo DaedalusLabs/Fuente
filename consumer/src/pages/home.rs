@@ -48,9 +48,9 @@ pub fn stores_banner() -> Html {
     let businesses = commerce_ctx.commerces();
 
     html! {
-        <section class="bg-sky-200 rounded-2xl py-10">
-            <div class="flex justify-between items-center container mx-auto">
-                <h2 class="text-fuente text-5xl font-semibold tracking-tighter">{&translations["home_top_stores"]}</h2>
+        <section class="bg-sky-200 rounded-2xl py-10 mt-5 lg:mt-0">
+            <div class="flex justify-between items-center w-full mx-auto">
+                <h2 class="text-fuente text-5xl font-semibold tracking-tighter px-5">{&translations["home_top_stores"]}</h2>
             </div>
 
             <div class="flex justify-center lg:justify-between items-center mt-10 px-6">

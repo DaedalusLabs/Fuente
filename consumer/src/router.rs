@@ -91,7 +91,7 @@ fn login_button() -> Html {
                     login_state.dispatch(LoginStateAction::Show);
                 })
             }
-            class="flex items-center gap-2 bg-fuente text-white px-4 py-2 rounded-full"
+            class="bg-fuente text-white px-5 py-2 rounded-full text-center font-bold"
         >
             {"Login"}
         </button>
@@ -118,7 +118,7 @@ pub fn header() -> Html {
                     <SearchBar />
 
                     <AppLink<ConsumerRoute>
-                        class="lg:hidden"
+                        class=""
                         selected_class=""
                         route={ConsumerRoute::Home}>
                         <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
@@ -126,7 +126,7 @@ pub fn header() -> Html {
                 </div>
 
                 // Auth-required buttons section
-                <div class="flex gap-5 mb-2">
+                <div class="flex items-center justify-center gap-5">
                     {if is_authenticated {
                         html! {
                             <>
@@ -180,7 +180,7 @@ pub fn footer() -> Html {
             <div class="container mx-auto">
                 <div class="flex flex-wrap justify-between items-center gap-4">
                     <div class="w-auto lg:mb-4  items-center">
-                        <a href="#" class="inline-block text-center">
+                        <a href="/" class="inline-block text-center">
                             <h3 class="text-white font-bold text-2xl sm:text-3xl">{"Fuente"}</h3>
                         </a>
                     </div>
