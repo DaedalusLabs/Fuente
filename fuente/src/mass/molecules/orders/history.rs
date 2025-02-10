@@ -37,7 +37,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
                                 let filter = filter.clone();
                                 move |_| filter.set(OrderStatus::Completed)
                             })}
-                            class={classes!("border-green-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
+                            class={classes!("border-green-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full", "cursor-pointer")}>
                             <p class={classes!("text-lg", "font-semibold", "text-center", "text-green-500")}>
                                 {&translations["store_orders_history_completed"]}
                             </p>
@@ -47,7 +47,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
                                 let filter = filter.clone();
                                 move |_| filter.set(OrderStatus::Canceled)
                             })}
-                            class={classes!("border-red-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
+                            class={classes!("border-red-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full", "cursor-pointer")}>
                             <p class={classes!("text-lg", "font-semibold", "text-center", "text-red-500")}>
                                 {&translations["store_orders_history_canceled"]}
                             </p>
@@ -87,9 +87,9 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
     } = props;
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
-            <div class="flex flex-1 justify-evenly gap-4 h-full p-4 overflow-hidden">
+            <div class="flex flex-1 justify-evenly gap-4 h-full container mx-auto mt-5 overflow-hidden">
                 <div class="flex flex-col gap-2 w-1/2 h-full overflow-hidden">
-                    <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit">
+                    <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit cursor-pointer">
                         <p class="text-green-500 text-lg font-semibold text-center">{&translations["store_orders_history_completed"]}</p>
                     </div>
 
@@ -104,7 +104,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
                 </div>
 
                 <div class="flex flex-col gap-2 w-1/2 h-full overflow-hidden">
-                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit">
+                    <div class="border-2 border-red-500 rounded-2xl py-3 px-2 h-fit w-fit cursor-pointer">
                         <p class="text-red-500 text-lg font-semibold text-center">{&translations["store_orders_history_canceled"]}</p>
                     </div>
 

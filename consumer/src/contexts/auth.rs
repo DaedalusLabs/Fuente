@@ -111,7 +111,7 @@ pub fn login_modal() -> Html {
                     >
                         <X class="w-6 h-6" />
                     </button>
-                    <div class="p-8 w-full overflow-y-auto max-h-[90vh]">
+                    <div class="w-full overflow-y-auto max-h-[90vh]">
                         <LoginPage />
                     </div>
                 </div>

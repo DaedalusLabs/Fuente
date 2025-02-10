@@ -99,9 +99,9 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
             <ProductPage product={product.clone()} commerce_id={commerce_id.clone()} product_handle={product_handle.clone()} />
         },
         None => html! {
-            <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-                <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                    <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+            <main class="flex flex-col w-full mx-auto">
+                <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto gap-4">
+                    <h1 class="text-2xl font-mplus lg:text-6xl text-fuente tracking-tighter font-bold text-center line-clamp-2">
                         {&commerce_profile.name}
                     </h1>
 
@@ -118,9 +118,9 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
                     </div>
                 </div>
 
-                <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                    <aside class="flex-shrink-0 px-4 lg:px-10 overflow-auto no-scrollbar items-center justify-center flex">
-                        <div class="flex flex-row lg:flex-col gap-3 bg-gray-100 items-center rounded-2xl p-2 m-2">
+                <div class="flex-grow flex flex-col lg:flex-row overflow-hidden container mx-auto mt-5 gap-5">
+                    <aside class="flex-shrink-0 overflow-auto no-scrollbar items-start justify-center flex">
+                        <div class="flex flex-row lg:flex-col gap-3 bg-gray-100 items-center rounded-2xl p-2 lg:p-5 lg:w-full">
                             <h3 class="font-semibold text-fuente text-xl">{&translations["detail_store_filter_heading"]}</h3>
                             <div class="flex flex-row gap-3 lg:flex-col">
                                 <p onclick={onclick_price_filter}
@@ -135,9 +135,9 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
                         </div>
                     </aside>
 
-                    <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                    <div class="flex-grow overflow-hidden w-full">
                         <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
-                            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-5 place-items-center overflow-y-auto">
+                            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-5 overflow-y-auto">
                                 {all_products.iter().map(|product| {
                                         let onclick = {
                                             let product_handle = product_handle.clone();
@@ -212,7 +212,7 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
         })
     };
     html! {
-        <div class="border border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
+        <div class="border-2 border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
             <div class="relative">
                 <img onclick={image_onclick.clone()} src={product.image_url()} alt="Favorites Image"
                 class="hidden lg:block object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl" />
@@ -255,14 +255,14 @@ pub fn product_page_template(props: &ProductItemProps) -> Html {
         })
     };
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+        <main class="flex flex-col h-screen overflow-hidden container mx-auto">
             <button onclick={back_to_store}
                 class="flex gap-3">
                 <ArrowLeft class="w-8 h-8 text-fuente" />
                 <p class="text-fuente text-lg font-semibold">{"Back to store"}</p>
             </button>
 
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden mt-2">
+            <div class="flex flex-col lg:flex-row overflow-hidden mt-5">
                 <div class="grid grid-cols-1 lg:grid-cols-2 items-center overflow-y-auto w-full gap-4">
                     <div class="grid grid-cols-1 lg:grid-cols-2 place-items-center gap-2">
                         <img src={product.image_url()} alt={product.name()} class="hidden lg:block bg-gray-100 rounded-2xl w-5/6 object-contain h-full max-h-96" />
@@ -272,7 +272,7 @@ pub fn product_page_template(props: &ProductItemProps) -> Html {
                         </div>
                     </div>
 
-                    <div class="mx-5 my-3">
+                    <div>
                         <h2 class="text-gray-500 text-2xl font-bold">{product.name()}</h2>
                         <p class="font-light text-gray-500 text-xl mt-3 text-xs sm:text-sm md:text-lg line-clamp-3">{product.details()}</p>
                         <p class="font-bold text-gray-500 uppercase text-2xl">{format!("{}", product.sku())}</p>
@@ -309,25 +309,25 @@ pub fn settings_template() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("Commerce context not found");
     let businesses = commerce_ctx.commerces();
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+        <main class="flex flex-col h-full overflow-hidden container mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center my-5">
+                <h1 class="text-3xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["stores_heading"]}
                 </h1>
             </div>
 
-            <div class="flex-1 w-full flex flex-col lg:flex-row overflow-hidden mt-2 mx-2 md:mx-4">
-                <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto flex-1">
+            <div class="flex-1 w-full flex flex-col lg:flex-row overflow-hidden mt-2">
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto">
                     {businesses.iter().map(|profile| {
                         let commerce_data = profile.profile().clone();
                         let commerce_id = profile.id().to_string();
                         html! {
                             <AppLink<ConsumerRoute>
-                                class="border-2 border-fuente rounded-3xl block object-contain bg-white overflow-clip p-2"
+                                class="border-2 border-fuente rounded-3xl block object-contain bg-white overflow-clip p-2 h-80"
                                 selected_class=""
                                 route={ConsumerRoute::Commerce { commerce_id: commerce_id.clone() }}
                             >
-                            <div class="flex flex-col md:flex-row items-center justify-center gap-5 w-full h-full">
+                            <div class="flex flex-col md:flex-row items-center justify-center gap-5 w-full h-fit">
                                 <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-36" />
                                 <div class="space-y-2 flex flex-col items-center">
                                     <h3 class="text-gray-500 text-lg font-bold tracking-wide uppercase">{&commerce_data.name}</h3>

@@ -91,7 +91,7 @@ fn login_button() -> Html {
                     login_state.dispatch(LoginStateAction::Show);
                 })
             }
-            class="flex items-center gap-2 bg-fuente text-white px-4 py-2 rounded-lg"
+            class="bg-fuente text-white px-5 py-2 rounded-full text-center font-bold"
         >
             {"Login"}
         </button>
@@ -107,7 +107,7 @@ pub fn header() -> Html {
     html! {
         <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
            <AppLink<ConsumerRoute>
-               class="hidden lg:flex"
+               class=""
                selected_class=""
                route={ConsumerRoute::Home}>
                    <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
@@ -118,7 +118,7 @@ pub fn header() -> Html {
                     <SearchBar />
 
                     <AppLink<ConsumerRoute>
-                        class="lg:hidden"
+                        class=""
                         selected_class=""
                         route={ConsumerRoute::Home}>
                         <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
@@ -126,7 +126,7 @@ pub fn header() -> Html {
                 </div>
 
                 // Auth-required buttons section
-                <div class="flex gap-5 mb-2">
+                <div class="flex items-center justify-center gap-5">
                     {if is_authenticated {
                         html! {
                             <>
@@ -180,7 +180,7 @@ pub fn footer() -> Html {
             <div class="container mx-auto">
                 <div class="flex flex-wrap justify-between items-center gap-4">
                     <div class="w-auto lg:mb-4  items-center">
-                        <a href="#" class="inline-block text-center">
+                        <a href="/" class="inline-block text-center">
                             <h3 class="text-white font-bold text-2xl sm:text-3xl">{"Fuente"}</h3>
                         </a>
                     </div>
@@ -310,7 +310,7 @@ pub fn commerce_filters() -> Html {
                 value={(*search_term).clone()}
                 oninput={set_search_term}
                 placeholder={translations["nav_search"].clone()}
-                class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
+                class="w-full pl-5 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
             />
             {if search_term.is_empty() {
                 html! {

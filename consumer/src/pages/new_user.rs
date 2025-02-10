@@ -166,7 +166,7 @@ pub fn new_profile_form() -> Html {
             <div class="space-y-5 flex flex-col mt-5">
                 <input
                     type="submit"
-                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-normal text-nowrap"
                     value={translations["auth_register_link_button"].clone()}
                 />
             </div>

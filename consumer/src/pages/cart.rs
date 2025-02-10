@@ -39,9 +39,9 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+        <main class="flex flex-col h-screen overflow-hidden container w-full mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["cart_heading"]}
                 </h1>
             </div>
@@ -60,8 +60,8 @@ pub fn empty_cart() -> Html {
     let translations = language_ctx.translations();
     html! {
         <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+            <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto py-5 gap-4">
+                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["checkout_product_empty_table_heading"]}
                 </h1>
             </div>
@@ -96,21 +96,21 @@ pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
     let counted_products = order.counted_products();
     if counted_products.is_empty() {
         return html! {
-            <div class="border border-fuente mt-7 px-16 rounded-3xl flex items-center justify-center">
-                <h2 class="text-lg text-fuente font-bold p-5">{&translations["checkout_product_empty_table_heading"]}</h2>
+            <div class="border border-fuente mt-10 px-5 rounded-3xl h-[550px] overflow-y-scroll">
+                <h2 class="flex text-2xl text-fuente font-bold pt-5">{&translations["checkout_product_empty_table_heading"]}</h2>
             </div>
         };
     }
     html! {
-        <div class="flex-1 overflow-hidden px-4 py-2 lg:py-4 w-full">
-            <div class="h-full overflow-auto border border-fuente rounded-xl no-scrollbar relative p-2">
+        <div class="flex-1 overflow-hidden py-2 lg:py-4 w-full">
+            <div class="overflow-auto border-2 border-fuente rounded-xl no-scrollbar relative p-2">
                 <h2 class=" bg-white flex text-2xl text-fuente font-bold pt-5 sticky top-0">{&translations["cart_text"]}</h2>
 
                 <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
                     <h3></h3>
-                    <h3 class="text-fuente lg:pl-16 xl:pl-40">{&translations["cart_table_heading_details"]}</h3>
+                    <h3 class="text-fuente lg:pl-16 xl:pl-20">{&translations["cart_table_heading_details"]}</h3>
                     <h3 class="text-fuente lg:pl-0 xl:pl-5">{&translations["cart_table_heading_quantity"]}</h3>
-                    <h3 class="text-fuente lg:pr-10 xl:pr-32">{&translations["cart_table_heading_price"]}</h3>
+                    <h3 class="text-fuente lg:pr-10 xl:pr-28">{&translations["cart_table_heading_price"]}</h3>
                     <h3></h3>
                 </div>
                 {order.counted_products().iter().map(|(item, count)| {
@@ -169,7 +169,7 @@ pub fn cart_pre_total() -> Html {
 
             <div class="lg:flex lg:justify-center my-3 px-5 lg:px-12">
                 <button onclick={send_order_request}
-                    class="bg-fuente-buttons text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-fuente-forms">
+                    class="bg-fuente-light text-lg w-full lg:w-fit text-nowrap py-4 px-10 rounded-full font-bold text-white">
                     {&translations["cart_checkout"]}
                 </button>
             </div>
@@ -193,7 +193,7 @@ pub fn cart_page() -> Html {
     html! {
         <main class="flex flex-col h-screen overflow-hidden w-full">
             <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
                     {&translations["checkout_title"]}
                 </h1>
             </div>
@@ -262,13 +262,13 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
     };
     let price = item.price().parse::<f64>().unwrap() * *count as f64;
     html! {
-        <div class="flex justify-between  items-center gap-5 md:gap-20 mt-10 py-10 border-t border-t-fuente">
+        <div class="flex flex-col min-[450px]:flex-row justify-center sm:justify-between items-center gap-5 mt-10 py-10">
             <img
                 src={item.thumbnail_url()}
                 alt="Product Image"
                 class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block"
             />
-            <div class="flex flex-col">
+            <div class="flex items-center min-[450px]:items-start flex-col">
                 <p class="text-gray-500 font-bold">{item.name()}</p>
                 <p class="text-gray-500 font-light w-20 sm:w-28 lg:w-32 line-clamp-3">{item.details()}</p>
                 <p class="text-gray-500 font-bold uppercase">{format!("SKU: {}", item.sku())}</p>

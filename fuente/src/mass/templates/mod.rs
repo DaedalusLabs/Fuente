@@ -22,7 +22,7 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
     let selected_class = classes!("bg-fuente", "text-white");
     let unselected_class = classes!("bg-gray-100", "text-gray-500");
     html! {
-        <aside class="flex-shrink-0 px-4 overflow-auto no-scrollbar lg:px-10">
+        <aside class="flex-shrink-0 overflow-auto no-scrollbar">
             <div class="flex flex-row lg:flex-col gap-3">
                 {for options.iter().map(|(name, onclick, selected)| {
                     html! {
@@ -73,8 +73,8 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
-            <div class="h-full overflow-auto border border-fuente rounded-xl no-scrollbar relative">
+        <div class="flex-grow overflow-hidden w-full">
+            <div class="overflow-auto border-2 border-fuente rounded-xl no-scrollbar relative">
                 {children}
                 {edit_button.clone().unwrap_or_default()}
             </div>
@@ -139,15 +139,15 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     } = props.clone();
     html! {
         <>
-        <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-row justify-between items-center px-4 lg:p-10">
-                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+        <main class="flex flex-col h-screen overflow-hidden w-full container mx-auto">
+            <div class="flex flex-row justify-between items-center">
+                <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                     {&heading}
                 </h1>
                 <SettingsOptionsButtons {options} />
             </div>
 
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden mt-5 gap-5">
                 <SettingsSideBar options={sidebar_options} />
                 <SettingsContent edit_button={content_button} >
                     {children}
@@ -195,10 +195,10 @@ pub fn login_template(props: &LoginPageProps) -> Html {
                     </div>
                 </div>
 
-                <h2 class="pointer-events-none text-white text-[42px] font-bold md:tracking-[-1rem] text-center lg:hidden absolute -bottom-4  left-0 w-full">{&heading}</h2>
+                <h2 class="pointer-events-none text-white text-[42px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12  left-0 w-full">{&heading}</h2>
             </div>
             <div class="pointer-events-none lg:hidden bg-white">
-                <h2 class="text-fuente text-[42px] font-bold md:tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
+                <h2 class="text-fuente text-[42px] font-bold tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
             </div>
         </main>
     }
@@ -288,22 +288,22 @@ pub fn sales_pitch() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-    <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-7">
-        <div class="flex">
-            <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10" />
-            <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20" />
-            <img src="/public/assets/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex"/>
-        </div>
+        <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl pr-1 py-5 container mx-auto mt-7 lg:mt-20">
+            <div class="flex">
+                <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10 -mr-10 lg:-mr-0 2xl:translate-x-[70%]" />
+                <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 lg:left-28 z-20 2xl:translate-x-[70%]" />
+                <img src="/public/assets/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex 2xl:translate-x-[70%]"/>
+            </div>
 
-        <div class="mx-auto lg:mx-0 lg:ml-auto">
-            <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
-            <div class="flex justify-center lg:justify-start">
-                <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
-                    <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{&translations["sale_products_button"]}</button>
-                </a>
+            <div class="mx-auto lg:mx-0 lg:ml-auto 2xl:translate-x-[-25%]">
+                <h2 class="text-3xl lg:text-6xl text-fuente tracking-tighter font-semibold max-w-[590px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
+                <div class="flex justify-center lg:justify-start">
+                    <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
+                        <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-bold mt-5">{&translations["sale_products_button"]}</button>
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
     }
 }
 
@@ -315,7 +315,7 @@ pub fn benefits() -> Html {
     <section class="mt-5 container mx-auto">
         <div class="grid lg:grid-cols-3 gap-5 bg-gray-100 p-12 rounded-2xl place-content-center lg:place-items-center">
             <div class="flex items-center gap-5">
-                <Headset class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <Headset class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_support_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_support_text"]}</p>
@@ -323,7 +323,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <Truck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <Truck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_track_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_track_text"]}</p>
@@ -331,7 +331,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <ShieldCheck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <ShieldCheck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_secure_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_secure_text"]}</p>
@@ -592,19 +592,19 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+        <main class="flex flex-col h-screen overflow-hidden w-full container mx-auto">
+            <div class="flex flex-row items-center justify-center lg:justify-start">
+                <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left lg:text-6xl tracking-tighter font-bold">
                     {&translations["favorites_stores_heading"]}
                 </h1>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden gap-5 mt-5">
                 <SettingsSideBar options={
                     vec![
                         (translations["favorites_stores_stores_button"].clone(), Callback::noop(), true),
                     ]
                 } />
-                <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                <div class="">
                     <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
                     {props.children.clone()}
                     </div>
