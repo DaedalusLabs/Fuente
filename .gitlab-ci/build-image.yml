@@ -1,0 +1,13 @@
+build_pwa_image:
+  stage: build-image
+  before_script:
+    - docker build -t minion-pwa:latest -f PwaDockerfile .
+  script:
+    - docker image ls
+
+    ## build_deployer_image:
+    ##   stage: build-image
+    ##   before_script:
+    ##     - docker build -t minion-deployer:latest -f DeployerDockerfile .
+    ##   script:
+    ##     - docker image ls

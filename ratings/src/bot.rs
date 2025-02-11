@@ -2,7 +2,7 @@ use crate::manager::RatingManager;
 
 pub struct RatingBot {
     pub keys: nostro2::keypair::NostrKeypair,
-    pub broadcaster: nostro2::relays::PoolRelayBroadcaster,
+    pub broadcaster: tokio::sync::broadcast::Sender<nostro2::relays::WebSocketMessage>,
     pub ratings: crate::manager::LiveRatingMap,
 }
 impl RatingBot {
@@ -24,20 +24,12 @@ impl RatingBot {
         &self,
         mut relay_pool: nostro2::relays::NostrRelayPool,
     ) -> anyhow::Result<()> {
+        relay_pool.broadcaster.send(self.order_filter().into())?;
         relay_pool
-            .writer
-            .subscribe(self.order_filter().relay_subscription())
-            .await?;
-        relay_pool
-            .writer
-            .subscribe(self.satisfaction_filter().relay_subscription())
-            .await?;
-        while let Some(signed_note) = relay_pool.listener.recv().await {
-            if let nostro2::relays::RelayEvent::EndOfSubscription(
-                nostro2::relays::EndOfSubscriptionEvent(_, _),
-            ) = signed_note.1
-            {}
-            if let nostro2::relays::RelayEvent::NewNote(nostro2::relays::NoteEvent(_, _, note)) =
+            .broadcaster
+            .send(self.satisfaction_filter().into())?;
+        while let Some(signed_note) = relay_pool.reader.recv().await {
+            if let nostro2::relays::RelayEvent::NewNote((_, _, note)) =
                 signed_note.1
             {
                 if let Err(e) = self.process_note(note).await {
@@ -56,7 +48,7 @@ impl RatingBot {
                     let mut new_note: nostro2::notes::NostrNote = new_rating.into();
                     new_note.tags.add_parameter_tag("rating");
                     self.keys.sign_nostr_event(&mut new_note);
-                    self.broadcaster.broadcast_note(new_note).await?;
+                    self.broadcaster.send(new_note.into())?;
                 };
             }
             fuente::models::NOSTR_KIND_SATISFACTION_EVENT => {
@@ -67,7 +59,7 @@ impl RatingBot {
                         let mut new_note: nostro2::notes::NostrNote = rating.into();
                         new_note.tags.add_parameter_tag("rating");
                         self.keys.sign_nostr_event(&mut new_note);
-                        self.broadcaster.broadcast_note(new_note).await?;
+                        self.broadcaster.send(new_note.into())?;
                     }
                 }
             }
@@ -76,4 +68,3 @@ impl RatingBot {
         Ok(())
     }
 }
-

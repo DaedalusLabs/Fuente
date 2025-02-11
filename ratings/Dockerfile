@@ -5,4 +5,4 @@ RUN set -ex \
     && apt-get install -y curl ca-certificates libssl-dev  --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-CMD ["./ratings"]
+CMD ["./fuente-rating-bot"]

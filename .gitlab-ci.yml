@@ -1,43 +1,22 @@
+image: docker:24.0.5 
+
+services:
+  - docker:24.0.5-dind 
+
 stages:
+  - build-image
   - build
   - deploy
 
 cache:
-  key: ${CI_COMMIT_REF_SLUG}  # Cache key based on the branch name
+  key: ${CI_COMMIT_REF_SLUG}
   paths:
     - target/
 
-# Build stage
-build_invoicer:
-  stage: build
-  image: rust:latest  # Use the official Rust Docker image
-  script:
-    - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
-  artifacts:
-    paths:
-      - target/release/fuente-invoicer  # Save the compiled binaries
-      - invoicer/Dockerfile
-      - invoicer/docker-compose.yml
-    expire_in: 1 week  # Optional: Set an expiration time for the artifacts
+include:
+  - local: '/.gitlab-ci/build-image.yml'
+  - local: '/.gitlab-ci/build.yml'
+  - local: '/.gitlab-ci/deploy_bin.yml'
+  - local: '/.gitlab-ci/deploy_pwa.yml'
 
-# Deploy stage
-deploy_invoicer:
-  stage: deploy
-  before_script:
-    - apt-get -q update && apt-get -q install -y openssh-client rsync
-    - eval $(ssh-agent -s)
-    - mkdir -p ~/.ssh
-    - touch ~/.ssh/config
-    - cp /runner/.ssh/* ~/.ssh/
-    - chmod -R 400 ~/.ssh
-    - ssh-add ~/.ssh/gitlab-deploy
-    - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  script:
-    - ls target/release/  # List the binaries to verify they are available
-    - rsync -avz --rsync-path="sudo rsync" target/release/fuente-invoicer "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/fuente-invoicer"
-    - rsync -avz --rsync-path="sudo rsync" invoicer/docker-compose.yml "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/docker-compose.yml"
-    - rsync -avz --rsync-path="sudo rsync" invoicer/Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/Dockerfile"
-    - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "export LND_ADDRESS=\"$LND_ADDRESS\" && export LND_MACAROON=\"$LND_MACAROON\" && export FUENTE_PRIV_KEY=\"$FUENTE_PRIV_KEY\" && export UT_API_KEY=\"$UT_API_KEY\" && export UT_APP_ID=\"$UT_APP_ID\" && export UT_CALLBACK_DOMAIN=\"$UT_CALLBACK_DOMAIN\" && cd \"$DEPLOY_PATH\" && docker-compose down && docker-compose up -d"
-  dependencies:
-    - build_invoicer # Explicitly depend on the build stage artifacts
-  when: manual
+
