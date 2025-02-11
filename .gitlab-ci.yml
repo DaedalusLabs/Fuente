@@ -2,6 +2,11 @@ stages:
   - build
   - deploy
 
+cache:
+  key: ${CI_COMMIT_REF_SLUG}  # Cache key based on the branch name
+  paths:
+    - target/
+
 # Build stage
 build_invoicer:
   stage: build
@@ -10,7 +15,7 @@ build_invoicer:
     - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
   artifacts:
     paths:
-      - target/release/  # Save the compiled binaries
+      - target/release/fuente-invoicer  # Save the compiled binaries
     expire_in: 1 week  # Optional: Set an expiration time for the artifacts
 
 # Deploy stage
