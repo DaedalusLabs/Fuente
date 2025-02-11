@@ -7,7 +7,7 @@ build_invoicer:
   stage: build
   image: rust:latest  # Use the official Rust Docker image
   script:
-    - cargo build --package fuente_invoicer --release  # Build the binaries in release mode
+    - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
   artifacts:
     paths:
       - target/release/  # Save the compiled binaries
