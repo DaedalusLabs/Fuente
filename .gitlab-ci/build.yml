@@ -1,0 +1,55 @@
+.build_pwa: &build_pwa
+  stage: build
+  image: minion-pwa:latest
+  ##before_script: *setup_environment
+  script:
+    - tailwindcss -i public/styles/input.css -o $APP/styles/output.css -c tailwind.config.cjs
+    - trunk build --config $APP/Trunk.toml --release
+  artifacts:
+    paths:
+      - $APP/dist/
+    expire_in: 1 week
+
+build_admin:
+  <<: *build_pwa
+  variables:
+    APP: admin
+
+build_business:
+  <<: *build_pwa
+  variables:
+    APP: business
+
+build_consumer:
+  <<: *build_pwa
+  variables:
+    APP: consumer
+
+build_driver:
+  <<: *build_pwa
+  variables:
+    APP: driver
+
+build_invoicer:
+  stage: build
+  image: rust:latest  # Use the official Rust Docker image
+  script:
+    - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
+  artifacts:
+    paths:
+      - target/release/fuente-invoicer  # Save the compiled binaries
+      - invoicer/Dockerfile
+      - invoicer/docker-compose.yml
+    expire_in: 1 week  # Optional: Set an expiration time for the artifacts
+
+build_rating_bot:
+  stage: build
+  image: rust:latest  # Use the official Rust Docker image
+  script:
+    - cargo build --package fuente-rating-bot --release  # Build the binaries in release mode
+  artifacts:
+    paths:
+      - target/release/fuente-rating-bot # Save the compiled binaries
+      - ratings/Dockerfile
+      - ratings/docker-compose.yml
+    expire_in: 1 week  # Optional: Set an expiration time for the artifacts

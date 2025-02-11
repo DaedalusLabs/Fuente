@@ -5,15 +5,14 @@ services:
     build:
       context: .
     volumes:
-      - /home/illuminodes/fuente/ratings:/app
+      - /opt/fuente/rating-bot:/app
     working_dir: /app
     restart: unless-stopped
     environment:
-      - FUENTE_KEY=${FUENTE_KEY}
+      - FUENTE_PRIV_KEY=${FUENTE_PRIV_KEY}
     networks:
-      - illuminodes
+      - ratings
 
 networks:
-  illuminodes:
-    external: true
-    name: nginx_illuminodes
+  ratings:
+    driver: bridge

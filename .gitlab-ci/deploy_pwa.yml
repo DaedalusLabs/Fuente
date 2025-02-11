@@ -1,0 +1,42 @@
+.deploy_pwa: &deploy_pwa
+  stage: deploy
+  image: node:latest
+  before_script:
+    - npm install wrangler --save-dev
+  script:
+    - npx wrangler pages deploy $APP/dist --project-name=$CF_PROJECT
+  when: manual
+
+deploy_admin:
+  <<: *deploy_pwa
+  dependencies:
+    - build_admin
+  variables:
+    APP: admin
+    CF_PROJECT: fuente-admin
+
+deploy_business:
+  <<: *deploy_pwa
+  dependencies:
+    - build_business
+  variables:
+    APP: business
+    CF_PROJECT: fuente-business
+
+deploy_consumer:
+  <<: *deploy_pwa
+  dependencies:
+    - build_consumer
+  variables:
+    APP: consumer
+    CF_PROJECT: fuente-consumer
+
+deploy_driver:
+  <<: *deploy_pwa
+  dependencies:
+    - build_driver
+  variables:
+    APP: driver
+    CF_PROJECT: fuente-driver
+
+
