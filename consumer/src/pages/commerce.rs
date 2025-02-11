@@ -1,11 +1,13 @@
 use crate::{
-    contexts::{CartAction, CartStore, CommerceDataStore},
+    contexts::{CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LoginStateStore},
     router::ConsumerRoute,
 };
 
 use fuente::{contexts::LanguageConfigsStore, mass::{AppLink, Toast, ToastAction, ToastContext, ToastType}, models::ProductItem};
 use lucide_yew::{ArrowLeft, ShoppingCart};
+use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
+use yew_router::hooks::use_navigator;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct CommercePageProps {
@@ -176,6 +178,13 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
         product_handle,
     } = props;
     let cart_ctx = use_context::<CartStore>().expect("No cart context found");
+    let auth_context = use_context::<NostrIdStore>().expect("No auth context found");
+    let consumer_ctx = use_context::<ConsumerDataStore>().expect("No commerce context found");
+    let has_address_and_profile = {
+        consumer_ctx.get_default_address().is_some() && consumer_ctx.get_profile().is_some()
+    };
+    let is_logged_in = auth_context.get_nostr_key().is_some();
+    let navigation = use_navigator().expect("No navigation found");
     let show_warning = use_state(|| false);
     let onclick = {
         let commerce_id = commerce_id.clone();
@@ -186,6 +195,14 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
         
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
+            if !is_logged_in {
+                navigation.push(&ConsumerRoute::Login);
+                return;
+            }
+            if !has_address_and_profile {
+                navigation.push(&ConsumerRoute::Register);
+                return;
+            }
             if !cart_ctx.can_add_from_business(&commerce_id) {
                 show_warning.set(true);
                 toast_ctx.dispatch(ToastAction::Show(Toast {

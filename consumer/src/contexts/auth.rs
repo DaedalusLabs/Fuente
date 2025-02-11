@@ -13,7 +13,7 @@ pub struct RequireAuthProps {
 // Create a state to manage login modal visibility globally
 #[derive(Default, PartialEq, Clone)]
 pub struct LoginState {
-    pub show_modal: bool
+    pub logged_in: bool
 }
 
 pub enum LoginStateAction {
@@ -26,8 +26,8 @@ impl Reducible for LoginState {
 
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            LoginStateAction::Show => std::rc::Rc::new(Self { show_modal: true }),
-            LoginStateAction::Hide => std::rc::Rc::new(Self { show_modal: false })
+            LoginStateAction::Show => std::rc::Rc::new(Self { logged_in: true }),
+            LoginStateAction::Hide => std::rc::Rc::new(Self { logged_in: false })
         }
     }
 }
@@ -53,17 +53,13 @@ pub fn login_provider(props: &LoginProviderProps) -> Html {
 #[function_component(RequireAuth)]
 pub fn require_auth(props: &RequireAuthProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
+    let navigator = use_navigator().expect("Navigator not found");
 
     let is_authenticated = key_ctx.get_nostr_key().is_some();
 
     if !is_authenticated {
-        login_state.dispatch(LoginStateAction::Show);
-        html! {
-            <div class="h-screen flex items-center justify-center">
-                <p>{"Please log in to access this feature"}</p>
-            </div>
-        }
+        navigator.push(&ConsumerRoute::Login);
+        return html! {};
     } else {
         html! { 
             {props.children.clone()} 
@@ -89,7 +85,7 @@ pub fn login_modal() -> Html {
         });
     }
     
-    if !login_state.show_modal {
+    if !login_state.logged_in {
         return html! {};
     }
 

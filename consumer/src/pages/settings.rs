@@ -20,6 +20,7 @@ use nostr_minions::{
 };
 use yew::prelude::*;
 use yew::props;
+use yew_router::hooks::use_navigator;
 
 #[derive(Clone, PartialEq)]
 pub enum SettingsPage {
@@ -58,10 +59,10 @@ pub fn settings_page() -> Html {
     let user_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
     let translations = language_ctx.translations();
     let current_page = use_state(|| SettingsPage::Profile);
+    let navigator = use_navigator().expect("Navigator not found");
     if user_ctx.get_profile().is_none() {
-        return html! {
-            <NewProfilePage />
-        };
+        navigator.push(&ConsumerRoute::Register);
+        return html! { <div></div> };
     }
     let go_to_profile = {
         let page = current_page.clone();

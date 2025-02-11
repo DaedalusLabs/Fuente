@@ -19,7 +19,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                    <NewProfileForm />
+                <NewProfileForm />
         </LoginPageTemplate>
     }
 }

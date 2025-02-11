@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use lucide_yew::{Heart, House, Search, ShieldQuestion, ShoppingCart, UserRound, X};
 use nostr_minions::key_manager::NostrIdStore;
 use wasm_bindgen::{prelude::Closure, JsCast};
@@ -5,17 +7,24 @@ use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::{contexts::LanguageConfigsStore, mass::AppLink};
+use fuente::{
+    contexts::LanguageConfigsStore,
+    mass::{AppLink, LoginPage},
+};
 
 use crate::{
-    contexts::{CartStore, CommerceDataStore, LoginModal, LoginStateAction, LoginStateStore, RequireAuth},
+    contexts::{
+        CartStore, CommerceDataStore, ConsumerDataStore, LoginModal, LoginStateAction,
+        LoginStateStore, RequireAuth,
+    },
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
-        HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage,
+        HomePage, LiveOrderCheck, NewAddressPage, NewProfilePage, SettingsPageComponent,
+        TrackPackagesPage,
     },
 };
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Routable, PartialEq, Debug)]
 pub enum ConsumerRoute {
     #[at("/")]
     Home,
@@ -37,13 +46,42 @@ pub enum ConsumerRoute {
     Order { order_id: String },
     #[at("/track-packages")] // Add this new route
     TrackPackages,
+    #[at("/login")]
+    Login,
+    #[at("/register")]
+    Register,
+}
+impl TryFrom<&str> for ConsumerRoute {
+    type Error = wasm_bindgen::JsError;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        ConsumerRoute::from_path(value, &HashMap::new())
+            .ok_or_else(|| wasm_bindgen::JsError::new("Invalid route"))
+    }
 }
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
+    let location = use_location().expect("Location not found");
+    let path: ConsumerRoute = match location.path().try_into() {
+        Ok(path) => path,
+        Err(_) => ConsumerRoute::Home,
+    };
+    gloo::console::log!("Current path: {:?}", format!("{:?}", path));
+    let auth_context = use_context::<NostrIdStore>().expect("LoginStateStore not found");
+    let consumer_store = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
+    let has_profile = consumer_store.get_profile();
+    let has_address = consumer_store.get_default_address();
+    let navigator = use_navigator().expect("Navigator not found");
+    let logged_in = auth_context.get_nostr_key();
     html! {
         <div class="flex flex-col h-screen overflow-hidden">
-            <FuenteHeader />
+            {if path != ConsumerRoute::Login && path != ConsumerRoute::Register {
+                html! {
+                    <FuenteHeader />
+                }
+            } else {
+                html! {}
+            }}
             <main class="flex-1 overflow-y-auto">
                 <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                     match switch {
@@ -53,7 +91,7 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },
-                        
+
                         // Protected routes - for now just render normally
                         ConsumerRoute::Cart => html!{
                             <RequireAuth>
@@ -70,11 +108,44 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::Favorites => html!{<FavoritesPage />},
                         ConsumerRoute::Order { order_id: _ } => html!{<LiveOrderCheck />},
                         ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
+                        ConsumerRoute::Login => {
+                            if logged_in.is_some() {
+                                navigator.push(&ConsumerRoute::Home);
+                                html!{}
+                            } else {
+                                html!{
+                                    <LoginPage />
+                            }}
+                        },
+                        ConsumerRoute::Register => {
+                            gloo::console::log!("Has profile, Has address", format!("{:?}", has_profile), format!("{:?}", has_address));
+                            match (has_profile.as_ref(), has_address.as_ref()) {
+                                (Some(_), Some(_)) => {
+                                    navigator.push(&ConsumerRoute::Home);
+                                    html!{}
+                                },
+                                (Some(_), None) => html!{
+                                    <NewAddressPage />
+                                },
+                                (None, Some(_)) => html!{
+                                    <NewProfilePage />
+                                },
+                                (None, None) => html!{
+                                    <NewProfilePage />
+                                }
+                            }
+                        },
                     }
                 }}
                 />
             </main>
-            <FuenteFooter />
+            {if path != ConsumerRoute::Login && path != ConsumerRoute::Register {
+                html! {
+                    <FuenteFooter />
+                }
+            } else {
+                html! {}
+            }}
         </div>
     }
 }
@@ -82,13 +153,14 @@ pub fn consumer_pages() -> Html {
 #[function_component(LoginButton)]
 fn login_button() -> Html {
     let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
-    
+    let navigator = use_navigator().expect("Navigator not found");
+
     html! {
-        <button 
+        <button
             onclick={
                 let login_state = login_state.clone();
                 Callback::from(move |_| {
-                    login_state.dispatch(LoginStateAction::Show);
+                    navigator.push(&ConsumerRoute::Login);
                 })
             }
             class="bg-fuente text-white px-5 py-2 rounded-full text-center font-bold"

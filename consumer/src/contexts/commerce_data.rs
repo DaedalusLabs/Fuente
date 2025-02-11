@@ -53,7 +53,7 @@ impl CommerceData {
 
 pub trait CommerceDataExt {
     fn find_commerce_by_id(&self, id: &str) -> Option<CommerceProfile>;
-    fn is_loading(&self) -> bool;
+    fn is_loaded(&self) -> bool;
 }
 
 impl CommerceDataExt for UseReducerHandle<CommerceData> {
@@ -70,8 +70,8 @@ impl CommerceDataExt for UseReducerHandle<CommerceData> {
             .cloned()
     }
 
-    fn is_loading(&self) -> bool {
-        !self.finished_loading()
+    fn is_loaded(&self) -> bool {
+        self.finished_loading()
     }
 }
 
