@@ -5,8 +5,7 @@ services:
     build:
       context: .
     volumes:
-      - /home/illuminodes/.lnd/data/chain/bitcoin/mainnet/admin.macaroon:/app/admin.macaroon
-      - /home/illuminodes/fuente/invoicer:/app
+      - /opt/fuente/invoicer:/app
     working_dir: /app
     restart: unless-stopped
     environment:
@@ -21,5 +20,4 @@ services:
 
 networks:
   illuminodes:
-    external: true
-    name: nginx_illuminodes
+    name: illuminodes
