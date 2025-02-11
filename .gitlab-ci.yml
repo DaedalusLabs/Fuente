@@ -40,3 +40,4 @@ deploy_invoicer:
     - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "export LND_ADDRESS=\"$LND_ADDRESS\" && export LND_MACAROON=\"$LND_MACAROON\" && export FUENTE_PRIV_KEY=\"$FUENTE_PRIV_KEY\" && export UT_API_KEY=\"$UT_API_KEY\" && export UT_APP_ID=\"$UT_APP_ID\" && export UT_CALLBACK_DOMAIN=\"$UT_CALLBACK_DOMAIN\" && cd \"$DEPLOY_PATH\" && docker-compose down && docker-compose up -d"
   dependencies:
     - build_invoicer # Explicitly depend on the build stage artifacts
+  when: manual
