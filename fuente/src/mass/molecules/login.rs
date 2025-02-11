@@ -25,6 +25,7 @@ pub struct AuthPageProps {
 #[function_component(LoginPage)]
 pub fn login_template() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
+
     let translations = language_ctx.translations();
     let login_type = use_state(|| AuthPage::Login);
     let register: Callback<MouseEvent> = {
@@ -82,6 +83,7 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
                 .get_user_keys()
                 .await
                 .expect("Failed to get user keys");
+            gloo::console::log!("GOT HERE");
             user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
         });
     });
