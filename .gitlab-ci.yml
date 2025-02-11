@@ -1,0 +1,24 @@
+stages:
+  - build
+  - deploy
+
+# Build stage
+build_invoicer:
+  stage: build
+  image: rust:latest  # Use the official Rust Docker image
+  script:
+    - cargo build --package fuente_invoicer --release  # Build the binaries in release mode
+  artifacts:
+    paths:
+      - target/release/  # Save the compiled binaries
+    expire_in: 1 week  # Optional: Set an expiration time for the artifacts
+
+# Deploy stage
+deploy_binaries:
+  stage: deploy
+  image: alpine:latest  # Use a lightweight image for deployment
+  script:
+    - echo "Deploying the binaries..."
+    - ls target/release/  # List the binaries to verify they are available
+  dependencies:
+    - build_invoicer # Explicitly depend on the build stage artifacts
