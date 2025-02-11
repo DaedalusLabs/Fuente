@@ -16,8 +16,8 @@ build_invoicer:
   artifacts:
     paths:
       - target/release/fuente-invoicer  # Save the compiled binaries
-      - Dockerfile
-      - docker-compose.yml
+      - invoicer/Dockerfile
+      - invoicer/docker-compose.yml
     expire_in: 1 week  # Optional: Set an expiration time for the artifacts
 
 # Deploy stage
@@ -35,8 +35,8 @@ deploy_invoicer:
   script:
     - ls target/release/  # List the binaries to verify they are available
     - rsync -avz --rsync-path="sudo rsync" target/release/fuente-invoicer "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/fuente-invoicer"
-    - rsync -avz --rsync-path="sudo rsync" docker-compose.yml "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/docker-compose.yml"
-    - rsync -avz --rsync-path="sudo rsync" Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/Dockerfile"
+    - rsync -avz --rsync-path="sudo rsync" invoicer/docker-compose.yml "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/docker-compose.yml"
+    - rsync -avz --rsync-path="sudo rsync" invoicer/Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/Dockerfile"
     - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "cd \"$DEPLOY_PATH\" && docker-compose down && docker-compose up -d"
   dependencies:
     - build_invoicer # Explicitly depend on the build stage artifacts
