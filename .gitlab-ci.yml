@@ -19,11 +19,21 @@ build_invoicer:
     expire_in: 1 week  # Optional: Set an expiration time for the artifacts
 
 # Deploy stage
-deploy_binaries:
+deploy_invoicer:
   stage: deploy
-  image: alpine:latest  # Use a lightweight image for deployment
+  before_script:
+    - apt-get -q update && apt-get -q install -y openssh-client rsync
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - touch ~/.ssh/config
+    - cp /runner/.ssh/* ~/.ssh/
+    - chmod -R 400 ~/.ssh
+    - ssh-add ~/.ssh/gitlab-deploy
+    - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - echo "Deploying the binaries..."
     - ls target/release/  # List the binaries to verify they are available
+    - rsync -avz --rsync-path="sudo rsync" ../target/release/fuente-invoicer ./docker-compose.yml ./Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH"
+    - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "cd \"$DEPLOY_PATH\" && docker-compose down && docker-compose up -d"
   dependencies:
     - build_invoicer # Explicitly depend on the build stage artifacts
+  when: manual
