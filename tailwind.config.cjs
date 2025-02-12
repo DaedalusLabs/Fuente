@@ -17,7 +17,8 @@ module.exports = {
             },
             fontFamily: {
                 'mplus': ['MPlus', 'sans-serif'],
-                'fuente': ['Open Sans']
+                'fuente': ['Open Sans'],
+                'product': ['ProductSans', 'sans-serif']
             },
             backgroundImage: {
                 logo: `url('/templates/img/Logo Fuente.jpeg')`
