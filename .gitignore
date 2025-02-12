@@ -15,6 +15,7 @@
 *.macaroon
 *.env
 package.json
+package-lock.json
 *.lockb
 
 

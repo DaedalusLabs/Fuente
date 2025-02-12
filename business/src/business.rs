@@ -5,7 +5,7 @@ use business::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage},
+    mass::{LoadingScreen, LoginPage, ToastProvider},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -38,15 +38,17 @@ fn app() -> Html {
     });
     html! {
         <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayProviderComponent>
-                <AppContext>
-                    <LoginCheck>
-                        <CommercePages />
-                    </LoginCheck>
-                </AppContext>
-            </RelayProviderComponent>
-        </BrowserRouter>
+            <BrowserRouter>
+                <RelayProviderComponent>
+                    <AppContext>
+                        <ToastProvider>
+                            <LoginCheck>
+                                <CommercePages />
+                            </LoginCheck>
+                        </ToastProvider>
+                    </AppContext>
+                </RelayProviderComponent>
+            </BrowserRouter>
         </LanguageConfigsProvider>
     }
 }

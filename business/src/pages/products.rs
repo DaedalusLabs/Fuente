@@ -2,7 +2,7 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleInput, SimpleTextArea
+        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleInput, SimpleTextArea, Toast, ToastAction, ToastContext, ToastType
     },
     models::{CommerceProfileIdb, ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
@@ -136,7 +136,7 @@ pub fn home_page() -> Html {
             <AddProductForm />
         </PopupSection>
         <PopupSection close_handle={add_category_modal.clone()}>
-            <AddCategoryForm />
+            <AddCategoryForm close_modal={Callback::from(move |_| add_category_modal.set(false))} />
         </PopupSection>
         <PopupSection close_handle={add_banner.clone()}>
             <AddBannerForm />
@@ -157,51 +157,73 @@ pub struct EditProductFormProps {
     pub on_cancel: Callback<MouseEvent>,
 }
 
+#[derive(Properties, PartialEq)]
+pub struct AddCategoryFormProps {
+    pub close_modal: Callback<()>,
+}
+
 #[function_component(AddCategoryForm)]
-pub fn add_category_form() -> Html {
+pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
+    let close_modal = props.close_modal.clone();
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageConfigsStore found");
     let translations = language_ctx.translations();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
     let menu = commerce_ctx.menu();
+
+    let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
+
     let onsubmit = {
         let sender = relay_ctx.send_note.clone();
         let key = key_ctx.get_nostr_key().expect("No user keys found");
         let handle = commerce_ctx.clone();
+        let close_modal = close_modal.clone();
+        let toast_ctx = toast_ctx.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            let form = HtmlForm::new(e).expect("Failed to get form");
+            let form = nostr_minions::browser_api::HtmlForm::new(e).expect("Failed to get form");
             let category_name = form
                 .input_value("category_name")
                 .expect("Failed to get category name");
-            match (menu).clone() {
+            match menu.clone() {
                 Some(mut menu) => {
-                    let new_category = ProductCategory::new(menu.categories().len(), category_name);
+                    let new_category = ProductCategory::new(menu.categories().len(), category_name.clone());
                     menu.update_category_name(new_category);
                     let db_entry = ProductMenuIdb::new(menu, &key);
                     sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry))
+                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
                 }
                 None => {
                     let mut new_menu = ProductMenu::new();
-                    let new_category = ProductCategory::new(0, category_name);
+                    let new_category = ProductCategory::new(0, category_name.clone());
                     new_menu.add_category(new_category);
                     let db_entry = ProductMenuIdb::new(new_menu, &key);
                     sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry))
+                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
                 }
             }
+
+            let success_message = format!("Category \"{}\" added successfully!", category_name);
+            toast_ctx.dispatch(
+                ToastAction::Show(
+                    Toast {
+                        message: success_message,
+                        toast_type: ToastType::Success,
+                    }
+                )
+            );
+            close_modal.emit(());
         })
     };
     html! {
         <main class="bg-white rounded-2xl p-10 max-w-6xl mx-auto flex-1">
-            <form
-                class="flex flex-col gap-2 items-center p-4"
-                {onsubmit}>
+            <form class="flex flex-col gap-2 items-center p-4" {onsubmit}>
                 <div class="space-y-2">
-                    <label for="category_name" class="text-gray-400 font-light block text-md">{&translations["store_products_form_label_add_category"]}</label>
-                    <input type="text" id="category_name" name="category_name" class="border border-fuente rounded-xl p-2 w-full" required={true} />
+                    <label for="category_name" class="text-gray-400 font-light block text-md">
+                        {&translations["store_products_form_label_add_category"]}
+                    </label>
+                    <input type="text" id="category_name" name="category_name" class="border border-fuente rounded-xl p-2 w-full" required=true />
                 </div>
                 <button
                     type="submit"
