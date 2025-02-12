@@ -4,3 +4,7 @@
 ### Added
 - Added `CHANGELOG.md` doc to properly track dev process
 - Added `toast notification` in category section when a new category is added.
+
+## [1.1.0] - 2025-02-12
+### Fixed
+- Fixed `consumer_pwa` general styling
