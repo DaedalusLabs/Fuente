@@ -1,7 +1,7 @@
 use admin::{AdminPanelPages, PlatformStatsProvider, PlatformStatsStore, ServerConfigsProvider, ServerConfigsStore};
 use fuente::{
     contexts::LanguageConfigsProvider,
-    mass::{AdminLoginPage, LoadingScreen},
+    mass::{AdminLoginPage, LoadingScreen, ToastProvider},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -37,9 +37,11 @@ fn app() -> Html {
         <LanguageConfigsProvider >
             <BrowserRouter>
                <AppContext>
-                    <LoginCheck>
-                        <AdminPanelPages />
-                    </LoginCheck>
+                    <ToastProvider>
+                        <LoginCheck>
+                            <AdminPanelPages />
+                        </LoginCheck>
+                    </ToastProvider>
                </AppContext>
             </BrowserRouter>
         </LanguageConfigsProvider>

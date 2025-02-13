@@ -12,14 +12,14 @@ pub fn exchange_rate_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex-1 overflow-hidden">
+        <main class="container mx-auto overflow-hidden">
             <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
                         {&translations["admin_settings_title_exchange"]}
                     </h1>
                 </div>
-                <div class="grid  grid-cols-1 lg:grid-cols-2  gap-5 lg:gap-10 mt-5 mx-2 md:mx-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10">
                     <div class="flex-1">
                         <ExchangeRateDisplay />
                     </div>
@@ -40,12 +40,12 @@ pub fn exchange_rate_display() -> Html {
     html! {
         <div class="flex flex-col gap-5 p-5 md:max-w-sm lg:max-w-xs mx-auto">
             <div class="space-y-2">
-                <p class="text-gray-500 text-md font-bold">{"Bitcoin Exchange"}</p>
+                <p class="text-gray-500 text-lg font-bold">{"Bitcoin Exchange"}</p>
                 <p class="text-fuente font-bold text-2xl">{format!("1 BTC = SRD {}", exchange_rate)}</p>
             </div>
             <div class="space-y-2">
-                <p class="text-gray-500 text-sm font-bold">{"Sat Price"}</p>
-                <p class="text-gray-500 font-light text-lg">{format!("1 SAT = SRD {}", sat_rate)}</p>
+                <p class="text-gray-500 text-md font-bold">{"Sat Price"}</p>
+                <p class="text-gray-500 font-light text-md">{format!("1 SAT = SRD {}", sat_rate)}</p>
             </div>
         </div>
     }

@@ -14,14 +14,14 @@ pub fn exchange_rate_page() -> Html {
     let completed_orders = stats_ctx.count_completed_orders();
     let canceled_orders = stats_ctx.count_pending_orders();
     html! {
-        <main class="flex-1 overflow-hidden">
+        <main class="container mx-auto overflow-hidden">
             <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
                         {&translations["admin_settings_title_home"]}
                     </h1>
                 </div>
-                <div class="grid  grid-cols-1 lg:grid-cols-2  gap-5 lg:gap-10 mt-5 mx-2 md:mx-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 p-5 lg:p-0 lg:px-5">
                     <div class="rounded-2xl admin-shadow flex items-center justify-center gap-5 p-3">
                         <div>
                             <svg class="w-12 h-12" fill="none" stroke="#4167e8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
