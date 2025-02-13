@@ -8,3 +8,7 @@
 ## [1.1.0] - 2025-02-12
 ### Fixed
 - Fixed `consumer_pwa` general styling
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
