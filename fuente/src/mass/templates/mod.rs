@@ -139,20 +139,22 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     } = props.clone();
     html! {
         <>
-        <main class="flex flex-col h-screen overflow-hidden w-full container mx-auto">
-            <div class="flex flex-row justify-between items-center">
-                <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
-                    {&heading}
-                </h1>
-                <SettingsOptionsButtons {options} />
-            </div>
+        <main class="container mx-auto overflow-hidden">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
+                        {&heading}
+                    </h1>
+                    <SettingsOptionsButtons {options} />
+                </div>
 
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden mt-5 gap-5">
-                <SettingsSideBar options={sidebar_options} />
-                <SettingsContent edit_button={content_button} >
-                    {children}
-                </SettingsContent>
-            </div>
+                <div class="flex flex-col lg:flex-row overflow-hidden gap-5">
+                    <SettingsSideBar options={sidebar_options} />
+                    <SettingsContent edit_button={content_button} >
+                        {children}
+                    </SettingsContent>
+                </div>
+            </div>            
         </main>
         </>
     }
@@ -630,7 +632,8 @@ pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
                 <div class="flex-shrink-0 py-4">
                 </div>
             </aside>
-            <nav class="w-full lg:hidden bg-white shadow-lg py-3 px-6 rounded-t-xl order-last">
+
+            <nav class="w-full bg-white lg:hidden shadow-lg py-3 px-6 rounded-xl order-last fixed bottom-0 mb-5 mx-auto">
                 <ul class="flex items-center justify-evenly">
                     {props.children.clone()}
                 </ul>
