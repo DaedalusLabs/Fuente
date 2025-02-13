@@ -15,10 +15,10 @@ pub fn exchange_rate_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex-1 overflow-hidden">
+        <main class="container mx-auto overflow-hidden">
             <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
                         {&translations["admin_settings_title_commerces"]}
                     </h1>
                 </div>
@@ -178,7 +178,7 @@ pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
                                 move |_| filter.set(CommerceStatus::Registered)
                             })}
                             class={classes!("border-green-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
-                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-green-500")}>
+                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-green-500", "cursor-pointer", "whitespace-nowrap")}>
                                 {&translations["admin_settings_commerces_registered"]}
                             </p>
                         </div>
@@ -188,7 +188,7 @@ pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
                                 move |_| filter.set(CommerceStatus::Unregistered)
                             })}
                             class={classes!("border-red-500", "border-2", "rounded-2xl", "py-3", "px-2", "w-full")}>
-                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-red-500")}>
+                            <p class={classes!("text-lg", "font-semibold", "text-center", "text-red-500", "cursor-pointer", "whitespace-nowrap")}>
                                 {&translations["admin_settings_commerces_unregistered"]}
                             </p>
                         </div>
