@@ -87,7 +87,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
     } = props;
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
-            <div class="flex flex-1 justify-evenly gap-4 h-full container mx-auto mt-5 overflow-hidden">
+            <div class="flex flex-1 justify-evenly gap-4 h-full mt-5 overflow-hidden">
                 <div class="flex flex-col gap-2 w-1/2 h-full overflow-hidden">
                     <div class="border-2 border-green-500 rounded-2xl py-3 px-2 h-fit w-fit cursor-pointer">
                         <p class="text-green-500 text-lg font-semibold text-center">{&translations["store_orders_history_completed"]}</p>

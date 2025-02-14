@@ -19,7 +19,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl relative z-0">
+                <div class="bg-fuente-forms px-5 rounded-3xl relative z-0">
                     <NewProfileForm />
                 </div>
         </LoginPageTemplate>
@@ -61,12 +61,12 @@ pub fn edit_profile_menu() -> Html {
     });
     html! {
         <form {onsubmit}
-            class="w-full h-full flex flex-col gap-4 px-8 py-4">
+            class="w-full h-full flex flex-col gap-4 py-10">
             <ProfileInputs />
             <div class="space-y-5 flex flex-col mt-5">
                 <input
                     type="submit"
-                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-nowrap"
                     value={translations["auth_register_link_button"].clone()}
                 />
             </div>

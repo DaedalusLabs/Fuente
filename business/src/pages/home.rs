@@ -29,17 +29,17 @@ pub fn home_page() -> Html {
     };
     html! {
         <main class="flex-1 overflow-hidden">
-            <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+            <div class="flex flex-col h-full container mx-auto">
+                <div class="flex flex-row justify-between items-center">
+                    <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-10 lg:text-6xl tracking-tighter font-bold">
                         {&translations["orders_heading"]}
                     </h1>
                     <button onclick={go_to_orders.clone()}
-                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl">
                             <ScrollText class="w-6 h-6 text-fuente" />
                     </button>
                     <button onclick={go_to_orders}
-                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
+                        class="lg:block hidden flex items-center bg-white px-6 py-3 rounded-full text-fuente border-2 border-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["orders_historic"]}
                     </button>
                 </div>

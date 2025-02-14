@@ -62,13 +62,13 @@ pub fn settings_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-white px-6 py-3 rounded-full text-fuente border-2 border-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::History} >
                     <span class="hidden lg:block text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
                 </AppLink<CommerceRoute>>
                 <AppLink<CommerceRoute>
-                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-white p-2 rounded-xl border-2 border-fuente"
                     selected_class=""
                     route={CommerceRoute::History} >
                     <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
@@ -82,13 +82,13 @@ pub fn settings_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::Products} >
                     <span class="hidden lg:block text-lg font-bold text-center">{&translations["admin_store_new_products_heading"]}</span>
                 </AppLink<CommerceRoute>>
                 <AppLink<CommerceRoute>
-                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl"
                     selected_class=""
                     route={CommerceRoute::Products} >
                     <ShoppingBag class={classes!("h-6", "w-6", "stroke-fuente")} />
@@ -107,7 +107,7 @@ pub fn settings_page() -> Html {
                 html! {
                     <button type="button"
                         class="absolute top-1 right-1 sm:top-4 sm:right-4 p-2 rounded-full transition duration-300">
-                        <span class="text-red-600 font-bold text-xl flex gap-1 items-top">
+                        <span class="text-red-600 font-bold text-xl flex items-center gap-1 items-top">
                             {&translations["profile_personal_information_delete_account_button"]}
                             <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
                         </span>
@@ -247,9 +247,9 @@ fn my_contact_details() -> Html {
 
                   <button
                     onclick={Callback::from(move |_| logo_popup_handle_clone.set(true))}
-                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
+                    class="bg-fuente-light text-white py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
                   >
-                    <Upload class="w-5 h-5" />
+                    <Upload class="w-5 h-5 stroke-white" />
                     <span>{&translations["profile_settings_upload"]}</span>
                   </button>
                 </div>

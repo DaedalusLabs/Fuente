@@ -57,12 +57,12 @@ pub fn home_page() -> Html {
                 <div class="flex justify-center items-center">
                     <button
                         type="button" onclick={onclick_new_product.clone()}
-                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
+                        class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["admin_store_add_product_button"]}
                     </button>
                     <button
                         type="button" onclick={onclick_new_product}
-                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl">
                         <Shirt class="w-6 h-6 stroke-fuente" />
                     </button>
                 </div>
@@ -81,12 +81,12 @@ pub fn home_page() -> Html {
                 <div class="flex justify-center items-center">
                     <button
                         type="button" onclick={onclick_new_category.clone()}
-                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
+                        class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["store_products_form_label_add_category"]}
                     </button>
                     <button
                         type="button" onclick={onclick_new_category}
-                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl">
                         <Library class="w-6 h-6 stroke-fuente" />
                     </button>
                 </div>
@@ -573,11 +573,11 @@ pub fn product_list_section() -> Html {
     html! {
         <div class="min-w-max">
         <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
-           <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center lg:mt-10 xl:mt-5 ">
+           <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center">
                <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
-               <p class="" ></p>
+               <p class=""></p>
                <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</p>
-               <p class="" ></p>
+               <p class=""></p>
            </div>
            {
                if let Some(menu) = menu_state.as_ref() {
