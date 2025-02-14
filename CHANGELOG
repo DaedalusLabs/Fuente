@@ -1,4 +1,25 @@
-# Changelog
+# Changelog <!-- Newer dates on top -->
+
+
+## [1.1.0] - 2025-02-14
+### Fixed
+- Enhanced banner display in business profile with proper image containment and responsive behavior.
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed navigation issue on key recovery page caused by missing `ToastProvider`.
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed `admin general styles`: line breaks, title fonts, margins, and paddings to align with branding guidelines.
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
 
 ## [1.1.0] - 2025-02-13
 ### Fixed

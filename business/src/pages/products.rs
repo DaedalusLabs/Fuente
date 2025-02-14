@@ -539,9 +539,12 @@ pub fn banner_details_section(props: &BannerDetailsProps) -> Html {
     html! {
             <div class="w-full flex flex-col md:flex-row items-center gap-5 p-2">
                 <div class="w-full">
-                    <div class="w-full xl:relative flex items-center justify-center bg-fuente rounded-2xl h-32 lg:pr-5 2xl:pr-20">
-                        <img src={profile.banner_url.clone()} alt={profile.name.clone()}
-                        class="xl:absolute xl:top-2 xl:right-40 2xl:right-72 xl:-translate-x-10 xl:-translate-y-10 block object-contain w-56" />
+                    <div class="w-full relative bg-fuente rounded-2xl h-32 overflow-hidden">
+                        <img 
+                            src={profile.banner_url.clone()} 
+                            alt={profile.name.clone()}
+                            class="absolute inset-0 w-full h-full object-cover" 
+                        />
                     </div>
                 </div>
                 <button {onclick} class="border border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">
