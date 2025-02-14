@@ -277,9 +277,8 @@ pub fn add_banner_form() -> Html {
                                 url_handle={image_url.clone()}
                                 nostr_keys={nostr_keys.clone()}
                                 classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                                input_id="large-image-upload"  // Unique ID for large image
+                                input_id="large-image-upload"
                             />
-                            // can be removed
                             {if let Some(_url) = (*image_url).clone() {
                                 html! {
                                     <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
@@ -330,7 +329,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
         let handle = commerce_ctx.clone();
         let menu = menu.clone();
         let toast_ctx = toast_ctx.clone();
-        let close_modal = props.close_handle.clone(); // Make sure we clone the close_handle from props
+        let close_modal = props.close_handle.clone();
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
