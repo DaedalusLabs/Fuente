@@ -65,8 +65,8 @@ pub fn home_page() -> Html {
 
     if orders.is_empty() && order_ctx.get_live_order().is_none() {
         return html! {
-            <div class="flex flex-col flex-1 gap-8">
-                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4">{"No orders yet!"}</h2>
+            <div class="min-h-screen flex items-center justify-center flex-1">
+                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4 text-center">{"No orders yet!"}</h2>
             </div>
         };
     };
