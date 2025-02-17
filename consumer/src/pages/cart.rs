@@ -96,7 +96,7 @@ pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
     let counted_products = order.counted_products();
     if counted_products.is_empty() {
         return html! {
-            <div class="border border-fuente mt-10 px-5 rounded-3xl h-[550px] overflow-y-scroll">
+            <div class="border-2 border-fuente mt-10 px-5 rounded-3xl h-[550px] overflow-y-scroll">
                 <h2 class="flex text-2xl text-fuente font-bold pt-5">{&translations["checkout_product_empty_table_heading"]}</h2>
             </div>
         };
@@ -276,7 +276,7 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
                     class="lg:hidden border-2 border-fuente px-5 py-2 rounded-xl w-fit mt-1">{count}</button>
             </div>
 
-            <div class="hidden lg:flex items-center justify-between border border-fuente rounded-xl">
+            <div class="hidden lg:flex items-center justify-between border-2 border-fuente rounded-xl">
                 <button onclick={remove_one_item}
                     class="text-gray-500 w-full px-5 py-3">{"-"}</button>
                 <button class="text-gray-500 w-full px-5 py-3">{count}</button>
@@ -302,7 +302,7 @@ pub fn checkout_summary() -> Html {
     let user_address = user_ctx.get_default_address();
     if let (Some(profile), Some(address)) = (user_profile, user_address) {
         html! {
-            <div class="border border-fuente rounded-2xl py-5 px-10 mx-2 lg:mx-4">
+            <div class="border-2 border-fuente rounded-2xl py-5 px-10 mx-2 lg:mx-4">
                 <h2 class="text-fuente text-3xl font-semibold">{&translations["checkout_client_information"]}</h2>
                 <div class="flex items-center justify-between mt-5 flex-wrap gap-5">
                     <div>
@@ -327,7 +327,7 @@ pub fn checkout_summary() -> Html {
         }
     } else {
         html! {
-            <div class="border border-fuente rounded-2xl py-5 px-10">
+            <div class="border-2 border-fuente rounded-2xl py-5 px-10">
                 <h2 class="text-fuente text-3xl font-semibold">{"Info not set"}</h2>
             </div>
         }

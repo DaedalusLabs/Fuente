@@ -1,60 +1,45 @@
 # Changelog <!-- Newer dates on top -->
 
+<<<<<<< CHANGELOG
+
+=======
 
 ## [1.1.0] - 2025-02-18
 ### Added
 - Added confirmation dialog for product deletion to prevent accidental removals
 - Implemented user-friendly warning message for irreversible actions
 
+## [1.1.0] - 2025-02-17
+### Fixed
+- Fixed all `fuente apps` border width to align with the new design guidelines.
+
 ## [1.1.0] - 2025-02-14
 ### Fixed
 - Adjust `courier list` and `courier pubkey form` for a better user experience
-
-## [1.1.0] - 2025-02-14
-### Fixed
 - Implemented styles for the "Unauthorized" screen based on the provided design.
-
-## [1.1.0] - 2025-02-14
-### Fixed
 - Fixed `exchange screen` spacing and alignment for a better readability
-
-## [1.1.0] - 2025-02-14
-### Fixed
-- Update `admin business` UI colors for improved visual consistency
-
-### Added
-- Added automatic UI updates for product list when adding or modifying products
-- Implemented automatic modal closure after successful product addition
-- Added toast notifications for product operations feedback
-
-## [1.1.0] - 2025-02-14
-### Fixed
+- Update `admin business` UI colors for improved visual consistency.
 - Enhanced banner display in business profile with proper image containment and responsive behavior.
 
+### Added
+- Added automatic UI updates for product list when adding or modifying products.
+- Implemented automatic modal closure after successful product addition.
+- Added toast notifications for product operations feedback.
+
 ## [1.1.0] - 2025-02-13
 ### Fixed
 - Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
 - Fixed navigation issue on key recovery page caused by missing `ToastProvider`.
 - Fixed `admin general styles`: line breaks, title fonts, margins, and paddings to align with branding guidelines.
 - Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
-
-## [1.1.0] - 2025-02-13
-### Fixed
 - Fixed navigation issue on key recovery page caused by missing `ToastProvider`.
-
-## [1.1.0] - 2025-02-13
-### Fixed
 - Fixed `admin general styles`: line breaks, title fonts, margins, and paddings to align with branding guidelines.
-
-## [1.1.0] - 2025-02-13
-### Fixed
 - Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
 
 ## [1.1.0] - 2025-02-12
 ### Added
-- Added `CHANGELOG.md` doc to properly track dev process
+- Added `CHANGELOG.md` doc to properly track dev process.
 - Added `toast notification` in category section when a new category is added.
 
-## [1.1.0] - 2025-02-12
 ### Fixed
-- Fixed `consumer_pwa` general styling
+- Fixed `consumer_pwa` general styling.

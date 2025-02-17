@@ -229,21 +229,23 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
         })
     };
     html! {
-        <div class="border-2 border-fuente rounded-2xl p-2 max-w-72 max-h-96 overflow-hidden">
-            <div class="relative">
-                <img onclick={image_onclick.clone()} src={product.image_url()} alt="Favorites Image"
-                class="hidden lg:block object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl" />
-                <img onclick={image_onclick} src={product.thumbnail_url()} alt="Favorites Image"
-                class="block lg:hidden object-contain w-full max-h-24 mx-auto bg-gray-100 rounded-2xl" />
-                // add favorite items?
-            </div>
-            <h2 class="font-bold text-lg text-gray-500 text-center mt-3">{product.name()}</h2>
-            <p class="text-sm text-gray-400 text-center line-clamp-2">{product.details()}</p>
-            <div class="flex justify-between items-center mt-3 px-5 gap-5">
-                <p class="text-xl font-bold text-fuente">{format!("SRD {}", product.price())}</p>
-                <button {onclick} class="bg-fuente-orange text-white py-2 px-7 rounded-full z-[500]">
-                    <ShoppingCart class="w-8 h-8" />
-                </button>
+        <div class="border-2 border-fuente rounded-2xl p-2 max-w-72 m-auto min-h-96 max-h-96 h-full overflow-hidden">
+            <div class="flex flex-1 flex-col justify-center h-full">
+                <div class="relative">
+                    <img onclick={image_onclick.clone()} src={product.image_url()} alt="Favorites Image"
+                    class="hidden lg:block object-contain w-full max-h-52 mx-auto bg-gray-100 rounded-2xl" />
+                    <img onclick={image_onclick} src={product.thumbnail_url()} alt="Favorites Image"
+                    class="block lg:hidden object-contain w-full max-h-24 mx-auto bg-gray-100 rounded-2xl" />
+                    // add favorite items?
+                </div>
+                <h2 class="font-bold text-lg text-gray-500 text-center mt-3">{product.name()}</h2>
+                <p class="text-sm text-gray-400 text-center line-clamp-2">{product.details()}</p>
+                <div class="flex justify-between items-center mt-3 px-5 gap-5">
+                    <p class="text-xl font-bold text-fuente">{format!("SRD {}", product.price())}</p>
+                    <button {onclick} class="bg-fuente-orange text-white py-2 px-7 rounded-full z-[500]">
+                        <ShoppingCart class="w-8 h-8" />
+                    </button>
+                </div>
             </div>
         </div>
     }
