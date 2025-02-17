@@ -13,6 +13,7 @@ use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
+
 #[derive(Clone, PartialEq)]
 pub enum ProductPageSection {
     Products,
@@ -132,9 +133,9 @@ pub fn home_page() -> Html {
                 }}
             </>
         </SettingsPageTemplate>
-        <PopupSection close_handle={add_product_modal.clone()}>
-            <AddProductForm />
-        </PopupSection>
+            <PopupSection close_handle={add_product_modal.clone()}>
+                <AddProductForm close_handle={add_product_modal.clone()} />
+            </PopupSection>
         <PopupSection close_handle={add_category_modal.clone()}>
             <AddCategoryForm close_modal={Callback::from(move |_| add_category_modal.set(false))} />
         </PopupSection>
@@ -237,7 +238,7 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
 
 
 #[function_component(AddBannerForm)]
-pub fn add_product_form() -> Html {
+pub fn add_banner_form() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
 
     let image_url = use_state(|| None::<String>);
@@ -276,9 +277,8 @@ pub fn add_product_form() -> Html {
                                 url_handle={image_url.clone()}
                                 nostr_keys={nostr_keys.clone()}
                                 classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                                input_id="large-image-upload"  // Unique ID for large image
+                                input_id="large-image-upload"
                             />
-                            // can be removed
                             {if let Some(_url) = (*image_url).clone() {
                                 html! {
                                     <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
@@ -301,8 +301,12 @@ pub fn add_product_form() -> Html {
         }
 }
 
+#[derive(Properties, Clone, PartialEq)]
+pub struct AddProductFormProps {
+    pub close_handle: UseStateHandle<bool>,
+}
 #[function_component(AddProductForm)]
-pub fn add_product_form() -> Html {
+pub fn add_product_form(props: &AddProductFormProps) -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
     let menu = commerce_ctx.menu();
 
@@ -310,6 +314,7 @@ pub fn add_product_form() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageStore found");
+    let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
     let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
     let thumbnail_url = use_state(|| None::<String>);
     let discount_enabled = use_state(|| false);
@@ -323,6 +328,8 @@ pub fn add_product_form() -> Html {
         let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
         let handle = commerce_ctx.clone();
         let menu = menu.clone();
+        let toast_ctx = toast_ctx.clone();
+        let close_modal = props.close_handle.clone();
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
@@ -364,28 +371,32 @@ pub fn add_product_form() -> Html {
                         category.id(),
                     );
 
-                    // Set image URL if available, log the process
                     if let Some(url) = (*image_url).clone() {
-                        gloo::console::log!("Setting main image URL:", url.clone());
                         product.set_image_url(url);
                     }
-                    // Set thumbnail
                     if let Some(url) = (*thumbnail_url).clone() {
-                        gloo::console::log!("Setting thumbnail URL:", url.clone());
                         product.set_thumbnail_url(url);
-                    } else {
-                        gloo::console::warn!("No image URL found for product");
                     }
                     product.set_details(details);
                     product.set_discount(discount);
-                    gloo::console::log!("Final product:", format!("{:?}", product));
-
+    
                     menu.add_product(category.id(), product);
-                    let db_entry = ProductMenuIdb::new(menu, &nostr_keys);
+                    let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys);
                     sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry))
+                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+
+                    toast_ctx.dispatch(ToastAction::Show(Toast {
+                        message: "Product added successfully!".into(),
+                        toast_type: ToastType::Success,
+                    }));
+                    close_modal.set(false);
                 }
-                None => {}
+                None => {
+                    toast_ctx.dispatch(ToastAction::Show(Toast {
+                        message: "Failed to add product: No menu found".into(),
+                        toast_type: ToastType::Error,
+                    }));
+                }
             }
         })
     };
@@ -573,6 +584,13 @@ pub fn product_list_section() -> Html {
             handle.dispatch(CommerceDataAction::UpdateProductList(db_entry))
         }
     });
+    {
+        let menu_state = menu_state.clone();
+        use_effect_with(commerce_ctx.clone(), move |ctx| {
+            menu_state.set(ctx.menu());
+            || {}
+        });
+    }
     html! {
         <div class="min-w-max">
         <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
