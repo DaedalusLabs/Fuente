@@ -222,7 +222,7 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
                     <label for="category_name" class="text-gray-400 font-light block text-md">
                         {&translations["store_products_form_label_add_category"]}
                     </label>
-                    <input type="text" id="category_name" name="category_name" class="border border-fuente rounded-xl p-2 w-full" required=true />
+                    <input type="text" id="category_name" name="category_name" class="border-2 border-fuente rounded-xl p-2 w-full" required=true />
                 </div>
                 <button
                     type="submit"
@@ -427,7 +427,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                 <div>
                     <div class="space-y-2">
                         <label for="product_name" class="text-gray-400 font-light block text-md">{&translations["store_products_form_label_name"]}</label>
-                        <input type="text" id="product_name" class="border border-fuente rounded-xl p-2 w-full" required={true} />
+                        <input type="text" id="product_name" class="border-2 border-fuente rounded-xl p-2 w-full" required={true} />
                     </div>
 
                     <p class="text-gray-400 font-light mt-5 text-sm">{&translations["store_products_form_label_information"]}</p>
@@ -435,7 +435,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                     <div class="mt-5 space-y-4">
                         <div class="grid grid-cols-2 items-center gap-4">
                             <label for="product_category" class="text-gray-400 font-semibold">{&translations["store_products_form_label_category"]}</label>
-                            <select id="product_category" class="border border-fuente rounded-xl p-2 w-full" required={true}>
+                            <select id="product_category" class="border-2 border-fuente rounded-xl p-2 w-full" required={true}>
                                 {if let Some(menu) = (menu).clone() {
                                     menu.categories().iter().map(|category| {
                                         html! {
@@ -451,12 +451,12 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
 
                         <div class="space-y-2">
                             <label for="description" class="text-gray-400 font-light block">{&translations["store_products_form_label_details"]}</label>
-                            <textarea id="details" class="border border-fuente rounded-xl p-2 w-full min-h-32"></textarea>
+                            <textarea id="details" class="border-2 border-fuente rounded-xl p-2 w-full min-h-32"></textarea>
                         </div>
 
                         <div class="space-y-2">
                             <label for="description" class="text-gray-400 font-light block">{&translations["store_products_form_label_description"]}</label>
-                            <textarea id="description" class="border border-fuente rounded-xl p-2 w-full min-h-32"></textarea>
+                            <textarea id="description" class="border-2 border-fuente rounded-xl p-2 w-full min-h-32"></textarea>
                         </div>
                     </div>
                 </div>
@@ -504,18 +504,18 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                         <div class="mt-5 space-y-5">
                             <div class="w-full flex justify-between">
                                 <label for="price" class="text-gray-400 font-semibold ">{&translations["store_products_form_label_original_price"]}</label>
-                                <input onchange={onchange_price.clone()} step={"0.01"} type="number" id="price" class="border border-fuente rounded-xl p-2 max-w-24" />
+                                <input onchange={onchange_price.clone()} step={"0.01"} type="number" id="price" class="border-2 border-fuente rounded-xl p-2 max-w-24" />
                             </div>
 
                             <div class="w-full flex justify-between">
                                 <label for="discount" class="text-gray-400 font-semibold">{&translations["store_products_form_label_discount"]}</label>
-                                <input onchange={onchange_price} step={"0.01"} type="number" id="discount" class="border border-fuente rounded-xl p-2 max-w-24" />
+                                <input onchange={onchange_price} step={"0.01"} type="number" id="discount" class="border-2 border-fuente rounded-xl p-2 max-w-24" />
                             </div>
 
                             <div class="w-full flex justify-between">
                                 <label for="product_price" class="text-gray-400 font-semibold ">{&translations["store_products_form_label_total_price"]}</label>
                                 <input step={"0.01"} type="number" id="product_price"  disabled={true}
-                                    class="border border-fuente rounded-xl p-2 max-w-24" required={true} />
+                                    class="border-2 border-fuente rounded-xl p-2 max-w-24" required={true} />
                             </div>
                         </div>
 
@@ -555,7 +555,7 @@ pub fn banner_details_section(props: &BannerDetailsProps) -> Html {
                         />
                     </div>
                 </div>
-                <button {onclick} class="border border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">
+                <button {onclick} class="border-2 border-fuente text-center text-gray-500 text-lg rounded-xl py-3 px-5 w-1/3 h-fit">
                     {&translations["admin_store_banner_new"]}
                 </button>
             </div>
@@ -871,7 +871,7 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
                         <button
                             type="button"
                             onclick={on_cancel}
-                            class="border border-gray-300 rounded-lg px-4 py-2"
+                            class="border-2 border-gray-300 rounded-lg px-4 py-2"
                         >
                             {"Cancel"}
                         </button>

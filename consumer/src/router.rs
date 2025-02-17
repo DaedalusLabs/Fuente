@@ -402,7 +402,7 @@ pub fn commerce_filters() -> Html {
         </div>
         {if *is_open && businesses.len() > 0 {
             html! {
-                <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                <div class="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-md shadow-lg">
                     <ul class="py-1">
                         {businesses.iter().map(|profile| {
                             let commerce_data = profile.profile().clone();
