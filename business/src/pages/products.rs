@@ -2,7 +2,8 @@ use crate::contexts::{CommerceDataAction, CommerceDataStore};
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput, PopupSection, SimpleInput, SimpleTextArea, Toast, ToastAction, ToastContext, ToastType
+        templates::SettingsPageTemplate, CardComponent, DrawerSection, LoadingScreen, MoneyInput,
+        PopupSection, SimpleInput, SimpleTextArea, Toast, ToastAction, ToastContext, ToastType,
     },
     models::{CommerceProfileIdb, ProductCategory, ProductItem, ProductMenu, ProductMenuIdb},
 };
@@ -12,7 +13,6 @@ use lucide_yew::{Library, Shirt, Trash};
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-
 
 #[derive(Clone, PartialEq)]
 pub enum ProductPageSection {
@@ -166,7 +166,8 @@ pub struct AddCategoryFormProps {
 #[function_component(AddCategoryForm)]
 pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
     let close_modal = props.close_modal.clone();
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageConfigsStore found");
+    let language_ctx =
+        use_context::<LanguageConfigsStore>().expect("No LanguageConfigsStore found");
     let translations = language_ctx.translations();
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
@@ -189,7 +190,8 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
                 .expect("Failed to get category name");
             match menu.clone() {
                 Some(mut menu) => {
-                    let new_category = ProductCategory::new(menu.categories().len(), category_name.clone());
+                    let new_category =
+                        ProductCategory::new(menu.categories().len(), category_name.clone());
                     menu.update_category_name(new_category);
                     let db_entry = ProductMenuIdb::new(menu, &key);
                     sender.emit(db_entry.note());
@@ -206,14 +208,10 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
             }
 
             let success_message = format!("Category \"{}\" added successfully!", category_name);
-            toast_ctx.dispatch(
-                ToastAction::Show(
-                    Toast {
-                        message: success_message,
-                        toast_type: ToastType::Success,
-                    }
-                )
-            );
+            toast_ctx.dispatch(ToastAction::Show(Toast {
+                message: success_message,
+                toast_type: ToastType::Success,
+            }));
             close_modal.emit(());
         })
     };
@@ -236,7 +234,6 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
     }
 }
 
-
 #[function_component(AddBannerForm)]
 pub fn add_banner_form() -> Html {
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
@@ -258,47 +255,47 @@ pub fn add_banner_form() -> Html {
             e.prevent_default();
             if let Some(mut profile) = handle.profile().clone() {
                 profile.banner_url = (*image_url).clone().unwrap();
-                let db_entry = CommerceProfileIdb::new(profile, &nostr_keys).expect("Failed to create profile entry");
+                let db_entry = CommerceProfileIdb::new(profile, &nostr_keys)
+                    .expect("Failed to create profile entry");
                 sender.emit(db_entry.signed_note().clone());
                 handle.dispatch(CommerceDataAction::UpdateCommerceProfile(db_entry));
             }
-
         })
     };
 
     html! {
-        <main class="bg-white rounded-2xl p-10 w-fit h-fit mx-auto">
-            <form {onsubmit} class="grid grid-cols-1 gap-4 md:gap-10 lg:gap-20">
-                <div>
-                    <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_banner"]}</p>
-                    <div class="grid grid-cols-1 mt-2 gap-5 items-center">
-                        <div class="w-full flex flex-col gap-2 justify-center items-center">
-                            <ImageUploadInput
-                                url_handle={image_url.clone()}
-                                nostr_keys={nostr_keys.clone()}
-                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
-                                input_id="large-image-upload"
-                            />
-                            {if let Some(_url) = (*image_url).clone() {
-                                html! {
-                                    <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
-                                }
-                            } else {
-                                html! {}
-                            }}
-                        </div>
-                    </div>
-                    <div>
-                        <button
-                            type="submit"
-                            class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
-                            {&translations["store_products_form_label_add_banner"]}
-                        </button>
+    <main class="bg-white rounded-2xl p-10 w-fit h-fit mx-auto">
+        <form {onsubmit} class="grid grid-cols-1 gap-4 md:gap-10 lg:gap-20">
+            <div>
+                <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_banner"]}</p>
+                <div class="grid grid-cols-1 mt-2 gap-5 items-center">
+                    <div class="w-full flex flex-col gap-2 justify-center items-center">
+                        <ImageUploadInput
+                            url_handle={image_url.clone()}
+                            nostr_keys={nostr_keys.clone()}
+                            classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                            input_id="large-image-upload"
+                        />
+                        {if let Some(_url) = (*image_url).clone() {
+                            html! {
+                                <span class="text-xs text-green-500 mt-1">{"✓ Large image uploaded"}</span>
+                            }
+                        } else {
+                            html! {}
+                        }}
                     </div>
                 </div>
-            </form>
-        </main>
-        }
+                <div>
+                    <button
+                        type="submit"
+                        class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
+                        {&translations["store_products_form_label_add_banner"]}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </main>
+    }
 }
 
 #[derive(Properties, Clone, PartialEq)]
@@ -379,7 +376,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                     }
                     product.set_details(details);
                     product.set_discount(discount);
-    
+
                     menu.add_product(category.id(), product);
                     let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys);
                     sender.emit(db_entry.note());
@@ -551,10 +548,10 @@ pub fn banner_details_section(props: &BannerDetailsProps) -> Html {
             <div class="w-full flex flex-col md:flex-row items-center gap-5 p-2">
                 <div class="w-full">
                     <div class="w-full relative bg-fuente rounded-2xl h-32 overflow-hidden">
-                        <img 
-                            src={profile.banner_url.clone()} 
+                        <img
+                            src={profile.banner_url.clone()}
                             alt={profile.name.clone()}
-                            class="absolute inset-0 w-full h-full object-cover" 
+                            class="absolute inset-0 w-full h-full object-cover"
                         />
                     </div>
                 </div>
@@ -572,6 +569,8 @@ pub fn product_list_section() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("Consumer context not found");
     let menu_state = use_state(|| commerce_ctx.menu());
     let editing_product = use_state(|| None::<ProductItem>); // Editing product state
+    let deleting_product = use_state(|| None::<(String, String)>);
+    let show_delete_popup = use_state(|| false);
 
     let new_menu = menu_state.clone();
     let handle = commerce_ctx.clone();
@@ -606,29 +605,17 @@ pub fn product_list_section() -> Html {
                    {category.products().iter().map(|product| {
                        let menu_handle = menu_state.clone();
 
-                       // Delete handler
                        let on_delete = {
-                           let product_id = product.id();
-                           let category_id = category.id();
-                           let menu_handle = menu_handle.clone();
-                           let handle = commerce_ctx.clone();  // Get commerce context
-                           let keys = key_ctx.get_nostr_key().expect("No user keys found");
-                           let sender = relay_ctx.send_note.clone();
+                            let product_id = product.id();
+                            let category_id = category.id();
+                            let deleting_product = deleting_product.clone();
+                            let show_delete_popup = show_delete_popup.clone();
 
-                           Callback::from(move |_: MouseEvent| {
-                               if let Some(mut menu) = (*menu_handle).clone() {
-                                   menu.remove_product(&category_id, &product_id);
-
-                                   // Create ProductMenuIdb and broadcast changes
-                                   let db_entry = ProductMenuIdb::new(menu.clone(), &keys);
-                                   sender.emit(db_entry.note());
-                                   handle.dispatch(CommerceDataAction::UpdateProductList(db_entry.clone()));
-
-                                   // Update local state
-                                   menu_handle.set(Some(menu));
-                               }
-                           })
-                       };
+                            Callback::from(move |_: MouseEvent| {
+                                deleting_product.set(Some((category_id.clone(), product_id.clone())));
+                                show_delete_popup.set(true);
+                            })
+                        };
 
                        let _on_edit = {
                            let editing_product = editing_product.clone();
@@ -641,7 +628,7 @@ pub fn product_list_section() -> Html {
 
                        html! {
                            <div class="grid grid-cols-4 gap-5 md:gap-20 mt-10 items-center">
-                               <img src={product.thumbnail_url()} alt="Product Image" 
+                               <img src={product.thumbnail_url()} alt="Product Image"
                                    class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block" />
                                <div class="text-left flex flex-col w-32 justify-start">
                                    <p class="font-bold text-gray-500">{product.name()}</p>
@@ -651,7 +638,7 @@ pub fn product_list_section() -> Html {
                                <p class="text-2xl md:text-4xl text-fuente font-bold">
                                    {product.price()}
                                </p>
-                               <button onclick={on_delete} 
+                               <button onclick={on_delete}
                                    class="w-8 h-8 md:h-10 md:w-10 text-red-500">
                                    <Trash class="cursor-pointer" />
                                </button>
@@ -664,6 +651,56 @@ pub fn product_list_section() -> Html {
                }
            }
         </div>
+            <PopupSection close_handle={show_delete_popup.clone()}>
+                <div class="bg-white rounded-2xl p-6 max-w-md mx-auto">
+                    <h3 class="text-lg font-semibold mb-4">{"Are you sure you want to delete this product?"}</h3>
+                    <p class="text-gray-600 mb-6">{"This action cannot be undone."}</p>
+                    <div class="flex justify-end gap-4">
+                        <button
+                            onclick={
+                                let show_delete_popup = show_delete_popup.clone();
+                                let deleting_product = deleting_product.clone();
+                                Callback::from(move |_| {
+                                    show_delete_popup.set(false);
+                                    deleting_product.set(None);
+                                })
+                            }
+                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                        >
+                            {"Cancel"}
+                        </button>
+                        <button
+                            onclick={
+                                let menu_handle = menu_state.clone();
+                                let handle = commerce_ctx.clone();
+                                let keys = key_ctx.get_nostr_key().expect("No user keys found");
+                                let sender = relay_ctx.send_note.clone();
+                                let deleting_product = deleting_product.clone();
+                                let show_delete_popup = show_delete_popup.clone();
+
+                                Callback::from(move |_| {
+                                    if let (Some((category_id, product_id)), Some(mut menu)) = ((*deleting_product).clone(), (*menu_handle).clone()) {
+                                        menu.remove_product(&category_id, &product_id);
+
+                                        // Create ProductMenuIdb and broadcast changes
+                                        let db_entry = ProductMenuIdb::new(menu.clone(), &keys);
+                                        sender.emit(db_entry.note());
+                                        handle.dispatch(CommerceDataAction::UpdateProductList(db_entry.clone()));
+
+                                        // Update local state
+                                        menu_handle.set(Some(menu));
+                                        deleting_product.set(None);
+                                        show_delete_popup.set(false);
+                                    }
+                                })
+                            }
+                            class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                        >
+                            {"Delete"}
+                        </button>
+                    </div>
+                </div>
+            </PopupSection>
         </div>
 
     }
