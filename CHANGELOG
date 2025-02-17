@@ -2,6 +2,10 @@
 
 ## [1.1.0] - 2025-02-14
 ### Fixed
+- Adjust `courier list` and `courier pubkey form` for a better user experience
+
+## [1.1.0] - 2025-02-14
+### Fixed
 - Implemented styles for the "Unauthorized" screen based on the provided design.
 
 ## [1.1.0] - 2025-02-14
