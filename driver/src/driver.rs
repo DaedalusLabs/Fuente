@@ -7,7 +7,7 @@ use driver::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider, LanguageConfigsStore},
-    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput},
+    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput, ToastProvider},
     models::{
         init_commerce_db, init_consumer_db, DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY,
     },
@@ -47,13 +47,15 @@ fn app() -> Html {
         <BrowserRouter>
             <RelayPoolComponent>
                 <LoginContext>
-                    <LoginCheck>
-                        <AppContext>
-                            <ProfileCheck>
-                                <DriverPages />
-                            </ProfileCheck>
-                        </AppContext>
-                    </LoginCheck>
+                    <ToastProvider>
+                        <LoginCheck>
+                            <AppContext>
+                                <ProfileCheck>
+                                    <DriverPages />
+                                </ProfileCheck>
+                            </AppContext>
+                        </LoginCheck>
+                    </ToastProvider>
                 </LoginContext>
             </RelayPoolComponent>
         </BrowserRouter>
@@ -251,7 +253,7 @@ pub fn new_profile_form() -> Html {
 
     html! {
         <form {onsubmit}
-            class="w-full flex flex-col gap-2 bg-fuente-forms rounded-3xl p-4 items-center">
+            class="w-fit ml-auto flex flex-col gap-2 bg-fuente-forms rounded-3xl items-center p-5 space-y-5">
                 <SimpleInput
                     id="name"
                     name="name"
@@ -270,7 +272,7 @@ pub fn new_profile_form() -> Html {
                     />
                 <button
                     type="submit"
-                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl">
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-normal text-nowrap">
                     {"Save"}
                 </button>
         </form>

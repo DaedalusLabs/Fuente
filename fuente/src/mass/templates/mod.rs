@@ -48,6 +48,7 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
                                 "lg:text-left",
                                 "lg:text-lg",
                                 "tracking-wide",
+                                "whitespace-nowrap",
                                 if *selected { selected_class.clone() } else { unselected_class.clone() }
                             )}
                             {onclick}>
