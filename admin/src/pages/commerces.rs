@@ -46,7 +46,7 @@ fn commerce_details(props: &CommerceDetailsProps) -> Html {
         html! {
         <div
             // onclick={props.on_click.clone()} id={order_id}
-            class="bg-white shadow py-2 px-5 rounded-2xl space-y-1 w-full">
+            class="py-2 px-5 space-y-1 w-full border-b border-gray-400 last-of-type:border-b-0">
             <p class="text-fuente font-bold text-md">{profile.name}</p>
             <p class="text-sm text-muted-foreground">{&profile.description}</p>
             <p class="text-gray-500 text-xs">{&profile.telephone}</p>
@@ -237,7 +237,7 @@ pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
                         <p class="text-green-500 text-lg font-semibold text-center">{&translations["admin_settings_commerces_registered"]}</p>
                     </div>
 
-                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-green-100"}>
+                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-green-100 border-2 border-green-500"}>
                         <div class="grid grid-cols-1 gap-4">
                         {whitelisted_commerces.iter().map(|id| {
                             html! { <CommerceDetails commerce_id={id.clone()} onclick={unregister_onclick.clone()} action={translations["admin_settings_commerces_unregister"].clone()} />}
@@ -252,7 +252,7 @@ pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
                         <p class="text-red-500 text-lg font-semibold text-center">{&translations["admin_settings_commerces_unregistered"]}</p>
                     </div>
 
-                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-red-100"}>
+                     <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-red-100 border-2 border-red-500"}>
                         <div class="grid grid-cols-1 gap-4">
                         {unregistered_commerces.iter().map(|id| {
                             html! { <CommerceDetails commerce_id={id.clone()} onclick={register_onclick.clone()} action={translations["admin_settings_commerces_register"].clone()} />}

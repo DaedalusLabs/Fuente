@@ -21,8 +21,10 @@ pub fn exchange_rate_page() -> Html {
                         {&translations["admin_settings_title_couriers"]}
                     </h1>
                 </div>
-                <CourierWhitelistForm />
-                <CourierWhitelistProfiles />
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-center">
+                    <CourierWhitelistForm />
+                    <CourierWhitelistProfiles />
+                </div>
             </div>
         </main>
     }
@@ -137,20 +139,22 @@ pub fn courier_whitelist_form() -> Html {
     });
     html! {
         <form {onsubmit}
-            class="rounded-2xl bg-white p-5 md:max-w-sm lg:max-w-xs mx-auto">
-            <div class="space-y-2">
-                <label for="exchange_rate" class="text-gray-500 font-light text-sm">{"New Courier Pubkey"}</label>
-                <input
-                    type="text"
-                    id="courier_id"
-                    name="courier_id"
-                    class="w-full rounded-lg border-2 border-fuente p-2"
-                    value="" required={true} />
+            class="rounded-2xl bg-white p-5 w-full md:max-w-lg mx-auto shadow-xl">
+            <div class="space-y-5">
+                <div class="space-y-2">
+                    <label for="exchange_rate" class="block text-gray-500 font-bold text-center">{"New Courier Pubkey"}</label>
+                    <input
+                        type="text"
+                        id="courier_id"
+                        name="courier_id"
+                        class="w-full rounded-lg border-2 border-fuente p-2"
+                        value="" required={true} />
+                </div>
                 <div class="flex justify-center">
                     <input
                         type="submit"
                         value={translations["admin_settings_submit"].clone()}
-                        class="bg-fuente-orange text-center text-white font-bold text-sm py-3 rounded-full w-full md:w-1/2 lg:mx-auto"
+                        class="bg-fuente-orange text-center text-white font-bold py-3 rounded-full w-full md:w-1/2 lg:mx-auto cursor-pointer"
                     />
                 </div>
             </div>
