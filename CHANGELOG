@@ -2,7 +2,11 @@
 
 ## [1.1.0] - 2025-02-14
 ### Fixed
-- Fixed exchange screen spacing and alignment for a better readability
+- Implemented styles for the "Unauthorized" screen based on the provided design.
+
+## [1.1.0] - 2025-02-14
+### Fixed
+- Fixed `exchange screen` spacing and alignment for a better readability
 
 ## [1.1.0] - 2025-02-14
 ### Fixed
