@@ -19,7 +19,7 @@ pub fn exchange_rate_page() -> Html {
                         {&translations["admin_settings_title_exchange"]}
                     </h1>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10 border-2 border-fuente rounded-2xl w-full lg:max-w-5xl mx-auto">
                     <div class="flex-1">
                         <ExchangeRateDisplay />
                     </div>
@@ -44,8 +44,7 @@ pub fn exchange_rate_display() -> Html {
                 <p class="text-fuente font-bold text-2xl">{format!("1 BTC = SRD {}", exchange_rate)}</p>
             </div>
             <div class="space-y-2">
-                <p class="text-gray-500 text-md font-bold">{"Sat Price"}</p>
-                <p class="text-gray-500 font-light text-md">{format!("1 SAT = SRD {}", sat_rate)}</p>
+                <p class="text-gray-500 text-md"><span class="font-bold">{"Sat Price: "}</span>{ format!("1 SAT = SRD {}", sat_rate) }</p>
             </div>
         </div>
     }
@@ -92,7 +91,7 @@ pub fn exchange_rate_form() -> Html {
                     <input
                         type="submit"
                         value={translations["admin_settings_submit"].clone()}
-                        class="bg-fuente-orange text-center text-white font-bold text-sm py-3 rounded-full w-full md:w-1/2 lg:mx-auto"
+                        class="bg-fuente-orange text-center text-white font-bold text-sm py-3 rounded-full w-full md:w-1/2 lg:mx-auto cursor-pointer"
                     />
                 </div>
             </div>

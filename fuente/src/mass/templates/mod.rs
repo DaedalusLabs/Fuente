@@ -634,7 +634,7 @@ pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
                 </div>
             </aside>
 
-            <nav class="w-full bg-white lg:hidden shadow-lg py-3 px-6 rounded-xl order-last fixed bottom-0 mb-5 mx-auto">
+            <nav class="w-full bg-white lg:hidden shadow-lg py-3 px-6 rounded-xl order-last fixed bottom-0 mx-auto">
                 <ul class="flex items-center justify-evenly">
                     {props.children.clone()}
                 </ul>
