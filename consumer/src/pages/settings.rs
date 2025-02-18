@@ -11,7 +11,7 @@ use fuente::mass::{
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::{Compass, Mail, MapPin, Phone, Plus, ScrollText, SquarePen, Trash2, Truck};
+use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck, Upload};
 use nostr_minions::key_manager::NostrIdAction;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
@@ -161,7 +161,7 @@ pub fn settings_page() -> Html {
             SettingsPage::Address => {
                 html! {
                     <button onclick={Callback::from(move |_| address_popup_handle.set(true))}
-                        type="button" class="absolute right-52 top-6 m-2 flex gap-2 items-center">
+                        type="button" class="absolute right-2 top-2 m-2 flex gap-4 tracking-wide">
                         <span class="text-fuente font-bold text-xl">
                             {&translations["profile_personal_information_edit_button"]}
                         </span>
@@ -237,7 +237,7 @@ pub fn my_contact_details() -> Html {
     let translations = language_ctx.translations();
     let profile_popup_handle = use_state(|| false);
     let profile_popup_handle_clone = profile_popup_handle.clone();
-
+    
     // Get profile safely
     match user_ctx.get_profile() {
         Some(profile) => {
@@ -270,7 +270,7 @@ pub fn my_contact_details() -> Html {
 
                         <div class="flex flex-col items-center justify-center space-y-6">
                             <div class="relative w-full max-w-xs aspect-square">
-                                <img
+                                <img 
                                     src={profile.avatar_url.clone()}
                                     alt="Profile Logo"
                                     class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
@@ -283,13 +283,13 @@ pub fn my_contact_details() -> Html {
                     </PopupSection>
                 </div>
             }
-        }
+        },
         None => {
             html! {
                 <div class="flex flex-col items-center justify-center p-8">
                     <h2 class="text-2xl font-semibold mb-4">{&translations["profile_not_setup"]}</h2>
                     <p class="text-gray-600 mb-4">{&translations["profile_setup_required"]}</p>
-                    <AppLink<ConsumerRoute>
+                    <AppLink<ConsumerRoute> 
                         class="bg-fuente text-white px-6 py-2 rounded-lg"
                         selected_class=""
                         route={ConsumerRoute::Home}>
@@ -429,142 +429,53 @@ pub fn my_address_details() -> Html {
     let mut addresses = use_context::<ConsumerDataStore>()
         .expect("No user context found")
         .get_address_entrys();
-    let address_popup_handle = use_state(|| false);
-
     addresses.sort_by(|a, b| a.is_default().cmp(&b.is_default()));
     addresses.reverse();
+    let default_address = addresses.iter().find(|a| a.is_default());
     html! {
-        <div class="max-w-full flex flex-col p-6 rounded-lg space-y-6 overflow-hidden">
-            <div class="w-full flex flex-row justify-between items-center border-b pb-4">
-                <h2 class="text-2xl font-bold">
-                    {&translations["profile_address_registered"]}
-                </h2>
-                <button
-                onclick={let handle = address_popup_handle.clone();
-                        Callback::from(move |_| handle.set(true))}
-                class="absolute top-6 right-6 bg-fuente hover:bg-fuente-dark text-white rounded-full flex items-center gap-2 px-6 py-3"
-            >
-                <Plus class="w-5 h-5" />
-                <span class="text-base font-bold whitespace-nowrap">{&translations["profile_address_new_address_button"]}</span>
-            </button>
-            </div>
+        {if let Some(address) = default_address {
+            let lookup = address.address().lookup(); 
+            html! {
+                <div class="max-w-full flex flex-col p-6 rounded-lg space-y-6 overflow-hidden">
+                    <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
+                      {&translations["profile_address_registered"]}
+                    </h3>
 
-            {if addresses.is_empty() {
-                html! {
-                    <div class="p-10">
-                        <p class="text-xl font-bold text-gray-500">{&translations["profile_address_registered"]}</p>
-                        <span class="text-xl font-thin text-gray-500">{&translations["profile_no_address_registered"]}</span>
-                    </div>
-                }
-            } else {
-                html! {
                     <div class="space-y-4">
-                        {addresses.iter().map(|address| {
-                            html! {
-                                <AddressCard address={address.clone()} />
-                            }
-                        }).collect::<Html>()}
+                      <div class="flex items-start space-x-3">
+                        <MapPin class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                        <div class="flex-grow">
+                          <p class="text-gray-700 text-lg font-bold">
+                            {&translations["profile_address_registered"]}
+                          </p>
+                          <p class="text-gray-600 text-xl font-light break-words max-w-xs sm:max-w-sm">
+                            {&lookup.display_name()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-start space-x-3">
+                        <Compass class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                        <div class="flex-grow">
+                          <p class="text-gray-700 text-lg font-bold">
+                            {&translations["profile_address_coordinates"]}
+                          </p>
+                          <p class="text-gray-600 text-xl font-light">
+                            {format!("Latitude: {:.2} Longitude: {:.2}", &lookup.lat_as_f64(), &lookup.long_as_f64())}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                }
-            }}
-
-            <PopupSection close_handle={address_popup_handle.clone()}>
-                <NewAddressMenu close_handle={address_popup_handle} />
-            </PopupSection>
-        </div>
-    }
-}
-
-#[derive(Properties, Clone, PartialEq)]
-pub struct AddressCardProps {
-    pub address: ConsumerAddressIdb,
-}
-#[function_component(AddressCard)]
-pub fn address_card(props: &AddressCardProps) -> Html {
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
-    let translations = language_ctx.translations();
-    let consumer_ctx = use_context::<ConsumerDataStore>().expect("No user context found");
-
-    let lookup = props.address.address().lookup();
-    let is_default = props.address.is_default();
-
-    let set_as_default = {
-        let handle = consumer_ctx.clone();
-        let address = props.address.clone();
-        Callback::from(move |_| {
-            if !address.is_default() {
-                handle.dispatch(ConsumerDataAction::SetDefaultAddress(address.clone()));
+                </div>
             }
-        })
-    };
-
-    let delete_address = {
-        let handle = consumer_ctx.clone();
-        let address = props.address.clone();
-        Callback::from(move |_| {
-            handle.dispatch(ConsumerDataAction::DeleteAddress(address.clone()));
-        })
-    };
-
-    html! {
-        <div class={classes!(
-            "p-6",
-            "rounded-lg",
-            "border-2",
-            "space-y-4",
-            if is_default { "border-fuente" } else { "border-gray-200" }
-        )}>
-            <div class="flex items-start space-x-3">
-                <MapPin class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
-                <div class="flex-grow">
-                    <p class="text-gray-700 text-lg font-bold">
-                        {&translations["profile_address_registered"]}
-                    </p>
-                    <p class="text-gray-600 text-xl font-light break-words max-w-xs sm:max-w-sm">
-                        {&lookup.display_name()}
-                    </p>
+        } else {
+            html! {
+                <div class="p-10 ">
+                    <p class="text-xl font-bold text-gray-500">{&translations["profile_address_registered"]}</p>
+                    <span class="text-xl font-thin text-gray-500">{&translations["profile_no_address_registered"]}</span>
                 </div>
-            </div>
-
-            <div class="flex items-start space-x-3">
-                <Compass class="text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
-                <div class="flex-grow">
-                    <p class="text-gray-700 text-lg font-bold">
-                        {&translations["profile_address_coordinates"]}
-                    </p>
-                    <p class="text-gray-600 text-xl font-light">
-                        {format!("Latitude: {:.2} Longitude: {:.2}",
-                            &lookup.lat_as_f64(),
-                            &lookup.long_as_f64())}
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3">
-                {if !is_default {
-                    html! {
-                        <button
-                            onclick={set_as_default}
-                            class="bg-fuente text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2"
-                        >
-                            {"Set as Default"}
-                        </button>
-                    }
-                } else {
-                    html! {
-                        <span class="text-fuente text-sm font-bold px-4 py-2">
-                            {"Default Address"}
-                        </span>
-                    }
-                }}
-                <button
-                    onclick={delete_address}
-                    class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold"
-                >
-                    <Trash2 class="w-4 h-4" />
-                </button>
-            </div>
-        </div>
+            }
+        }}
     }
 }
 

@@ -422,7 +422,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
     };
 
     html! {
-        <main class="bg-white rounded-2xl p-4 md:p-5 lg:p-10 max-w-6xl mx-auto flex-1 max-h-screen m-2 overflow-y-auto no-scrollbar">
+        <main class="bg-white rounded-2xl p-4 md:p-5 lg:p-10 min-w-6xl max-w-6xl mx-auto flex-1 max-h-screen m-2 overflow-y-auto no-scrollbar">
             <form {onsubmit} class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-20">
                 <div>
                     <div class="space-y-2">
@@ -465,14 +465,14 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                     <p class="text-gray-400 text-sm font-light">{&translations["store_products_form_label_photos"]}</p>
                     <div class="grid grid-cols-2 mt-2 gap-5">
                         // Large Image Upload
-                        <div class="w-full flex flex-col gap-2">
-                            <label class="text-xs font-bold text-neutral-400">
+                        <div class="w-full space-y-2">
+                            <label class="text-xs font-bold text-neutral-400 whitespace-nowrap">
                                 {"Product Image (Large)"}
                             </label>
                             <ImageUploadInput
                                 url_handle={image_url.clone()}
                                 nostr_keys={nostr_keys.clone()}
-                                classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")}
+                                classes={classes!("size-32")}
                                 input_id="large-image-upload"  // Unique ID for large image
                             />
                             // can be removed
@@ -486,14 +486,14 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                         </div>
 
                         // Thumbnail Image Upload
-                        <div class="w-full flex flex-col gap-2">
+                        <div class="w-full space-y-2">
                             <label class="text-xs font-bold text-neutral-400">
                                 {"Product Thumbnail"}
                             </label>
                             <ImageUploadInput
                                 url_handle={thumbnail_url.clone()}
                                 nostr_keys={nostr_keys}
-                                classes={classes!("min-w-16", "min-h-16", "h-16", "w-16")}
+                                classes={classes!("size-32")}
                                 input_id="thumbnail-image-upload"  // Unique ID for thumbnail image
                             />
                         </div>
@@ -504,18 +504,18 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                         <div class="mt-5 space-y-5">
                             <div class="w-full flex justify-between">
                                 <label for="price" class="text-gray-400 font-semibold ">{&translations["store_products_form_label_original_price"]}</label>
-                                <input onchange={onchange_price.clone()} step={"0.01"} type="number" id="price" class="border-2 border-fuente rounded-xl p-2 max-w-24" />
+                                <input onchange={onchange_price.clone()} step={"0.01"} type="number" id="price" class="border-2 border-fuente rounded-xl p-2 max-w-32" min={"0"} />
                             </div>
 
                             <div class="w-full flex justify-between">
                                 <label for="discount" class="text-gray-400 font-semibold">{&translations["store_products_form_label_discount"]}</label>
-                                <input onchange={onchange_price} step={"0.01"} type="number" id="discount" class="border-2 border-fuente rounded-xl p-2 max-w-24" />
+                                <input onchange={onchange_price} step={"0.01"} type="number" id="discount" class="border-2 border-fuente rounded-xl p-2 max-w-32" />
                             </div>
 
                             <div class="w-full flex justify-between">
                                 <label for="product_price" class="text-gray-400 font-semibold ">{&translations["store_products_form_label_total_price"]}</label>
                                 <input step={"0.01"} type="number" id="product_price"  disabled={true}
-                                    class="border-2 border-fuente rounded-xl p-2 max-w-24" required={true} />
+                                    class="border-2 border-fuente rounded-xl p-2 max-w-32" required={true} />
                             </div>
                         </div>
 
@@ -594,8 +594,8 @@ pub fn product_list_section() -> Html {
         <div class="min-w-max">
         <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
            <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center">
-               <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
                <p class=""></p>
+               <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
                <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</p>
                <p class=""></p>
            </div>
