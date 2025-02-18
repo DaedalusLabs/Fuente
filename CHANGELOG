@@ -4,6 +4,11 @@
 
 =======
 
+## [1.1.0] - 2025-02-19
+### Added
+- Implemented multiple address management in Consumer PWA
+- Added ability to set and change default delivery address
+
 ## [1.1.0] - 2025-02-18
 ### Added
 - Added confirmation dialog for product deletion to prevent accidental removals
