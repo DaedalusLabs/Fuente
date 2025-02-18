@@ -39,9 +39,9 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-        <main class="flex flex-col h-screen overflow-hidden container w-full mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
+        <main class="flex flex-col overflow-hidden container w-full mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4 py-5">
+                <h1 class="text-3xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["cart_heading"]}
                 </h1>
             </div>
@@ -59,9 +59,9 @@ pub fn empty_cart() -> Html {
         use_context::<LanguageConfigsStore>().expect("No language context not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+        <main class="flex flex-col overflow-hidden w-full mx-auto">
             <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto py-5 gap-4">
-                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
+                <h1 class="text-3xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["checkout_product_empty_table_heading"]}
                 </h1>
             </div>
@@ -102,9 +102,9 @@ pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
         };
     }
     html! {
-        <div class="flex-1 overflow-hidden py-2 lg:py-4 w-full">
+        <div class="overflow-hidden py-2 lg:py-4 w-full">
             <div class="overflow-auto border-2 border-fuente rounded-xl no-scrollbar relative p-2">
-                <h2 class=" bg-white flex text-2xl text-fuente font-bold pt-5 sticky top-0">{&translations["cart_text"]}</h2>
+                <h2 class="bg-white flex text-2xl text-fuente font-bold px-10 pt-5 sticky top-0">{&translations["cart_text"]}</h2>
 
                 <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
                     <h3></h3>
@@ -159,9 +159,9 @@ pub fn cart_pre_total() -> Html {
         })
     };
     html! {
-        <div class="flex flex-col gap-4 mx-auto">
-            <div class="bg-gray-100 p-5 lg:px-12 m-5 rounded-2xl flex justify-end items-center">
-                <p class="text-center text-fuente text-lg flex items-center gap-10">
+        <div class="flex flex-col gap-4 mx-auto h-fit">
+            <div class="bg-gray-100 p-5 m-5 rounded-2xl flex justify-end items-center">
+                <p class="text-center text-fuente text-lg flex items-center gap-5">
                     {&translations["cart_pre_total"]}
                     <span class="font-bold text-2xl md:text-3xl">{format!("SRD {:.2}", order.total())}</span>
                 </p>
@@ -191,14 +191,14 @@ pub fn cart_page() -> Html {
     }
 
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-col lg:flex-row justify-between items-center px-4 lg:px-10 gap-4">
-                <h1 class="text-2xl font-mplus lg:text-6xl text-nowrap uppercase text-fuente tracking-tighter font-bold text-center">
+        <main class="flex flex-col h-screen overflow-hidden container mx-auto">
+            <div class="flex flex-col lg:flex-row justify-between items-center py-5 gap-4">
+                <h1 class="text-3xl font-mplus lg:text-6xl text-nowrap text-fuente tracking-tighter font-bold text-center">
                     {&translations["checkout_title"]}
                 </h1>
             </div>
             <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                <div class="grid xl:grid-cols-[3fr_1fr] mt-10 gap-5 overflow-y-auto">
+                <div class="grid xl:grid-cols-[3fr_1fr] gap-5 overflow-y-auto">
                     <div>
                         <CheckoutClientInfo />
                         <CartTemplate order={ProductOrder::new(cart_items)} />
@@ -262,29 +262,29 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
     };
     let price = item.price().parse::<f64>().unwrap() * *count as f64;
     html! {
-        <div class="flex flex-col min-[450px]:flex-row justify-center sm:justify-between items-center gap-5 mt-10 py-10">
+        <div class="flex flex-col min-[450px]:flex-row justify-center sm:justify-between items-center gap-5 mt-10 py-10 px-10">
             <img
                 src={item.thumbnail_url()}
                 alt="Product Image"
-                class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block"
+                class="size-32 object-contain bg-gray-100 rounded-xl block"
             />
             <div class="flex items-center min-[450px]:items-start flex-col">
                 <p class="text-gray-500 font-bold">{item.name()}</p>
-                <p class="text-gray-500 font-light w-20 sm:w-28 lg:w-32 line-clamp-3">{item.details()}</p>
+                <p class="text-gray-500 font-light line-clamp-3">{item.details()}</p>
                 <p class="text-gray-500 font-bold uppercase">{format!("SKU: {}", item.sku())}</p>
                 <button onclick={add_one_item.clone()}
                     class="lg:hidden border-2 border-fuente px-5 py-2 rounded-xl w-fit mt-1">{count}</button>
             </div>
 
-            <div class="hidden lg:flex items-center justify-between border-2 border-fuente rounded-xl">
+            <div class="hidden lg:flex items-center justify-between border-2 border-fuente rounded-xl gap-5 px-2">
                 <button onclick={remove_one_item}
-                    class="text-gray-500 w-full px-5 py-3">{"-"}</button>
-                <button class="text-gray-500 w-full px-5 py-3">{count}</button>
+                    class="text-gray-500 w-full py-3">{"-"}</button>
+                <button class="text-gray-500 w-full py-3">{count}</button>
                 <button onclick={add_one_item}
-                    class="text-gray-500 w-full px-5 py-3">{"+"}</button>
+                    class="text-gray-500 w-full py-3">{"+"}</button>
             </div>
 
-            <p class="text-2xl md:text-4xl text-fuente font-bold">{format!("SRD {:.2}", price)}</p>
+            <p class="text-2xl text-center md:text-4xl text-fuente font-bold">{format!("SRD {:.2}", price)}</p>
 
             <button onclick={clear_product} >
                 <Trash2 class="w-8 h-8 text-red-500" />
@@ -302,8 +302,8 @@ pub fn checkout_summary() -> Html {
     let user_address = user_ctx.get_default_address();
     if let (Some(profile), Some(address)) = (user_profile, user_address) {
         html! {
-            <div class="border-2 border-fuente rounded-2xl py-5 px-10 mx-2 lg:mx-4">
-                <h2 class="text-fuente text-3xl font-semibold">{&translations["checkout_client_information"]}</h2>
+            <div class="border-2 border-fuente rounded-2xl py-5 px-10">
+                <h2 class="text-fuente text-3xl font-bold">{&translations["checkout_client_information"]}</h2>
                 <div class="flex items-center justify-between mt-5 flex-wrap gap-5">
                     <div>
                         <h3 class="text-gray-400 font-bold text-lg">{&translations["checkout_client_information_heading_name"]}</h3>

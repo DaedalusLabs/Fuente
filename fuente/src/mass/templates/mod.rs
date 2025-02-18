@@ -596,12 +596,12 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let translations = language_ctx.translations();
     html! {
         <main class="flex flex-col h-screen overflow-hidden w-full container mx-auto">
-            <div class="flex flex-row items-center justify-center lg:justify-start">
-                <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left lg:text-6xl tracking-tighter font-bold">
+            <div class="flex flex-row items-center justify-center lg:justify-start py-5">
+                <h1 class="text-fuente font-mplus text-3xl text-center lg:text-left lg:text-6xl tracking-tighter font-bold">
                     {&translations["favorites_stores_heading"]}
                 </h1>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden gap-5 mt-5">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden gap-5">
                 <SettingsSideBar options={
                     vec![
                         (translations["favorites_stores_stores_button"].clone(), Callback::noop(), true),
