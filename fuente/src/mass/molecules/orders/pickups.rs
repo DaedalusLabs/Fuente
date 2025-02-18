@@ -120,9 +120,9 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
             };
             let _ = map.add_marker_with_icon(&commerce_location, commerce_icon);
             let consumer_icon = IconOptions {
-                icon_url: "/public/assets/img/my_marker.png".to_string(),
+                icon_url: "/public/assets/img/red-pin.svg".to_string(),
                 icon_size: Some(vec![32, 32]),
-                icon_anchor: Some(vec![16, 16]),
+                icon_anchor: Some(vec![16, 32]),
             };
             let _ = map.add_marker_with_icon(&consumer_location, consumer_icon);
             let bounds = vec![

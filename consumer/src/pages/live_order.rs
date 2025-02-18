@@ -405,9 +405,9 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                         let _ = map_instance.add_marker_with_icon(&pickup_location, pickup_icon);
 
                         let delivery_icon = IconOptions {
-                            icon_url: "/public/assets/img/my_marker.png".to_string(),
+                            icon_url: "/public/assets/img/red-pin.svg".to_string(),
                             icon_size: Some(vec![32, 32]),
-                            icon_anchor: Some(vec![16, 16]),
+                            icon_anchor: Some(vec![16, 32]),
                         };
                         let _ = map_instance.add_marker_with_icon(&delivery_location, delivery_icon);
 

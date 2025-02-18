@@ -5,6 +5,10 @@
 - Implemented multiple address management in Consumer PWA.
 - Added ability to set and change default delivery address.
 
+### Fixed
+- Changes the user location marker on maps to a red pin for better visibility
+- Updates the map container styling to match business interface design
+
 ## [1.1.0] - 2025-02-18
 ### Fixed
 - Fix `Business Add Product` modal spacing, margins and paddings for a better UI consistency.
