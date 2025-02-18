@@ -402,7 +402,7 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
             Some(url) => {
                 html! {
                      <div class="relative w-full h-full">
-                        <img src={url.clone()} class="w-full h-full object-cover" />
+                        <img src={url.clone()} class="size-20 object-cover" />
                         <label for={input_id.clone()} class="absolute inset-0 flex items-center justify-center">
                             <input {onchange} id={input_id.clone()} type="file" accept="image/*" class="hidden" />
                             {match *is_loading_new {

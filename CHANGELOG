@@ -1,13 +1,17 @@
 # Changelog <!-- Newer dates on top -->
 
+## [1.1.0] - 2025-02-19
+### Added
+- Implemented multiple address management in Consumer PWA.
+- Added ability to set and change default delivery address.
+
+## [1.1.0] - 2025-02-18
+### Fixed
+- Fix `Business Add Product` modal spacing, margins and paddings for a better UI consistency.
+
 ## [1.1.0] - 2025-02-18
 ### Fixed
 - Adjust `Checkout` UI margins, paddings and layouts for a better UI consistency.
-
-## [1.1.0] - 2025-02-19
-### Added
-- Implemented multiple address management in Consumer PWA
-- Added ability to set and change default delivery address
 
 ## [1.1.0] - 2025-02-18
 ### Added
