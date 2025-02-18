@@ -1,13 +1,13 @@
 # Changelog <!-- Newer dates on top -->
 
-<<<<<<< CHANGELOG
-
-=======
+## [1.1.0] - 2025-02-18
+### Fixed
+- Adjust `Checkout` UI margins, paddings and layouts for a better UI consistency.
 
 ## [1.1.0] - 2025-02-18
 ### Added
-- Added confirmation dialog for product deletion to prevent accidental removals
-- Implemented user-friendly warning message for irreversible actions
+- Added confirmation dialog for product deletion to prevent accidental removals.
+- Implemented user-friendly warning message for irreversible actions.
 
 ## [1.1.0] - 2025-02-17
 ### Fixed

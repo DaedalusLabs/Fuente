@@ -102,7 +102,7 @@ pub fn commerce_page_template(props: &CommercePageProps) -> Html {
         },
         None => html! {
             <main class="flex flex-col w-full mx-auto">
-                <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto gap-4">
+                <div class="flex flex-col lg:flex-row justify-between items-center container mx-auto gap-4 py-5">
                     <h1 class="text-2xl font-mplus lg:text-6xl text-fuente tracking-tighter font-bold text-center line-clamp-2">
                         {&commerce_profile.name}
                     </h1>
