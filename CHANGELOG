@@ -8,6 +8,8 @@
 ### Fixed
 - Changes the user location marker on maps to a red pin for better visibility
 - Updates the map container styling to match business interface design
+- Fix the lightening address not changing issue in business
+- Fix description section in business profile
 
 ## [1.1.0] - 2025-02-18
 ### Fixed

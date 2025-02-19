@@ -15,6 +15,7 @@ use lucide_yew::{
 use nostr_minions::browser_api::HtmlForm;
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
+use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -233,6 +234,13 @@ fn my_contact_details() -> Html {
                         <p class="text-gray-600">{&profile.ln_address}</p>
                       </div>
                     </div>
+                    <div class="flex items-center space-x-3">
+                        <ScrollText class="text-gray-500 w-5 h-5" />
+                        <div>
+                            <p class="text-gray-700 text-lg font-bold">{"Description"}</p>
+                            <p class="text-gray-600">{&profile.description}</p>
+                        </div>
+                    </div>
                   </div>
                 </div>
 
@@ -362,6 +370,17 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
             .input_value("telephone")
             .expect("Failed to get telephone");
         new_profile.web = form.input_value("web").expect("Failed to get web");
+        new_profile.ln_address = form
+            .input_value("ln_address")
+            .expect("Failed to get ln_address");
+        let description_element = web_sys::window()
+            .expect("no window")
+            .document()
+            .expect("no document")
+            .get_element_by_id("description")
+            .expect("Failed to get description element")
+            .unchecked_into::<web_sys::HtmlTextAreaElement>();
+        new_profile.description = description_element.value();
         let db =
             CommerceProfileIdb::new(new_profile.clone(), &keys).expect("Failed to create profile");
         let note = db.signed_note();
