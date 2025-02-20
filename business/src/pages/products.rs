@@ -592,11 +592,11 @@ pub fn product_list_section() -> Html {
     }
     html! {
         <div class="min-w-max">
-        <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
+        <div class="grid grid-flow-rows px-5 pb-10 flex-1 overflow-auto">
            <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center">
                <p class=""></p>
                <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
-               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</p>
+               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg lg:pl-10">{"Price"}</p>
                <p class=""></p>
            </div>
            {

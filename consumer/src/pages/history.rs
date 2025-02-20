@@ -122,8 +122,8 @@ pub fn history_page() -> Html {
     };
 
     html! {
-        <main class="flex-1 flex flex-col h-screen overflow-hidden">
-            <div class="flex flex-row justify-between items-center container mx-auto">
+        <main class="flex-1 flex flex-col h-screen overflow-hidden container mx-auto">
+            <div class="flex flex-row justify-between items-center">
                 <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                   {&translations["store_orders_history_title"]}
                 </h1>
