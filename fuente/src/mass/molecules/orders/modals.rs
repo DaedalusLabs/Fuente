@@ -1,4 +1,4 @@
-use lucide_yew::{Clock, Hammer, MapPinCheck, Truck};
+use lucide_yew::{Clock, Hammer, MapPinCheck, Truck, Check, X};
 use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
@@ -44,15 +44,25 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                     <p class="text-gray-500 font-light text-lg">{&translations["store_order_modal_title"]}</p>
                 </div>
                 <button
-                    class={classes!("border-2", "bg-white", "rounded-2xl", "py-3", "px-4", "text-center", "font-semibold",
-                        order_status.text_color(), order_status.border_color())}>
-                        {match order_status {
-                            OrderStatus::Pending => html! {<Clock class="w-6 h-6" />},
-                            OrderStatus::Preparing => html! {<Hammer class="w-6 h-6" />},
-                            OrderStatus::ReadyForDelivery => html! {<MapPinCheck class="w-6 h-6" />},
-                            OrderStatus::InDelivery => html! {<Truck class="w-6 h-6" />},
-                            _ => {html! {}},
-                        }}
+                    class={classes!(
+                        "border-2", 
+                        "bg-white", 
+                        "rounded-2xl", 
+                        "py-3", 
+                        "px-4", 
+                        "text-center", 
+                        "font-semibold",
+                        order_status.text_color(), 
+                        order_status.border_color()
+                    )}>
+                    {match order_status {
+                        OrderStatus::Pending => html! {<Clock class={order_status.text_color()} />},
+                        OrderStatus::Preparing => html! {<Hammer class={order_status.text_color()} />},
+                        OrderStatus::ReadyForDelivery => html! {<MapPinCheck class={order_status.text_color()} />},
+                        OrderStatus::InDelivery => html! {<Truck class={order_status.text_color()} />},
+                        OrderStatus::Completed => html! {<Check class={order_status.text_color()} />},
+                        OrderStatus::Canceled => html! {<X class={order_status.text_color()} />},
+                    }}
                 </button>
             </div>
 

@@ -26,8 +26,8 @@ impl From<GeolocationCoordinates> for CoordinateStrings {
 impl Into<GeolocationCoordinates> for CoordinateStrings {
     fn into(self) -> GeolocationCoordinates {
         GeolocationCoordinates {
-            latitude: self.latitude.parse().unwrap(),
-            longitude: self.longitude.parse().unwrap(),
+            latitude: self.latitude.parse().unwrap_or(0.0),
+            longitude: self.longitude.parse().unwrap_or(0.0),
             speed: None,
             accuracy: 0.0,
             altitude_accuracy: None,
