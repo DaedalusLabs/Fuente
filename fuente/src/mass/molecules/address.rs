@@ -49,11 +49,13 @@ pub fn new_address_menu(props: &NewAddressProps) -> Html {
             <AddressDetails ..props.clone()/>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
-            <button
-                {onclick}
-                class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl self-start"
-            >{"Save"}
-        </button>
+            <div class="flex justify-center">
+                <button
+                    {onclick}
+                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl self-start"
+                >{"Save"}
+                </button>
+            </div>
         </div>
     }
 }

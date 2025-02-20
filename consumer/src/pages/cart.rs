@@ -45,7 +45,7 @@ pub fn cart_page() -> Html {
                     {&translations["cart_heading"]}
                 </h1>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden lg:justify-center">
                <CartTemplate order={ProductOrder::new(cart_items)} />
                <CartPreTotal />
             </div>
@@ -108,8 +108,8 @@ pub fn checkout_cart_template(props: &CartTemplateProps) -> Html {
 
                 <div class="hidden lg:flex justify-between items-center lg:mt-10 xl:mt-5">
                     <h3></h3>
-                    <h3 class="text-fuente lg:pl-16 xl:pl-20">{&translations["cart_table_heading_details"]}</h3>
-                    <h3 class="text-fuente lg:pl-0 xl:pl-5">{&translations["cart_table_heading_quantity"]}</h3>
+                    <h3 class="text-fuente lg:pl-16 xl:pl-24">{&translations["cart_table_heading_details"]}</h3>
+                    <h3 class="text-fuente">{&translations["cart_table_heading_quantity"]}</h3>
                     <h3 class="text-fuente lg:pr-10 xl:pr-28">{&translations["cart_table_heading_price"]}</h3>
                     <h3></h3>
                 </div>
@@ -270,7 +270,7 @@ pub fn cart_item_details(props: &CartItemDetailsProps) -> Html {
             />
             <div class="flex items-center min-[450px]:items-start flex-col">
                 <p class="text-gray-500 font-bold">{item.name()}</p>
-                <p class="text-gray-500 font-light line-clamp-3">{item.details()}</p>
+                <p class="text-gray-500 font-light line-clamp-3 max-w-32">{item.details()}</p>
                 <p class="text-gray-500 font-bold uppercase">{format!("SKU: {}", item.sku())}</p>
                 <button onclick={add_one_item.clone()}
                     class="lg:hidden border-2 border-fuente px-5 py-2 rounded-xl w-fit mt-1">{count}</button>
@@ -427,7 +427,7 @@ pub fn checkout_summary(props: &OrderInvoiceProps) -> Html {
         }
     } else {
         html! {
-            <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 items-center justify-center w-full">
+            <div class="bg-zinc-100 p-4 rounded-2xl flex flex-col gap-3 items-center justify-center mx-2 lg:mx-4">
                 <ThreeBlockSpinner class="w-8 h-8 text-fuente" />
             </div>
         }

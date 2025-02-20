@@ -76,7 +76,7 @@
     "payment_step_1": "Payment",
     "payment_step_2": "Confirmation",
     "payment_heading": "Your transaction is waiting to be approved by the store",
-    "payment_detail": "Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded tho the account",
+    "payment_detail": "Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded to the account",
 
     "confirmation_title": "Confirmation",
     "confirmation_step_1": "Payment",
