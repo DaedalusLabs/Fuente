@@ -1,5 +1,12 @@
 # Changelog <!-- Newer dates on top -->
 
+## [1.1.0] - 2025-02-20
+### Fixed
+- Standardized order modal styling across driver and business interfaces
+- Implemented proper status-based icon coloring in order modals
+- Fixed modal overlay and content cutoff issues
+- Improved modal positioning and background handling
+
 ## [1.1.0] - 2025-02-19
 ### Added
 - Implemented multiple address management in Consumer PWA.

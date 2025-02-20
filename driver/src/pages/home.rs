@@ -136,6 +136,7 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
     let sender = relay_ctx.send_note.clone();
     let OrderPickupProps { order, order_note } = props;
     let order_req = order.get_order_request();
+    let order_coordinates = order_req.address.coordinates();
     let order_status = order.order_status.clone();
     let commerce = commerce_ctx
         .find_commerce(&order_req.commerce)
@@ -167,7 +168,13 @@ pub fn live_order_details(props: &OrderPickupProps) -> Html {
             sender.emit(signed_order);
         })
     };
-
+    if order_coordinates.latitude.is_empty() || order_coordinates.longitude.is_empty() {
+        return html! {
+            <div class="flex items-center justify-center h-full">
+                <p class="text-red-500">{"Invalid order location coordinates"}</p>
+            </div>
+        };
+    }
     html! {
         <>
         <OrderPickupModal
