@@ -14,7 +14,7 @@ use yew_router::prelude::*;
 pub fn package_list_mobile(props: &html::ChildrenProps) -> Html {
     html! {
         <div class="flex lg:hidden flex-1 overflow-hidden">
-            <div class="flex flex-1 justify-evenly gap-4 h-full overflow-hidden">
+            <div class="flex flex-1 justify-evenly gap-4 h-full p-4 overflow-hidden">
                 <div class="flex flex-col gap-2 w-full h-full overflow-hidden">
                     <div
                         class={classes!("flex-1", "rounded-2xl", "mt-2", "px-2", "py-2", "overflow-y-auto", "no-scrollbar", "bg-yellow-100")}>
@@ -31,8 +31,8 @@ pub fn package_list_mobile(props: &html::ChildrenProps) -> Html {
 pub fn package_list_mobile(props: &html::ChildrenProps) -> Html {
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
-            <div class="flex flex-1 justify-evenly gap-4 h-full overflow-hidden">
-                 <div class={"flex-1 rounded-2xl px-2 py-2 overflow-y-auto no-scrollbar bg-yellow-100"}>
+            <div class="flex flex-1 justify-evenly gap-4 h-full p-4 overflow-hidden">
+                 <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-yellow-100"}>
                     <div class="grid grid-cols-1 gap-4">
                         {props.children.clone()}
                     </div>
@@ -102,11 +102,11 @@ pub fn track_packages_page() -> Html {
     };
 
     html! {
-        <main class="flex flex-col h-full overflow-hidden container mx-auto">
-            <div class="flex flex-row justify-center lg:justify-between items-center py-4 lg:py-0 lg:pb-10">
-                <h1 class="text-fuente font-mplus text-3xl text-center lg:text-left lg:text-6xl tracking-tighter font-bold">
+        <main class="flex flex-col h-screen overflow-hidden w-full mx-auto">
+            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                <h3 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                     {"Track Your Packages"}
-                </h1>
+                </h3>
             </div>
             <div class="flex-1 flex flex-col lg:flex-row">
                 <PackageListMobile>

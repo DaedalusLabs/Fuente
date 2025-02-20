@@ -92,7 +92,7 @@ pub fn history_page() -> Html {
 
     html! {
           <main class="flex-1 flex flex-col h-screen overflow-hidden container mx-auto">
-              <div class="flex flex-row justify-between items-center p-4 lg:p-0">
+              <div class="flex flex-row justify-between items-center">
                   <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-10 lg:text-6xl tracking-tighter font-bold">
                       {&translations["orders_heading"]}
                   </h1>

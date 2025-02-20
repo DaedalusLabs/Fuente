@@ -44,17 +44,25 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                     <p class="text-gray-500 font-light text-lg">{&translations["store_order_modal_title"]}</p>
                 </div>
                 <button
-                    class={classes!("border-2", "bg-white", "rounded-2xl", "py-3", "px-4", "text-center", "font-semibold",
-                        order_status.text_color(), order_status.border_color())}>
-                        {match order_status {
-                            OrderStatus::Pending => html! {<Clock class="w-6 h-6" />},
-                            OrderStatus::Preparing => html! {<Hammer class="w-6 h-6" />},
-                            OrderStatus::ReadyForDelivery => html! {<MapPinCheck class="w-6 h-6" />},
-                            OrderStatus::InDelivery => html! {<Truck class="w-6 h-6" />},
-                            OrderStatus::Completed => html! {<Check class="w-6 h-6" />},
-                            OrderStatus::Canceled => html! {<X class="w-6 h-6" />},
-                            _ => {html! {}},
-                        }}
+                    class={classes!(
+                        "border-2", 
+                        "bg-white", 
+                        "rounded-2xl", 
+                        "py-3", 
+                        "px-4", 
+                        "text-center", 
+                        "font-semibold",
+                        order_status.text_color(), 
+                        order_status.border_color()
+                    )}>
+                    {match order_status {
+                        OrderStatus::Pending => html! {<Clock class={order_status.text_color()} />},
+                        OrderStatus::Preparing => html! {<Hammer class={order_status.text_color()} />},
+                        OrderStatus::ReadyForDelivery => html! {<MapPinCheck class={order_status.text_color()} />},
+                        OrderStatus::InDelivery => html! {<Truck class={order_status.text_color()} />},
+                        OrderStatus::Completed => html! {<Check class={order_status.text_color()} />},
+                        OrderStatus::Canceled => html! {<X class={order_status.text_color()} />},
+                    }}
                 </button>
             </div>
 
@@ -65,7 +73,7 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                 }
             }).collect::<Html>()}
 
-            <div class="my-5 bg-gray-200 flex justify-end p-3">
+            <div class="mt-5 bg-gray-200 flex justify-end p-3">
                 <div class="space-y-2">
                     <p class="text-fuente font-bold text-lg text-right">{format!("SRD {}", order_total)}</p>
                 </div>
@@ -139,7 +147,7 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                         </select>
                     </div>
                     <input type="submit" value={translations["store_order_modal_button_submit"].clone()}
-                        class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5 cursor-pointer" />
+                        class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5" />
                 </form>
             }
         }

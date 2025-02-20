@@ -46,47 +46,88 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
     }
 
     html! {
-       <main class="bg-white rounded-2xl py-5 px-4 sm:px-10 mx-auto w-full md:w-1/2 h-full overflow-y-auto">
-           <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
-               <div>
-                   <p class="text-fuente-dark font-bold text-xl sm:text-2xl">{format!("#{}", &order.order_id()[..12])}</p>
-                   <p class="text-gray-500 font-light text-base sm:text-lg">{&translations["store_order_modal_title"]}</p>
-               </div>
-               <button
-                   class="border-2 border-gray-400 text-gray-400 bg-white rounded-2xl py-2 px-3 sm:py-3 sm:px-4 text-center font-semibold text-sm sm:text-base">{order.order_status.to_string()}</button>
-           </div>
-
-           <OrderPickupMapPreview
-               order_id={order.order_id()}
-               commerce_location={commerce_address}
-               consumer_location={address}
-               own_location={location_state.clone()}
-               classes={classes!["rounded-lg", "min-w-64", "min-h-64", "h-48", "sm:h-64", "w-full", "p-2"]}
-           />
-           {match order_state {
-               OrderStatus::ReadyForDelivery => html! {
-                   <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-5">
-                       <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
-                       <CustomerDetails customer={customer_profile.clone()} />
-                       <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
-                   </div>
-               },
-               OrderStatus::InDelivery => html! {
-                   <div class="grid grid-cols-1 gap-4">
-                       <CustomerDetails customer={customer_profile.clone()} />
-                       <CustomerAddressDetails customer={request.address.clone()} />
-                   </div>
-               },
-               _ => html! {<></>},
-           }}
-           <form onsubmit={on_order_click.clone()} class="mt-5">
-           <select id="order_status" name="order_status" class="hidden">
-               <option value={OrderStatus::ReadyForDelivery.to_string()}></option>
-           </select>
-           <input type="submit" value={translations["store_order_modal_button_submit"].clone()}
-               class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5 cursor-pointer" />
-           </form>
-       </main>
+        <div class="fixed inset-0 flex items-center justify-center z-50">
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+            <main class="bg-white rounded-2xl py-5 px-4 sm:px-10 mx-auto max-w-full sm:max-w-xl h-[90vh] sm:h-[640px] overflow-y-auto relative z-10">
+                <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
+                    <div>
+                        <p class="text-fuente-dark font-bold text-xl sm:text-2xl">
+                            {format!("#{}", &order.order_id()[..12])}
+                        </p>
+                        <p class="text-gray-500 font-light text-base sm:text-lg">
+                            {&translations["store_order_modal_title"]}
+                        </p>
+                    </div>
+                    <button
+                        class={classes!(
+                            "border-2",
+                            "text-center", 
+                            "font-semibold",
+                            "rounded-2xl",
+                            "py-2",
+                            "px-3",
+                            "sm:py-3",
+                            "sm:px-4",
+                            order.order_status.text_color(),
+                            order.order_status.border_color()
+                        )}
+                    >
+                        {match order.order_status {
+                            OrderStatus::Pending => html! {<Clock class={order.order_status.text_color()} />},
+                            OrderStatus::Preparing => html! {<Hammer class={order.order_status.text_color()} />},
+                            OrderStatus::ReadyForDelivery => html! {<MapPinCheck class={order.order_status.text_color()} />},
+                            OrderStatus::InDelivery => html! {<Truck class={order.order_status.text_color()} />},
+                            OrderStatus::Completed => html! {<Check class={order.order_status.text_color()} />},
+                            OrderStatus::Canceled => html! {<X class={order.order_status.text_color()} />},
+                        }}
+                    </button>
+                </div>
+    
+                <OrderPickupMapPreview
+                    order_id={order.order_id()}
+                    commerce_location={commerce_address}
+                    consumer_location={address}
+                    own_location={location_state.clone()}
+                    classes={classes![
+                        "rounded-lg",
+                        "min-w-64",
+                        "min-h-64",
+                        "h-48",
+                        "sm:h-64",
+                        "w-full",
+                        "p-2"
+                    ]}
+                />
+    
+                {match order_state {
+                    OrderStatus::ReadyForDelivery => html! {
+                        <div class="grid grid-cols-1 gap-4">
+                            <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
+                            <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
+                            <CustomerDetails customer={customer_profile.clone()} />
+                        </div>
+                    },
+                    OrderStatus::InDelivery => html! {
+                        <div class="grid grid-cols-1 gap-4">
+                            <CustomerDetails customer={customer_profile.clone()} />
+                            <CustomerAddressDetails customer={request.address.clone()} />
+                        </div>
+                    },
+                    _ => html! {<></>},
+                }}
+    
+                <form onsubmit={on_order_click.clone()} class="mt-5">
+                    <select id="order_status" name="order_status" class="hidden">
+                        <option value={OrderStatus::ReadyForDelivery.to_string()}></option>
+                    </select>
+                    <input 
+                        type="submit" 
+                        value={translations["store_order_modal_button_submit"].clone()}
+                        class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5" 
+                    />
+                </form>
+            </main>
+        </div>
     }
 }
 #[derive(Clone, PartialEq, Properties)]

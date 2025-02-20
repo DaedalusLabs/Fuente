@@ -76,28 +76,28 @@ pub fn home_page() -> Html {
         };
     }
     html! {
-        <main class="flex-1 overflow-hidden container mx-auto">
+        <main class="flex-1 overflow-hidden">
             <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
-                    <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
                         {&translations["orders_heading"]}
                     </h1>
                     <AppLink<DriverRoute>
                         route={DriverRoute::History}
-                        class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl"
+                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
                         selected_class="">
                             <ScrollText class="w-6 h-6 text-fuente" />
                     </AppLink<DriverRoute>>
                     <AppLink<DriverRoute>
                         route={DriverRoute::History}
-                        class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
                         selected_class="">
                         <span>{&translations["orders_historic"]}</span>
                     </AppLink<DriverRoute>>
                 </div>
 
                 <div class="flex flex-col flex-1 overflow-hidden">
-                    <div class="flex-1 overflow-hidden mt-4 px-4 justify-center">
+                    <div class="flex-1 overflow-hidden mt-4 px-4 flex justify-center">
                         <OrderList title={OrderStatus::ReadyForDelivery}>
                             {orders.iter().filter(|o| o.0.order_status == OrderStatus::ReadyForDelivery && o.0.courier.is_none()
                                 ).map(|order| {

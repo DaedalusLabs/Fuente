@@ -101,7 +101,7 @@ pub fn settings_template(props: &OrderConfirmationProps) -> Html {
                 <div class="flex flex-col items-center justify-center">
                     <p class="font-light text-center text-fuente">{&translations["confirmation_detail"]}</p>
                     <p class="font-light text-center text-fuente">{&translations["confirmation_detail_message"]}</p>
-                    <button {onclick} class="bg-fuente-light text-white py-4 px-7 rounded-full mt-5 font-bold">
+                    <button {onclick} class="bg-fuente-buttons text-fuente-forms py-4 px-7 rounded-full mt-5 font-bold">
                         {&translations["confirmation_button"]}
                     </button>
                 </div>
@@ -132,7 +132,7 @@ pub fn settings_template(props: &OrderConfirmationProps) -> Html {
 
                     <div class="flex flex-col items-center justify-center">
                         <p class="font-light text-center text-fuente">{&translations["error_screen_detail"]}</p>
-                        <button class="bg-fuente-light text-white py-4 px-7 rounded-full mt-5 font-bold">
+                        <button class="bg-fuente-buttons text-fuente-forms py-4 px-7 rounded-full mt-5 font-bold">
                             {&translations["error_screen_detail_message"]}
                         </button>
                     </div>

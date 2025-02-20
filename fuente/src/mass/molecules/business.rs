@@ -43,18 +43,18 @@ pub fn business_details(props: &CommerceProfileProps) -> Html {
         rating: _,
     } = props;
     html! {
-        <section class="lg:mt-5 space-y-3 border-t border-t-gray-400 md:border-t-0 py-3 w-full">
+        <section class="mt-5 space-y-3 border-y border-y-gray-400 py-3 w-full">
             <h3 class="text-gray-500 font-light text-lg">{&translations["stores_settings_option_information"]}</h3>
             <p class="text-gray-500 font-bold text-lg">{&commerce_data.name}</p>
-            <div class="w-full flex flex-col gap-2 justify-between">
-                <div class="flex gap-2 items-center">
+            <div class="w-96 space-y-2">
+                <div class="flex flex-col md:flex-row lg:justify-between gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_email"]}</p>
-                    <p class="text-gray-500 flex-1 text-right">{&commerce_data.web}</p>
+                    <p class="text-gray-500">{&commerce_data.web}</p>
                 </div>
 
-                <div class="flex gap-2 items-center">
+                <div class="flex flex-col md:flex-row lg:justify-between gap">
                     <p class="text-gray-500 font-bold text-lg">{&translations["checkout_client_information_heading_phone"]}</p>
-                    <p class="text-gray-500 flex-1 text-right">{&commerce_data.telephone}</p>
+                    <p class="text-gray-500">{&commerce_data.telephone}</p>
                 </div>
             </div>
         </section>
@@ -68,8 +68,8 @@ pub fn business_address_details(props: &CommerceProfileProps) -> Html {
         rating: _,
     } = props;
     html! {
-        <section class="space-y-3 py-3 w-full md:col-start-1 md:col-end-3">
-            <span class="text-neutral-400 line-clamp-3 text-center">{commerce_data.lookup.display_name()}</span>
+        <section class="space-y-3 border-b border-b-gray-400 py-3 w-full">
+            <span class="text-neutral-400 line-clamp-3">{commerce_data.lookup.display_name()}</span>
         </section>
     }
 }
