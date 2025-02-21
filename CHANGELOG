@@ -1,5 +1,10 @@
 # Changelog <!-- Newer dates on top -->
 
+
+## [1.1.0] - 2025-02-21
+### Fixed
+- Fixed order display logic in driver home screen to properly show cards with all the details popup.
+
 ## [1.1.0] - 2025-02-20
 ### Fixed
 - Standardized order modal styling across driver and business interfaces

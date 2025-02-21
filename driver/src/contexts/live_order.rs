@@ -80,25 +80,34 @@ impl Reducible for OrderHub {
                 order_history: self.order_history.clone(),
                 hub_keys: self.hub_keys.clone(),
             }),
-            OrderHubAction::UpdateOrder((order, note)) => Rc::new(OrderHub {
-                live_orders: {
-                    let mut orders = self.live_orders.clone();
-                    orders.retain(|o| o.0.order_id() != order.order_id());
-                    orders.push((order, note));
-                    orders
-                },
-                order_history: self.order_history.clone(),
-                assigned_order: self.assigned_order.clone(),
-                has_loaded: self.has_loaded,
-                hub_keys: self.hub_keys.clone(),
-            }),
+            OrderHubAction::UpdateOrder((order, note)) => {
+                let mut live_orders = self.live_orders.clone();
+                if let Some(index) = live_orders.iter().position(|o| o.0.order_id() == order.order_id()) {
+                    live_orders[index] = (order, note);
+                } else {
+                    live_orders.push((order, note));
+                }
+
+                Rc::new(OrderHub {
+                    live_orders,
+                    assigned_order: self.assigned_order.clone(),
+                    order_history: self.order_history.clone(),
+                    has_loaded: self.has_loaded,
+                    hub_keys: self.hub_keys.clone(),
+                })
+            },
             OrderHubAction::OrderCompleted(completed_id) => {
                 let mut live_orders = self.live_orders.clone();
+                let mut order_history = self.order_history.clone();
+
+                if let Some(completed_order) = live_orders.iter().find(|o| o.0.order_id() == completed_id).cloned() {
+                    order_history.push(completed_order);
+                }
                 live_orders.retain(|o| o.0.order_id() != completed_id);
                 Rc::new(OrderHub {
                     live_orders,
                     assigned_order: None,
-                    order_history: self.order_history.clone(),
+                    order_history,
                     has_loaded: self.has_loaded,
                     hub_keys: self.hub_keys.clone(),
                 })
