@@ -1,5 +1,4 @@
 use crate::contexts::{ConsumerDataAction, ConsumerDataStore};
-use crate::pages::NewProfilePage;
 use crate::router::ConsumerRoute;
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::PopupProps;
@@ -11,7 +10,7 @@ use fuente::mass::{
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck, Upload};
+use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck};
 use nostr_minions::key_manager::NostrIdAction;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
@@ -236,7 +235,6 @@ pub fn my_contact_details() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
     let translations = language_ctx.translations();
     let profile_popup_handle = use_state(|| false);
-    let profile_popup_handle_clone = profile_popup_handle.clone();
     
     // Get profile safely
     match user_ctx.get_profile() {

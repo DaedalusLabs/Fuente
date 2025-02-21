@@ -1,8 +1,7 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataExt, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, ConsumerDataStore, FavoritesProvider, FavoritesStore, LiveOrderProvider, LiveOrderStore, LoginModal, LoginProvider, RatingsProvider
+        CartProvider, CommerceDataExt, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, FavoritesProvider, LiveOrderProvider, LoginProvider, RatingsProvider
     },
-    pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{
