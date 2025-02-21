@@ -2,8 +2,14 @@
 
 
 ## [1.1.0] - 2025-02-21
+### Added
+- Added cancellation reason input with required field
+- Added cancel button functionality for driver interface
+
 ### Fixed
 - Fixed order display logic in driver home screen to properly show cards with all the details popup.
+- Changed order status selection from dropdown to separate action buttons
+
 
 ## [1.1.0] - 2025-02-20
 ### Fixed

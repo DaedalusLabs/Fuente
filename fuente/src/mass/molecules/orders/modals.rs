@@ -1,4 +1,4 @@
-use lucide_yew::{Clock, Hammer, MapPinCheck, Truck, Check, X};
+use lucide_yew::{Check, Clock, Hammer, MapPinCheck, Truck, X};
 use nostr_minions::key_manager::NostrIdStore;
 use yew::prelude::*;
 
@@ -45,14 +45,14 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                 </div>
                 <button
                     class={classes!(
-                        "border-2", 
-                        "bg-white", 
-                        "rounded-2xl", 
-                        "py-3", 
-                        "px-4", 
-                        "text-center", 
+                        "border-2",
+                        "bg-white",
+                        "rounded-2xl",
+                        "py-3",
+                        "px-4",
+                        "text-center",
                         "font-semibold",
-                        order_status.text_color(), 
+                        order_status.text_color(),
                         order_status.border_color()
                     )}>
                     {match order_status {
@@ -113,44 +113,77 @@ pub struct OrderModalFormProps {
 #[function_component(OrderModalForm)]
 pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
-    let translations = language_ctx.translations();
     let OrderModalFormProps {
         current_status,
         on_order_click,
     } = props;
-    let options = match current_status {
-        OrderStatus::Pending => Some(html! {
-            <>
-                <option class={OrderStatus::Canceled.theme_color()} value={OrderStatus::Canceled.to_string()}>{OrderStatus::Canceled.display()}</option>
-                <option class={OrderStatus::Preparing.theme_color()} value={OrderStatus::Preparing.to_string()}>{OrderStatus::Preparing.display()}</option>
-            </>
-        }),
-        OrderStatus::Preparing => Some(html! {
-            <>
-                <option value={OrderStatus::Canceled.to_string()}>{OrderStatus::Canceled.display()}</option>
-                <option value={OrderStatus::ReadyForDelivery.to_string()}>{OrderStatus::ReadyForDelivery.display()}</option>
-            </>
-        }),
-        OrderStatus::ReadyForDelivery => Some(html! {
-            <option value={OrderStatus::Canceled.to_string()}>{OrderStatus::Canceled.display()}</option>
-        }),
-        _ => None,
+
+    let cancel_form = html! {
+        <form onsubmit={on_order_click.clone()}>
+            <input type="hidden" name="order_status" value={OrderStatus::Canceled.to_string()} />
+            <div class="mb-4">
+                <label for="cancel_reason" class="block text-gray-500 text-sm font-bold mb-2">
+                    {"Why are you cancelling this order?"}
+                </label>
+                <textarea
+                    id="cancel_reason"
+                    name="cancel_reason"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required={true}
+                    rows="3"
+                    placeholder="Please provide a reason for cancellation..."
+                />
+            </div>
+            <button 
+                type="submit"
+                class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
+            >
+                {OrderStatus::Canceled.display()}
+            </button>
+        </form>
     };
-    match options {
-        Some(options) => {
+
+    match current_status {
+        OrderStatus::Pending => {
             html! {
-                <form onsubmit={on_order_click.clone()} class="mt-5">
-                    <div class="flex justify-between items-center">
-                        <label for="order_status" class="text-gray-500 font-light text-lg w-full">{&translations["store_order_modal_option_response"]}</label>
-                        <select id="order_status" name="order_status" class="py-3 px-5 rounded-xl border border-gray-500 w-full text-gray-500">
-                            {options}
-                        </select>
-                    </div>
-                    <input type="submit" value={translations["store_order_modal_button_submit"].clone()}
-                        class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5" />
-                </form>
+                <div class="mt-5 space-y-4">
+                    <form onsubmit={on_order_click.clone()}>
+                        <input type="hidden" name="order_status" value={OrderStatus::Preparing.to_string()} />
+                        <button 
+                            type="submit"
+                            class="bg-orange-500 text-white text-center text-lg font-bold rounded-full w-full py-3"
+                        >
+                            {OrderStatus::Preparing.display()}
+                        </button>
+                    </form>
+                    {cancel_form}
+                </div>
             }
-        }
-        None => html! { <></> },
+        },
+        OrderStatus::Preparing => {
+            html! {
+                <div class="mt-5 space-y-4">
+                    <form onsubmit={on_order_click.clone()}>
+                        <input type="hidden" name="order_status" value={OrderStatus::ReadyForDelivery.to_string()} />
+                        <button 
+                            type="submit"
+                            class="bg-sky-500 text-white text-center text-lg font-bold rounded-full w-full py-3"
+                        >
+                            {OrderStatus::ReadyForDelivery.display()}
+                        </button>
+                    </form>
+                    {cancel_form}
+                </div>
+            }
+        },
+        OrderStatus::ReadyForDelivery => {
+            html! {
+                <div class="mt-5">
+                    {cancel_form}
+                </div>
+            }
+        },
+        OrderStatus::InDelivery => html! {},
+        _ => html! {},
     }
 }

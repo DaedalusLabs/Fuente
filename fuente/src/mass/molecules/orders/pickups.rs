@@ -13,6 +13,40 @@ use crate::{
     },
     models::{CommerceProfile, OrderInvoiceState, OrderStatus},
 };
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct CancelFormProps {
+    pub on_order_click: Callback<SubmitEvent>,
+}
+
+#[function_component(CancelForm)]
+fn cancel_form(props: &CancelFormProps) -> Html {
+    html! {
+        <form onsubmit={props.on_order_click.clone()}>
+            <input type="hidden" name="order_status" value={OrderStatus::Canceled.to_string()} />
+            <div class="mb-4">
+                <label for="cancel_reason" class="block text-gray-500 text-sm font-bold mb-2">
+                    {"Why are you cancelling this order?"}
+                </label>
+                <textarea
+                    id="cancel_reason"
+                    name="cancel_reason"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required={true}
+                    rows="3"
+                    placeholder="Please provide a reason for cancellation..."
+                />
+            </div>
+            <button 
+                type="submit"
+                class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
+            >
+                {OrderStatus::Canceled.display()}
+            </button>
+        </form>
+    }
+}
+
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderPickupModalProps {
     pub order: OrderInvoiceState,
@@ -101,19 +135,28 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
     
                 {match order_state {
                     OrderStatus::ReadyForDelivery => html! {
-                        <div class="grid grid-cols-1 gap-4">
-                            <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
-                            <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
-                            <CustomerDetails customer={customer_profile.clone()} />
-                        </div>
+                        <>
+                            <div class="grid grid-cols-1 gap-4">
+                                <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
+                                <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
+                                <CustomerDetails customer={customer_profile.clone()} />
+                            </div>
+                            <div class="mt-5 space-y-4">
+                                <CancelForm on_order_click={on_order_click.clone()} />
+                            </div>
+                        </>
                     },
+            
                     OrderStatus::InDelivery => html! {
                         <div class="grid grid-cols-1 gap-4">
                             <CustomerDetails customer={customer_profile.clone()} />
                             <CustomerAddressDetails customer={request.address.clone()} />
+                            <div class="mt-5 space-y-4">
+                                <CancelForm on_order_click={on_order_click.clone()} />
+                            </div>
                         </div>
                     },
-                    _ => html! {<></>},
+                    _ => html! {},
                 }}
     
                 <form onsubmit={on_order_click.clone()} class="mt-5">
