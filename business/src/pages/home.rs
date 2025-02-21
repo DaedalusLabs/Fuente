@@ -58,13 +58,20 @@ fn respond_to_order(
 ) -> Callback<SubmitEvent> {
     Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
-        let form = HtmlForm::new(e).expect("Could not get form");
-
-        let status_update_str = form
-            .select_value("order_status")
+        let form = e.target_unchecked_into::<web_sys::HtmlFormElement>();
+        let form_data = web_sys::FormData::new_with_form(&form).unwrap();
+        let status_str = form_data.get("order_status").as_string().unwrap();
+        
+        let status_update = OrderStatus::try_from(status_str)
             .expect("Could not parse order status");
-        let status_update =
-            OrderStatus::try_from(status_update_str).expect("Could not parse order status");
+
+        if status_update == OrderStatus::Canceled {
+            if let Some(reason) = form_data.get("cancel_reason").as_string() {
+                gloo::console::log!("Cancellation reason:", reason);
+                // TODO: We may want to store this reason in our order update request
+            }
+        }
+
         let new_request = OrderUpdateRequest {
             order: order.clone(),
             status_update,
