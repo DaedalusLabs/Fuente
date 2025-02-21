@@ -4,7 +4,7 @@ use crate::{
 };
 use fuente::{
     contexts::LanguageConfigsStore,
-    mass::{AppLink, LoadingScreen, OrderList, OrderPickup, OrderPickupModal},
+    mass::{AppLink, LoadingScreen, OrderList, OrderPickup, OrderPickupModal, OrderStateCard},
     models::{
         OrderInvoiceState, OrderStatus, OrderUpdateRequest, DRIVER_HUB_PUB_KEY,
         NOSTR_KIND_COURIER_UPDATE,
@@ -63,18 +63,12 @@ pub fn home_page() -> Html {
     }
     let orders = order_ctx.live_orders();
 
-    if orders.is_empty() && order_ctx.get_live_order().is_none() {
-        return html! {
-            <div class="min-h-screen flex items-center justify-center flex-1">
-                <h2 class="text-3xl max-w-1/2 font-mplus text-fuente-dark px-4 text-center">{"No orders yet!"}</h2>
-            </div>
-        };
-    };
     if let Some((order, order_note)) = order_ctx.get_live_order() {
         return html! {
             <LiveOrderDetails {order} {order_note} />
         };
     }
+
     html! {
         <main class="flex-1 overflow-hidden">
             <div class="flex flex-col h-full">
@@ -98,27 +92,64 @@ pub fn home_page() -> Html {
 
                 <div class="flex flex-col flex-1 overflow-hidden">
                     <div class="flex-1 overflow-hidden mt-4 px-4 flex justify-center">
-                        <OrderList title={OrderStatus::ReadyForDelivery}>
-                            {orders.iter().filter(|o| o.0.order_status == OrderStatus::ReadyForDelivery && o.0.courier.is_none()
-                                ).map(|order| {
-                                    let commerce = commerce_ctx
-                                        .find_commerce(&order.0.get_commerce_pubkey())
-                                        .expect("Failed to find commerce");
-                                let on_click = {
-                                    respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
-                                };
-                                html! {
-                                    <OrderPickup order={order.0.clone()} on_click={on_click} commerce_profile={commerce.profile().clone()} />
+                        <div class="flex gap-4 h-full">
+                            <OrderList title={OrderStatus::ReadyForDelivery}>
+                                {orders.iter()
+                                    .filter(|o| o.0.order_status == OrderStatus::ReadyForDelivery && o.0.courier.is_none())
+                                    .map(|order| {
+                                        let commerce = commerce_ctx
+                                            .find_commerce(&order.0.get_commerce_pubkey())
+                                            .expect("Failed to find commerce");
+                                        let on_click = {
+                                            respond_to_order(nostr_keys.clone(), send_note.send_note.clone(), order.1.clone(), update_kind)
+                                        };
+                                        html! {
+                                            <OrderPickup order={order.0.clone()} on_click={on_click} commerce_profile={commerce.profile().clone()} />
+                                        }
+                                    }).collect::<Html>()
                                 }
-                            }).collect::<Html>()}
-                        </OrderList>
+                            </OrderList>
+                            <OrderList title={OrderStatus::Completed}>
+                                {{
+                                    let history = order_ctx.order_history();
+                                    let mut completed_orders: Vec<_> = history.iter()
+                                        .filter(|o| o.0.order_status == OrderStatus::Completed)
+                                        .collect();
+                                    completed_orders.sort_by(|a, b| b.0.order_timestamp().cmp(&a.0.order_timestamp()));
+                                    completed_orders.iter()
+                                        .take(5)
+                                        .map(|order| {
+                                            html! {
+                                                <OrderStateCard order={order.0.clone()} on_click={Callback::noop()} />
+                                            }
+                                        })
+                                        .collect::<Html>()
+                                }}
+                            </OrderList>
+                            <OrderList title={OrderStatus::Canceled}>
+                                {{
+                                    let history = order_ctx.order_history();
+                                    let mut canceled_orders: Vec<_> = history.iter()
+                                        .filter(|o| o.0.order_status == OrderStatus::Canceled)
+                                        .collect();
+                                    canceled_orders.sort_by(|a, b| b.0.order_timestamp().cmp(&a.0.order_timestamp()));
+                                    canceled_orders.iter()
+                                        .take(5)
+                                        .map(|order| {
+                                            html! {
+                                                <OrderStateCard order={order.0.clone()} on_click={Callback::noop()} />
+                                            }
+                                        })
+                                        .collect::<Html>()
+                                }}
+                            </OrderList>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     }
 }
-
 #[derive(Clone, PartialEq, Properties)]
 pub struct OrderPickupProps {
     pub order: OrderInvoiceState,
