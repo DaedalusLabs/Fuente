@@ -603,8 +603,6 @@ pub fn product_list_section() -> Html {
                if let Some(menu) = menu_state.as_ref() {
                menu.categories().iter().map(|category| {
                    {category.products().iter().map(|product| {
-                       let menu_handle = menu_state.clone();
-
                        let on_delete = {
                             let product_id = product.id();
                             let category_id = category.id();

@@ -66,7 +66,9 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
                         navigator.push(&ConsumerRoute::Cart);
                     }
                     OrderPaymentStatus::PaymentSuccess => {
-                        if state.order_status == OrderStatus::Completed {
+                        if state.order_status == OrderStatus::ReadyForDelivery {
+                            navigator.push(&ConsumerRoute::TrackPackages);
+                        } else if state.order_status == OrderStatus::Completed {
                             navigator.push(&ConsumerRoute::History);
                         }
                     }

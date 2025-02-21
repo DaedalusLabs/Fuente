@@ -6,7 +6,7 @@ use driver::{
     router::DriverPages,
 };
 use fuente::{
-    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider, LanguageConfigsStore},
+    contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
     mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput, ToastProvider},
     models::{
         init_commerce_db, init_consumer_db, DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY,
@@ -110,8 +110,6 @@ fn app_context(props: &ChildrenProps) -> Html {
 
 #[function_component(WhitelistWaitScreen)]
 fn whitelist_wait_screen() -> Html {
-    let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
-    let translations = language_ctx.translations();
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let pubkey = key_ctx.get_nostr_key().unwrap().public_key();
 

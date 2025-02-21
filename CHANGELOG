@@ -6,6 +6,8 @@
 - Implemented proper status-based icon coloring in order modals
 - Fixed modal overlay and content cutoff issues
 - Improved modal positioning and background handling
+- Improved ReadyToDeliver Confirmation Screen
+- Remove unused imports
 
 ## [1.1.0] - 2025-02-19
 ### Added

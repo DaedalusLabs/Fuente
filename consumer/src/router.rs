@@ -14,8 +14,7 @@ use fuente::{
 
 use crate::{
     contexts::{
-        CartStore, CommerceDataStore, ConsumerDataStore, LoginModal, LoginStateAction,
-        LoginStateStore, RequireAuth,
+        CartStore, CommerceDataStore, ConsumerDataStore, RequireAuth,
     },
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
@@ -152,13 +151,11 @@ pub fn consumer_pages() -> Html {
 
 #[function_component(LoginButton)]
 fn login_button() -> Html {
-    let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
     let navigator = use_navigator().expect("Navigator not found");
 
     html! {
         <button
             onclick={
-                let login_state = login_state.clone();
                 Callback::from(move |_| {
                     navigator.push(&ConsumerRoute::Login);
                 })
