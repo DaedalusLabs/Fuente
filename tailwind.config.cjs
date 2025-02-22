@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ['**/*.{html,rs}', '../**/*.{html,rs}', '!/node_modules/**', '!./**/target/**'],
+    content: ['**/*.{html,rs}', '!/node_modules/**', '!./**/target/**'],
     plugins: [
         require('@tailwindcss/forms'),
         require('@tailwindcss/typography'),

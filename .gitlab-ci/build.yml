@@ -1,6 +1,6 @@
 .build_pwa: &build_pwa
   stage: build
-  image: minion-pwa:latest
+  image: fuente-pwa:0.1
   ##before_script: *setup_environment
   script:
     - tailwindcss -i public/styles/input.css -o $APP/styles/output.css -c tailwind.config.cjs
@@ -32,7 +32,7 @@ build_driver:
 
 build_invoicer:
   stage: build
-  image: rust:latest  # Use the official Rust Docker image
+  image: rust:1.84-bookworm # Use the official Rust Docker image
   script:
     - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
   artifacts:
@@ -44,7 +44,7 @@ build_invoicer:
 
 build_rating_bot:
   stage: build
-  image: rust:latest  # Use the official Rust Docker image
+  image: rust:1.84-bookworm  # Use the official Rust Docker image
   script:
     - cargo build --package fuente-rating-bot --release  # Build the binaries in release mode
   artifacts:
