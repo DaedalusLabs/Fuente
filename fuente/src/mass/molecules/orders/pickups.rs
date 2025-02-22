@@ -37,7 +37,7 @@ fn cancel_form(props: &CancelFormProps) -> Html {
                     placeholder="Please provide a reason for cancellation..."
                 />
             </div>
-            <button 
+            <button
                 type="submit"
                 class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
             >
@@ -80,9 +80,9 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
     }
 
     html! {
-        <div class="fixed inset-0 flex items-center justify-center z-50">
-            <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
-            <main class="bg-white rounded-2xl py-5 px-4 sm:px-10 mx-auto w-full md:w-1/2 h-full overflow-y-auto">
+        // <div class="fixed inset-0 flex items-center justify-center z-50">
+        //     <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+        <div class="bg-white rounded-2xl py-5 px-4 sm:px-10 flex-1  overflow-y-auto container">
                 <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
                     <div>
                         <p class="text-fuente-dark font-bold text-xl sm:text-2xl">
@@ -95,7 +95,7 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
                     <button
                         class={classes!(
                             "border-2",
-                            "text-center", 
+                            "text-center",
                             "font-semibold",
                             "rounded-2xl",
                             "py-2",
@@ -116,7 +116,7 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
                         }}
                     </button>
                 </div>
-    
+
                 <OrderPickupMapPreview
                     order_id={order.order_id()}
                     commerce_location={commerce_address}
@@ -132,7 +132,7 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
                         "p-2"
                     ]}
                 />
-    
+
                 {match order_state {
                     OrderStatus::ReadyForDelivery => html! {
                         <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-5">
@@ -149,19 +149,19 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
                     },
                     _ => html! {<></>},
                 }}
-    
+
                 <form onsubmit={on_order_click.clone()} class="mt-5">
                     <select id="order_status" name="order_status" class="hidden">
                         <option value={OrderStatus::ReadyForDelivery.to_string()}></option>
                     </select>
-                    <input 
-                        type="submit" 
+                    <input
+                        type="submit"
                         value={translations["store_order_modal_button_submit"].clone()}
-                        class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5 cursor-pointer" 
+                        class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5 cursor-pointer"
                     />
                 </form>
-            </main>
-        </div>
+            </div>
+        //</div>
     }
 }
 #[derive(Clone, PartialEq, Properties)]

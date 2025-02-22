@@ -8,7 +8,7 @@ use fuente::{
     models::{OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
 use lucide_yew::{Check, CircleCheck, CircleHelp, Clock2, ScrollText, Truck, X};
-use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
+use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
@@ -61,9 +61,9 @@ fn respond_to_order(
         let form = e.target_unchecked_into::<web_sys::HtmlFormElement>();
         let form_data = web_sys::FormData::new_with_form(&form).unwrap();
         let status_str = form_data.get("order_status").as_string().unwrap();
-        
-        let status_update = OrderStatus::try_from(status_str)
-            .expect("Could not parse order status");
+
+        let status_update =
+            OrderStatus::try_from(status_str).expect("Could not parse order status");
 
         if status_update == OrderStatus::Canceled {
             if let Some(reason) = form_data.get("cancel_reason").as_string() {

@@ -83,7 +83,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
     let OrderHistoryProps {
         completed_orders,
         canceled_orders,
-        on_order_click: _,
+        on_order_click,
     } = props;
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
@@ -96,7 +96,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
                      <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-green-100"}>
                         <div class="grid grid-cols-1 gap-4">
                         {completed_orders.iter().map(|order| {
-                           html! {  <OrderStateCard order={(*order).clone()} on_click={Callback::noop()} />}
+                           html! {  <OrderStateCard order={(*order).clone()} on_click={on_order_click} />}
                         }).collect::<Html>()}
                         </div>
                     </div>
@@ -111,7 +111,7 @@ pub fn order_history_desktop(props: &OrderHistoryProps) -> Html {
                      <div class={"flex-1 rounded-2xl mt-2 px-2 py-2 overflow-y-auto no-scrollbar bg-red-100"}>
                         <div class="grid grid-cols-1 gap-4">
                         {canceled_orders.iter().map(|order| {
-                            html! { <OrderStateCard order={(*order).clone()} on_click={Callback::noop()} />}
+                            html! { <OrderStateCard order={(*order).clone()} on_click={on_order_click} />}
                         }).collect::<Html>()}
                         </div>
                     </div>

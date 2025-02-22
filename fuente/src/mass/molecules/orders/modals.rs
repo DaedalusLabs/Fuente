@@ -36,9 +36,10 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
             .map(|courier| DriverProfile::try_from(courier));
         driver
     };
+    let icon_class = classes!("w-6", "h-6", order_status.text_color());
     html! {
         <>
-            <div class="flex items-center justify-between border-b border-b-gray-400 pb-3 gap-2">
+            <div class="flex items-center justify-between border-b border-b-gray-400 pb-3 gap-2 sm:gap-4 md:gap-6">
                 <div>
                     <p class="text-fuente-dark font-bold text-2xl">{format!("#{}", &order.order_id()[..12])}</p>
                     <p class="text-gray-500 font-light text-lg">{&translations["store_order_modal_title"]}</p>
@@ -52,19 +53,19 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                         "px-4",
                         "text-center",
                         "font-semibold",
-                        "w-6",
-                        "h-6",
                         order_status.text_color(),
                         order_status.border_color()
                     )}>
-                    {match order_status {
-                        OrderStatus::Pending => html! {<Clock class={order_status.text_color()} />},
-                        OrderStatus::Preparing => html! {<Hammer class={order_status.text_color()} />},
-                        OrderStatus::ReadyForDelivery => html! {<MapPinCheck class={order_status.text_color()} />},
-                        OrderStatus::InDelivery => html! {<Truck class={order_status.text_color()} />},
-                        OrderStatus::Completed => html! {<Check class={order_status.text_color()} />},
-                        OrderStatus::Canceled => html! {<X class={order_status.text_color()} />},
-                    }}
+                    {
+                        match order_status {
+                            OrderStatus::Pending => html! {<Clock class={icon_class} />},
+                            OrderStatus::Preparing => html! {<Hammer class={icon_class} />},
+                            OrderStatus::ReadyForDelivery => html! {<MapPinCheck class={icon_class} />},
+                            OrderStatus::InDelivery => html! {<Truck class={icon_class} />},
+                            OrderStatus::Completed => html! {<Check class={icon_class} />},
+                            OrderStatus::Canceled => html! {<X class={icon_class} />},
+                        }
+                    }
                 </button>
             </div>
 
@@ -137,7 +138,7 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                     placeholder="Please provide a reason for cancellation..."
                 />
             </div>
-            <button 
+            <button
                 type="submit"
                 class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
             >
@@ -158,13 +159,13 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                     {cancel_form}
                 </div>
             }
-        },
+        }
         OrderStatus::Preparing => {
             html! {
                 <div class="mt-5 space-y-4">
                     <form onsubmit={on_order_click.clone()}>
                         <input type="hidden" name="order_status" value={OrderStatus::ReadyForDelivery.to_string()} />
-                        <button 
+                        <button
                             type="submit"
                             class="bg-sky-500 text-white text-center text-lg font-bold rounded-full w-full py-3"
                         >
@@ -174,14 +175,14 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                     {cancel_form}
                 </div>
             }
-        },
+        }
         OrderStatus::ReadyForDelivery => {
             html! {
                 <div class="mt-5">
                     {cancel_form}
                 </div>
             }
-        },
+        }
         OrderStatus::InDelivery => html! {},
         _ => html! {},
     }
