@@ -52,6 +52,8 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                         "px-4",
                         "text-center",
                         "font-semibold",
+                        "w-6",
+                        "h-6",
                         order_status.text_color(),
                         order_status.border_color()
                     )}>
@@ -73,7 +75,7 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
                 }
             }).collect::<Html>()}
 
-            <div class="mt-5 bg-gray-200 flex justify-end p-3">
+            <div class="my-5 bg-gray-200 flex justify-end p-3">
                 <div class="space-y-2">
                     <p class="text-fuente font-bold text-lg text-right">{format!("SRD {}", order_total)}</p>
                 </div>
@@ -113,6 +115,7 @@ pub struct OrderModalFormProps {
 #[function_component(OrderModalForm)]
 pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = language_ctx.translations();
     let OrderModalFormProps {
         current_status,
         on_order_click,
@@ -149,12 +152,8 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                 <div class="mt-5 space-y-4">
                     <form onsubmit={on_order_click.clone()}>
                         <input type="hidden" name="order_status" value={OrderStatus::Preparing.to_string()} />
-                        <button 
-                            type="submit"
-                            class="bg-orange-500 text-white text-center text-lg font-bold rounded-full w-full py-3"
-                        >
-                            {OrderStatus::Preparing.display()}
-                        </button>
+                        <input type="submit" value={translations["store_order_modal_button_submit"].clone()}
+                        class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5 cursor-pointer" />
                     </form>
                     {cancel_form}
                 </div>

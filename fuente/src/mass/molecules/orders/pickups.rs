@@ -82,7 +82,7 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
     html! {
         <div class="fixed inset-0 flex items-center justify-center z-50">
             <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
-            <main class="bg-white rounded-2xl py-5 px-4 sm:px-10 mx-auto max-w-full sm:max-w-xl h-[90vh] sm:h-[640px] overflow-y-auto relative z-10">
+            <main class="bg-white rounded-2xl py-5 px-4 sm:px-10 mx-auto w-full md:w-1/2 h-full overflow-y-auto">
                 <div class="flex items-center justify-between border-b border-b-gray-400 pb-3">
                     <div>
                         <p class="text-fuente-dark font-bold text-xl sm:text-2xl">
@@ -135,28 +135,19 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
     
                 {match order_state {
                     OrderStatus::ReadyForDelivery => html! {
-                        <>
-                            <div class="grid grid-cols-1 gap-4">
-                                <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
-                                <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
-                                <CustomerDetails customer={customer_profile.clone()} />
-                            </div>
-                            <div class="mt-5 space-y-4">
-                                <CancelForm on_order_click={on_order_click.clone()} />
-                            </div>
-                        </>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-5">
+                            <CommerceProfileDetails commerce_data={commerce_profile.clone()} />
+                            <CommerceProfileAddressDetails commerce_data={commerce_profile.clone()} />
+                            <CustomerDetails customer={customer_profile.clone()} />
+                        </div>
                     },
-            
                     OrderStatus::InDelivery => html! {
                         <div class="grid grid-cols-1 gap-4">
                             <CustomerDetails customer={customer_profile.clone()} />
                             <CustomerAddressDetails customer={request.address.clone()} />
-                            <div class="mt-5 space-y-4">
-                                <CancelForm on_order_click={on_order_click.clone()} />
-                            </div>
                         </div>
                     },
-                    _ => html! {},
+                    _ => html! {<></>},
                 }}
     
                 <form onsubmit={on_order_click.clone()} class="mt-5">
@@ -166,7 +157,7 @@ pub fn order_detail_modal(props: &OrderPickupModalProps) -> Html {
                     <input 
                         type="submit" 
                         value={translations["store_order_modal_button_submit"].clone()}
-                        class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5" 
+                        class="bg-fuente-orange text-white text-center text-base sm:text-lg font-bold rounded-full w-full py-2 sm:py-3 mt-5 cursor-pointer" 
                     />
                 </form>
             </main>
