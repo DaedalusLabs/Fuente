@@ -227,7 +227,7 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
                 <button
                     type="submit"
                     class="bg-fuente-orange text-white font-semibold rounded-full py-3 w-full mt-10 text-center">
-                    {&translations["store_products_form_label_add_button"]}
+                    {&translations["store_products_form_label_add_category"]}
                 </button>
             </form>
         </main>
@@ -592,11 +592,11 @@ pub fn product_list_section() -> Html {
     }
     html! {
         <div class="min-w-max">
-        <div class="grid grid-flow-rows px-5 flex-1 overflow-auto">
+        <div class="grid grid-flow-rows px-5 pb-10 flex-1 overflow-auto">
            <div class="sticky bg-white top-0 grid grid-cols-4 gap-5 items-center">
                <p class=""></p>
-               <p class="py-3 text-left text-md leading-4 font-semibold text-fuente text-lg" >{"Product Details"}</p>
-               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg">{"Price"}</p>
+               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg text-center" >{"Product Details"}</p>
+               <p class="py-3 text-md leading-4 font-semibold text-fuente text-lg text-center">{"Price"}</p>
                <p class=""></p>
            </div>
            {
@@ -625,7 +625,7 @@ pub fn product_list_section() -> Html {
                        };
 
                        html! {
-                           <div class="grid grid-cols-4 gap-5 md:gap-20 mt-10 items-center">
+                           <div class="grid grid-cols-4 gap-5 md:gap-20 mt-10 items-center place-items-center">
                                <img src={product.thumbnail_url()} alt="Product Image"
                                    class="w-20 sm:w-28 lg:w-32 object-contain bg-gray-100 rounded-xl block" />
                                <div class="text-left flex flex-col w-32 justify-start">

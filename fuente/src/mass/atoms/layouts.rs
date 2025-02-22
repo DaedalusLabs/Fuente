@@ -106,14 +106,14 @@ pub fn popup_section(props: &PopupProps) -> Html {
     };
     html! {
         <>
-        <div {onclick}
-            class="fixed inset-0 bg-neutral-900 opacity-40 z-[500]">
-        </div>
-        <div class="fixed inset-0 flex items-center justify-center p-8 z-[501] pointer-events-none">
-            <div class="pointer-events-auto">
-                {props.children.clone()}
+            <div {onclick}
+                class="fixed inset-0 bg-neutral-900 opacity-40 z-[500]">
             </div>
-        </div>
+            <div class="fixed inset-0 flex items-center justify-center p-8 z-[501] pointer-events-none">
+                <div class="pointer-events-auto">
+                    {props.children.clone()}
+                </div>
+            </div>
         </>
     }
 }

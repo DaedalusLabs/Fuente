@@ -32,7 +32,6 @@ pub fn order_list(props: &OrderListProps) -> Html {
         "rounded-2xl",
         "px-2",
         "py-2",
-        "space-y-3",
         "no-scrollbar",
         props.title.theme_color()
     );
