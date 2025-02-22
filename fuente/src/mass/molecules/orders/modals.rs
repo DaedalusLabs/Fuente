@@ -122,38 +122,49 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
         on_order_click,
     } = props;
 
+    let cancel_button_text = match current_status {
+        OrderStatus::Pending => translations["store_order_action_reject"].clone(),
+        OrderStatus::Preparing => translations["store_order_action_cancel"].clone(),
+        OrderStatus::ReadyForDelivery => translations["store_order_action_cancel"].clone(),
+        _ => String::new(),
+    };
     let cancel_form = html! {
         <form onsubmit={on_order_click.clone()}>
             <input type="hidden" name="order_status" value={OrderStatus::Canceled.to_string()} />
-            <div class="mb-4">
-                <label for="cancel_reason" class="block text-gray-500 text-sm font-bold mb-2">
-                    {"Why are you cancelling this order?"}
-                </label>
-                <textarea
-                    id="cancel_reason"
-                    name="cancel_reason"
-                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required={true}
-                    rows="3"
-                    placeholder="Please provide a reason for cancellation..."
-                />
-            </div>
+            // <div class="mb-4">
+            //     <label for="cancel_reason" class="block text-gray-500 text-sm font-bold mb-2">
+            //     {&translations["store_order_action_reject_reason"]}
+            //     </label>
+            //     <textarea
+            //         id="cancel_reason"
+            //         name="cancel_reason"
+            //         class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            //         required={true}
+            //         rows="3"
+            //         placeholder={translations["store_order_action_reject_reason"].clone()}
+            //     />
+            // </div>
             <button
                 type="submit"
                 class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
             >
-                {OrderStatus::Canceled.display()}
+                {cancel_button_text}
             </button>
         </form>
     };
 
+    let order_button_text = match current_status {
+        OrderStatus::Pending => translations["store_order_action_accept"].clone(),
+        OrderStatus::Preparing => translations["store_order_action_deliver"].clone(),
+        _ => String::new(),
+    };
     match current_status {
         OrderStatus::Pending => {
             html! {
                 <div class="mt-5 space-y-4">
                     <form onsubmit={on_order_click.clone()}>
                         <input type="hidden" name="order_status" value={OrderStatus::Preparing.to_string()} />
-                        <input type="submit" value={translations["store_order_modal_button_submit"].clone()}
+                        <input type="submit" value={order_button_text.clone()}
                         class="bg-fuente-orange text-white text-center text-lg font-bold rounded-full w-full py-3 mt-5 cursor-pointer" />
                     </form>
                     {cancel_form}
@@ -169,7 +180,7 @@ pub fn order_modal_form(props: &OrderModalFormProps) -> Html {
                             type="submit"
                             class="bg-sky-500 text-white text-center text-lg font-bold rounded-full w-full py-3"
                         >
-                            {OrderStatus::ReadyForDelivery.display()}
+                            {order_button_text}
                         </button>
                     </form>
                     {cancel_form}

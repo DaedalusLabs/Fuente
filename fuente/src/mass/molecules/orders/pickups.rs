@@ -21,12 +21,14 @@ pub struct CancelFormProps {
 
 #[function_component(CancelForm)]
 fn cancel_form(props: &CancelFormProps) -> Html {
+    let lang_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
+    let translations = lang_ctx.translations();
     html! {
         <form onsubmit={props.on_order_click.clone()}>
             <input type="hidden" name="order_status" value={OrderStatus::Canceled.to_string()} />
             <div class="mb-4">
                 <label for="cancel_reason" class="block text-gray-500 text-sm font-bold mb-2">
-                    {"Why are you cancelling this order?"}
+                {&translations["store_order_action_reject_reason"]}
                 </label>
                 <textarea
                     id="cancel_reason"
@@ -34,14 +36,14 @@ fn cancel_form(props: &CancelFormProps) -> Html {
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required={true}
                     rows="3"
-                    placeholder="Please provide a reason for cancellation..."
+                    placeholder={translations["store_order_action_reject_reason"].clone()}
                 />
             </div>
             <button
                 type="submit"
                 class="border-2 border-red-500 text-red-500 bg-white text-center text-lg font-bold rounded-full w-full py-3 hover:bg-red-50"
             >
-                {OrderStatus::Canceled.display()}
+                {&translations["store_order_action_cancel"]}
             </button>
         </form>
     }

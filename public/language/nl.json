@@ -339,6 +339,17 @@
     "store_orders_history_completed": "Voltooid",
     "store_orders_history_canceled": "Geannuleerd",
     "store_orders_history_back": "Terug",
+    
+    "store_order_action_accept": "Accepteer Bestelling",
+    "store_order_action_reject": "Weiger Bestelling",
+    "store_order_action_reject_reason": "Reden voor Weigering",
+    "store_order_action_cancel": "Annuleer Bestelling",
+    "store_order_action_deliver": "Bestelling Klaar",
+
+    "driver_order_action_accept": "Accepteer Bestelling",
+    "driver_order_action_reject": "Annuleer Bestelling",
+    "driver_order_action_deliver": "Opgehaald",
+    "driver_order_action_delivered": "Afgeleverd",
 
     "store_products_form_label_name": "Naam van het Product",
     "store_products_form_label_information": "Productinformatie",

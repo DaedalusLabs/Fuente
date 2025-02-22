@@ -13,7 +13,7 @@ module.exports = {
                 'fuente-dark': '#3b1197',
                 'fuente-forms': "#3859c7",
                 "fuente-buttons": "#6fe5fa",
-                "fuente-orange": "#f4801b"
+                "fuente-orange": "#f2a900"
             },
             fontFamily: {
                 'mplus': ['MPlus', 'sans-serif'],

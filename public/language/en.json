@@ -339,6 +339,17 @@
     "store_orders_history_canceled": "Canceled",
     "store_orders_history_back": "Back",
 
+    "store_order_action_accept": "Accept Order",
+    "store_order_action_reject": "Reject Order",
+    "store_order_action_reject_reason": "Reason for rejection",
+    "store_order_action_cancel": "Cancel Order",
+    "store_order_action_deliver": "Order Ready",
+
+    "driver_order_action_accept": "Accept Order",
+    "driver_order_action_reject": "Cancel Order",
+    "driver_order_action_deliver": "Picked Up",
+    "driver_order_action_delivered": "Delivered",
+
     "store_products_form_label_name": "Name of product",
     "store_products_form_label_information": "Product information",
     "store_products_form_label_details": "Details of your product",

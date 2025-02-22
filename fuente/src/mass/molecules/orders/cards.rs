@@ -53,8 +53,7 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         <>
         <OrderStateCard order={props.order.clone()} on_click={open_popup} />
         <PopupSection close_handle={order_popup.clone()}>
-            <div
-                class="bg-white rounded-2xl p-4 m-4">
+            <div class="bg-white rounded-2xl p-4 m-4 flex-1 overflow-y-auto">
                 <OrderDetailModal order={props.order.clone()} on_submit={props.on_click.clone()} />
             </div>
         </PopupSection>

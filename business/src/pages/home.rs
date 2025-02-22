@@ -66,6 +66,11 @@ fn respond_to_order(
             OrderStatus::try_from(status_str).expect("Could not parse order status");
 
         if status_update == OrderStatus::Canceled {
+            let Ok(true) = web_sys::window().unwrap().confirm_with_message(
+                "Are you sure you want to cancel this order? This action cannot be undone.",
+            ) else {
+                return;
+            };
             if let Some(reason) = form_data.get("cancel_reason").as_string() {
                 gloo::console::log!("Cancellation reason:", reason);
                 // TODO: We may want to store this reason in our order update request

@@ -215,7 +215,7 @@ pub fn bitcoin_banner() -> Html {
     let translations = language_ctx.translations();
     html! {
     <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
-        <div class="bg-[#F2A900] w-full rounded-2xl h-fit lg:max-h-52">
+        <div class="bg-fuente-orange w-full rounded-2xl h-fit lg:max-h-52">
             <div class="flex items-center">
                 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-80 -rotate-12 -mt-5 lg:-mt-14">
                     <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
