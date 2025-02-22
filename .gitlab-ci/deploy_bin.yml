@@ -1,35 +1,23 @@
 .deploy_rust_bin: &deploy_rust_bin
   stage: deploy
-  image: debian:bookworm-slim
-  before_script:
-    - apt-get update -y
-    - apt-get install -y rsync openssh-client
-    - eval $(ssh-agent -s)
-    - mkdir -p ~/.ssh 
-    - touch ~/.ssh/config
-    - cp /runner/.ssh/* ~/.ssh/
-    - chmod -R 400 ~/.ssh 
-    - ssh-add ~/.ssh/gitlab-deploy 
-    - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  tags:
+    - ansible
+  script:
+    - ansible-playbook -i .ansible/hosts .ansible/$PLAYBOOK
   when: manual
 
 deploy_invoicer:
   <<: *deploy_rust_bin
-  script:
-    - rsync -avz target/release/fuente-invoicer "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/invoicer/fuente-invoicer"
-    - rsync -avz invoicer/docker-compose.yml "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/invoicer/docker-compose.yml"
-    - rsync -avz invoicer/Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/invoicer/Dockerfile"
-    - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "export LND_ADDRESS=\"$LND_ADDRESS\" && export LND_MACAROON=\"$LND_MACAROON\" && export FUENTE_PRIV_KEY=\"$FUENTE_PRIV_KEY\" && export UT_API_KEY=\"$UT_API_KEY\" && export UT_APP_ID=\"$UT_APP_ID\" && export UT_CALLBACK_DOMAIN=\"$UT_CALLBACK_DOMAIN\" && cd \"$DEPLOY_PATH\"/invoicer && docker-compose down && docker-compose up -d"
   dependencies:
     - build_invoicer 
+  variables:
+    PLAYBOOK: deploy_invoicer.yml
+
 
 deploy_rating_bot:
   <<: *deploy_rust_bin
-  script:
-    - rsync -avz target/release/fuente-rating-bot "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/rating-bot/fuente-rating-bot"
-    - rsync -avz ratings/Dockerfile "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/rating-bot/Dockerfile"
-    - rsync -avz ratings/docker-compose.yml "$DAEDALUS_APPS_HOST:$DEPLOY_PATH/rating-bot/docker-compose.yml"
-    - ssh -o StrictHostKeyChecking=no "$DAEDALUS_APPS_HOST" "export FUENTE_PRIV_KEY=\"$FUENTE_PRIV_KEY\" && cd \"$DEPLOY_PATH\"/rating-bot && docker-compose down && docker-compose up -d"
   dependencies:
     - build_rating_bot
+  variables:
+    PLAYBOOK: deploy_rating_bot.yml
 

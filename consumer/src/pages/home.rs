@@ -15,8 +15,8 @@ pub fn home_page() -> Html {
     html! {
         <main class="flex flex-col flex-1 overflow-hidden w-full mx-auto">
             <CommerceFilters />
-            <div class="grid grid-cols-1 gap-4 overflow-y-auto">
-                <div class="grid lg:grid-cols-2 gap-4 container mx-auto">
+            <div class="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 container mx-auto">
                     <FuenteStoresBanner/>
                     <div class="bg-fuente rounded-2xl p-5 flex flex-col h-fit w-full">
                         <div class="flex flex-col gap-2 lg:mb-4">
@@ -48,9 +48,9 @@ pub fn stores_banner() -> Html {
     let businesses = commerce_ctx.commerces();
 
     html! {
-        <section class="bg-sky-200 rounded-2xl py-10 mt-5 lg:mt-0">
+        <section class="bg-fuente-light rounded-2xl py-10 mt-5 lg:mt-0">
             <div class="flex justify-between items-center w-full mx-auto">
-                <h2 class="text-fuente text-5xl font-semibold tracking-tighter px-5">{&translations["home_top_stores"]}</h2>
+                <h2 class="text-white text-5xl font-semibold tracking-tighter px-5">{&translations["home_top_stores"]}</h2>
             </div>
 
             <div class="flex justify-center lg:justify-between items-center mt-10 px-6">

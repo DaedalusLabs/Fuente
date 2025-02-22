@@ -1,10 +1,10 @@
 .deploy_pwa: &deploy_pwa
   stage: deploy
-  image: node:latest
+  image: oven/bun:1.2.2-alpine
   before_script:
-    - npm install wrangler --save-dev
+    - bun install wrangler --save-dev
   script:
-    - npx wrangler pages deploy $APP/dist --project-name=$CF_PROJECT
+    - bunx wrangler pages deploy $APP_DIR/dist --project-name=$CF_PROJECT
   when: manual
 
 deploy_admin:

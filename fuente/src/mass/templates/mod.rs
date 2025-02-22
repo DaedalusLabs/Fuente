@@ -1,14 +1,17 @@
 use lucide_yew::{
-    ArrowLeft, ArrowRight, Bitcoin, Copy as CopyIcon, Headset, Key, ShieldCheck, SquarePen, TriangleAlert, Truck,
+    ArrowLeft, ArrowRight, Copy as CopyIcon, Headset, Key, ShieldCheck, SquarePen, TriangleAlert,
+    Truck,
 };
 use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
+use web_sys::window;
 use web_sys::HtmlElement;
 use yew::prelude::*;
-use web_sys::window;
 
 use crate::{
-    contexts::LanguageConfigsStore, mass::{Toast, ToastAction, ToastContext, ToastType}, models::{DriverProfile, OrderInvoiceState, OrderStatus}
+    contexts::LanguageConfigsStore,
+    mass::{Toast, ToastAction, ToastContext, ToastType},
+    models::{DriverProfile, OrderInvoiceState, OrderStatus},
 };
 
 #[derive(Clone, PartialEq, Properties)]
@@ -155,7 +158,7 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
                         {children}
                     </SettingsContent>
                 </div>
-            </div>            
+            </div>
         </main>
         </>
     }
@@ -212,7 +215,7 @@ pub fn bitcoin_banner() -> Html {
     let translations = language_ctx.translations();
     html! {
     <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
-        <div class="bg-orange-400 w-full rounded-2xl h-fit lg:max-h-52">
+        <div class="bg-[#F2A900] w-full rounded-2xl h-fit lg:max-h-52">
             <div class="flex items-center">
                 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-80 -rotate-12 -mt-5 lg:-mt-14">
                     <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
@@ -223,8 +226,8 @@ pub fn bitcoin_banner() -> Html {
             </div>
         </div>
 
-        <Bitcoin class="bg-orange-400 rounded-full text-white flex h-24 w-24" />
-        // <img src="/templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
+        // <Bitcoin class="bg-orange-400 rounded-full text-white flex h-24 w-24" />
+        <img src="/public/assets/img/bitcoin.png" alt="Bitcoin Logo" class="flex flex-1  max-h-28 max-w-28 sm:max-h-44 sm:max-w-44" />
         // <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg" class="lg:hidden w-1/2 h-full">
         //     <defs id="defs4"><filter color-interpolation-filters="sRGB" id="_drop-shadow"><feGaussianBlur id="feGaussianBlur7" in="SourceAlpha" result="blur-out" stdDeviation="1"/><feBlend id="feBlend9" in="SourceGraphic" in2="blur-out" mode="normal"/></filter><linearGradient id="coin-gradient" x1="0%" x2="0%" y1="0%" y2="100%"><stop id="stop12" offset="0%" style="stop-color:#f9aa4b"/><stop id="stop14" offset="100%" style="stop-color:#f7931a"/></linearGradient></defs><g id="g16" transform="scale(0.015625)"><path d="m 63.0359,39.741 c -4.274,17.143 -21.637,27.576 -38.782,23.301 -17.138,-4.274 -27.571,-21.638 -23.295,-38.78 4.272,-17.145 21.635,-27.579 38.775,-23.305 17.144,4.274 27.576,21.64 23.302,38.784 z" id="coin" style="fill:url(#coin-gradient)"/><path d="m 46.1009,27.441 c 0.637,-4.258 -2.605,-6.547 -7.038,-8.074 l 1.438,-5.768 -3.511,-0.875 -1.4,5.616 c -0.923,-0.23 -1.871,-0.447 -2.813,-0.662 l 1.41,-5.653 -3.509,-0.875 -1.439,5.766 c -0.764,-0.174 -1.514,-0.346 -2.242,-0.527 l 0.004,-0.018 -4.842,-1.209 -0.934,3.75 c 0,0 2.605,0.597 2.55,0.634 1.422,0.355 1.679,1.296 1.636,2.042 l -1.638,6.571 c 0.098,0.025 0.225,0.061 0.365,0.117 -0.117,-0.029 -0.242,-0.061 -0.371,-0.092 l -2.296,9.205 c -0.174,0.432 -0.615,1.08 -1.609,0.834 0.035,0.051 -2.552,-0.637 -2.552,-0.637 l -1.743,4.019 4.569,1.139 c 0.85,0.213 1.683,0.436 2.503,0.646 l -1.453,5.834 3.507,0.875 1.439,-5.772 c 0.958,0.26 1.888,0.5 2.798,0.726 l -1.434,5.745 3.511,0.875 1.453,-5.823 c 5.987,1.133 10.489,0.676 12.384,-4.739 1.527,-4.36 -0.076,-6.875 -3.226,-8.515 2.294,-0.529 4.022,-2.038 4.483,-5.155 z m -8.022,11.249 c -1.085,4.36 -8.426,2.003 -10.806,1.412 l 1.928,-7.729 c 2.38,0.594 10.012,1.77 8.878,6.317 z m 1.086,-11.312 c -0.99,3.966 -7.1,1.951 -9.082,1.457 l 1.748,-7.01 c 1.982,0.494 8.365,1.416 7.334,5.553 z" id="symbol" style="fill:#ffffff"/></g>
         // </svg>
@@ -291,7 +294,7 @@ pub fn sales_pitch() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-        <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl pr-1 py-5 container mx-auto mt-7 lg:mt-20">
+        <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-fuente-light rounded-2xl pr-1 py-5 container mx-auto">
             <div class="flex">
                 <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10 -mr-10 lg:-mr-0 2xl:translate-x-[70%]" />
                 <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 lg:left-28 z-20 2xl:translate-x-[70%]" />
@@ -299,7 +302,7 @@ pub fn sales_pitch() -> Html {
             </div>
 
             <div class="mx-auto lg:mx-0 lg:ml-auto 2xl:translate-x-[-25%]">
-                <h2 class="text-3xl lg:text-6xl text-fuente tracking-tighter font-semibold max-w-[590px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
+                <h2 class="text-3xl lg:text-6xl text-white tracking-tighter font-semibold max-w-[590px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
                 <div class="flex justify-center lg:justify-start">
                     <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
                         <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-bold mt-5">{&translations["sale_products_button"]}</button>
@@ -694,7 +697,7 @@ pub fn key_recovery_section() -> Html {
              <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
                {secret_key_hex}
              </pre>
-             <button 
+             <button
                onclick={onclick_copy}
                class="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded-lg"
              >
