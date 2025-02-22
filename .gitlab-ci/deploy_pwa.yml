@@ -4,7 +4,7 @@
   before_script:
     - bun install wrangler --save-dev
   script:
-    - bunx wrangler pages deploy $APP_DIR/dist --project-name=$CF_PROJECT
+    - bunx wrangler pages deploy $APP/dist --project-name=$CF_PROJECT
   when: manual
 
 deploy_admin:
