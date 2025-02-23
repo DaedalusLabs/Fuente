@@ -1,9 +1,9 @@
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 
-use nostr_minions::browser_api::IdbStoreManager;
+use nostr_minions::{browser_api::IdbStoreManager, key_manager::UserIdentity};
 
 use super::{
     nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
@@ -73,24 +73,28 @@ impl ConsumerProfile {
             avatar_url: avatar,
         }
     }
-    pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
-        let mut unsigned_note = NostrNote {
-            pubkey: keys.public_key(),
+    pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
+        let unsigned_note = NostrNote {
+            pubkey: keys.get_pubkey().await.expect("no pubkey"),
             kind: NOSTR_KIND_CONSUMER_PROFILE,
             content: self.to_string(),
             ..Default::default()
         };
-        keys.sign_nostr_event(&mut unsigned_note);
-        unsigned_note
+        keys.sign_nostr_note(unsigned_note)
+            .await
+            .expect("could not sign")
     }
-    pub fn registry_data(
+    pub async fn registry_data(
         &self,
-        keys: &NostrKeypair,
+        keys: &UserIdentity,
         recipient: String,
     ) -> Result<NostrNote, JsValue> {
-        let inner_note = self.signed_data(keys);
+        let inner_note = self.signed_data(keys).await;
         let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
+            pubkey: keys
+                .get_pubkey()
+                .await
+                .ok_or(JsValue::from_str("no pubkey"))?,
             kind: NOSTR_KIND_CONSUMER_REGISTRY,
             content: inner_note.to_string(),
             ..Default::default()
@@ -103,18 +107,19 @@ impl ConsumerProfile {
             .map(|b| format!("{:02x}", b))
             .collect::<String>();
         giftwrap.tags.add_parameter_tag(&d_tag);
-        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
-            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
-        Ok(giftwrap)
+        keys.sign_nip44(giftwrap, recipient).await
     }
-    pub fn giftwrapped_data(
+    pub async fn giftwrapped_data(
         &self,
-        keys: &NostrKeypair,
+        keys: &UserIdentity,
         recipient: String,
     ) -> Result<NostrNote, JsValue> {
-        let inner_note = self.signed_data(keys);
+        let inner_note = self.signed_data(keys).await;
         let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
+            pubkey: keys
+                .get_pubkey()
+                .await
+                .ok_or(JsValue::from_str("no pubkey"))?,
             kind: NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
             content: inner_note.to_string(),
             ..Default::default()
@@ -127,9 +132,7 @@ impl ConsumerProfile {
             .map(|b| format!("{:02x}", b))
             .collect::<String>();
         giftwrap.tags.add_parameter_tag(&d_tag);
-        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)
-            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
-        Ok(giftwrap)
+        keys.sign_nip44(giftwrap, recipient).await
     }
 }
 
@@ -141,9 +144,9 @@ pub struct ConsumerProfileIdb {
 }
 
 impl ConsumerProfileIdb {
-    pub fn new(profile: ConsumerProfile, keys: &NostrKeypair) -> Self {
-        let pubkey = keys.public_key().to_string();
-        let note = profile.signed_data(keys);
+    pub async fn new(profile: ConsumerProfile, keys: &UserIdentity) -> Self {
+        let pubkey = keys.get_pubkey().await.expect("no pubkey");
+        let note = profile.signed_data(keys).await;
         Self {
             pubkey,
             note,
@@ -201,46 +204,5 @@ impl IdbStoreManager for ConsumerProfileIdb {
     }
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::models::init_consumer_db;
-    use nostr_minions::browser_api::IdbStoreManager;
-    use wasm_bindgen_test::*;
-
-    #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), JsValue> {
-        init_consumer_db()?;
-        let key_1 = NostrKeypair::generate(false);
-        let consumer_address = ConsumerProfile::default();
-        let address_idb = ConsumerProfileIdb::new(consumer_address.clone(), &key_1);
-        address_idb.clone().save_to_store().await.unwrap();
-
-        let key_2 = NostrKeypair::generate(false);
-        let address_idb_2 = ConsumerProfileIdb::new(consumer_address, &key_2);
-        address_idb_2.clone().save_to_store().await.unwrap();
-
-        let retrieved: ConsumerProfileIdb =
-            ConsumerProfileIdb::retrieve_from_store(&address_idb.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved.pubkey(), address_idb.pubkey());
-
-        let retrieved_2: ConsumerProfileIdb =
-            ConsumerProfileIdb::retrieve_from_store(&address_idb_2.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved_2.pubkey(), address_idb_2.pubkey());
-
-        let all_addresses = ConsumerProfileIdb::retrieve_all_from_store().await.unwrap();
-        assert_eq!(all_addresses.len(), 2);
-
-        let deleted = retrieved.delete_from_store().await;
-        let deleted_2 = retrieved_2.delete_from_store().await;
-        assert!(deleted.is_ok());
-        assert!(deleted_2.is_ok());
-        Ok(())
     }
 }

@@ -1,5 +1,5 @@
 use nostr_minions::browser_api::IdbStoreManager;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use web_sys::wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 
 mod address;

@@ -4,7 +4,7 @@ use fuente::{
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::notes::NostrNote;
-use wasm_bindgen::JsCast;
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use yew::prelude::*;
 
@@ -86,11 +86,11 @@ pub fn unregistered_commerces() -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("NostrProps not found");
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let config_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
-    let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_nostr_key();
+    let keys = user_ctx.clone();
     let commerce_whitelist = config_ctx.get_commerce_whitelist();
+    let sender = relay_ctx.send_note.clone();
     let register_onclick = Callback::from(move |e: MouseEvent| {
-        let keys = keys.clone().expect("No keys found");
+        let keys = keys.get_identity().cloned().expect("No keys found");
         let mut new_whitelist = commerce_whitelist.clone();
         let commerce_id = e.target().unwrap().dyn_ref::<HtmlElement>().unwrap().id();
         new_whitelist.push(commerce_id);
@@ -98,16 +98,20 @@ pub fn unregistered_commerces() -> Html {
             AdminConfigurationType::CommerceWhitelist,
             serde_json::to_string(&new_whitelist).unwrap(),
         );
-        let signed_request = admin_request
-            .sign_data(&keys)
-            .expect("Failed to sign request");
-        sender.emit(signed_request);
+        let sender = sender.clone();
+        let keys = keys.clone();
+        yew::platform::spawn_local(async move {
+            let signed_request = admin_request
+                .sign_data(&keys)
+                .await
+                .expect("Failed to sign request");
+            sender.emit(signed_request);
+        });
     });
-    let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_nostr_key();
+    let keys = user_ctx.clone();
     let commerce_whitelist = config_ctx.get_commerce_whitelist();
     let unregister_onclick = Callback::from(move |e: MouseEvent| {
-        let keys = keys.clone().expect("No keys found");
+        let keys = keys.get_identity().cloned().expect("No keys found");
         let mut new_whitelist = commerce_whitelist.clone();
         let commerce_id = e.target().unwrap().dyn_ref::<HtmlElement>().unwrap().id();
         new_whitelist.retain(|id| id != &commerce_id);
@@ -115,10 +119,15 @@ pub fn unregistered_commerces() -> Html {
             AdminConfigurationType::CommerceWhitelist,
             serde_json::to_string(&new_whitelist).unwrap(),
         );
-        let signed_request = admin_request
-            .sign_data(&keys)
-            .expect("Failed to sign request");
-        sender.emit(signed_request);
+        let sender = relay_ctx.send_note.clone();
+        let keys = keys.clone();
+        yew::platform::spawn_local(async move {
+            let signed_request = admin_request
+                .sign_data(&keys)
+                .await
+                .expect("Failed to sign request");
+            sender.emit(signed_request);
+        });
     });
     html! {
         <>
@@ -264,4 +273,3 @@ pub fn order_history_desktop(props: &CommerceRegistrationProps) -> Html {
         </div>
     }
 }
-

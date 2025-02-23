@@ -214,16 +214,23 @@ pub fn live_order_check(props: &ChildrenProps) -> Html {
 
     let cancel_onclick = {
         let order_ctx = order_ctx.clone();
+        let keys = key_ctx.get_identity().cloned().unwrap();
         Callback::from(move |_| {
-            if let Some((order_note, _order_state)) = &order_ctx.live_orders.last() {
-                let keys = key_ctx.get_nostr_key().expect("No user keys found");
-                let update_req = OrderUpdateRequest {
-                    order: order_note.clone(),
-                    status_update: OrderStatus::Canceled,
-                };
-                if let Ok(signed_req) = update_req.sign_update(&keys, NOSTR_KIND_CONSUMER_CANCEL) {
-                    relay_ctx.send_note.emit(signed_req);
-                }
+            if let Some((order_note, _order_state)) = order_ctx.live_orders.last().cloned() {
+                let keys = keys.clone();
+                let relay_ctx = relay_ctx.clone();
+                yew::platform::spawn_local(async move {
+                    let update_req = OrderUpdateRequest {
+                        order: order_note.clone(),
+                        status_update: OrderStatus::Canceled,
+                    };
+                    if let Ok(signed_req) = update_req
+                        .sign_update(&keys, NOSTR_KIND_CONSUMER_CANCEL)
+                        .await
+                    {
+                        relay_ctx.send_note.emit(signed_req);
+                    }
+                })
             }
         })
     };
@@ -336,12 +343,13 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
 
     let driver_marker = marker_handle.clone();
     let map = map_handle.clone();
+    let keys = key_ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
-        if let Some(note) = notes.last() {
+        if let Some(note) = notes.last().cloned() {
             // Only process driver state notes
             if note.kind == NOSTR_KIND_DRIVER_STATE {
-                if let Some(keys) = key_ctx.get_nostr_key() {
-                    match keys.decrypt_nip_04_content(note) {
+                yew::platform::spawn_local(async move {
+                    match keys.decrypt_note(&note).await {
                         Ok(decrypted) => {
                             // Parse directly as DriverStateUpdate
                             match serde_json::from_str::<DriverStateUpdate>(&decrypted) {
@@ -370,9 +378,11 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
                                 }
                             }
                         }
-                        Err(e) => gloo::console::error!("Failed to decrypt note:", e.to_string()),
+                        Err(e) => {
+                            gloo::console::error!("Failed to decrypt note:", e)
+                        }
                     }
-                }
+                });
             }
         }
         || {}
@@ -391,6 +401,7 @@ pub fn live_order_tracking(props: &LiveOrderTrackingProps) -> Html {
     html! {
         <div class="w-full h-96">
             <LeafletComponent
+                map={map_handle.clone()}
                 map_id="tracking-map"
                 {map_options}
                 location_icon_options={Some(location_icon_options)}
@@ -457,14 +468,21 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
     let onsubmit = {
         let onclose = onclose.clone();
         let rating = rating.clone();
+        let keys = key_ctx.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            if let Some(keys) = key_ctx.get_nostr_key() {
+            let keys = keys.clone();
+            let order_id = order_id.clone();
+            let rating = rating.clone();
+            let relay_ctx = relay_ctx.clone();
+            let onclose = onclose.clone();
+            yew::platform::spawn_local(async move {
+                let pubkey = keys.get_pubkey().expect("No pubkey");
                 let satisfaction = SatisfactionRecord {
                     order_id: order_id.clone(),
                     participant: fuente::models::OrderParticipant::Commerce,
                     satisfaction: rating.to_string(),
-                    rater_pubkey: keys.public_key(),
+                    rater_pubkey: pubkey.clone(),
                 };
 
                 gloo::console::log!(
@@ -473,33 +491,23 @@ pub fn rating_prompt(props: &RatingPromptProps) -> Html {
                 );
 
                 let sender = relay_ctx.send_note.clone();
-                let mut giftwrap = nostro2::notes::NostrNote {
+                let giftwrap = nostro2::notes::NostrNote {
                     kind: fuente::models::NOSTR_KIND_SATISFACTION_EVENT,
                     content: serde_json::to_string(&satisfaction).unwrap(),
-                    pubkey: keys.public_key(),
+                    pubkey,
                     ..Default::default()
                 };
 
                 // Sign the note first
-                keys.sign_nostr_event(&mut giftwrap);
+                let giftwrap = keys
+                    .sign_encrypted_note(giftwrap, TEST_PUB_KEY.to_string())
+                    .await
+                    .expect("Failed to sign note");
 
                 // Now encrypt it
-                match keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string()) {
-                    Ok(()) => {
-                        gloo::console::log!(
-                            "Successfully encrypted and sending satisfaction record"
-                        );
-                        sender.emit(giftwrap);
-                        onclose.emit(());
-                    }
-                    Err(e) => {
-                        gloo::console::error!(
-                            "Failed to encrypt satisfaction record:",
-                            e.to_string()
-                        );
-                    }
-                }
-            }
+                sender.emit(giftwrap);
+                onclose.emit(());
+            });
         })
     };
 

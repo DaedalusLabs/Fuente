@@ -172,8 +172,8 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
 
     use_effect_with((), move |_| || {});
     let subscriber = relay_ctx.subscribe.clone();
-    use_effect_with(user_ctx.get_nostr_key().clone(), move |key| {
-        if let Some(_) = key {
+    use_effect_with(user_ctx.get_pubkey().clone(), move |key| {
+        if key.is_some() {
             let mut courier_filter = nostro2::relays::NostrSubscription {
                 kinds: Some(vec![NOSTR_KIND_COURIER_PROFILE]),
                 ..Default::default()
@@ -207,8 +207,8 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
         let driver_hub_key =
-            NostrKeypair::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
-        if let (Some(note), Some(_key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
+            NostrKeypair::try_from(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys");
+        if let (Some(note), true) = (notes.last(), key_clone.get_identity().is_some()) {
             if note.kind == NOSTR_KIND_COMMERCE_PROFILE {
                 if let Ok(_) = CommerceProfile::try_from(note.clone()) {
                     ctx_clone.dispatch(ServerConfigsAction::AddCommerce(note.clone()));

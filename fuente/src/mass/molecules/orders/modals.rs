@@ -20,9 +20,8 @@ pub fn order_detail_modal(props: &OrderDetailModalProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let OrderDetailModalProps { order, on_submit } = props;
     let is_customer = {
-        let keypair = key_ctx.get_nostr_key().expect("Nostr key not found");
-        let pubkey = keypair.public_key();
-        order.order.pubkey == pubkey
+        let keypair = key_ctx.get_pubkey().expect("Nostr key not found");
+        order.order.pubkey == keypair
     };
     let request = order.get_order_request();
     let products = request.products.counted_products();

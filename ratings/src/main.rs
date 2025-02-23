@@ -12,7 +12,7 @@ pub async fn main() -> anyhow::Result<()> {
         .map(|s| s.trim().to_string())
         .collect::<Vec<_>>();
     let relay_pool = nostro2::relays::NostrRelayPool::new(vec_strings).await?;
-    let keys = nostro2::keypair::NostrKeypair::new(&std::env::var("FUENTE_PRIV_KEY")?)?;
+    let keys = nostro2::keypair::NostrKeypair::try_from(&std::env::var("FUENTE_PRIV_KEY")?)?;
     let ratings: crate::manager::LiveRatingMap =
         std::sync::Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new()));
     let rating_bot = crate::bot::RatingBot {

@@ -230,6 +230,7 @@ pub fn order_pickup_map_preview(props: &OrderPickupMapPreviewProps) -> Html {
     });
     html! {
         <LeafletComponent
+            map={map_state.clone()}
             {map_id}
             {map_options}
             {location_icon_options}

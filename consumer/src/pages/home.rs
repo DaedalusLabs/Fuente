@@ -99,7 +99,7 @@ pub struct HomeFavoriteButtonProps {
 fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    if key_ctx.get_nostr_key().is_none() {
+    if key_ctx.get_identity().is_none() {
         return html! {};
     }
 
@@ -108,7 +108,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let onclick = {
         let commerce_id = props.commerce_id.clone();
         let favorites = favorites_ctx.clone();
-        let user_id = key_ctx.get_nostr_key().unwrap().public_key();
+        let user_id = key_ctx.get_pubkey().expect("No user keys found");
 
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();

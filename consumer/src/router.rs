@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use lucide_yew::{Heart, House, Search, ShieldQuestion, ShoppingCart, UserRound, X};
 use nostr_minions::key_manager::NostrIdStore;
-use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -13,9 +13,7 @@ use fuente::{
 };
 
 use crate::{
-    contexts::{
-        CartStore, CommerceDataStore, ConsumerDataStore, RequireAuth,
-    },
+    contexts::{CartStore, CommerceDataStore, ConsumerDataStore, RequireAuth},
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
         HomePage, LiveOrderCheck, NewAddressPage, NewProfilePage, SettingsPageComponent,
@@ -51,10 +49,10 @@ pub enum ConsumerRoute {
     Register,
 }
 impl TryFrom<&str> for ConsumerRoute {
-    type Error = wasm_bindgen::JsError;
+    type Error = web_sys::wasm_bindgen::JsError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         ConsumerRoute::from_path(value, &HashMap::new())
-            .ok_or_else(|| wasm_bindgen::JsError::new("Invalid route"))
+            .ok_or_else(|| web_sys::wasm_bindgen::JsError::new("Invalid route"))
     }
 }
 
@@ -65,13 +63,12 @@ pub fn consumer_pages() -> Html {
         Ok(path) => path,
         Err(_) => ConsumerRoute::Home,
     };
-    gloo::console::log!("Current path: {:?}", format!("{:?}", path));
     let auth_context = use_context::<NostrIdStore>().expect("LoginStateStore not found");
     let consumer_store = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
     let has_profile = consumer_store.get_profile();
     let has_address = consumer_store.get_default_address();
     let navigator = use_navigator().expect("Navigator not found");
-    let logged_in = auth_context.get_nostr_key();
+    let logged_in = auth_context.get_identity().cloned();
     html! {
         <div class="flex flex-col h-screen overflow-hidden">
             {if path != ConsumerRoute::Login && path != ConsumerRoute::Register {
@@ -117,7 +114,6 @@ pub fn consumer_pages() -> Html {
                             }}
                         },
                         ConsumerRoute::Register => {
-                            gloo::console::log!("Has profile, Has address", format!("{:?}", has_profile), format!("{:?}", has_address));
                             match (has_profile.as_ref(), has_address.as_ref()) {
                                 (Some(_), Some(_)) => {
                                     navigator.push(&ConsumerRoute::Home);
@@ -171,7 +167,7 @@ pub fn header() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let cart_len = cart_ctx.cart().len();
-    let is_authenticated = key_ctx.get_nostr_key().is_some();
+    let is_authenticated = key_ctx.get_identity().is_some();
 
     html! {
         <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">

@@ -1,6 +1,8 @@
 use crate::{
     contexts::LanguageConfigsStore,
-    mass::{templates::LoginPageTemplate, Toast, ToastAction, ToastContext, ToastProvider, ToastType},
+    mass::{
+        templates::LoginPageTemplate, Toast, ToastAction, ToastContext, ToastProvider, ToastType,
+    },
 };
 use lucide_yew::Copy;
 use nostr_minions::{
@@ -46,9 +48,9 @@ pub fn login_template() -> Html {
     };
     html! {
         <ToastProvider>
-            <LoginPageTemplate 
-                heading={heading.to_string()} 
-                sub_heading={translations["auth_register_heading_now"].clone()} 
+            <LoginPageTemplate
+                heading={heading.to_string()}
+                sub_heading={translations["auth_register_heading_now"].clone()}
                 title={title.to_string()}>
                     {match *login_type {
                         AuthPage::Login => html! {<LoginForm login_handle={register} />},
@@ -72,8 +74,9 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
             .find_element_by_id::<HtmlInputElement>("private_key")
             .expect("Failed to get password")
             .value();
-        let user_keys =
-            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
+        let mut user_keys =
+            NostrKeypair::try_from(&user_keys_str).expect("Failed to create user keys");
+        user_keys.make_extractable();
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)
@@ -82,9 +85,10 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
             let keys = user_identity
                 .get_user_keys()
                 .await
-                .expect("Failed to get user keys");
+                .expect("Failed to get user keys")
+                .public_key();
             gloo::console::log!("GOT HERE");
-            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+            user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
         });
     });
 
@@ -154,8 +158,9 @@ pub fn new_user_form(props: &AuthPageProps) -> Html {
                 let keys = user_identity
                     .get_user_keys()
                     .await
-                    .expect("Failed to get user keys");
-                user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+                    .expect("Failed to get user keys")
+                    .public_key();
+                user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
             });
         })
     };
@@ -239,20 +244,19 @@ pub fn import_user_form() -> Html {
         let user_keys_str = form_element
             .input_value("password")
             .expect("Failed to get password");
-        let user_keys =
-            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
+        let user_keys = NostrKeypair::try_from(&user_keys_str).expect("Failed to create user keys");
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)
                 .await
                 .expect("Failed to create user identity");
-            let keys = user_identity.get_user_keys().await.unwrap();
-            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+            let keys = user_identity.get_user_keys().await.unwrap().public_key();
+            user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
         });
     });
 
     html! {
-        <LoginPageTemplate 
+        <LoginPageTemplate
             heading={"".to_string()}
             sub_heading={"".to_string()}
             title={translations["auth_login_title"].clone()}>

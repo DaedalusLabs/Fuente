@@ -10,6 +10,13 @@ deploy_invoicer:
   <<: *deploy_rust_bin
   dependencies:
     - build_invoicer 
+  environment:
+    PRIV_KEY: $FUENTE_PRIV_KEY
+    ADDRESS: $LND_ADDRESS
+    MACAROON: $LND_MACAROON
+    API_KEY: $UT_API_KEY
+    APP_ID: $UT_APP_ID
+    CALLBACK_DOMAIN: $UT_CALLBACK_DOMAIN
   variables:
     PLAYBOOK: deploy_invoicer.yml
 

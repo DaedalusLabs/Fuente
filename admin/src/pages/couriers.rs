@@ -41,7 +41,7 @@ pub fn courier_whitelist_display() -> Html {
         };
     }
     let sender = relay_ctx.send_note.clone();
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No keys found");
     let wl_profiles = config_ctx.get_whitelisted_couriers();
     let whitelist = config_ctx.get_couriers_whitelist();
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
@@ -85,10 +85,14 @@ pub fn courier_whitelist_display() -> Html {
                                               AdminConfigurationType::CourierWhitelist,
                                               serde_json::to_string(&new_whitelist).unwrap(),
                                             );
+                                            let sender = sender.clone();
+                                            let keys = keys.clone();
+                                            yew::platform::spawn_local(async move {
                                             let signed_request = admin_request
-                                              .sign_data(&keys)
+                                              .sign_data(&keys).await
                                               .expect("Failed to sign request");
                                             sender.emit(signed_request);
+                                            });
                                           })
                                         }
                                         class="bg-red-500 text-white font-bold text-sm py-2 px-4 rounded-full"
@@ -117,7 +121,7 @@ pub fn courier_whitelist_form() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
     let translations = language_ctx.translations();
     let sender = relay_ctx.send_note.clone();
-    let keys = user_ctx.get_nostr_key();
+    let keys = user_ctx.get_identity().cloned();
     let commerce_whitelist = config_ctx.get_couriers_whitelist();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
@@ -132,10 +136,15 @@ pub fn courier_whitelist_form() -> Html {
             AdminConfigurationType::CourierWhitelist,
             serde_json::to_string(&new_whitelist).unwrap(),
         );
-        let signed_request = admin_request
-            .sign_data(&keys)
-            .expect("Failed to sign request");
-        sender.emit(signed_request);
+        let sender = sender.clone();
+        let keys = keys.clone();
+        yew::platform::spawn_local(async move {
+            let signed_request = admin_request
+                .sign_data(&keys)
+                .await
+                .expect("Failed to sign request");
+            sender.emit(signed_request);
+        });
     });
     html! {
         <form {onsubmit}

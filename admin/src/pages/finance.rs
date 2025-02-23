@@ -59,21 +59,25 @@ pub fn exchange_rate_form() -> Html {
     let sender = relay_ctx.send_note.clone();
 
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    let keys = user_ctx.get_nostr_key();
+    let keys = user_ctx.clone();
 
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
-        let keys = keys.clone().expect("No keys found");
+        let keys = keys.clone();
         let form_element = HtmlForm::new(e).expect("Failed to get form element");
         let exchange_rate = form_element
             .input_value("exchange_rate")
             .expect("Failed to get exchange rate");
         let admin_request =
             AdminServerRequest::new(AdminConfigurationType::ExchangeRate, exchange_rate);
-        let signed_request = admin_request
-            .sign_data(&keys)
-            .expect("Failed to sign request");
-        sender.emit(signed_request);
+        let sender = sender.clone();
+        yew::platform::spawn_local(async move {
+            let signed_request = admin_request
+                .sign_data(&keys.get_identity().expect("No identity found"))
+                .await
+                .expect("Failed to sign request");
+            sender.emit(signed_request);
+        });
     });
 
     html! {
@@ -81,9 +85,9 @@ pub fn exchange_rate_form() -> Html {
             class="rounded-2xl bg-white p-5 md:max-w-sm lg:max-w-xs mx-auto">
             <div class="space-y-2">
                 <label for="exchange_rate" class="text-gray-500 font-light text-sm">{"Change the Exchange"}</label>
-                <input  
-                    type="number" 
-                    id="exchange_rate" name="exchange_rate" 
+                <input
+                    type="number"
+                    id="exchange_rate" name="exchange_rate"
                     placeholder={translations["admin_settings_btc_srd"].clone()}
                     class="w-full rounded-lg border-2 border-fuente p-2"
                     step="0.01" value="" required={true} />

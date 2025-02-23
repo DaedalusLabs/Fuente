@@ -184,7 +184,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(keys) = key_ctx.get_nostr_key() {
+        if let Some(keys) = key_ctx.get_pubkey() {
             spawn_local(async move {
                 let last_save_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
                 // let unix_time = web_sys::js_sys::Date::new_0();
@@ -197,7 +197,7 @@ pub fn commerce_data_sync() -> Html {
                     since: Some(last_save_time as u64),
                     ..Default::default()
                 };
-                filter.add_tag("#p", keys.public_key().as_str());
+                filter.add_tag("#p", keys.as_str());
                 let relay_sub: nostro2::relays::SubscribeEvent = filter.into();
                 id_handle.set(relay_sub.1.clone());
                 subscriber.emit(relay_sub.into());
@@ -218,15 +218,17 @@ pub fn commerce_data_sync() -> Html {
     });
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
-    let keys = key_ctx.get_nostr_key();
+    let keys = key_ctx.clone();
     use_effect_with(unique_notes, move |notes| {
-        if let (Some(note), Some(keys)) = (notes.last(), keys) {
+        if let Some(note) = notes.last().cloned() {
             if note.kind == NOSTR_KIND_ORDER_STATE {
-                if let Ok(plaintext) = keys.decrypt_nip_04_content(&note) {
-                    if let Ok(order) = plaintext.try_into() {
-                        ctx_clone.dispatch(OrderDataAction::UpdateCommerceOrder(order));
+                yew::platform::spawn_local(async move {
+                    if let Ok(plaintext) = keys.decrypt_note(&note).await {
+                        if let Ok(order) = plaintext.try_into() {
+                            ctx_clone.dispatch(OrderDataAction::UpdateCommerceOrder(order));
+                        }
                     }
-                }
+                });
             }
         }
         || {}

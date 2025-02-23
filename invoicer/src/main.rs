@@ -26,6 +26,11 @@ use uploads::UtSigner;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
+    #[cfg(debug_assertions)]
+    tracing_subscriber::fmt::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+    #[cfg(not(debug_assertions))]
     tracing_subscriber::fmt::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
@@ -34,7 +39,9 @@ pub async fn main() -> anyhow::Result<()> {
         .lines()
         .map(|x| x.trim().to_string())
         .collect();
+    tracing::debug!("Relays: {:?}", vec_strings);
     let relay_pool = NostrRelayPool::new(vec_strings).await?;
+    tracing::debug!("Relay pool created");
     let bot = InvoicerBot::new(relay_pool.broadcaster.clone()).await?;
     tracing::info!("Bot created");
     if let Err(relay_future) = bot.read_relay_pool(relay_pool).await {
@@ -56,7 +63,9 @@ impl InvoicerBot {
     pub async fn new(
         broadcaster: Sender<nostro2::relays::WebSocketMessage>,
     ) -> anyhow::Result<Self> {
-        let server_keys = NostrKeypair::new(&std::env::var("FUENTE_PRIV_KEY")?)?;
+        let server_keys =
+            NostrKeypair::try_from(&std::env::var("FUENTE_PRIV_KEY").expect("No key"))?;
+        tracing::debug!("Server keys created");
         Ok(Self {
             invoicer: Invoicer::new().await?,
             server_keys,
@@ -114,14 +123,14 @@ impl InvoicerBot {
     async fn note_processor(&self, signed_note: NostrNote) -> anyhow::Result<()> {
         match signed_note.kind {
             NOSTR_KIND_SERVER_REQUEST => {
-                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_44_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 if let Err(e) = self.handle_server_requests(inner_note, signed_note).await {
                     tracing::error!("{:?}", e);
                 }
             }
             NOSTR_KIND_ADMIN_REQUEST => {
-                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_44_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 let update_note = self
                     .bot_state
@@ -130,12 +139,12 @@ impl InvoicerBot {
                 self.broadcaster.send(update_note.into())?;
             }
             NOSTR_KIND_CONSUMER_REGISTRY => {
-                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_44_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 self.bot_state.add_consumer_profile(inner_note).await?
             }
             NOSTR_KIND_ORDER_STATE => {
-                let decrypted = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let decrypted = self.server_keys.decrypt_nip_44_content(&signed_note)?;
                 let inner_note = NostrNote::try_from(decrypted)?;
                 let _ = OrderInvoiceState::try_from(&inner_note)?;
                 self.bot_state.update_live_order(inner_note).await?;
@@ -169,14 +178,14 @@ impl InvoicerBot {
                 tracing::info!("Added menu");
             }
             NOSTR_KIND_COURIER_PROFILE => {
-                let inner_note = self.server_keys.decrypt_nip_04_content(&signed_note)?;
+                let inner_note = self.server_keys.decrypt_nip_44_content(&signed_note)?;
                 let driver_note = NostrNote::try_from(inner_note)?;
                 DriverProfile::try_from(&driver_note)?;
                 self.bot_state.add_courier_profile(driver_note).await?;
                 tracing::info!("Added courier profile");
             }
             NOSTR_KIND_SERVER_CONFIG => {
-                let decrypted = match self.server_keys.decrypt_nip_04_content(&signed_note) {
+                let decrypted = match self.server_keys.decrypt_nip_44_content(&signed_note) {
                     Ok(decrypted) => Some(decrypted),
                     Err(_e) => None,
                 };
@@ -268,7 +277,7 @@ impl InvoicerBot {
                             ..Default::default()
                         };
                         self.server_keys
-                            .sign_nip_04_encrypted(&mut new_url_note, outer_note.pubkey)?;
+                            .sign_nip_44_encrypted(&mut new_url_note, outer_note.pubkey)?;
                         self.broadcaster.send(new_url_note.into())?;
                     }
                 }

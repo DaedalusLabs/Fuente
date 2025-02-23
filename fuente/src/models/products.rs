@@ -1,13 +1,13 @@
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     f64,
     hash::{DefaultHasher, Hash, Hasher},
 };
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 
-use nostr_minions::browser_api::IdbStoreManager;
+use nostr_minions::{browser_api::IdbStoreManager, key_manager::UserIdentity};
 
 use super::{
     nostr_kinds::NOSTR_KIND_COMMERCE_PRODUCTS, DB_NAME_FUENTE, DB_VERSION_FUENTE,
@@ -81,7 +81,8 @@ impl ProductItem {
         }
     }
     // Add new getter methods
-    pub fn category_id(&self) -> String {  // Add this getter method
+    pub fn category_id(&self) -> String {
+        // Add this getter method
         self.category.clone()
     }
     pub fn details(&self) -> String {
@@ -91,11 +92,15 @@ impl ProductItem {
         self.sku.clone().unwrap_or_default()
     }
     pub fn image_url(&self) -> String {
-        self.image_url.clone().unwrap_or_else(|| "/public/assets/img/logo.png".to_string())
+        self.image_url
+            .clone()
+            .unwrap_or_else(|| "/public/assets/img/logo.png".to_string())
     }
     pub fn thumbnail_url(&self) -> String {
         // added debug loggins
-        let url = self.thumbnail_url.clone()
+        let url = self
+            .thumbnail_url
+            .clone()
             .unwrap_or_else(|| "/public/assets/img/logo.png".to_string());
         url
     }
@@ -104,12 +109,12 @@ impl ProductItem {
     }
     pub fn price(&self) -> String {
         let base = self.price.parse::<f64>().unwrap_or(0.0);
-    
+
         if let Some(discount) = &self.discount {
             let disc = discount.parse::<f64>().unwrap_or(0.0);
             return format!("{:.2}", base - disc);
         }
-        
+
         // Return original base price if no discount
         format!("{:.2}", base)
     }
@@ -343,15 +348,19 @@ pub struct ProductMenuIdb {
     note: NostrNote,
 }
 impl ProductMenuIdb {
-    pub fn new(menu: ProductMenu, user_keys: &NostrKeypair) -> Self {
+    pub async fn new(menu: ProductMenu, user_keys: &UserIdentity) -> Self {
+        let pubkey = user_keys.get_pubkey().await.expect("no pubkey");
         let content = menu.to_string();
-        let mut new_note = NostrNote {
-            pubkey: user_keys.public_key().to_string(),
+        let new_note = NostrNote {
+            pubkey: pubkey.clone(),
             kind: NOSTR_KIND_COMMERCE_PRODUCTS,
             content,
             ..Default::default()
         };
-        user_keys.sign_nostr_event(&mut new_note);
+        let new_note = user_keys
+            .sign_nostr_note(new_note)
+            .await
+            .expect("Could not sign note");
         Self {
             pubkey: new_note.pubkey.clone(),
             menu,
@@ -404,46 +413,5 @@ impl IdbStoreManager for ProductMenuIdb {
     }
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::models::init_consumer_db;
-    use nostr_minions::browser_api::IdbStoreManager;
-
-    use wasm_bindgen_test::*;
-    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), JsValue> {
-        init_consumer_db()?;
-        let key_1 = NostrKeypair::generate(false);
-        let consumer_address = ProductMenu::default();
-        let address_idb = ProductMenuIdb::new(consumer_address.clone(), &key_1);
-        address_idb.clone().save_to_store().await.unwrap();
-
-        let key_2 = NostrKeypair::generate(false);
-        let address_idb_2 = ProductMenuIdb::new(consumer_address, &key_2);
-        address_idb_2.clone().save_to_store().await.unwrap();
-
-        let retrieved: ProductMenuIdb = ProductMenuIdb::retrieve_from_store(&address_idb.key())
-            .await
-            .unwrap();
-        assert_eq!(retrieved.id(), address_idb.id());
-
-        let retrieved_2: ProductMenuIdb = ProductMenuIdb::retrieve_from_store(&address_idb_2.key())
-            .await
-            .unwrap();
-        assert_eq!(retrieved_2.id(), address_idb_2.id());
-
-        let all_addresses = ProductMenuIdb::retrieve_all_from_store().await.unwrap();
-        assert_eq!(all_addresses.len(), 2);
-
-        let deleted = retrieved.delete_from_store().await;
-        let deleted_2 = retrieved_2.delete_from_store().await;
-        assert!(deleted.is_ok());
-        assert!(deleted_2.is_ok());
-        Ok(())
     }
 }

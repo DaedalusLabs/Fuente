@@ -8,8 +8,11 @@ use fuente::{
     models::{OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
 use lucide_yew::{Check, CircleCheck, CircleHelp, Clock2, ScrollText, Truck, X};
-use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostr_minions::{
+    key_manager::{NostrIdStore, UserIdentity},
+    relay_pool::NostrProps,
+};
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -51,7 +54,7 @@ pub fn home_page() -> Html {
 }
 
 fn respond_to_order(
-    nostr_keys: NostrKeypair,
+    nostr_keys: UserIdentity,
     send_note: Callback<NostrNote>,
     order: NostrNote,
     update_kind: u32,
@@ -81,10 +84,15 @@ fn respond_to_order(
             order: order.clone(),
             status_update,
         };
-        let signed_req = new_request
-            .sign_update(&nostr_keys, update_kind)
-            .expect("Could not sign order");
-        send_note.emit(signed_req);
+        let send_note = send_note.clone();
+        let nostr_keys = nostr_keys.clone();
+        yew::platform::spawn_local(async move {
+            let signed_req = new_request
+                .sign_update(&nostr_keys, update_kind)
+                .await
+                .expect("Could not sign order");
+            send_note.emit(signed_req);
+        });
     })
 }
 
@@ -183,7 +191,7 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("Nostr key not found");
+    let nostr_keys = key_ctx.get_identity().cloned().expect("Nostr key not found");
     let viewed_status = use_state(|| OrderStatus::Pending);
     html! {
         <div class="lg:hidden flex flex-col flex-1 overflow-hidden">
@@ -209,7 +217,7 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
-    let nostr_keys = key_ctx.get_nostr_key().expect("Nostr key not found");
+    let nostr_keys = key_ctx.get_identity().cloned().expect("Nostr key not found");
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
             <div class="flex justify-start gap-4 h-full p-4 overflow-x-auto">

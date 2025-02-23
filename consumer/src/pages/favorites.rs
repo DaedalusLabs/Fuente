@@ -90,7 +90,7 @@ fn favorite_button(props: &FavoriteButtonProps) -> Html {
     let onclick = {
         let commerce_id = props.commerce_id.clone();
         let favorites = favorites_ctx.clone();
-        let user_id = key_ctx.get_nostr_key().unwrap().public_key();
+        let user_id = key_ctx.get_pubkey().expect("No user keys found");
 
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();

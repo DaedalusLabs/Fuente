@@ -1,5 +1,6 @@
 use crate::contexts::{
-    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore, LoginStateAction, LoginStateStore,
+    CartAction, CartStore, CommerceDataStore, ConsumerDataStore, LiveOrderStore, LoginStateAction,
+    LoginStateStore,
 };
 use crate::pages::OrderInvoiceComponent;
 use crate::router::ConsumerRoute;
@@ -28,7 +29,7 @@ pub fn cart_page() -> Html {
         };
     }
 
-    if key_ctx.get_nostr_key().is_none() {
+    if key_ctx.get_identity().is_none() {
         // Show login modal and return placeholder
         login_state.dispatch(LoginStateAction::Show);
         return html! {
@@ -145,17 +146,24 @@ pub fn cart_pre_total() -> Html {
         let sender = relay_ctx.send_note.clone();
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
-            let keys = key_ctx.get_nostr_key();
-            let note = cart_ctx.sign_request(
-                &keys.unwrap(),
-                id.clone(),
-                profile.clone().unwrap(),
-                address.clone().unwrap(),
-            );
-            // sent_handle.set(Some(note.id.as_ref().unwrap().to_string()));
-            sender.emit(note.1);
-            cart_ctx.dispatch(CartAction::SentOrder(note.0));
-            navigator.push(&ConsumerRoute::Checkout);
+            let keys = key_ctx.get_identity().cloned();
+            let cart_ctx = cart_ctx.clone();
+            let id = id.clone();
+            let profile = profile.clone();
+            let address = address.clone();
+            let navigator = navigator.clone();
+            let sender = sender.clone();
+            yew::platform::spawn_local(async move {
+                let note = cart_ctx.sign_request(
+                    &keys.unwrap(),
+                    id.clone(),
+                    profile.clone().unwrap(),
+                    address.clone().unwrap(),
+                ).await;
+                sender.emit(note.1);
+                cart_ctx.dispatch(CartAction::SentOrder(note.0));
+                navigator.push(&ConsumerRoute::Checkout);
+            });
         })
     };
     html! {
@@ -418,7 +426,11 @@ pub fn checkout_summary(props: &OrderInvoiceProps) -> Html {
         });
     }
 
-    if let Some(order) = order_ctx.live_orders.iter().find(|o| o.1.order_id() == order_id) {
+    if let Some(order) = order_ctx
+        .live_orders
+        .iter()
+        .find(|o| o.1.order_id() == order_id)
+    {
         html! {
             <OrderInvoiceComponent
                 invoice={order.1.consumer_invoice.as_ref().cloned().unwrap()}

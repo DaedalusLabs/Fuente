@@ -16,7 +16,7 @@ pub fn order_state_card(props: &OrderStateCardProps) -> Html {
     let order_req = order.get_order_request();
     let profile = order_req.profile;
     let order_id = order.order_id();
-    let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+    let timestamp = web_sys::js_sys::Date::new(&web_sys::wasm_bindgen::JsValue::from_f64(
         order.order_timestamp() as f64 * 1000.0,
     ));
     let locale_options = web_sys::js_sys::Object::new();

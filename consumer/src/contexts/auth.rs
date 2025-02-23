@@ -55,7 +55,7 @@ pub fn require_auth(props: &RequireAuthProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let navigator = use_navigator().expect("Navigator not found");
 
-    let is_authenticated = key_ctx.get_nostr_key().is_some();
+    let is_authenticated = key_ctx.get_identity().is_some();
 
     if !is_authenticated {
         navigator.push(&ConsumerRoute::Login);
@@ -77,7 +77,7 @@ pub fn login_modal() -> Html {
     {
         let login_state = login_state.clone();
         use_effect_with(key_ctx.clone(), move |key_ctx| {
-            if key_ctx.get_nostr_key().is_some() {
+            if key_ctx.get_identity().is_some() {
                 // User is logged in, hide modal
                 login_state.dispatch(LoginStateAction::Hide);
             }

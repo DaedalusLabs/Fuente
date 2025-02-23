@@ -67,14 +67,14 @@ fn authentication_check() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     // Show loading state while context is initializing
-    if !key_ctx.finished_loading() {
+    if !key_ctx.loaded() {
         return html! {
             <LoadingScreen />
         };
     }
 
     // Show login page or main app based on authentication
-    if key_ctx.get_nostr_key().is_none() {
+    if key_ctx.get_identity().is_none() {
         return html! {
             <LoginPage />
         };
@@ -145,7 +145,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
-    if !key_ctx.finished_loading()
+    if !key_ctx.loaded()
         || !admin_ctx.is_loaded()
         || !commerce_ctx.is_loaded()
     {

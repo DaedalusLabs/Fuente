@@ -15,7 +15,7 @@ use lucide_yew::{
 use nostr_minions::browser_api::HtmlForm;
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
-use wasm_bindgen::JsCast;
+use web_sys::wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -276,25 +276,33 @@ pub fn edit_avatar(props: &PopupProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayPool Context found");
     let profile = user_ctx.profile().expect("No user profile found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
-    let user_keys = nostr_keys.clone();
+    let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_ctx.send_note.clone();
     let logo_url = use_state(|| None);
     let url_handle = logo_url.clone();
     let url_clone = logo_url.clone();
 
+    let user_keys = nostr_keys.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let mut new_profile = profile.clone();
         new_profile.logo_url = (*url_clone)
             .clone()
             .unwrap_or_else(|| new_profile.logo_url.clone());
-        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        close_handle.set(false);
+        let user_keys = user_keys.clone();
+        let sender = sender.clone();
+        let close_handle = close_handle.clone();
+        let new_profile = new_profile.clone();
+        let user_ctx = user_ctx.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            close_handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
@@ -356,7 +364,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = props.close_handle.clone();
     let profile_clone = profile.clone();
@@ -381,12 +389,19 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
             .expect("Failed to get description element")
             .unchecked_into::<web_sys::HtmlTextAreaElement>();
         new_profile.description = description_element.value();
-        let db =
-            CommerceProfileIdb::new(new_profile.clone(), &keys).expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        handle.set(false);
+        let keys = keys.clone();
+        let sender = sender.clone();
+        let user_ctx = user_ctx.clone();
+        let handle = handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
@@ -459,7 +474,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = props.close_handle.clone();
 
@@ -482,12 +497,19 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
         let mut profile_clone = profile.clone();
         profile_clone.lookup = address.clone().expect("No address found");
         profile_clone.geolocation = coords.clone().expect("No coordinates found").into();
-        let db = CommerceProfileIdb::new(profile_clone.clone(), &keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        handle.set(false);
+        let keys = keys.clone();
+        let sender = sender.clone();
+        let user_ctx = user_ctx.clone();
+        let handle = handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(profile_clone.clone(), &keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            handle.set(false);
+        });
     });
     html! {
         <form  class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" {onsubmit}>

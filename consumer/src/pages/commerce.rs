@@ -183,7 +183,7 @@ pub fn product_item_card(props: &ProductItemProps) -> Html {
     let has_address_and_profile = {
         consumer_ctx.get_default_address().is_some() && consumer_ctx.get_profile().is_some()
     };
-    let is_logged_in = auth_context.get_nostr_key().is_some();
+    let is_logged_in = auth_context.get_identity().is_some();
     let navigation = use_navigator().expect("No navigation found");
     let show_warning = use_state(|| false);
     let onclick = {
