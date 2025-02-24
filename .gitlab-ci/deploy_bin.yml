@@ -17,7 +17,7 @@ deploy_invoicer:
     API_KEY: $UT_API_KEY
     APP_ID: $UT_APP_ID
     CALLBACK_DOMAIN: $UT_CALLBACK_DOMAIN
-    PLAYBOOK: deploy_invoicer.yml
+    PLAYBOOK: invoicer-playbook.yml
 
 
 deploy_rating_bot:
