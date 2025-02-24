@@ -1,19 +1,15 @@
 use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
-#[cfg(target_arch = "wasm32")]
 use sha2::{Digest, Sha256};
 use web_sys::wasm_bindgen::JsValue;
 
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
 
 use nostr_minions::browser_api::IdbStoreManager;
 
-#[cfg(target_arch = "wasm32")]
-use super::{NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP};
-
 use super::{
     nostr_kinds::NOSTR_KIND_CONSUMER_PROFILE, DB_NAME_FUENTE, DB_VERSION_FUENTE,
+    NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP,
     STORE_NAME_CONSUMER_PROFILES,
 };
 
