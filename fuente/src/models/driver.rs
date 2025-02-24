@@ -1,16 +1,11 @@
-#[cfg(target_arch = "wasm32")]
-use super::NOSTR_KIND_DRIVER_STATE;
 use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::JsValue;
 
 use super::{
-    nostr_kinds::NOSTR_KIND_COURIER_PROFILE, DB_NAME_FUENTE, DB_VERSION_FUENTE,
-    STORE_NAME_CONSUMER_PROFILES,
+    nostr_kinds::NOSTR_KIND_COURIER_PROFILE, DB_NAME_FUENTE, DB_VERSION_FUENTE, NOSTR_KIND_DRIVER_STATE, STORE_NAME_CONSUMER_PROFILES
 };
-use nostr_minions::browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager};
-#[cfg(target_arch = "wasm32")]
-use nostr_minions::key_manager::UserIdentity;
+use nostr_minions::{browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager}, key_manager::UserIdentity};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
@@ -79,7 +74,6 @@ impl DriverProfile {
             telephone,
         }
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
         let pubkey = keys.get_pubkey().await.expect("no pubkey");
         let new_note = NostrNote {
@@ -92,7 +86,6 @@ impl DriverProfile {
             .await
             .expect("could not sign")
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn giftwrapped_data(
         &self,
         keys: &UserIdentity,
@@ -150,7 +143,6 @@ impl DriverStateUpdate {
         })
     }
 
-    #[cfg(target_arch = "wasm32")]
     pub async fn to_encrypted_note(
         &self,
         keys: &UserIdentity,
