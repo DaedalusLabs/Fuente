@@ -37,10 +37,11 @@ pub async fn main() -> anyhow::Result<()> {
     let relays = include_str!("../../relays.txt")
         .trim()
         .lines()
+        .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    tracing::debug!("Relays: {:?}", vec_strings);
-    let relay_pool = NostrRelayPool::new(vec_strings).await?;
+    tracing::debug!("Relays: {:?}", relays);
+    let relay_pool = NostrRelayPool::new(relays).await?;
     tracing::debug!("Relay pool created");
     let bot = InvoicerBot::new(relay_pool.broadcaster.clone()).await?;
     tracing::info!("Bot created");

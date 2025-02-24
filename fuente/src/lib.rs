@@ -1,6 +1,5 @@
-// pub mod browser_api;
+#[cfg(target_arch = "wasm32")]
 pub mod contexts;
-// pub mod js;
+#[cfg(target_arch = "wasm32")]
 pub mod mass;
 pub mod models;
-// pub mod widgets;

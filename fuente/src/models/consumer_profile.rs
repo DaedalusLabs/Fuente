@@ -1,13 +1,20 @@
 use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
+#[cfg(target_arch = "wasm32")]
 use sha2::{Digest, Sha256};
 use web_sys::wasm_bindgen::JsValue;
 
-use nostr_minions::{browser_api::IdbStoreManager, key_manager::UserIdentity};
+#[cfg(target_arch = "wasm32")]
+use nostr_minions::key_manager::UserIdentity;
+
+use nostr_minions::browser_api::IdbStoreManager;
+
+#[cfg(target_arch = "wasm32")]
+use super::{NOSTR_KIND_CONSUMER_REGISTRY, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP};
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_CONSUMER_PROFILE, NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP},
-    DB_NAME_FUENTE, DB_VERSION_FUENTE, NOSTR_KIND_CONSUMER_REGISTRY, STORE_NAME_CONSUMER_PROFILES,
+    nostr_kinds::NOSTR_KIND_CONSUMER_PROFILE, DB_NAME_FUENTE, DB_VERSION_FUENTE,
+    STORE_NAME_CONSUMER_PROFILES,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -73,6 +80,7 @@ impl ConsumerProfile {
             avatar_url: avatar,
         }
     }
+    #[cfg(target_arch = "wasm32")]
     pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
         let unsigned_note = NostrNote {
             pubkey: keys.get_pubkey().await.expect("no pubkey"),
@@ -84,6 +92,7 @@ impl ConsumerProfile {
             .await
             .expect("could not sign")
     }
+    #[cfg(target_arch = "wasm32")]
     pub async fn registry_data(
         &self,
         keys: &UserIdentity,
@@ -109,6 +118,7 @@ impl ConsumerProfile {
         giftwrap.tags.add_parameter_tag(&d_tag);
         keys.sign_nip44(giftwrap, recipient).await
     }
+    #[cfg(target_arch = "wasm32")]
     pub async fn giftwrapped_data(
         &self,
         keys: &UserIdentity,
@@ -144,6 +154,7 @@ pub struct ConsumerProfileIdb {
 }
 
 impl ConsumerProfileIdb {
+    #[cfg(target_arch = "wasm32")]
     pub async fn new(profile: ConsumerProfile, keys: &UserIdentity) -> Self {
         let pubkey = keys.get_pubkey().await.expect("no pubkey");
         let note = profile.signed_data(keys).await;
