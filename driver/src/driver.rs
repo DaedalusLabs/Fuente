@@ -33,13 +33,6 @@ fn app() -> Html {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing Fuente database");
         init_commerce_db().expect("Error initializing Commerce database");
-        // spawn_local(async move {
-        //     let sw = nostr_minions::browser_api::AppServiceWorker::new()
-        //         .expect("Error initializing service worker");
-        //     sw.install("serviceWorker.js")
-        //         .await
-        //         .expect("Error installing service worker");
-        // });
         || {}
     });
     html! {
@@ -65,18 +58,15 @@ fn app() -> Html {
 
 #[function_component(RelayPoolComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim()
+        .lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
         <RelayProvider {relays}>
             {props.children.clone()}

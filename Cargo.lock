@@ -1791,7 +1791,9 @@ dependencies = [
 
 [[package]]
 name = "nostr-minions"
-version = "0.1.7"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "899770900e56f33f6b916e87ae058d196616cdde380172619c77d27a7cd764b9"
 dependencies = [
  "gloo 0.11.0",
  "nostro2",
@@ -1808,7 +1810,9 @@ dependencies = [
 
 [[package]]
 name = "nostro2"
-version = "0.2.4"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6ec9565f654a0c0d87cd03ca292335d6c7388f179c0a5642e03c4a23431909e"
 dependencies = [
  "anyhow",
  "base64 0.22.1",

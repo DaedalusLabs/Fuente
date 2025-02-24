@@ -9,12 +9,12 @@ use fuente::{
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
+use lucide_yew::Smile;
 use nostr_minions::{
     init_nostr_db,
     key_manager::{NostrIdProvider, NostrIdStore},
     relay_pool::{RelayProvider, UserRelay},
 };
-use lucide_yew::Smile;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::BrowserRouter;
 
@@ -56,18 +56,15 @@ fn app() -> Html {
 
 #[function_component(RelayProviderComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim()
+        .lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
         <RelayProvider {relays}>
             {props.children.clone()}

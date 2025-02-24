@@ -1,6 +1,7 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataExt, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider, FavoritesProvider, LiveOrderProvider, LoginProvider, RatingsProvider
+        CartProvider, CommerceDataExt, CommerceDataProvider, CommerceDataStore,
+        ConsumerDataProvider, FavoritesProvider, LiveOrderProvider, LoginProvider, RatingsProvider,
     },
     router::ConsumerPages,
 };
@@ -91,18 +92,14 @@ fn authentication_check() -> Html {
 
 #[function_component(RelayPoolComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim().lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
         <RelayProvider {relays}>
             {props.children.clone()}
@@ -145,10 +142,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
     let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
-    if !key_ctx.loaded()
-        || !admin_ctx.is_loaded()
-        || !commerce_ctx.is_loaded()
-    {
+    if !key_ctx.loaded() || !admin_ctx.is_loaded() || !commerce_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
     html! {

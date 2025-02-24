@@ -1,0 +1,11 @@
+wss://relay.illuminodes.com
+wss://strfry.iris.to
+wss://relay.hodl.ar
+wss://nostr.sudocarlos.com
+wss://prl.plus
+wss://af.purplerelay.com
+wss://nostr.zoel.network
+wss://tw.purplerelay.com
+wss://nostr.1sat.org
+
+

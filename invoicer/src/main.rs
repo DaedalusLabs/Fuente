@@ -34,11 +34,11 @@ pub async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    let vec_strings = include_str!("relays.txt")
+    let relays = include_str!("../../relays.txt")
         .trim()
         .lines()
-        .map(|x| x.trim().to_string())
-        .collect();
+        .collect::<Vec<String>>();
+
     tracing::debug!("Relays: {:?}", vec_strings);
     let relay_pool = NostrRelayPool::new(vec_strings).await?;
     tracing::debug!("Relay pool created");

@@ -6,11 +6,10 @@ pub async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    let vec_strings = include_str!("../relays.txt")
+    let relays = include_str!("../../relays.txt")
         .trim()
         .lines()
-        .map(|s| s.trim().to_string())
-        .collect::<Vec<_>>();
+        .collect::<Vec<String>>();
     let relay_pool = nostro2::relays::NostrRelayPool::new(vec_strings).await?;
     let keys = nostro2::keypair::NostrKeypair::try_from(&std::env::var("FUENTE_PRIV_KEY")?)?;
     let ratings: crate::manager::LiveRatingMap =

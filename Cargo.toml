@@ -7,14 +7,10 @@ fuente = { path = "fuente" }
 ratings = { path = "ratings" }
 
 # ILLUMINODES stack
-#nostr-minions = "0.1.6"
-nostr-minions = { path = "../../illuminodes/minions" }
+nostr-minions = "0.1.9"
 bright-lightning = "0.1.5"
-# bright-lightning = { path = "../bright-lightning" }
-#nostro2 = "0.2.4"
-nostro2 = { path = "../../illuminodes/NostrO2" }
+nostro2 = "0.2.6"
 upload-things = "0.1.2"
-#upload-things = { path = "../o2-thing/upload-things" }
 
 anyhow = "1.0.94"
 async-channel = "2.2.0"
