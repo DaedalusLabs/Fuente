@@ -7,7 +7,7 @@ fuente = { path = "fuente" }
 ratings = { path = "ratings" }
 
 # ILLUMINODES stack
-nostr-minions = "0.1.9"
+nostr-minions = "0.1.10"
 bright-lightning = "0.1.5"
 nostro2 = "0.2.6"
 upload-things = "0.1.2"

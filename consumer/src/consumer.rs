@@ -7,7 +7,7 @@ use consumer::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage, PwaInstall, ToastProvider},
+    mass::{LoadingScreen, PwaInstall, ToastProvider},
     models::init_consumer_db,
 };
 use html::ChildrenProps;
@@ -62,38 +62,11 @@ fn app() -> Html {
     }
 }
 
-// New component to handle authentication checks
-#[function_component(AuthenticationCheck)]
-fn authentication_check() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-
-    // Show loading state while context is initializing
-    if !key_ctx.loaded() {
-        return html! {
-            <LoadingScreen />
-        };
-    }
-
-    // Show login page or main app based on authentication
-    if key_ctx.get_identity().is_none() {
-        return html! {
-            <LoginPage />
-        };
-    }
-
-    // Main app content when authenticated
-    html! {
-        <AppContext>
-            <ConsumerPages />
-            <PwaInstall />
-        </AppContext>
-    }
-}
-
 #[function_component(RelayPoolComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
     let relays = include_str!("../../relays.txt")
-        .trim().lines()
+        .trim()
+        .lines()
         .map(|url| UserRelay {
             url: url.trim().to_string(),
             read: true,
