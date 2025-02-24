@@ -1,12 +1,5 @@
 - name: Deploy Fuente Invoicer
   hosts: daedalus
-  vars:
-    PRIV_KEY: "{{ lookup('env', 'FUENTE_PRIV_KEY') }}"
-    ADDRESS: "{{ lookup('env', 'LND_ADDRESS') }}"
-    MACAROON: "{{ lookup('env', 'LND_MACAROON') }}"
-    API_KEY: "{{ lookup('env', 'UT_API_KEY') }}"
-    APP_ID: "{{ lookup('env', 'UT_APP_ID') }}"
-    CALLBACK_DOMAIN: "{{ lookup('env', 'UT_CALLBACK_DOMAIN') }}"
   tasks:
 
     - name: Ensure the directory exists
@@ -39,13 +32,13 @@
 
     - name: Run docker-compose
       command: docker-compose up --build -d
+      vars:
+        PRIV_KEY: "{{ lookup('env', 'FUENTE_PRIV_KEY') }}"
+        ADDRESS: "{{ lookup('env', 'LND_ADDRESS') }}"
+        MACAROON: "{{ lookup('env', 'LND_MACAROON') }}"
+        API_KEY: "{{ lookup('env', 'UT_API_KEY') }}"
+        APP_ID: "{{ lookup('env', 'UT_APP_ID') }}"
+        CALLBACK_DOMAIN: "{{ lookup('env', 'UT_CALLBACK_DOMAIN') }}"
       args:
-        vars:
-          FUENTE_PRIV_KEY: "{{ PRIV_KEY }}"
-          LND_ADDRESS: "{{ ADDRESS }}"
-          LND_MACAROON: "{{ MACAROON }}"
-          UT_API_KEY: "{{ API_KEY }}"
-          UT_APP_ID: "{{ APP_ID }}"
-          UT_CALLBACK_DOMAIN: "{{ CALLBACK_DOMAIN }}"
         chdir: /opt/fuente/invoicer
     
