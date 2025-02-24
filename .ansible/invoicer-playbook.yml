@@ -15,7 +15,7 @@
         dest: /opt/fuente/invoicer
       with_items:
         - ../target/release/fuente-invoicer
-        - ../docker-compose.yml
+        - ../invoicer/docker-compose.yml
 
     - name: Change ownership
       become: yes
