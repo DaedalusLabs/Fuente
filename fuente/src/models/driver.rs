@@ -223,7 +223,6 @@ pub struct DriverProfileIdb {
 }
 
 impl DriverProfileIdb {
-    #[cfg(target_arch = "wasm32")]
     pub async fn new(profile: DriverProfile, keys: &UserIdentity) -> Self {
         let pubkey = keys.get_pubkey().await.expect("no pubkey");
         let note = profile.signed_data(keys).await;

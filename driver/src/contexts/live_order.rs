@@ -216,7 +216,7 @@ pub fn commerce_data_sync() -> Html {
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_ORDER_STATE {
-                if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
+                if let Ok(decrypted) = hub_keys.decrypt_nip_44_content(&note) {
                     if let Ok(order_note) = NostrNote::try_from(decrypted) {
                         if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
                             let idb = OrderStateIdb::new(order_note.clone())
