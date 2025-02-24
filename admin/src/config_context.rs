@@ -215,16 +215,17 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                 }
             }
             if note.kind == NOSTR_KIND_COURIER_PROFILE {
-                let cleartext = driver_hub_key
-                    .decrypt_nip_04_content(&note)
-                    .expect("Failed to decrypt");
-                let giftwrapped_note = NostrNote::try_from(cleartext).expect("Failed to parse");
-
-                if let Ok(profile) = DriverProfile::try_from(giftwrapped_note.content.clone()) {
-                    ctx_clone.dispatch(ServerConfigsAction::AddCourier((
-                        giftwrapped_note.clone(),
-                        profile,
-                    )));
+                if let Ok(cleartext) = driver_hub_key.decrypt_nip_44_content(&note) {
+                    if let Ok(giftwrapped_note) = NostrNote::try_from(cleartext) {
+                        if let Ok(profile) =
+                            DriverProfile::try_from(giftwrapped_note.content.clone())
+                        {
+                            ctx_clone.dispatch(ServerConfigsAction::AddCourier((
+                                giftwrapped_note.clone(),
+                                profile,
+                            )));
+                        }
+                    }
                 }
             }
             if note.kind == NOSTR_KIND_SERVER_CONFIG {
