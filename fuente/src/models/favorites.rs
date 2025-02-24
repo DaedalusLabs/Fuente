@@ -1,5 +1,5 @@
 use ::serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use nostr_minions::browser_api::IdbStoreManager;
 use super::{DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_FAVORITES};
 
@@ -15,7 +15,7 @@ impl FavoriteStore {
         Self {
             commerce_id,
             user_id,
-            timestamp: js_sys::Date::now() as u64,
+            timestamp: web_sys::js_sys::Date::now() as u64,
         }
     }
 

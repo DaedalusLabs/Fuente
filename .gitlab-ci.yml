@@ -12,6 +12,7 @@ cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - target/
+    - public/
 
 include:
   - local: '/.gitlab-ci/build-image.yml'

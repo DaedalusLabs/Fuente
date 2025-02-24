@@ -29,7 +29,6 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
- "wasm-bindgen",
  "web-sys",
  "yew",
  "yew-router",
@@ -306,7 +305,6 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
- "wasm-bindgen",
  "web-sys",
  "yew",
  "yew-router",
@@ -416,7 +414,6 @@ dependencies = [
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
  "upload-things",
- "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
  "yew",
@@ -564,14 +561,12 @@ version = "0.1.0"
 dependencies = [
  "fuente",
  "gloo 0.11.0",
- "js-sys",
  "lucide-yew",
  "nostr-minions",
  "nostro2",
  "serde",
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
- "wasm-bindgen",
  "web-sys",
  "yew",
  "yew-router",
@@ -667,7 +662,6 @@ dependencies = [
  "async-channel",
  "bright-lightning",
  "gloo 0.11.0",
- "js-sys",
  "lucide-yew",
  "nostr-minions",
  "nostro2",
@@ -677,7 +671,6 @@ dependencies = [
  "sha2",
  "tokio",
  "upload-things",
- "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
@@ -707,7 +700,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fuente-rating-bot"
+name = "fuente-ratings"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1798,9 +1791,9 @@ dependencies = [
 
 [[package]]
 name = "nostr-minions"
-version = "0.1.6"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c9f9e37f8c61513795e85bddc33e48d491553a47e49fec8d7b8a84b92a9d037"
+checksum = "be01a9895b2292609db2775c7c3175674f55c6b42b6a9daf08ce86c5ccc39688"
 dependencies = [
  "gloo 0.11.0",
  "nostro2",
@@ -1817,9 +1810,9 @@ dependencies = [
 
 [[package]]
 name = "nostro2"
-version = "0.2.4"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b8f17cef598723c21a4a7a870b57edf91c0425d6447b203f2675bc8ebcdb04e"
+checksum = "ecc01fdc50092445596cdf4503838dc36b0f606e7300bc39ccf88b5d78144cbb"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -1845,6 +1838,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

@@ -16,9 +16,7 @@ nostr-minions.workspace = true
 upload-things.workspace = true
 
 # WASM stuff
-js-sys.workspace = true
 serde-wasm-bindgen.workspace = true
-wasm-bindgen.workspace = true 
 wasm-bindgen-futures.workspace = true
 wasm-bindgen-test.workspace = true
 web-sys.workspace = true

@@ -11,7 +11,13 @@ deploy_invoicer:
   dependencies:
     - build_invoicer 
   variables:
-    PLAYBOOK: deploy_invoicer.yml
+    PRIV_KEY: $FUENTE_PRIV_KEY
+    ADDRESS: $LND_ADDRESS
+    MACAROON: $LND_MACAROON
+    API_KEY: $UT_API_KEY
+    APP_ID: $UT_APP_ID
+    CALLBACK_DOMAIN: $UT_CALLBACK_DOMAIN
+    PLAYBOOK: invoicer-playbook.yml
 
 
 deploy_rating_bot:

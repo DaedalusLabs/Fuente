@@ -6,7 +6,7 @@ use nostr_minions::{
         LeafletMapOptions, Marker,
     },
 };
-use wasm_bindgen::{JsCast, JsValue};
+use web_sys::wasm_bindgen::{JsCast, JsValue};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Properties, Clone, PartialEq)]
@@ -231,6 +231,7 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
     let markers = use_state(|| Vec::<(f64, f64)>::new());
     html! {
         <LeafletComponent
+            map={map.clone()}
             map_id="map"
             {map_options}
             {location_icon_options}

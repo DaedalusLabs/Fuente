@@ -6,7 +6,7 @@ use fuente::{
     models::{OrderInvoiceState, OrderStateIdb, OrderStatus},
 };
 use lucide_yew::History;
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 

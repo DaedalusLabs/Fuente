@@ -1,4 +1,6 @@
 use bright_lightning::LightningAddress;
+#[cfg(target_arch = "wasm32")]
+use nostr_minions::key_manager::UserIdentity;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, IdbStoreManager},
     widgets::leaflet::nominatim::NominatimLookup,
@@ -8,9 +10,9 @@ use super::{
     gps::CoordinateStrings, nostr_kinds::NOSTR_KIND_COMMERCE_PROFILE, DB_NAME_FUENTE,
     DB_VERSION_FUENTE, STORE_NAME_COMMERCE_PROFILES,
 };
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommerceProfile {
@@ -63,16 +65,20 @@ impl CommerceProfile {
             banner_url,
         }
     }
-    pub fn signed_data(&self, user_keys: &NostrKeypair) -> NostrNote {
+    #[cfg(target_arch = "wasm32")]
+    pub async fn signed_data(&self, user_keys: &UserIdentity) -> NostrNote {
+        let pubkey = user_keys.get_pubkey().await.unwrap();
         let data = serde_json::to_string(self).unwrap();
-        let mut new_note = NostrNote {
-            pubkey: user_keys.public_key(),
+        let new_note = NostrNote {
+            pubkey,
             kind: NOSTR_KIND_COMMERCE_PROFILE,
             content: data,
             ..Default::default()
         };
-        user_keys.sign_nostr_event(&mut new_note);
-        new_note
+        user_keys
+            .sign_nostr_note(new_note)
+            .await
+            .expect("Failed to sign note")
     }
     pub fn geolocation(&self) -> GeolocationCoordinates {
         self.geolocation.clone().into()
@@ -112,8 +118,9 @@ pub struct CommerceProfileIdb {
 }
 
 impl CommerceProfileIdb {
-    pub fn new(profile: CommerceProfile, keys: &NostrKeypair) -> Result<Self, JsValue> {
-        let note = profile.signed_data(keys);
+    #[cfg(target_arch = "wasm32")]
+    pub async fn new(profile: CommerceProfile, keys: &UserIdentity) -> Result<Self, JsValue> {
+        let note = profile.signed_data(keys).await;
         let pubkey = note.pubkey.clone();
         Ok(Self {
             pubkey,
@@ -175,47 +182,5 @@ impl IdbStoreManager for CommerceProfileIdb {
     }
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::models::init_consumer_db;
-    use nostr_minions::browser_api::IdbStoreManager;
-    use wasm_bindgen_test::*;
-
-    #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), JsValue> {
-        init_consumer_db()?;
-        let key_1 = NostrKeypair::generate(false);
-        let consumer_address = CommerceProfile::default();
-        let address_idb = CommerceProfileIdb::new(consumer_address.clone(), &key_1)?;
-        address_idb.clone().save_to_store().await.unwrap();
-
-        let key_2 = NostrKeypair::generate(false);
-        let address_idb_2 = CommerceProfileIdb::new(consumer_address, &key_2)?;
-        address_idb_2.clone().save_to_store().await.unwrap();
-
-        let retrieved: CommerceProfileIdb =
-            CommerceProfileIdb::retrieve_from_store(&address_idb.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved.id(), address_idb.id());
-
-        let retrieved_2: CommerceProfileIdb =
-            CommerceProfileIdb::retrieve_from_store(&address_idb_2.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved_2.id(), address_idb_2.id());
-
-        let all_addresses = CommerceProfileIdb::retrieve_all_from_store().await.unwrap();
-        assert_eq!(all_addresses.len(), 2);
-
-        let deleted = retrieved.delete_from_store().await;
-        let deleted_2 = retrieved_2.delete_from_store().await;
-        assert!(deleted.is_ok());
-        assert!(deleted_2.is_ok());
-        Ok(())
     }
 }

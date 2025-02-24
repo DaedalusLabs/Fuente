@@ -28,6 +28,7 @@ struct InvoicerState {
 impl InvoicerState {
     fn read_whitelist() -> Vec<String> {
         let whitelist = include_str!("whitelist.txt");
+        tracing::debug!("Whitelist: {}", whitelist);
         whitelist
             .trim()
             .lines()

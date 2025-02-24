@@ -1,7 +1,7 @@
 use nostr_minions::browser_api::IdbStoreManager;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 
 use crate::models::{DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_ORDER_HISTORY};
 
@@ -16,11 +16,11 @@ pub struct OrderStateIdb {
 impl Default for OrderStateIdb {
     fn default() -> Self {
         let order_id = NostrKeypair::generate(false).public_key();
-        let order = OrderInvoiceState::default();
+        let order = NostrNote::default();
         Self {
             order_id,
-            timestamp: order.order.created_at,
-            state_note: order.order,
+            timestamp: order.created_at,
+            state_note: order,
         }
     }
 }

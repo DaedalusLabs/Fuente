@@ -107,17 +107,17 @@ pub fn commerce_data_sync() -> Html {
     // Get all required contexts first, returning early if they're not available
     let ctx = match use_context::<LiveOrderStore>() {
         Some(ctx) => ctx,
-        None => return html! {},  // Return empty if context not found
+        None => return html! {}, // Return empty if context not found
     };
-    
+
     let relay_ctx = match use_context::<NostrProps>() {
         Some(ctx) => ctx,
-        None => return html! {},  // Return empty if context not found
+        None => return html! {}, // Return empty if context not found
     };
-    
+
     let keys_ctx = match use_context::<NostrIdStore>() {
         Some(ctx) => ctx,
-        None => return html! {},  // Return empty if context not found
+        None => return html! {}, // Return empty if context not found
     };
 
     let sub_id = use_state(|| "".to_string());
@@ -127,7 +127,7 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(keys_ctx.clone(), move |key_ctx| {
-        if let Some(keys) = key_ctx.get_nostr_key() {
+        if let Some(keys) = key_ctx.get_pubkey() {
             spawn_local(async move {
                 let last_sync_time = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
                 let mut filter = NostrSubscription {
@@ -135,7 +135,7 @@ pub fn commerce_data_sync() -> Html {
                     since: Some(last_sync_time as u64),
                     ..Default::default()
                 };
-                filter.add_tag("#p", keys.public_key().as_str());
+                filter.add_tag("#p", keys.as_str());
                 let sub: nostro2::relays::SubscribeEvent = filter.into();
                 id_handle.set(sub.1.clone());
                 subscriber.emit(sub);
@@ -147,14 +147,13 @@ pub fn commerce_data_sync() -> Html {
     let subscriber_clone = relay_ctx.subscribe;
     let keys_ctx_clone = keys_ctx.clone();
     use_effect_with(ctx.live_orders.clone(), move |order| {
-        if let (Some((_note, state)), Some(keys)) = 
-        (order.last(), keys_ctx_clone.get_nostr_key()) {
+        if let (Some((_note, state)), Some(keys)) = (order.last(), keys_ctx_clone.get_pubkey()) {
             if let Some(_courier_note) = state.courier.clone() {
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_DRIVER_STATE]),
                     ..Default::default()
                 };
-                filter.add_tag("#p", keys.public_key().as_str());
+                filter.add_tag("#p", keys.as_str());
                 subscriber_clone.emit(filter.into());
             }
         }
@@ -162,54 +161,43 @@ pub fn commerce_data_sync() -> Html {
     });
 
     use_effect_with(unique_notes, move |notes| {
-        if let (Some(note), Some(keys)) = (notes.last(), keys_ctx.get_nostr_key()) {
+        if let (Some(note), keys) = (notes.last().cloned(), keys_ctx.clone()) {
             if note.kind == NOSTR_KIND_ORDER_STATE {
-                if let Ok(decrypted) = keys.decrypt_nip_04_content(&note) {
-                    if let Ok(order_note) = NostrNote::try_from(decrypted) {
-                        if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
-                            match OrderStateIdb::new(order_note.clone()) {
-                                Ok(order_idb) => {
-                                    spawn_local(async move {
-                                        order_idb
-                                            .save()
-                                            .await
-                                            .expect("Failed to save order state idb");
-                                    });
-                                }
-                                Err(e) => {
-                                    gloo::console::error!(
-                                        "Failed to create order state idb: {:?}",
-                                        e
-                                    );
-                                }
-                            }
-                            match (&order_status.payment_status, &order_status.order_status) {
-                                (OrderPaymentStatus::PaymentFailed, _) => {}
-                                (_, OrderStatus::Canceled) => {
-                                    // Save to IDB but don't complete the order immediately
-                                    // Use SetOrder instead of CompleteOrder to keep the order in context
-                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
-                                        order_note,
-                                        order_status,
-                                    ));
-                                }
-                                (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
-                                    gloo::console::log!("Setting completed order for rating");
-                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
-                                        order_note,
-                                        order_status,
-                                    ));
-                                }
-                                _ => {
-                                    ctx.dispatch(LiveOrderAction::UpdateOrder(
-                                        order_note,
-                                        order_status,
-                                    ));
-                                }
-                            }
+                spawn_local(async move {
+                    let Ok(decrypted) = keys.decrypt_note(&note).await else {
+                        gloo::console::error!("Failed to decrypt note");
+                        return;
+                    };
+                    let Ok(order_note) = NostrNote::try_from(decrypted) else {
+                        gloo::console::error!("Failed to parse note");
+                        return;
+                    };
+                    let Ok(order_status) = OrderInvoiceState::try_from(&order_note) else {
+                        gloo::console::error!("Failed to parse order status");
+                        return;
+                    };
+                    let Ok(order_idb) = OrderStateIdb::new(order_note.clone()) else {
+                        gloo::console::error!("Failed to create order state idb:");
+                        return;
+                    };
+                    order_idb
+                        .save()
+                        .await
+                        .expect("Failed to save order state idb");
+                    match (&order_status.payment_status, &order_status.order_status) {
+                        (OrderPaymentStatus::PaymentFailed, _) => {}
+                        (_, OrderStatus::Canceled) => {
+                            ctx.dispatch(LiveOrderAction::UpdateOrder(order_note, order_status));
+                        }
+                        (OrderPaymentStatus::PaymentSuccess, OrderStatus::Completed) => {
+                            gloo::console::log!("Setting completed order for rating");
+                            ctx.dispatch(LiveOrderAction::UpdateOrder(order_note, order_status));
+                        }
+                        _ => {
+                            ctx.dispatch(LiveOrderAction::UpdateOrder(order_note, order_status));
                         }
                     }
-                }
+                });
             }
         }
         || {}

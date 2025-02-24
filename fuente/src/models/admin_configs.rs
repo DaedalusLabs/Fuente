@@ -1,13 +1,18 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use nostr_minions::browser_api::IdbStoreManager;
+#[cfg(target_arch = "wasm32")]
+use nostr_minions::key_manager::UserIdentity;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
+
+#[cfg(target_arch = "wasm32")]
+use super::TEST_PUB_KEY;
 
 use super::{
     nostr_kinds::{NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_SERVER_CONFIG},
-    DB_NAME_FUENTE, DB_VERSION_FUENTE, TEST_PUB_KEY,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE,
 };
 
 #[derive(Serialize, Deserialize, Clone, Hash)]
@@ -305,24 +310,34 @@ impl AdminServerRequest {
             config_str,
         }
     }
-    pub fn sign_data(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
+    #[cfg(target_arch = "wasm32")]
+    pub async fn sign_data(&self, priv_key: &UserIdentity) -> anyhow::Result<NostrNote> {
+        let pubkey = priv_key
+            .get_pubkey()
+            .await
+            .ok_or(anyhow::anyhow!("No pubkey"))?;
         let mut note = NostrNote {
-            pubkey: priv_key.public_key(),
+            pubkey: pubkey.clone(),
             kind: NOSTR_KIND_ADMIN_REQUEST,
             content: self.config_str.clone(),
             ..Default::default()
         };
         let config_str: String = self.config_type.clone().into();
         note.tags.add_parameter_tag(&config_str);
-        priv_key.sign_nostr_event(&mut note);
-        let mut giftwrap = NostrNote {
-            pubkey: priv_key.public_key(),
+        let note = priv_key
+            .sign_nostr_note(note)
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign note"))?;
+        let giftwrap = NostrNote {
+            pubkey,
             kind: NOSTR_KIND_ADMIN_REQUEST,
             content: note.into(),
             ..Default::default()
         };
-        priv_key.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
-        Ok(giftwrap)
+        priv_key
+            .sign_nip44(giftwrap, TEST_PUB_KEY.to_string())
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign giftwrap"))
     }
 }
 impl ToString for AdminServerRequest {

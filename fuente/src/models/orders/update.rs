@@ -1,6 +1,9 @@
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+#[cfg(target_arch = "wasm32")]
+use nostr_minions::key_manager::UserIdentity;
+use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
 
+#[cfg(target_arch = "wasm32")]
 use crate::models::{NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY};
 
 use super::{state::OrderStatus, OrderInvoiceState};
@@ -29,21 +32,32 @@ impl OrderUpdateRequest {
         let invoice_state = OrderInvoiceState::try_from(&self.order)?;
         Ok(invoice_state)
     }
-    pub fn sign_update(&self, keys: &NostrKeypair, kind: u32) -> anyhow::Result<NostrNote> {
-        let mut note = NostrNote {
+    #[cfg(target_arch = "wasm32")]
+    pub async fn sign_update(&self, keys: &UserIdentity, kind: u32) -> anyhow::Result<NostrNote> {
+        let pubkey = keys
+            .get_pubkey()
+            .await
+            .ok_or(anyhow::anyhow!("No pubkey"))?;
+        let note = NostrNote {
             kind,
             content: serde_json::to_string(self)?,
-            pubkey: keys.public_key(),
+            pubkey: pubkey.clone(),
             ..Default::default()
         };
-        keys.sign_nostr_event(&mut note);
-        let mut giftwrap = NostrNote {
+        let note = keys
+            .sign_nostr_note(note)
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign note"))?;
+        let giftwrap = NostrNote {
             kind: NOSTR_KIND_SERVER_REQUEST,
             content: note.to_string(),
-            pubkey: keys.public_key(),
+            pubkey,
             ..Default::default()
         };
-        keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
+        let giftwrap = keys
+            .sign_nip44(giftwrap, TEST_PUB_KEY.to_string())
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign giftwrap"))?;
         Ok(giftwrap)
     }
 }

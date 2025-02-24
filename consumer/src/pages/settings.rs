@@ -235,7 +235,7 @@ pub fn my_contact_details() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No NostrProps found");
     let translations = language_ctx.translations();
     let profile_popup_handle = use_state(|| false);
-    
+
     // Get profile safely
     match user_ctx.get_profile() {
         Some(profile) => {
@@ -268,7 +268,7 @@ pub fn my_contact_details() -> Html {
 
                         <div class="flex flex-col items-center justify-center space-y-6">
                             <div class="relative w-full max-w-xs aspect-square">
-                                <img 
+                                <img
                                     src={profile.avatar_url.clone()}
                                     alt="Profile Logo"
                                     class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
@@ -281,13 +281,13 @@ pub fn my_contact_details() -> Html {
                     </PopupSection>
                 </div>
             }
-        },
+        }
         None => {
             html! {
                 <div class="flex flex-col items-center justify-center p-8">
                     <h2 class="text-2xl font-semibold mb-4">{&translations["profile_not_setup"]}</h2>
                     <p class="text-gray-600 mb-4">{&translations["profile_setup_required"]}</p>
-                    <AppLink<ConsumerRoute> 
+                    <AppLink<ConsumerRoute>
                         class="bg-fuente text-white px-6 py-2 rounded-lg"
                         selected_class=""
                         route={ConsumerRoute::Home}>
@@ -307,30 +307,43 @@ pub fn edit_avatar(props: &PopupProps) -> Html {
     let profile = user_ctx.get_profile().expect("No user profile found");
     let avatar_url = use_state(|| None);
     let url_handle = avatar_url.clone();
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
-    let user_keys = nostr_keys.clone();
+    let nostr_keys = key_ctx.clone();
+    let user_keys = nostr_keys.get_identity().cloned();
     let sender = relay_ctx.send_note.clone();
     let url_clone = url_handle.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
-        let mut user_profile = profile.clone();
-        user_profile.avatar_url = (*url_clone).clone();
-        let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
-        let giftwrapped_note = user_profile
-            .giftwrapped_data(&user_keys, user_keys.public_key())
-            .expect("Failed to giftwrap data");
-        let server_registry = user_profile
-            .registry_data(&user_keys, TEST_PUB_KEY.to_string())
-            .expect("Failed to giftwrap data");
-        sender.emit(server_registry);
-        sender.emit(giftwrapped_note);
-        user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
-        close_handle.set(false);
+        let profile = profile.clone();
+        let url_clone = url_clone.clone();
+        let sender = sender.clone();
+        let user_ctx = user_ctx.clone();
+        let close_handle = close_handle.clone();
+        let user_keys = user_keys.clone();
+        yew::platform::spawn_local(async move {
+            let mut user_profile = profile.clone();
+            let user_keys = user_keys.clone().expect("No user keys found");
+            let pubkey = user_keys.get_pubkey().await.expect("No pubkey found");
+
+            user_profile.avatar_url = (*url_clone).clone();
+            let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys).await;
+            let giftwrapped_note = user_profile
+                .giftwrapped_data(&user_keys, pubkey)
+                .await
+                .expect("Failed to giftwrap data");
+            let server_registry = user_profile
+                .registry_data(&user_keys, TEST_PUB_KEY.to_string())
+                .await
+                .expect("Failed to giftwrap data");
+            sender.emit(server_registry);
+            sender.emit(giftwrapped_note);
+            user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
+            close_handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
             class="w-full flex flex-col gap-2 bg-white rounded-3xl p-4 items-center">
-            <ImageUploadInput {url_handle} {nostr_keys} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} input_id="user-profile-upload" />
+            <ImageUploadInput {url_handle} nostr_keys={nostr_keys.get_identity().cloned().expect("no id")} classes={classes!("min-w-32", "min-h-32", "h-32", "w-32")} input_id="user-profile-upload" />
             <button
                 type="submit"
                 class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl"
@@ -347,7 +360,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let profile = user_ctx.get_profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let profile_clone = profile.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
@@ -367,17 +380,22 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
         user_profile.nickname = nickname;
         user_profile.email = email;
         user_profile.telephone = telephone;
-        let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys);
-        let giftwrapped_note = user_profile
-            .giftwrapped_data(&user_keys, user_keys.public_key())
-            .expect("Failed to giftwrap data");
-        let server_registry = user_profile
-            .registry_data(&user_keys, TEST_PUB_KEY.to_string())
-            .expect("Failed to giftwrap data");
-        sender.emit(server_registry);
-        sender.emit(giftwrapped_note);
-        user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
-        close_handle.set(false);
+        let close_handle = close_handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = ConsumerProfileIdb::new(user_profile.clone(), &user_keys).await;
+            let giftwrapped_note = user_profile
+                .giftwrapped_data(&user_keys, user_keys.get_pubkey().await.expect("No pubkey"))
+                .await
+                .expect("Failed to giftwrap data");
+            let server_registry = user_profile
+                .registry_data(&user_keys, TEST_PUB_KEY.to_string())
+                .await
+                .expect("Failed to giftwrap data");
+            sender.emit(server_registry);
+            sender.emit(giftwrapped_note);
+            user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
+            close_handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
@@ -432,7 +450,7 @@ pub fn my_address_details() -> Html {
     let default_address = addresses.iter().find(|a| a.is_default());
     html! {
         {if let Some(address) = default_address {
-            let lookup = address.address().lookup(); 
+            let lookup = address.address().lookup();
             html! {
                 <div class="max-w-full flex flex-col p-6 rounded-lg space-y-6 overflow-hidden">
                     <h3 class="text-gray-800 text-2xl font-semibold border-b pb-2">
@@ -554,15 +572,21 @@ pub fn new_address_menu(props: &PopupProps) -> Html {
     let address = (*nominatim_state).clone();
     let coords: Option<GeolocationCoordinates> = (*coordinate_state).clone();
     let onclick = Callback::from(move |_| {
-        if let (Some(address), Some(coords), Some(keys)) =
-            (address.clone(), coords.clone(), key_ctx.get_nostr_key())
-        {
+        if let (Some(address), Some(coords), Some(keys)) = (
+            address.clone(),
+            coords.clone(),
+            key_ctx.get_identity().cloned(),
+        ) {
             let address = ConsumerAddress::new(address, coords.into());
-            let db_entry = ConsumerAddressIdb::new(address.clone(), &keys);
-            let handle = close_handle.clone();
-            data_ctx.dispatch(ConsumerDataAction::NewAddress(db_entry.clone()));
-            data_ctx.dispatch(ConsumerDataAction::SetDefaultAddress(db_entry));
-            handle.set(false);
+            let close_handle = close_handle.clone();
+            let data_ctx = data_ctx.clone();
+            yew::platform::spawn_local(async move {
+                let db_entry = ConsumerAddressIdb::new(address.clone(), &keys).await;
+                let handle = close_handle.clone();
+                data_ctx.dispatch(ConsumerDataAction::NewAddress(db_entry.clone()));
+                data_ctx.dispatch(ConsumerDataAction::SetDefaultAddress(db_entry));
+                handle.set(false);
+            });
         }
     });
     let props = props!(NewAddressProps {
@@ -573,9 +597,9 @@ pub fn new_address_menu(props: &PopupProps) -> Html {
         onclick
     });
     html! {
-        <form class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+        <div class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
             <NewAddressForm ..props />
-        </form>
+        </div>
     }
 }
 

@@ -1,8 +1,6 @@
 use fuente::{
     contexts::LanguageConfigsStore,
-    mass::{
-        templates::LoginPageTemplate, SimpleInput,
-    },
+    mass::{templates::LoginPageTemplate, SimpleInput},
     models::{CommerceProfile, CommerceProfileIdb},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
@@ -33,8 +31,8 @@ pub fn edit_profile_menu() -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
     let translations = language_ctx.translations();
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
 
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
 
     let onsubmit = Callback::from(move |e: SubmitEvent| {
@@ -53,11 +51,18 @@ pub fn edit_profile_menu() -> Html {
             .input_value("ln_address")
             .expect("Failed to get ln_address");
 
-        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+        let new_profile = new_profile.clone();
+        let user_ctx = user_ctx.clone();
+        let sender = sender.clone();
+
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+        });
     });
     html! {
         <form {onsubmit}

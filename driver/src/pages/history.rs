@@ -1,7 +1,7 @@
 use fuente::contexts::LanguageConfigsStore;
 use fuente::mass::{OrderDetails, OrderHistoryDesktop, OrderHistoryMobile};
 use fuente::models::OrderStatus;
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 

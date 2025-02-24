@@ -178,7 +178,7 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
 
     let onsubmit = {
         let sender = relay_ctx.send_note.clone();
-        let key = key_ctx.get_nostr_key().expect("No user keys found");
+        let key = key_ctx.get_identity().cloned().expect("No user keys found");
         let handle = commerce_ctx.clone();
         let close_modal = close_modal.clone();
         let toast_ctx = toast_ctx.clone();
@@ -193,17 +193,27 @@ pub fn add_category_form(props: &AddCategoryFormProps) -> Html {
                     let new_category =
                         ProductCategory::new(menu.categories().len(), category_name.clone());
                     menu.update_category_name(new_category);
-                    let db_entry = ProductMenuIdb::new(menu, &key);
-                    sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+                    let sender = sender.clone();
+                    let handle = handle.clone();
+                    let key = key.clone();
+                    yew::platform::spawn_local(async move {
+                        let db_entry = ProductMenuIdb::new(menu, &key).await;
+                        sender.emit(db_entry.note());
+                        handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+                    });
                 }
                 None => {
                     let mut new_menu = ProductMenu::new();
                     let new_category = ProductCategory::new(0, category_name.clone());
                     new_menu.add_category(new_category);
-                    let db_entry = ProductMenuIdb::new(new_menu, &key);
-                    sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+                    let sender = sender.clone();
+                    let handle = handle.clone();
+                    let key = key.clone();
+                    yew::platform::spawn_local(async move {
+                        let db_entry = ProductMenuIdb::new(new_menu, &key).await;
+                        sender.emit(db_entry.note());
+                        handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+                    });
                 }
             }
 
@@ -242,23 +252,29 @@ pub fn add_banner_form() -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageStore found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let nostr_keys = key_ctx.get_identity().expect("No user keys found");
     let translations = language_ctx.translations();
 
     let onsubmit = {
         let image_url = image_url.clone();
         let sender = relay_ctx.send_note.clone();
-        let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
         let handle = commerce_ctx.clone();
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             if let Some(mut profile) = handle.profile().clone() {
                 profile.banner_url = (*image_url).clone().unwrap();
-                let db_entry = CommerceProfileIdb::new(profile, &nostr_keys)
-                    .expect("Failed to create profile entry");
-                sender.emit(db_entry.signed_note().clone());
-                handle.dispatch(CommerceDataAction::UpdateCommerceProfile(db_entry));
+                let sender = sender.clone();
+                let handle = handle.clone();
+                let nostr_keys = nostr_keys.clone();
+                yew::platform::spawn_local(async move {
+                    let db_entry = CommerceProfileIdb::new(profile, &nostr_keys)
+                        .await
+                        .expect("Failed to create profile entry");
+                    sender.emit(db_entry.signed_note().clone());
+                    handle.dispatch(CommerceDataAction::UpdateCommerceProfile(db_entry));
+                });
             }
         })
     };
@@ -312,7 +328,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
     let relay_ctx = use_context::<NostrProps>().expect("No RelayProps found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No LanguageStore found");
     let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let nostr_keys = key_ctx.get_identity().expect("No user keys found");
     let thumbnail_url = use_state(|| None::<String>);
     let discount_enabled = use_state(|| false);
     let translations = language_ctx.translations();
@@ -322,7 +338,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
         let thumbnail_url = thumbnail_url.clone();
         let discount_enabled = discount_enabled.clone();
         let sender = relay_ctx.send_note.clone();
-        let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
         let handle = commerce_ctx.clone();
         let menu = menu.clone();
         let toast_ctx = toast_ctx.clone();
@@ -378,15 +394,23 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                     product.set_discount(discount);
 
                     menu.add_product(category.id(), product);
-                    let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys);
-                    sender.emit(db_entry.note());
-                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
 
-                    toast_ctx.dispatch(ToastAction::Show(Toast {
-                        message: "Product added successfully!".into(),
-                        toast_type: ToastType::Success,
-                    }));
-                    close_modal.set(false);
+                    let sender = sender.clone();
+                    let handle = handle.clone();
+                    let toast_ctx = toast_ctx.clone();
+                    let close_modal = close_modal.clone();
+                    let key = nostr_keys.clone();
+                    yew::platform::spawn_local(async move {
+                        let db_entry = ProductMenuIdb::new(menu.clone(), &key).await;
+                        sender.emit(db_entry.note());
+                        handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+
+                        toast_ctx.dispatch(ToastAction::Show(Toast {
+                            message: "Product added successfully!".into(),
+                            toast_type: ToastType::Success,
+                        }));
+                        close_modal.set(false);
+                    });
                 }
                 None => {
                     toast_ctx.dispatch(ToastAction::Show(Toast {
@@ -492,7 +516,7 @@ pub fn add_product_form(props: &AddProductFormProps) -> Html {
                             </label>
                             <ImageUploadInput
                                 url_handle={thumbnail_url.clone()}
-                                nostr_keys={nostr_keys}
+                                nostr_keys={nostr_keys.clone()}
                                 classes={classes!("size-32")}
                                 input_id="thumbnail-image-upload"  // Unique ID for thumbnail image
                             />
@@ -574,13 +598,17 @@ pub fn product_list_section() -> Html {
 
     let new_menu = menu_state.clone();
     let handle = commerce_ctx.clone();
-    let keys = key_ctx.get_nostr_key();
+    let keys = key_ctx.get_identity().cloned();
     let sender = relay_ctx.send_note.clone();
     let _onclick = Callback::from(move |_: MouseEvent| {
         if let (Some(new_menu), Some(key)) = ((*new_menu).clone(), keys.clone()) {
-            let db_entry = ProductMenuIdb::new(new_menu, &key);
-            sender.emit(db_entry.note());
-            handle.dispatch(CommerceDataAction::UpdateProductList(db_entry))
+            let sender = sender.clone();
+            let handle = handle.clone();
+            yew::platform::spawn_local(async move {
+                let db_entry = ProductMenuIdb::new(new_menu, &key).await;
+                sender.emit(db_entry.note());
+                handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+            });
         }
     });
     {
@@ -671,7 +699,7 @@ pub fn product_list_section() -> Html {
                             onclick={
                                 let menu_handle = menu_state.clone();
                                 let handle = commerce_ctx.clone();
-                                let keys = key_ctx.get_nostr_key().expect("No user keys found");
+                                let keys = key_ctx.get_identity().cloned().expect("No user keys found");
                                 let sender = relay_ctx.send_note.clone();
                                 let deleting_product = deleting_product.clone();
                                 let show_delete_popup = show_delete_popup.clone();
@@ -680,8 +708,14 @@ pub fn product_list_section() -> Html {
                                     if let (Some((category_id, product_id)), Some(mut menu)) = ((*deleting_product).clone(), (*menu_handle).clone()) {
                                         menu.remove_product(&category_id, &product_id);
 
-                                        // Create ProductMenuIdb and broadcast changes
-                                        let db_entry = ProductMenuIdb::new(menu.clone(), &keys);
+                                        let sender = sender.clone();
+                                        let handle = handle.clone();
+                                        let keys = keys.clone();
+                                        let menu_handle = menu_handle.clone();
+                                        let deleting_product = deleting_product.clone();
+                                        let show_delete_popup = show_delete_popup.clone();
+                                        yew::platform::spawn_local(async move {
+                                        let db_entry = ProductMenuIdb::new(menu.clone(), &keys).await;
                                         sender.emit(db_entry.note());
                                         handle.dispatch(CommerceDataAction::UpdateProductList(db_entry.clone()));
 
@@ -689,6 +723,7 @@ pub fn product_list_section() -> Html {
                                         menu_handle.set(Some(menu));
                                         deleting_product.set(None);
                                         show_delete_popup.set(false);
+                                        });
                                     }
                                 })
                             }
@@ -720,7 +755,7 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
     let image_url = use_state(|| Some(product.image_url()));
     let thumbnail_url = use_state(|| Some(product.thumbnail_url()));
     let discount_enabled = use_state(|| product.discount().is_some());
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
 
     let onsubmit = {
         let handle = commerce_ctx.clone();
@@ -762,11 +797,19 @@ pub fn edit_product_form(props: &EditProductFormProps) -> Html {
 
                 menu.add_product(updated_product.category_id(), updated_product);
 
-                let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys);
-                sender.emit(db_entry.note());
-                handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
-                menu_handle.set(Some(menu.clone()));
-                on_cancel.emit(MouseEvent::new("click").unwrap());
+                let handle = handle.clone();
+                let sender = sender.clone();
+                let nostr_keys = nostr_keys.clone();
+                let menu_handle = menu_handle.clone();
+                let on_cancel = on_cancel.clone();
+
+                yew::platform::spawn_local(async move {
+                    let db_entry = ProductMenuIdb::new(menu.clone(), &nostr_keys).await;
+                    sender.emit(db_entry.note());
+                    handle.dispatch(CommerceDataAction::UpdateProductList(db_entry));
+                    menu_handle.set(Some(menu.clone()));
+                    on_cancel.emit(MouseEvent::new("click").unwrap());
+                });
             }
         })
     };

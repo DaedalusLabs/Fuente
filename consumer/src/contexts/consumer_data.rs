@@ -10,7 +10,7 @@ use nostro2::{
     relays::{NostrSubscription, RelayEvent},
 };
 use std::rc::Rc;
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -182,11 +182,10 @@ pub fn key_handler(props: &ConsumerDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("User context not found");
     use_effect_with(key_ctx, |key_ctx| {
-        if let Some(key) = key_ctx.get_nostr_key() {
+        if let Some(key) = key_ctx.get_pubkey() {
             spawn_local(async move {
                 if let Ok(profile) =
-                    ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(&key.public_key()))
-                        .await
+                    ConsumerProfileIdb::retrieve_from_store(&JsValue::from_str(&key)).await
                 {
                     ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile));
                 }
@@ -219,9 +218,8 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx.clone(), move |keys| {
-        if let Some(keys) = keys.get_nostr_key() {
+        if let Some(pubkey) = keys.get_pubkey() {
             if &(*id_handle) == "" {
-                let pubkey = keys.public_key();
                 let filter: nostro2::relays::SubscribeEvent = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP]),
                     authors: Some(vec![pubkey.clone()]),
@@ -245,23 +243,29 @@ pub fn commerce_data_sync() -> Html {
     let ctx_clone = ctx.clone();
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
-            match note.kind {
-                NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP => {
-                    let decrypted_note_str = key_ctx
-                        .get_nostr_key()
-                        .expect("No keys found")
-                        .decrypt_nip_04_content(note)
-                        .expect("Failed to decrypt note");
-                    let decrypted_note: NostrNote = serde_json::from_str(&decrypted_note_str)
-                        .expect("Failed to deserialize note");
-                    if let Ok(profile) = decrypted_note.try_into() {
+            let note = note.clone();
+            spawn_local(async move {
+                match note.kind {
+                    NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP => {
+                        let Ok(decrypted_note_str) = key_ctx.decrypt_note(&note).await else {
+                            gloo::console::info!("Failed to decrypt consumer note");
+                            return;
+                        };
+                        let Ok(decrypted_note) =
+                            serde_json::from_str::<NostrNote>(&decrypted_note_str)
+                        else {
+                            gloo::console::info!("Failed to parse consumer note");
+                            return;
+                        };
+                        let Ok(profile) = decrypted_note.try_into() else {
+                            gloo::console::info!("Received spammy note");
+                            return;
+                        };
                         ctx_clone.dispatch(ConsumerDataAction::LoadProfile(profile))
-                    } else {
-                        gloo::console::info!("Received spammy note");
                     }
+                    _ => {}
                 }
-                _ => {}
-            }
+            });
         }
         || {}
     });

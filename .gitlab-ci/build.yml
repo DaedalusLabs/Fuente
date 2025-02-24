@@ -30,26 +30,25 @@ build_driver:
   variables:
     APP: driver
 
-build_invoicer:
+.build_binary: &build_binary
   stage: build
-  image: rust:1.84-bookworm # Use the official Rust Docker image
+  image: rust:1.84-bookworm
   script:
-    - cargo build --package fuente-invoicer --release  # Build the binaries in release mode
+    - cargo build -p $BIN_NAME --release
   artifacts:
     paths:
-      - target/release/fuente-invoicer  # Save the compiled binaries
-      - invoicer/Dockerfile
-      - invoicer/docker-compose.yml
-    expire_in: 1 week  # Optional: Set an expiration time for the artifacts
+      - target/release/$BIN_NAME
+      - $BIN_REPO/docker-compose.yml
+    expire_in: 1 week
+
+build_invoicer:
+  <<: *build_binary
+  variables:
+    BIN_NAME: fuente-invoicer
+    BIN_REPO: invoicer
 
 build_rating_bot:
-  stage: build
-  image: rust:1.84-bookworm  # Use the official Rust Docker image
-  script:
-    - cargo build --package fuente-rating-bot --release  # Build the binaries in release mode
-  artifacts:
-    paths:
-      - target/release/fuente-rating-bot # Save the compiled binaries
-      - ratings/Dockerfile
-      - ratings/docker-compose.yml
-    expire_in: 1 week  # Optional: Set an expiration time for the artifacts
+  <<: *build_binary
+  variables:
+    BIN_NAME: fuente-ratings
+    BIN_REPO: ratings

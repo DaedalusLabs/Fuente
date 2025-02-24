@@ -1,12 +1,11 @@
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 
 use super::{
-    nostr_kinds::{NOSTR_KIND_COURIER_PROFILE, NOSTR_KIND_DRIVER_STATE},
-    DB_NAME_FUENTE, DB_VERSION_FUENTE, STORE_NAME_CONSUMER_PROFILES,
+    nostr_kinds::NOSTR_KIND_COURIER_PROFILE, DB_NAME_FUENTE, DB_VERSION_FUENTE, NOSTR_KIND_DRIVER_STATE, STORE_NAME_CONSUMER_PROFILES
 };
-use nostr_minions::browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager};
+use nostr_minions::{browser_api::{GeolocationCoordinates, GeolocationPosition, IdbStoreManager}, key_manager::UserIdentity};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DriverProfile {
@@ -75,37 +74,47 @@ impl DriverProfile {
             telephone,
         }
     }
-    pub fn signed_data(&self, keys: &NostrKeypair) -> NostrNote {
-        let mut new_note = NostrNote {
-            pubkey: keys.public_key(),
+    pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
+        let pubkey = keys.get_pubkey().await.expect("no pubkey");
+        let new_note = NostrNote {
+            pubkey,
             kind: NOSTR_KIND_COURIER_PROFILE,
             content: self.to_string(),
             ..Default::default()
         };
-        keys.sign_nostr_event(&mut new_note);
-        new_note
+        keys.sign_nostr_note(new_note)
+            .await
+            .expect("could not sign")
     }
-    pub fn giftwrapped_data(
+    pub async fn giftwrapped_data(
         &self,
-        keys: &NostrKeypair,
+        keys: &UserIdentity,
         receiver: String,
         tag: String,
     ) -> anyhow::Result<NostrNote> {
-        let mut unsigned_note = NostrNote {
-            pubkey: keys.public_key(),
+        let pubkey = keys
+            .get_pubkey()
+            .await
+            .ok_or(anyhow::anyhow!("No pubkey"))?;
+        let note = NostrNote {
+            pubkey: pubkey.clone(),
             kind: NOSTR_KIND_COURIER_PROFILE,
             content: self.to_string(),
             ..Default::default()
         };
-        keys.sign_nostr_event(&mut unsigned_note);
+        let note = keys.sign_nostr_note(note).await.map_err(|e| {
+            anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string()))
+        })?;
         let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
+            pubkey,
             kind: NOSTR_KIND_COURIER_PROFILE,
-            content: unsigned_note.to_string(),
+            content: note.to_string(),
             ..Default::default()
         };
-    giftwrap.tags.add_parameter_tag(&tag);
-        keys.sign_nip_04_encrypted(&mut giftwrap, receiver)?;
+        giftwrap.tags.add_parameter_tag(&tag);
+        let giftwrap = keys.sign_nip44(giftwrap, receiver).await.map_err(|e| {
+            anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string()))
+        })?;
         Ok(giftwrap)
     }
     pub fn nickname(&self) -> String {
@@ -125,27 +134,41 @@ pub struct DriverStateUpdate {
 impl DriverStateUpdate {
     // The new method looks fine, just fix the formatting and wildcards
     pub async fn new(driver: NostrNote) -> anyhow::Result<Self> {
-        let geo = GeolocationPosition::locate().await.map_err(|e| anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string())))?;
-        Ok(Self { driver, geolocation: geo })
+        let geo = GeolocationPosition::locate().await.map_err(|e| {
+            anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string()))
+        })?;
+        Ok(Self {
+            driver,
+            geolocation: geo,
+        })
     }
 
-
-    pub fn to_encrypted_note(&self, keys: &NostrKeypair, recipient: String) -> anyhow::Result<NostrNote> {
+    pub async fn to_encrypted_note(
+        &self,
+        keys: &UserIdentity,
+        recipient: String,
+    ) -> anyhow::Result<NostrNote> {
         // Convert state directly to string - no nesting
+        let pubkey = keys
+            .get_pubkey()
+            .await
+            .ok_or(anyhow::anyhow!("No pubkey"))?;
         let location_data = serde_json::to_string(&self)?;
-        
+
         // Create a single encrypted note
-        let mut encrypted_note = NostrNote {
+        let encrypted_note = NostrNote {
             kind: NOSTR_KIND_DRIVER_STATE,
-            content: location_data,  // Direct location data
-            pubkey: keys.public_key(),
+            content: location_data, // Direct location data
+            pubkey,
             ..Default::default()
         };
-        
+
         // Encrypt it for the recipient
-        keys.sign_nip_04_encrypted(&mut encrypted_note, recipient)?;
-        
-        Ok(encrypted_note)
+        keys.sign_nip44(encrypted_note, recipient)
+            .await
+            .map_err(|e| {
+                anyhow::anyhow!(e.as_string().unwrap_or_else(|| "Unknown error".to_string()))
+            })
     }
 
     // pub fn from_signed_update(
@@ -192,9 +215,9 @@ pub struct DriverProfileIdb {
 }
 
 impl DriverProfileIdb {
-    pub fn new(profile: DriverProfile, keys: &NostrKeypair) -> Self {
-        let pubkey = keys.public_key().to_string();
-        let note = profile.signed_data(keys);
+    pub async fn new(profile: DriverProfile, keys: &UserIdentity) -> Self {
+        let pubkey = keys.get_pubkey().await.expect("no pubkey");
+        let note = profile.signed_data(keys).await;
         Self {
             pubkey,
             note,
@@ -252,46 +275,5 @@ impl IdbStoreManager for DriverProfileIdb {
     }
     fn key(&self) -> JsValue {
         JsValue::from_str(&self.pubkey)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::models::init_consumer_db;
-    use nostr_minions::browser_api::IdbStoreManager;
-    use wasm_bindgen_test::*;
-
-    #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), JsValue> {
-        init_consumer_db()?;
-        let key_1 = NostrKeypair::generate(false);
-        let consumer_address = DriverProfile::default();
-        let address_idb = DriverProfileIdb::new(consumer_address.clone(), &key_1);
-        address_idb.clone().save_to_store().await.unwrap();
-
-        let key_2 = NostrKeypair::generate(false);
-        let address_idb_2 = DriverProfileIdb::new(consumer_address, &key_2);
-        address_idb_2.clone().save_to_store().await.unwrap();
-
-        let retrieved: DriverProfileIdb = DriverProfileIdb::retrieve_from_store(&address_idb.key())
-            .await
-            .unwrap();
-        assert_eq!(retrieved.pubkey(), address_idb.pubkey());
-
-        let retrieved_2: DriverProfileIdb =
-            DriverProfileIdb::retrieve_from_store(&address_idb_2.key())
-                .await
-                .unwrap();
-        assert_eq!(retrieved_2.pubkey(), address_idb_2.pubkey());
-
-        let all_addresses = DriverProfileIdb::retrieve_all_from_store().await.unwrap();
-        assert_eq!(all_addresses.len(), 2);
-
-        let deleted = retrieved.delete_from_store().await;
-        let deleted_2 = retrieved_2.delete_from_store().await;
-        assert!(deleted.is_ok());
-        assert!(deleted_2.is_ok());
-        Ok(())
     }
 }

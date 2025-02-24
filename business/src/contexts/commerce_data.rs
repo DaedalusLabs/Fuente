@@ -7,7 +7,7 @@ use nostr_minions::{
 };
 use nostro2::relays::{NostrSubscription, RelayEvent};
 use std::rc::Rc;
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -126,8 +126,7 @@ pub fn key_handler(props: &CommerceDataChildren) -> Html {
     let ctx_clone = ctx.clone();
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(key) = key_ctx.get_nostr_key() {
-            let pubkey = key.public_key().to_string();
+        if let Some(pubkey) = key_ctx.get_pubkey() {
             spawn_local(async move {
                 if let Ok(profile) =
                     CommerceProfileIdb::retrieve_from_store(&JsValue::from_str(&pubkey)).await
@@ -166,13 +165,13 @@ pub fn commerce_data_sync() -> Html {
 
     let id_handle = sub_id.clone();
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(key) = key_ctx.get_nostr_key() {
+        if let Some(pubkey) = key_ctx.get_pubkey() {
             let filter1: nostro2::relays::SubscribeEvent = NostrSubscription {
                 kinds: Some(vec![
                     NOSTR_KIND_COMMERCE_PROFILE,
                     NOSTR_KIND_COMMERCE_PRODUCTS,
                 ]),
-                authors: Some(vec![key.public_key()]),
+                authors: Some(vec![pubkey]),
                 ..Default::default()
             }
             .into();

@@ -5,7 +5,8 @@ use crate::{
 use fuente::{
     contexts::LanguageConfigsStore,
     mass::{
-        templates::{KeyRecoverySection, SettingsPageTemplate}, AppLink, LanguageToggle, PopupProps, PopupSection, SimpleInput
+        templates::{KeyRecoverySection, SettingsPageTemplate},
+        AppLink, LanguageToggle, PopupProps, PopupSection, SimpleInput,
     },
     models::{DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY},
 };
@@ -178,7 +179,7 @@ pub fn new_profile_form(props: &PopupProps) -> Html {
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let user_ctx = user_ctx.clone();
-        let keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let keys = key_ctx.get_identity().cloned().expect("No user keys found");
         let form_element = HtmlForm::new(e).expect("Failed to get form element");
         let nickname = form_element
             .input_value("name")
@@ -188,24 +189,30 @@ pub fn new_profile_form(props: &PopupProps) -> Html {
             .expect("Failed to get telephone");
         let sender = sender.clone();
         let user_profile = DriverProfile::new(nickname, telephone);
-        let db = DriverProfileIdb::new(user_profile.clone(), &keys);
+        let pubkey = key_ctx.get_pubkey().expect("No pubkey");
+        let popup_handle = popup_handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = DriverProfileIdb::new(user_profile.clone(), &keys).await;
 
-        // Fix the giftwrapped_data calls by providing the proper parameters
-        let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.public_key(), keys.public_key())
-            .expect("Failed to giftwrap data");
-        let pool_copy = user_profile
-            .giftwrapped_data(
-                &keys,
-                DRIVER_HUB_PUB_KEY.to_string(),
-                DRIVER_HUB_PUB_KEY.to_string(),
-            )
-            .expect("Failed to giftwrap data");
+            // Fix the giftwrapped_data calls by providing the proper parameters
+            let giftwrap = user_profile
+                .giftwrapped_data(&keys, pubkey.clone(), pubkey.clone())
+                .await
+                .expect("Failed to giftwrap data");
+            let pool_copy = user_profile
+                .giftwrapped_data(
+                    &keys,
+                    DRIVER_HUB_PUB_KEY.to_string(),
+                    DRIVER_HUB_PUB_KEY.to_string(),
+                )
+                .await
+                .expect("Failed to giftwrap data");
 
-        sender.emit(giftwrap);
-        sender.emit(pool_copy);
-        user_ctx.dispatch(DriverDataAction::NewProfile(db));
-        popup_handle.set(false);
+            sender.emit(giftwrap);
+            sender.emit(pool_copy);
+            user_ctx.dispatch(DriverDataAction::NewProfile(db));
+            popup_handle.set(false);
+        });
     });
 
     html! {

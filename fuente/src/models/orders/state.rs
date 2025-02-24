@@ -141,19 +141,6 @@ pub struct OrderInvoiceState {
     pub order_status: OrderStatus,
     pub courier: Option<NostrNote>,
 }
-impl Default for OrderInvoiceState {
-    fn default() -> Self {
-        let order = OrderRequest::default().sign_request(&NostrKeypair::generate(false));
-        Self {
-            order,
-            consumer_invoice: None,
-            commerce_invoice: None,
-            payment_status: OrderPaymentStatus::PaymentPending,
-            order_status: OrderStatus::Pending,
-            courier: None,
-        }
-    }
-}
 impl OrderInvoiceState {
     pub fn new(
         order: NostrNote,
@@ -204,7 +191,7 @@ impl OrderInvoiceState {
             OrderParticipant::Commerce => self.get_commerce_pubkey(),
             OrderParticipant::Courier => DRIVER_HUB_PUB_KEY.to_string(),
         };
-        keypair.sign_nip_04_encrypted(&mut new_note, receiver)?;
+        keypair.sign_nip_44_encrypted(&mut new_note, receiver)?;
         Ok((signed_order, new_note))
     }
     pub fn get_commerce_pubkey(&self) -> String {
@@ -222,7 +209,7 @@ impl OrderInvoiceState {
         self.order.created_at
     }
     pub fn locale_date(&self) -> String {
-        let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+        let timestamp = web_sys::js_sys::Date::new(&web_sys::wasm_bindgen::JsValue::from_f64(
             self.order.created_at as f64 * 1000.0,
         ));
         let locale_options = web_sys::js_sys::Object::new();
@@ -234,7 +221,7 @@ impl OrderInvoiceState {
         locale_date.into()
     }
     pub fn locale_time(&self) -> String {
-        let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+        let timestamp = web_sys::js_sys::Date::new(&web_sys::wasm_bindgen::JsValue::from_f64(
             self.order.created_at as f64 * 1000.0,
         ));
         let locale_time = timestamp.to_locale_time_string("nl-SR");

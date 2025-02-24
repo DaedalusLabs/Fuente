@@ -82,7 +82,10 @@ impl Reducible for OrderHub {
             }),
             OrderHubAction::UpdateOrder((order, note)) => {
                 let mut live_orders = self.live_orders.clone();
-                if let Some(index) = live_orders.iter().position(|o| o.0.order_id() == order.order_id()) {
+                if let Some(index) = live_orders
+                    .iter()
+                    .position(|o| o.0.order_id() == order.order_id())
+                {
                     live_orders[index] = (order, note);
                 } else {
                     live_orders.push((order, note));
@@ -95,12 +98,16 @@ impl Reducible for OrderHub {
                     has_loaded: self.has_loaded,
                     hub_keys: self.hub_keys.clone(),
                 })
-            },
+            }
             OrderHubAction::OrderCompleted(completed_id) => {
                 let mut live_orders = self.live_orders.clone();
                 let mut order_history = self.order_history.clone();
 
-                if let Some(completed_order) = live_orders.iter().find(|o| o.0.order_id() == completed_id).cloned() {
+                if let Some(completed_order) = live_orders
+                    .iter()
+                    .find(|o| o.0.order_id() == completed_id)
+                    .cloned()
+                {
                     order_history.push(completed_order);
                 }
                 live_orders.retain(|o| o.0.order_id() != completed_id);
@@ -138,7 +145,7 @@ pub struct OrderHubChildren {
 #[function_component(OrderHubProvider)]
 pub fn key_handler(props: &OrderHubChildren) -> Html {
     let ctx = use_reducer(|| OrderHub {
-        hub_keys: NostrKeypair::new(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
+        hub_keys: NostrKeypair::try_from(DRIVER_HUB_PRIV_KEY).expect("Failed to create user keys"),
         has_loaded: false,
         live_orders: Vec::new(),
         order_history: Vec::new(),
@@ -189,7 +196,7 @@ pub fn commerce_data_sync() -> Html {
         let key_ctx = key_ctx.clone();
         spawn_local(async move {
             let last_saved = OrderStateIdb::last_saved_timestamp().await.unwrap_or(0);
-            if let Some(_keys) = key_ctx.get_nostr_key() {
+            if key_ctx.get_identity().is_some() {
                 let mut filter = NostrSubscription {
                     kinds: Some(vec![NOSTR_KIND_ORDER_STATE]),
                     since: Some(last_saved as u64),
@@ -205,11 +212,11 @@ pub fn commerce_data_sync() -> Html {
     });
 
     let ctx_handle = ctx.clone();
-    let nostr_keys = keys_ctx.get_nostr_key().expect("Nostr keys not found");
+    let nostr_keys = keys_ctx.get_pubkey().expect("Nostr keys not found");
     use_effect_with(unique_notes, move |notes| {
         if let Some(note) = notes.last() {
             if note.kind == NOSTR_KIND_ORDER_STATE {
-                if let Ok(decrypted) = hub_keys.decrypt_nip_04_content(&note) {
+                if let Ok(decrypted) = hub_keys.decrypt_nip_44_content(&note) {
                     if let Ok(order_note) = NostrNote::try_from(decrypted) {
                         if let Ok(order_status) = OrderInvoiceState::try_from(&order_note) {
                             let idb = OrderStateIdb::new(order_note.clone())
@@ -225,7 +232,7 @@ pub fn commerce_data_sync() -> Html {
                                 }
                                 _ => {
                                     if let Some(courier) = order_status.courier.as_ref() {
-                                        if nostr_keys.public_key() == courier.pubkey {
+                                        if nostr_keys == courier.pubkey {
                                             ctx_handle.dispatch(OrderHubAction::AssignOrder((
                                                 order_status,
                                                 order_note,

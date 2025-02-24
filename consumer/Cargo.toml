@@ -16,7 +16,6 @@ nostro2.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde-wasm-bindgen.workspace = true
-wasm-bindgen.workspace = true
 web-sys.workspace = true
 yew.workspace = true
 yew-router.workspace = true

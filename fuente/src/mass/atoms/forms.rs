@@ -1,8 +1,10 @@
 use html::ChildrenProps;
 use lucide_yew::{Download, Globe, Plus, X};
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostr_minions::browser_api::BeforeInstallPromptEvent;
+use nostr_minions::key_manager::UserIdentity;
+use nostro2::notes::NostrNote;
 use upload_things::{UtPreSignedUrl, UtUpload};
-use wasm_bindgen::JsCast;
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::{FileReader, FormData, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::{
@@ -181,7 +183,7 @@ where
 #[derive(Clone, Debug, Properties, PartialEq)]
 pub struct ImageUploadInputProps {
     pub url_handle: UseStateHandle<Option<String>>,
-    pub nostr_keys: NostrKeypair,
+    pub nostr_keys: UserIdentity,
     pub classes: Classes,
     pub input_id: String,
 }
@@ -213,173 +215,184 @@ pub fn image_upload_input(props: &ImageUploadInputProps) -> Html {
     let input_id_for_effect = input_id.clone();
 
     use_effect_with(relay_pool.unique_notes.clone(), move |notes| {
-        if let Some(last_note) = notes.last() {
-            if last_note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
-                gloo::console::log!("Processing presigned URL response");
+        if let Some(last_note) = notes.last().cloned() {
+            spawn_local(async move {
+                if last_note.kind == NOSTR_KIND_PRESIGNED_URL_RESP {
+                    gloo::console::log!("Processing presigned URL response");
 
-                let decrypted_note = match user_keys.decrypt_nip_04_content(&last_note) {
-                    Ok(note) => note,
-                    Err(e) => {
-                        gloo::console::error!("Failed to decrypt note:", e.to_string());
-                        return;
-                    }
-                };
-
-                let presigned_url: UtPreSignedUrl = match (&decrypted_note).try_into() {
-                    Ok(url) => url,
-                    Err(e) => {
-                        gloo::console::error!("Failed to parse presigned url:", e.to_string());
-                        return;
-                    }
-                };
-
-                // Get document and input safely
-                let document = match HtmlDocument::new() {
-                    Ok(doc) => doc,
-                    Err(e) => {
-                        gloo::console::error!("Failed to get document:", e);
-                        return;
-                    }
-                };
-
-                let input: HtmlInputElement =
-                    match document.find_element_by_id(&input_id_for_effect) {
-                        Ok(input) => input,
+                    let decrypted_note = match user_keys.decrypt_nip44(&last_note).await {
+                        Ok(note) => note,
                         Err(e) => {
-                            gloo::console::error!("Failed to find input element:", e);
+                            gloo::console::error!("Failed to decrypt note:", e);
                             return;
                         }
                     };
 
-                let files = match input.files() {
-                    Some(files) => files,
-                    None => {
-                        gloo::console::error!("No files found");
-                        return;
-                    }
-                };
-
-                let file = match files.get(0) {
-                    Some(file) => file,
-                    None => {
-                        gloo::console::error!("No file selected");
-                        return;
-                    }
-                };
-
-                // Create form data
-                let form_data = match FormData::new() {
-                    Ok(form) => form,
-                    Err(e) => {
-                        gloo::console::error!("Failed to create form data:", e);
-                        return;
-                    }
-                };
-
-                if let Err(e) = form_data.append_with_blob("file", &file) {
-                    gloo::console::error!("Failed to append file to form data:", e);
-                    return;
-                }
-
-                // Create reader and set up upload
-                let reader = match FileReader::new() {
-                    Ok(reader) => reader,
-                    Err(e) => {
-                        gloo::console::error!("Failed to create file reader:", e);
-                        return;
-                    }
-                };
-
-                let reader_handle = reader.clone();
-                let loading_handle = loading_handle.clone();
-                let url_handle_clone = url_handle.clone();
-                let loading_handle_clone = loading_handle.clone();
-                let presigned_url_clone = presigned_url.clone();
-                let form_data_clone = form_data.clone();
-
-                let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(
-                    move |_: web_sys::ProgressEvent| {
-                        if let Ok(_) = reader_handle.result() {
-                            let url_setter = url_handle_clone.clone();
-                            let loading_setter = loading_handle_clone.clone();
-                            let url = presigned_url_clone.clone();
-                            let form_data = form_data_clone.clone();
-
-                            spawn_local(async move {
-                                let url_req = match url.try_into_request(form_data) {
-                                    Ok(req) => req,
-                                    Err(e) => {
-                                        gloo::console::error!("Failed to create request:", e);
-                                        loading_setter.set(false);
-                                        return;
-                                    }
-                                };
-
-                                match nostr_minions::browser_api::BrowserFetch::request::<UtUpload>(
-                                    &url_req,
-                                )
-                                .await
-                                {
-                                    Ok(upload_url) => {
-                                        gloo::console::log!(
-                                            "Upload successful, setting URL:",
-                                            &upload_url.url
-                                        );
-                                        url_setter.set(Some(upload_url.url));
-                                    }
-                                    Err(e) => {
-                                        gloo::console::error!("Upload failed:", e);
-                                    }
-                                }
-                                loading_setter.set(false);
-                            });
+                    let presigned_url: UtPreSignedUrl = match (&decrypted_note).try_into() {
+                        Ok(url) => url,
+                        Err(e) => {
+                            gloo::console::error!("Failed to parse presigned url:", e.to_string());
+                            return;
                         }
-                    },
-                )
-                    as Box<dyn FnMut(web_sys::ProgressEvent)>);
+                    };
 
-                reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
-                if let Err(e) = reader.read_as_array_buffer(&file) {
-                    gloo::console::error!("Failed to read file:", e);
-                    return;
+                    // Get document and input safely
+                    let document = match HtmlDocument::new() {
+                        Ok(doc) => doc,
+                        Err(e) => {
+                            gloo::console::error!("Failed to get document:", e);
+                            return;
+                        }
+                    };
+
+                    let input: HtmlInputElement =
+                        match document.find_element_by_id(&input_id_for_effect) {
+                            Ok(input) => input,
+                            Err(e) => {
+                                gloo::console::error!("Failed to find input element:", e);
+                                return;
+                            }
+                        };
+
+                    let files = match input.files() {
+                        Some(files) => files,
+                        None => {
+                            gloo::console::error!("No files found");
+                            return;
+                        }
+                    };
+
+                    let file = match files.get(0) {
+                        Some(file) => file,
+                        None => {
+                            gloo::console::error!("No file selected");
+                            return;
+                        }
+                    };
+
+                    // Create form data
+                    let form_data = match FormData::new() {
+                        Ok(form) => form,
+                        Err(e) => {
+                            gloo::console::error!("Failed to create form data:", e);
+                            return;
+                        }
+                    };
+
+                    if let Err(e) = form_data.append_with_blob("file", &file) {
+                        gloo::console::error!("Failed to append file to form data:", e);
+                        return;
+                    }
+
+                    // Create reader and set up upload
+                    let reader = match FileReader::new() {
+                        Ok(reader) => reader,
+                        Err(e) => {
+                            gloo::console::error!("Failed to create file reader:", e);
+                            return;
+                        }
+                    };
+
+                    let reader_handle = reader.clone();
+                    let loading_handle = loading_handle.clone();
+                    let url_handle_clone = url_handle.clone();
+                    let loading_handle_clone = loading_handle.clone();
+                    let presigned_url_clone = presigned_url.clone();
+                    let form_data_clone = form_data.clone();
+
+                    let closure = web_sys::wasm_bindgen::closure::Closure::wrap(Box::new(
+                        move |_: web_sys::ProgressEvent| {
+                            if let Ok(_) = reader_handle.result() {
+                                let url_setter = url_handle_clone.clone();
+                                let loading_setter = loading_handle_clone.clone();
+                                let url = presigned_url_clone.clone();
+                                let form_data = form_data_clone.clone();
+
+                                spawn_local(async move {
+                                    let url_req = match url.try_into_request(form_data) {
+                                        Ok(req) => req,
+                                        Err(e) => {
+                                            gloo::console::error!("Failed to create request:", e);
+                                            loading_setter.set(false);
+                                            return;
+                                        }
+                                    };
+
+                                    match nostr_minions::browser_api::BrowserFetch::request::<
+                                        UtUpload,
+                                    >(&url_req)
+                                    .await
+                                    {
+                                        Ok(upload_url) => {
+                                            gloo::console::log!(
+                                                "Upload successful, setting URL:",
+                                                &upload_url.url
+                                            );
+                                            url_setter.set(Some(upload_url.url));
+                                        }
+                                        Err(e) => {
+                                            gloo::console::error!("Upload failed:", e);
+                                        }
+                                    }
+                                    loading_setter.set(false);
+                                });
+                            }
+                        },
+                    )
+                        as Box<dyn FnMut(web_sys::ProgressEvent)>);
+
+                    reader.set_onloadend(Some(closure.as_ref().unchecked_ref()));
+                    if let Err(e) = reader.read_as_array_buffer(&file) {
+                        gloo::console::error!("Failed to read file:", e);
+                        return;
+                    }
+                    closure.forget();
                 }
-                closure.forget();
-            }
+            });
         }
     });
     let user_keys = nostr_keys.clone();
     let sender = relay_pool.send_note.clone();
     let loading_handle = is_loading_new.clone();
     let onchange = Callback::from(move |e: yew::Event| {
-        gloo::console::log!("Starting file upload process");
         loading_handle.set(true);
-        let input = e
-            .target()
-            .unwrap()
-            .dyn_into::<HtmlInputElement>()
-            .expect("Failed to get input element");
-        let file = input.files().unwrap().get(0).unwrap();
-        let file_req = upload_things::UtRequest::from(&file);
+        let user_keys = user_keys.clone();
+        let sender = sender.clone();
+        spawn_local(async move {
+            let pubkey = user_keys.get_pubkey().await.unwrap();
+            let input = e
+                .target()
+                .unwrap()
+                .dyn_into::<HtmlInputElement>()
+                .expect("Failed to get input element");
+            let file = input.files().unwrap().get(0).unwrap();
+            let file_req = upload_things::UtRequest::from(&file);
 
-        gloo::console::log!("Created file request:", &file_req.to_string());
-        let mut req_note = NostrNote {
-            content: file_req.to_string(),
-            kind: NOSTR_KIND_PRESIGNED_URL_REQ,
-            pubkey: user_keys.public_key(),
-            ..Default::default()
-        };
-        user_keys.sign_nostr_event(&mut req_note);
-        let mut giftwrap = NostrNote {
-            content: req_note.to_string(),
-            kind: NOSTR_KIND_SERVER_REQUEST,
-            pubkey: user_keys.public_key(),
-            ..Default::default()
-        };
-        user_keys
-            .sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())
-            .unwrap();
-        sender.emit(giftwrap);
-        gloo::console::log!("Sent request for presigned URL");
+            let req_note = NostrNote {
+                content: file_req.to_string(),
+                kind: NOSTR_KIND_PRESIGNED_URL_REQ,
+                pubkey: pubkey.clone(),
+                ..Default::default()
+            };
+            let Ok(req_note) = user_keys.sign_nostr_note(req_note).await else {
+                gloo::console::error!("Failed to sign request note");
+                return;
+            };
+            let giftwrap = NostrNote {
+                content: req_note.to_string(),
+                kind: NOSTR_KIND_SERVER_REQUEST,
+                pubkey,
+                ..Default::default()
+            };
+            let Ok(giftwrap) = user_keys
+                .sign_nip44(giftwrap, TEST_PUB_KEY.to_string())
+                .await
+            else {
+                gloo::console::error!("Failed to sign giftwrap");
+                return;
+            };
+            sender.emit(giftwrap);
+        });
     });
     let mut default_classes = classes!(
         "flex",
@@ -494,16 +507,6 @@ pub fn language_toggle() -> Html {
     }
 }
 
-use wasm_bindgen::prelude::*;
-#[wasm_bindgen]
-extern "C" {
-    pub type BeforeInstallPromptEvent;
-    #[wasm_bindgen(method)]
-    pub fn prompt(this: &BeforeInstallPromptEvent) -> web_sys::js_sys::Promise;
-    #[wasm_bindgen(method, js_name = "preventDefault")]
-    pub fn prevent_default(this: &BeforeInstallPromptEvent);
-}
-
 #[function_component(PwaInstall)]
 pub fn pwa_install() -> Html {
     let is_installable = use_state(|| None);
@@ -514,12 +517,13 @@ pub fn pwa_install() -> Html {
     use_effect_with((), move |_| {
         let window = web_sys::window().expect("No window found");
         let handle_clone = is_installable_handle.clone();
-        let callback: web_sys::js_sys::Function =
-            wasm_bindgen::closure::Closure::wrap(Box::new(move |e: BeforeInstallPromptEvent| {
+        let callback: web_sys::js_sys::Function = web_sys::wasm_bindgen::closure::Closure::wrap(
+            Box::new(move |e: BeforeInstallPromptEvent| {
                 handle_clone.set(Some(e));
-            }) as Box<dyn FnMut(_)>)
-            .into_js_value()
-            .unchecked_into();
+            }) as Box<dyn FnMut(_)>,
+        )
+        .into_js_value()
+        .unchecked_into();
         window
             .add_event_listener_with_callback("beforeinstallprompt", &callback)
             .expect("Failed to add event listener");

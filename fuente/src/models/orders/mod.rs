@@ -16,7 +16,7 @@ mod tests {
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]
-    async fn _commerce_profile_idb() -> Result<(), wasm_bindgen::JsValue> {
+    async fn _commerce_profile_idb() -> Result<(), web_sys::wasm_bindgen::JsValue> {
         init_consumer_db()?;
         let order_idb = OrderStateIdb::default();
         order_idb.clone().save_to_store().await?;

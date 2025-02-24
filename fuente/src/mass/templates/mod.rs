@@ -651,23 +651,34 @@ pub fn key_recovery_section() -> Html {
     let translations = language_ctx.translations();
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
+    let priv_key = use_state(|| "".to_string());
 
-    // Convert secret key bytes to hex string
-    let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
+    let priv_key_handle = priv_key.clone();
+    use_effect_with(key_ctx.clone(), move |key_handle| {
+        let priv_key_handle = priv_key_handle.clone();
+        let key_handle = key_handle.clone();
+        yew::platform::spawn_local(async move {
+            if let Some(mut key) = key_handle.get_nostr_key().await {
+                key.make_extractable();
+                priv_key_handle.set(
+                    key.get_secret_key()
+                        .iter()
+                        .map(|byte| format!("{:02x}", byte))
+                        .collect::<String>(),
+                );
+            }
+        });
+        || {}
+    });
 
     let onclick_copy = {
-        let secret_key = secret_key_hex.clone();
+        let secret_key = priv_key.clone();
         let toast_ctx = toast_ctx.clone();
         Callback::from(move |_| {
             if let Some(window) = window() {
                 let navigator = window.navigator();
                 let clipboard = navigator.clipboard();
-                let _ = clipboard.write_text(&secret_key);
+                let _ = clipboard.write_text(&*secret_key);
                 toast_ctx.dispatch(ToastAction::Show(Toast {
                     message: "Key copied to clipboard".into(),
                     toast_type: ToastType::Success,
@@ -695,7 +706,7 @@ pub fn key_recovery_section() -> Html {
 
            <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto relative">
              <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
-               {secret_key_hex}
+               {&*priv_key}
              </pre>
              <button
                onclick={onclick_copy}

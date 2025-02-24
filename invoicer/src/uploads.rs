@@ -38,6 +38,8 @@ impl Default for UtSigner {
             "x-uploadthing-api-key",
             HeaderValue::from_str(&api_key).expect("API_KEY has not been set"),
         );
+        tracing::debug!("API_KEY: {}", api_key);
+        tracing::debug!("APP_ID: {}", std::env::var("UT_APP_ID").expect("UT_APP_ID has not been set"));
         Self {
             client: reqwest::Client::builder()
                 .default_headers(header_map)
