@@ -106,7 +106,11 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
                         ConsumerRoute::Login => {
                             if logged_in.is_some() {
-                                navigator.push(&ConsumerRoute::Home);
+                                if has_profile.is_none() || has_address.is_none() {
+                                    navigator.push(&ConsumerRoute::Register);
+                                } else {
+                                    navigator.push(&ConsumerRoute::Home);
+                                }
                                 html!{}
                             } else {
                                 html!{

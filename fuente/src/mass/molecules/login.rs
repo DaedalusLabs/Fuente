@@ -6,7 +6,7 @@ use crate::{
 };
 use lucide_yew::Copy;
 use nostr_minions::{
-    browser_api::{clipboard_copy, HtmlForm},
+    browser_api::{clipboard_copy, HtmlForm, IdbStoreManager},
     key_manager::{NostrIdAction, NostrIdStore, UserIdentity},
 };
 use nostro2::keypair::NostrKeypair;
@@ -66,28 +66,47 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
     let user_ctx = use_context::<NostrIdStore>().expect("No CryptoId Context found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
     let translations = language_ctx.translations();
-    let onclick = Callback::from(move |e: MouseEvent| {
+    let onclick = {
+        let user_ctx = user_ctx.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            let document =
+                nostr_minions::browser_api::HtmlDocument::new().expect("Failed to get document");
+            let user_keys_str = document
+                .find_element_by_id::<HtmlInputElement>("private_key")
+                .expect("Failed to get password")
+                .value();
+            let mut user_keys =
+                NostrKeypair::try_from(&user_keys_str).expect("Failed to create user keys");
+            user_keys.make_extractable();
+            let user_ctx = user_ctx.clone();
+            spawn_local(async move {
+                let user_identity = UserIdentity::from_new_keys(user_keys)
+                    .await
+                    .expect("Failed to create user identity");
+                let keys = user_identity
+                    .get_user_keys()
+                    .await
+                    .expect("Failed to get user keys")
+                    .public_key();
+                user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
+            });
+        })
+    };
+
+    let user_ctx = user_ctx.clone();
+    let extension_login = Callback::from(move |e: MouseEvent| {
         e.prevent_default();
-        let document =
-            nostr_minions::browser_api::HtmlDocument::new().expect("Failed to get document");
-        let user_keys_str = document
-            .find_element_by_id::<HtmlInputElement>("private_key")
-            .expect("Failed to get password")
-            .value();
-        let mut user_keys =
-            NostrKeypair::try_from(&user_keys_str).expect("Failed to create user keys");
-        user_keys.make_extractable();
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
-            let user_identity = UserIdentity::from_new_keys(user_keys)
+            let user_identity = UserIdentity::new_extension_identity()
                 .await
                 .expect("Failed to create user identity");
             let keys = user_identity
-                .get_user_keys()
+                .get_pubkey()
                 .await
-                .expect("Failed to get user keys")
-                .public_key();
-            gloo::console::log!("GOT HERE");
+                .expect("Failed to get user keys");
+            user_identity.clone().save_to_store().await.expect("Failed to save to store");
             user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
         });
     });
@@ -111,6 +130,7 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
                   />
           </div>
 
+
           <div class="space-y-5 flex flex-col mt-5">
               <a
                   class="text-center text-white font-thin underline cursor-pointer hover:text-cyan-400">
@@ -126,6 +146,12 @@ pub fn import_user_form(props: &AuthPageProps) -> Html {
                   class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-fit mx-auto"
                   value={translations["auth_login_link_button"].clone()}
               />
+            <button
+                type="button"
+                onclick={extension_login}
+              class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-fit mx-auto align-center">
+              {&translations["auth_login_extension"]}
+              </button>
           </div>
       </form>
     }

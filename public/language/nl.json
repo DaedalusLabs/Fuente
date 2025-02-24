@@ -17,6 +17,7 @@
     "auth_login_link_key": "Hoe de sleutel werkt?",
     "auth_login_link_register": "Ik ben nog niet geregistreerd",
     "auth_login_link_button": "Winkel Nu",
+    "auth_login_extension": "Login met je sleutel",
 
     "auth_register_title": "Registreren",
     "auth_register_heading": "Registreren",

@@ -597,9 +597,9 @@ pub fn new_address_menu(props: &PopupProps) -> Html {
         onclick
     });
     html! {
-        <form class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+        <div class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
             <NewAddressForm ..props />
-        </form>
+        </div>
     }
 }
 

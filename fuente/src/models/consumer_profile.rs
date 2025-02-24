@@ -80,7 +80,6 @@ impl ConsumerProfile {
             avatar_url: avatar,
         }
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
         let unsigned_note = NostrNote {
             pubkey: keys.get_pubkey().await.expect("no pubkey"),
@@ -92,7 +91,6 @@ impl ConsumerProfile {
             .await
             .expect("could not sign")
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn registry_data(
         &self,
         keys: &UserIdentity,
@@ -118,7 +116,6 @@ impl ConsumerProfile {
         giftwrap.tags.add_parameter_tag(&d_tag);
         keys.sign_nip44(giftwrap, recipient).await
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn giftwrapped_data(
         &self,
         keys: &UserIdentity,
@@ -154,7 +151,6 @@ pub struct ConsumerProfileIdb {
 }
 
 impl ConsumerProfileIdb {
-    #[cfg(target_arch = "wasm32")]
     pub async fn new(profile: ConsumerProfile, keys: &UserIdentity) -> Self {
         let pubkey = keys.get_pubkey().await.expect("no pubkey");
         let note = profile.signed_data(keys).await;

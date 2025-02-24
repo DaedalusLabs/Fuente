@@ -17,6 +17,7 @@
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
     "auth_login_link_button": "Shop Now",
+    "auth_login_extension": "Login with extension",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",
