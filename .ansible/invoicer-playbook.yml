@@ -1,5 +1,12 @@
 - name: Deploy Fuente Invoicer
   hosts: daedalus
+  vars:
+    PRIV_KEY: "{{ lookup('env', 'FUENTE_PRIV_KEY') }}"
+    ADDRESS: "{{ lookup('env', 'LND_ADDRESS') }}"
+    MACAROON: "{{ lookup('env', 'LND_MACAROON') }}"
+    API_KEY: "{{ lookup('env', 'UT_API_KEY') }}"
+    APP_ID: "{{ lookup('env', 'UT_APP_ID') }}"
+    CALLBACK_DOMAIN: "{{ lookup('env', 'UT_CALLBACK_DOMAIN') }}"
   tasks:
 
     - name: Ensure the directory exists
