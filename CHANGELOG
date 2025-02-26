@@ -1,6 +1,10 @@
 # Changelog <!-- Newer dates on top -->
 
 
+## [1.1.0] - 2025-02-25
+### Added
+- Added Upload New Picture Button in consumer
+
 ## [1.1.0] - 2025-02-21
 ### Added
 - Added cancellation reason input with required field
