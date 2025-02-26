@@ -10,7 +10,7 @@ use fuente::mass::{
 use fuente::models::{
     ConsumerAddress, ConsumerAddressIdb, ConsumerProfile, ConsumerProfileIdb, TEST_PUB_KEY,
 };
-use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck};
+use lucide_yew::{Compass, Mail, MapPin, Phone, ScrollText, SquarePen, Trash2, Truck, Upload};
 use nostr_minions::key_manager::NostrIdAction;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, HtmlForm},
@@ -269,11 +269,22 @@ pub fn my_contact_details() -> Html {
                         <div class="flex flex-col items-center justify-center space-y-6">
                             <div class="relative w-full max-w-xs aspect-square">
                                 <img
-                                    src={profile.avatar_url.clone()}
+                                    src={profile.avatar_url.clone().unwrap_or_else(|| "/public/assets/img/logo.png".to_string())}
                                     alt="Profile Logo"
                                     class="border-2 border-dashed border-gray-300 bg-gray-100 rounded-lg object-cover w-full h-full max-w-56 max-h-56"
                                 />
                             </div>
+
+                            <button
+                                onclick={
+                                    let profile_popup_handle = profile_popup_handle.clone();
+                                    Callback::from(move |_| profile_popup_handle.set(true))
+                                }
+                                class="bg-fuente-light text-white py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
+                            >
+                                <Upload class="w-5 h-5 stroke-white" />
+                                <span>{&translations["profile_settings_upload"]}</span>
+                            </button>
                         </div>
                     </div>
                     <PopupSection close_handle={profile_popup_handle.clone()}>
