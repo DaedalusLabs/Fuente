@@ -153,21 +153,37 @@ impl AdminConfiguration {
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
-    pub fn sign_couriers_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
-        let serialized = serde_json::to_string(&self.couriers_whitelist)?;
+    pub fn add_deleted_courier(&mut self, courier_key: String) {
+        if self.couriers_whitelist.contains(&courier_key) {
+            self.couriers_whitelist.retain(|x| x != &courier_key);
+        }
+    }
 
+    
+    pub fn sign_couriers_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
+        let data = serde_json::json!({
+            "active": self.couriers_whitelist,
+        });
+        
+        // Log the data being signed
+        gloo::console::log!("Signing courier whitelist:", format!("{:?}", data));
+        
+        let serialized = serde_json::to_string(&data)?;
+        
         let mut note = NostrNote {
             pubkey: priv_key.public_key(),
             kind: NOSTR_KIND_SERVER_CONFIG,
             content: serialized,
             ..Default::default()
         };
+        
         let config_str: String = AdminConfigurationType::CourierWhitelist.into();
         let config_hash = AdminConfigurationType::CourierWhitelist.to_hash();
         note.tags
             .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
         note.tags.add_parameter_tag(&config_hash.to_string());
         note.tags.add_parameter_tag(&config_str);
+        
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
