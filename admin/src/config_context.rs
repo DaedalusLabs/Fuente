@@ -3,7 +3,7 @@ use std::{collections::HashSet, rc::Rc};
 use fuente::models::{
     AdminConfigurationType, CommerceProfile, DriverProfile, DRIVER_HUB_PRIV_KEY,
     DRIVER_HUB_PUB_KEY, NOSTR_KIND_COMMERCE_PROFILE, NOSTR_KIND_COURIER_PROFILE,
-    NOSTR_KIND_SERVER_CONFIG, TEST_PUB_KEY,
+    NOSTR_KIND_SERVER_CONFIG,
 };
 use nostr_minions::{key_manager::NostrIdStore, relay_pool::NostrProps};
 use nostro2::{
@@ -92,6 +92,9 @@ impl ServerConfigs {
     pub fn loading(&self) -> bool {
         !self.loaded
     }
+    pub fn get_all_couriers(&self) -> Vec<(NostrNote, DriverProfile)> {
+        self.couriers.clone()
+    }
 }
 
 pub enum ServerConfigsAction {
@@ -174,31 +177,38 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
     let subscriber = relay_ctx.subscribe.clone();
     use_effect_with(user_ctx.get_pubkey().clone(), move |key| {
         if key.is_some() {
+            // Remove author restriction to catch all config messages
+            let server_config_filter = nostro2::relays::NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
+                ..Default::default()
+            };
+            
+            let commerce_filter = nostro2::relays::NostrSubscription {
+                kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
+                ..Default::default()
+            };
+            
             let mut courier_filter = nostro2::relays::NostrSubscription {
                 kinds: Some(vec![NOSTR_KIND_COURIER_PROFILE]),
                 ..Default::default()
             };
             courier_filter.add_tag("#p", DRIVER_HUB_PUB_KEY);
-            let commerce_filter = nostro2::relays::NostrSubscription {
-                kinds: Some(vec![NOSTR_KIND_COMMERCE_PROFILE]),
-                ..Default::default()
-            };
-            let filter = nostro2::relays::NostrSubscription {
-                kinds: Some(vec![NOSTR_KIND_SERVER_CONFIG]),
-                authors: Some(vec![TEST_PUB_KEY.to_string()]),
-                ..Default::default()
-            };
-            let subscription: nostro2::relays::SubscribeEvent = filter.into();
+            
+            let subscription: nostro2::relays::SubscribeEvent = server_config_filter.into();
             let commerce_filter: nostro2::relays::SubscribeEvent = commerce_filter.into();
             let courier_filter: nostro2::relays::SubscribeEvent = courier_filter.into();
+
             let mut new_set = (*sub_handler).clone();
             new_set.insert(subscription.1.clone());
             new_set.insert(commerce_filter.1.clone());
             new_set.insert(courier_filter.1.clone());
             sub_handler.set(new_set);
-            subscriber.emit(commerce_filter.into());
-            subscriber.emit(courier_filter.into());
-            subscriber.emit(subscription.into());
+
+            subscriber.emit(subscription);
+            subscriber.emit(commerce_filter);
+            subscriber.emit(courier_filter);
+            
+            gloo::console::log!("Subscriptions sent");
         }
         || {}
     });
@@ -248,12 +258,24 @@ pub fn key_handler(props: &ServerConfigsChildren) -> Html {
                             }
                         }
                         AdminConfigurationType::CourierWhitelist => {
-                            if let Ok(whitelist) =
-                                serde_json::from_str::<Vec<String>>(&note.content)
-                            {
-                                ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(
-                                    whitelist,
-                                ));
+                            // Try to parse as a JSON object with active/deleted lists
+                            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&note.content) {
+                                if data.is_object() {
+                                    if let Some(active) = data.get("active").and_then(|v| v.as_array()) {
+                                        if let Ok(whitelist) = serde_json::from_value::<Vec<String>>(active.clone().into()) {
+                                            ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(whitelist));
+                                        }
+                                    }
+                                } else if data.is_array() {
+                                    // Handle the case where it's a simple array
+                                    if let Ok(whitelist) = serde_json::from_str::<Vec<String>>(&note.content) {
+                                        ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(whitelist));
+                                    }
+                                }
+                            } else {
+                                if let Ok(whitelist) = serde_json::from_str::<Vec<String>>(&note.content) {
+                                    ctx_clone.dispatch(ServerConfigsAction::UpdateCouriersWhitelist(whitelist));
+                                }
                             }
                         }
                         _ => {}

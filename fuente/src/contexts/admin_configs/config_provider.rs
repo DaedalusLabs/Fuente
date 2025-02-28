@@ -68,6 +68,7 @@ pub fn key_handler(props: &yew::html::ChildrenProps) -> Html {
         exchange_rate: "0".to_string(),
     });
 
+    let ctx_clone = ctx.clone();
     use_effect_with((), |_| {
         spawn_local(async move {});
         || {}
@@ -131,12 +132,41 @@ fn admin_config_sync() -> Html {
                             }
                         }
                         AdminConfigurationType::CourierWhitelist => {
-                            if let Ok(whitelist) =
-                                serde_json::from_str::<Vec<String>>(&note.content)
+                            gloo::console::log!(
+                                "Received courier whitelist update from server:",
+                                &note.content
+                            );
+
+
+                            // Process the whitelist normally
+                            if let Ok(data) =
+                                serde_json::from_str::<serde_json::Value>(&note.content)
                             {
-                                ctx_handler.dispatch(AdminConfigsAction::UpdateCourierWhitelist(
-                                    whitelist,
-                                ));
+                                // Handle JSON object format
+                                if data.is_object() {
+                                    // Process active list
+                                    if let Some(active) =
+                                        data.get("active").and_then(|v| v.as_array())
+                                    {
+                                        if let Ok(whitelist) = serde_json::from_value::<Vec<String>>(
+                                            active.clone().into(),
+                                        ) {
+                                            ctx_handler.dispatch(
+                                                AdminConfigsAction::UpdateCourierWhitelist(
+                                                    whitelist,
+                                                ),
+                                            );
+                                        }
+                                    }
+
+                                } else if let Ok(whitelist) =
+                                    serde_json::from_str::<Vec<String>>(&note.content)
+                                {
+                                    // For simple array format, only update whitelist but preserve deleted keys
+                                    ctx_handler.dispatch(
+                                        AdminConfigsAction::UpdateCourierWhitelist(whitelist),
+                                    );
+                                }
                             }
                         }
                         _ => {}

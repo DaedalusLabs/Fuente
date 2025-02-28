@@ -1,6 +1,13 @@
 # Changelog <!-- Newer dates on top -->
 
 
+## [1.2.0] - 2025-02-28
+### Added
+- Added system for tracking and managing deleted courier accounts with admin UI for restoring previously deactivated couriers.
+
+### Fixed
+- Fixed courier authentication flow to prevent deactivated couriers from accessing the system and improved Nostr extension login error handling.
+
 ## [1.1.0] - 2025-02-25
 ### Added
 - Added Upload New Picture Button in consumer

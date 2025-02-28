@@ -107,8 +107,8 @@ fn whitelist_wait_screen() -> Html {
         <div class="flex flex-col gap-8 justify-center items-center flex-1 inset-0 py-8 px-16 fixed">
             <img src="/public/assets/img/logo.png" class="max-w-64 max-h-64"/>
             <div class="flex flex-col items-center gap-4 text-center">
-                <h2 class="text-2xl font-bold text-fuente">{"Waiting for Admin Approval"}</h2>
-                <p class="text-gray-600">{"Your account is pending admin approval. Please provide this public key to the administrator:"}</p>
+                <h2 class="text-2xl font-bold text-fuente">{"Account Access Restricted"}</h2>
+                <p class="text-gray-600">{"Your courier account is either pending approval or has been deactivated. Please contact the administrator and provide this public key:"}</p>
                 <div class="bg-gray-100 p-4 rounded-lg">
                     <p class="font-mono text-sm break-all">{pubkey}</p>
                 </div>
@@ -129,12 +129,16 @@ fn login_check(props: &ChildrenProps) -> Html {
             <LoginPage />
         };
     }
-    let wl = admin_ctx.get_courier_whitelist();
+    
     let pubkey = key_ctx.get_pubkey().expect("No public key found");
+    
+    // Check whitelist - only show message if not in whitelist
+    let wl = admin_ctx.get_courier_whitelist();
     if !wl.contains(&pubkey) {
         gloo::console::error!("User not in whitelist", &pubkey);
         return html! {<WhitelistWaitScreen />};
     }
+    
     html! {
         {props.children.clone()}
     }
