@@ -5,7 +5,7 @@ use business::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage, ToastProvider},
+    mass::{LoadingScreen, LoginPage, ToastProvider,  PwaInstall},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -39,6 +39,7 @@ fn app() -> Html {
     });
     html! {
         <LanguageConfigsProvider>
+            <PwaInstall/>
             <BrowserRouter>
                 <RelayProviderComponent>
                     <AppContext>

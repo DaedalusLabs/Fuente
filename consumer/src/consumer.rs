@@ -40,6 +40,7 @@ fn app() -> Html {
 
     html! {
         <LanguageConfigsProvider>
+            <PwaInstall />
             <BrowserRouter>
                 <RelayPoolComponent>
                     <NostrIdProvider>
@@ -49,7 +50,6 @@ fn app() -> Html {
                                     <RatingsProvider>
                                     <AppContext>
                                         <ConsumerPages />
-                                        <PwaInstall />
                                     </AppContext>
                                     </RatingsProvider>
                                 </CommerceDataProvider>

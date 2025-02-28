@@ -7,7 +7,7 @@ use driver::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput, ToastProvider},
+    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput, ToastProvider, PwaInstall},
     models::{
         init_commerce_db, init_consumer_db, DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY,
     },
@@ -37,21 +37,22 @@ fn app() -> Html {
     });
     html! {
         <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayPoolComponent>
-                <LoginContext>
-                    <ToastProvider>
-                        <LoginCheck>
-                            <AppContext>
-                                <ProfileCheck>
-                                    <DriverPages />
-                                </ProfileCheck>
-                            </AppContext>
-                        </LoginCheck>
-                    </ToastProvider>
-                </LoginContext>
-            </RelayPoolComponent>
-        </BrowserRouter>
+            <PwaInstall/>
+            <BrowserRouter>
+                <RelayPoolComponent>
+                    <LoginContext>
+                        <ToastProvider>
+                            <LoginCheck>
+                                <AppContext>
+                                    <ProfileCheck>
+                                        <DriverPages />
+                                    </ProfileCheck>
+                                </AppContext>
+                            </LoginCheck>
+                        </ToastProvider>
+                    </LoginContext>
+                </RelayPoolComponent>
+            </BrowserRouter>
         </LanguageConfigsProvider>
     }
 }
