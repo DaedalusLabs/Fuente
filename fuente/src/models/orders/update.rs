@@ -1,9 +1,7 @@
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
 use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
 
-#[cfg(target_arch = "wasm32")]
 use crate::models::{NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY};
 
 use super::{state::OrderStatus, OrderInvoiceState};
@@ -32,7 +30,6 @@ impl OrderUpdateRequest {
         let invoice_state = OrderInvoiceState::try_from(&self.order)?;
         Ok(invoice_state)
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn sign_update(&self, keys: &UserIdentity, kind: u32) -> anyhow::Result<NostrNote> {
         let pubkey = keys
             .get_pubkey()

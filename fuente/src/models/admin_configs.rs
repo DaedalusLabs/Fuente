@@ -1,13 +1,11 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use nostr_minions::browser_api::IdbStoreManager;
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::JsValue;
 
-#[cfg(target_arch = "wasm32")]
 use super::TEST_PUB_KEY;
 
 use super::{
@@ -326,7 +324,6 @@ impl AdminServerRequest {
             config_str,
         }
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn sign_data(&self, priv_key: &UserIdentity) -> anyhow::Result<NostrNote> {
         let pubkey = priv_key
             .get_pubkey()

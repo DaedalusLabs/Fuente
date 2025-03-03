@@ -191,7 +191,10 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
-    let nostr_keys = key_ctx.get_identity().cloned().expect("Nostr key not found");
+    let nostr_keys = key_ctx
+        .get_identity()
+        .cloned()
+        .expect("Nostr key not found");
     let viewed_status = use_state(|| OrderStatus::Pending);
     html! {
         <div class="lg:hidden flex flex-col flex-1 overflow-hidden">
@@ -217,7 +220,10 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
-    let nostr_keys = key_ctx.get_identity().cloned().expect("Nostr key not found");
+    let nostr_keys = key_ctx
+        .get_identity()
+        .cloned()
+        .expect("Nostr key not found");
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
             <div class="flex justify-start gap-4 h-full p-4 overflow-x-auto">
