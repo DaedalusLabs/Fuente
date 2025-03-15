@@ -1,11 +1,10 @@
-#[cfg(target_arch = "wasm32")]
 use super::NOSTR_KIND_CONSUMER_REPLACEABLE_GIFTWRAP;
-#[cfg(target_arch = "wasm32")]
-use nostr_minions::key_manager::UserIdentity;
-use nostr_minions::{browser_api::IdbStoreManager, widgets::leaflet::nominatim::NominatimLookup};
+use nostr_minions::{
+    browser_api::IdbStoreManager, key_manager::UserIdentity,
+    widgets::leaflet::nominatim::NominatimLookup,
+};
 use nostro2::notes::NostrNote;
 use serde::{Deserialize, Serialize};
-#[cfg(target_arch = "wasm32")]
 use sha2::{Digest, Sha256};
 use web_sys::wasm_bindgen::JsValue;
 
@@ -32,7 +31,6 @@ impl ConsumerAddress {
     pub fn coordinates(&self) -> CoordinateStrings {
         self.coordinates.clone()
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn signed_data(&self, keys: &UserIdentity) -> NostrNote {
         let new_note = NostrNote {
             pubkey: keys.get_pubkey().await.unwrap(),
@@ -44,7 +42,6 @@ impl ConsumerAddress {
             .await
             .expect("Failed to sign note")
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn giftwrapped_data(
         &self,
         keys: &UserIdentity,
@@ -148,7 +145,6 @@ impl TryFrom<NostrNote> for ConsumerAddressIdb {
 }
 
 impl ConsumerAddressIdb {
-    #[cfg(target_arch = "wasm32")]
     pub async fn new(address: ConsumerAddress, keys: &UserIdentity) -> Self {
         let note = address.signed_data(keys).await;
         let nostr_id = note.id.as_ref().unwrap().to_string();

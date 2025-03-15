@@ -16,8 +16,9 @@
     "auth_login_form_label": "Your Private Key",
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
-    "auth_login_link_button": "Shop Now",
-    "auth_login_extension": "Login with extension",
+    "auth_login_link_button": "Log In With Key",
+    "auth_login_extension": "Log In with extension",
+    "auth_login_accept": "I Understand",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",

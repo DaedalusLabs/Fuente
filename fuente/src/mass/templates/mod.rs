@@ -201,10 +201,10 @@ pub fn login_template(props: &LoginPageProps) -> Html {
                     </div>
                 </div>
 
-                <h2 class="pointer-events-none text-white text-[42px] font-bold tracking-[-1rem] text-center lg:hidden absolute -bottom-12  left-0 w-full">{&heading}</h2>
+                <h2 class="pointer-events-none text-white text-[48px] font-bold text-center lg:hidden absolute -bottom-2  left-0 w-full">{&heading}</h2>
             </div>
             <div class="pointer-events-none lg:hidden bg-white">
-                <h2 class="text-fuente text-[42px] font-bold tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
+                <h2 class="text-fuente text-[48px] font-bold text-center -mt-5">{&sub_heading}</h2>
             </div>
         </main>
     }
@@ -304,7 +304,7 @@ pub fn sales_pitch() -> Html {
             <div class="mx-auto lg:mx-0 lg:ml-auto 2xl:translate-x-[-25%]">
                 <h2 class="text-3xl lg:text-6xl text-white tracking-tighter font-semibold max-w-[590px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
                 <div class="flex justify-center lg:justify-start">
-                    <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
+                    <a href={"https://fuente-business.pages.dev"} target="_blank">
                         <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-bold mt-5">{&translations["sale_products_button"]}</button>
                     </a>
                 </div>

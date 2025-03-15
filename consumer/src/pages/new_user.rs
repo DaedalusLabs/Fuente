@@ -65,7 +65,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl relative z-0  text-white mx-auto my-auto">
+                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl mb-16 relative z-0  text-white mx-auto my-auto">
                     <NewAddressForm ..props />
                 </div>
         </LoginPageTemplate>
