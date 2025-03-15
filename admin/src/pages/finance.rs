@@ -12,14 +12,14 @@ pub fn exchange_rate_page() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("ServerConfigsStore not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex-1 overflow-hidden">
+        <main class="container mx-auto overflow-hidden">
             <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
                         {&translations["admin_settings_title_exchange"]}
                     </h1>
                 </div>
-                <div class="grid  grid-cols-1 lg:grid-cols-2  gap-5 lg:gap-10 mt-5 mx-2 md:mx-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10 border-2 border-fuente rounded-2xl w-full lg:max-w-5xl mx-auto">
                     <div class="flex-1">
                         <ExchangeRateDisplay />
                     </div>
@@ -40,12 +40,11 @@ pub fn exchange_rate_display() -> Html {
     html! {
         <div class="flex flex-col gap-5 p-5 md:max-w-sm lg:max-w-xs mx-auto">
             <div class="space-y-2">
-                <p class="text-gray-500 text-md font-bold">{"Bitcoin Exchange"}</p>
+                <p class="text-gray-500 text-lg font-bold">{"Bitcoin Exchange"}</p>
                 <p class="text-fuente font-bold text-2xl">{format!("1 BTC = SRD {}", exchange_rate)}</p>
             </div>
             <div class="space-y-2">
-                <p class="text-gray-500 text-sm font-bold">{"Sat Price"}</p>
-                <p class="text-gray-500 font-light text-lg">{format!("1 SAT = SRD {}", sat_rate)}</p>
+                <p class="text-gray-500 text-md"><span class="font-bold">{"Sat Price: "}</span>{ format!("1 SAT = SRD {}", sat_rate) }</p>
             </div>
         </div>
     }
@@ -60,21 +59,25 @@ pub fn exchange_rate_form() -> Html {
     let sender = relay_ctx.send_note.clone();
 
     let user_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    let keys = user_ctx.get_nostr_key();
+    let keys = user_ctx.clone();
 
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
-        let keys = keys.clone().expect("No keys found");
+        let keys = keys.clone();
         let form_element = HtmlForm::new(e).expect("Failed to get form element");
         let exchange_rate = form_element
             .input_value("exchange_rate")
             .expect("Failed to get exchange rate");
         let admin_request =
             AdminServerRequest::new(AdminConfigurationType::ExchangeRate, exchange_rate);
-        let signed_request = admin_request
-            .sign_data(&keys)
-            .expect("Failed to sign request");
-        sender.emit(signed_request);
+        let sender = sender.clone();
+        yew::platform::spawn_local(async move {
+            let signed_request = admin_request
+                .sign_data(&keys.get_identity().expect("No identity found"))
+                .await
+                .expect("Failed to sign request");
+            sender.emit(signed_request);
+        });
     });
 
     html! {
@@ -82,9 +85,9 @@ pub fn exchange_rate_form() -> Html {
             class="rounded-2xl bg-white p-5 md:max-w-sm lg:max-w-xs mx-auto">
             <div class="space-y-2">
                 <label for="exchange_rate" class="text-gray-500 font-light text-sm">{"Change the Exchange"}</label>
-                <input  
-                    type="number" 
-                    id="exchange_rate" name="exchange_rate" 
+                <input
+                    type="number"
+                    id="exchange_rate" name="exchange_rate"
                     placeholder={translations["admin_settings_btc_srd"].clone()}
                     class="w-full rounded-lg border-2 border-fuente p-2"
                     step="0.01" value="" required={true} />
@@ -92,7 +95,7 @@ pub fn exchange_rate_form() -> Html {
                     <input
                         type="submit"
                         value={translations["admin_settings_submit"].clone()}
-                        class="bg-fuente-orange text-center text-white font-bold text-sm py-3 rounded-full w-full md:w-1/2 lg:mx-auto"
+                        class="bg-fuente-orange text-center text-white font-bold text-sm py-3 rounded-full w-full md:w-1/2 lg:mx-auto cursor-pointer"
                     />
                 </div>
             </div>

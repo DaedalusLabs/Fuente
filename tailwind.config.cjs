@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ['**/*.{html,rs}', '../**/*.{html,rs}', '!/node_modules/**', '!./**/target/**'],
+    content: ['**/*.{html,rs}', '!/node_modules/**', '!./**/target/**'],
     plugins: [
         require('@tailwindcss/forms'),
         require('@tailwindcss/typography'),
@@ -13,11 +13,12 @@ module.exports = {
                 'fuente-dark': '#3b1197',
                 'fuente-forms': "#3859c7",
                 "fuente-buttons": "#6fe5fa",
-                "fuente-orange": "#f4801b"
+                "fuente-orange": "#f2a900"
             },
             fontFamily: {
                 'mplus': ['MPlus', 'sans-serif'],
-                'fuente': ['Open Sans']
+                'fuente': ['Open Sans'],
+                'product': ['ProductSans', 'sans-serif']
             },
             backgroundImage: {
                 logo: `url('/templates/img/Logo Fuente.jpeg')`

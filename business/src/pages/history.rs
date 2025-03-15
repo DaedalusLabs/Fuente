@@ -5,7 +5,7 @@ use fuente::{
     models::OrderStatus,
 };
 use lucide_yew::History;
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -83,9 +83,9 @@ pub fn history_page() -> Html {
     };
 
     html! {
-        <main class="flex-1 flex flex-col h-screen overflow-hidden">
-            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+        <main class="flex-1 flex flex-col h-screen overflow-hidden container mx-auto">
+            <div class="flex flex-row justify-between items-center">
+                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-10 lg:text-6xl tracking-tighter font-bold font-mplus whitespace-nowrap">
                   {&translations["store_orders_history_title"]}
                 </h1>
                 <div class="flex items-center gap-5">

@@ -16,7 +16,7 @@ pub fn order_state_card(props: &OrderStateCardProps) -> Html {
     let order_req = order.get_order_request();
     let profile = order_req.profile;
     let order_id = order.order_id();
-    let timestamp = web_sys::js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(
+    let timestamp = web_sys::js_sys::Date::new(&web_sys::wasm_bindgen::JsValue::from_f64(
         order.order_timestamp() as f64 * 1000.0,
     ));
     let locale_options = web_sys::js_sys::Object::new();
@@ -27,7 +27,7 @@ pub fn order_state_card(props: &OrderStateCardProps) -> Html {
     let locale_date = timestamp.to_locale_date_string("nl-SR", &locale_options);
     let locale_time = timestamp.to_locale_time_string("nl-SR");
     html! {
-        <div onclick={props.on_click.clone()} id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1">
+        <div onclick={props.on_click.clone()} id={order_id} class="bg-white shadow py-2 px-5 rounded-2xl space-y-1 cursor-pointer mt-3">
             <p class="pointer-events-none text-fuente font-bold text-md">{profile.nickname}</p>
             <p class="pointer-events-none font-bold text-sm">{format!("#{}", &order.order_id()[..8])}</p>
             <p class="pointer-events-none text-gray-500 text-xs">{format!("{} | {}", locale_date, locale_time)}</p>
@@ -53,10 +53,9 @@ pub fn order_card(props: &OrderCardProps) -> Html {
         <>
         <OrderStateCard order={props.order.clone()} on_click={open_popup} />
         <PopupSection close_handle={order_popup.clone()}>
-            <main 
-                class="bg-white rounded-2xl p-4 max-h-screen m-4 overflow-y-auto scrollbar-none">
+            <div class="bg-white rounded-2xl p-4 m-4 flex-1 overflow-y-auto">
                 <OrderDetailModal order={props.order.clone()} on_submit={props.on_click.clone()} />
-            </main>
+            </div>
         </PopupSection>
         </>
     }

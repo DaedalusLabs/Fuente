@@ -2,18 +2,17 @@ version: "3.8"
 
 services:
   fuente-ratings:
-    build:
-      context: .
+    image: rust:1.84-bookworm
     volumes:
-      - /home/illuminodes/fuente/ratings:/app
+      - ./:/app
     working_dir: /app
     restart: unless-stopped
     environment:
-      - FUENTE_KEY=${FUENTE_KEY}
+      - FUENTE_PRIV_KEY=${FUENTE_PRIV_KEY}
     networks:
-      - illuminodes
+      - ratings
+    command: ./fuente-ratings
 
 networks:
-  illuminodes:
-    external: true
-    name: nginx_illuminodes
+  ratings:
+    driver: bridge

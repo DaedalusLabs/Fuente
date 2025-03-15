@@ -6,7 +6,7 @@ use nostr_minions::{
         LeafletMapOptions, Marker,
     },
 };
-use wasm_bindgen::{JsCast, JsValue};
+use web_sys::wasm_bindgen::{JsCast, JsValue};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Properties, Clone, PartialEq)]
@@ -49,11 +49,13 @@ pub fn new_address_menu(props: &NewAddressProps) -> Html {
             <AddressDetails ..props.clone()/>
             <AddressSearch ..props.clone() />
             <AddressPickerMap ..props.clone()/>
-            <button
-                {onclick}
-                class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl self-start"
-            >{"Save"}
-        </button>
+            <div class="flex justify-center">
+                <button
+                    {onclick}
+                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl self-start"
+                >{"Save"}
+                </button>
+            </div>
         </div>
     }
 }
@@ -194,9 +196,9 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
         ..Default::default()
     };
     let location_icon_options = IconOptions {
-        icon_url: "/public/assets/img/my_marker.png".to_string(),
+        icon_url: "/public/assets/img/red-pin.svg".to_string(),
         icon_size: Some(vec![32, 32]),
-        icon_anchor: Some(vec![16, 16]),
+        icon_anchor: Some(vec![16, 32]),
     };
     let geo_handler_clone = props.coord_handle.clone();
     let address_handler_clone = props.nominatim_handle.clone();
@@ -229,6 +231,7 @@ pub fn address_picker_v2(props: &NewAddressProps) -> Html {
     let markers = use_state(|| Vec::<(f64, f64)>::new());
     html! {
         <LeafletComponent
+            map={map.clone()}
             map_id="map"
             {map_options}
             {location_icon_options}

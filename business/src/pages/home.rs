@@ -8,8 +8,11 @@ use fuente::{
     models::{OrderStatus, OrderUpdateRequest, NOSTR_KIND_COMMERCE_UPDATE},
 };
 use lucide_yew::{Check, CircleCheck, CircleHelp, Clock2, ScrollText, Truck, X};
-use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostr_minions::{
+    key_manager::{NostrIdStore, UserIdentity},
+    relay_pool::NostrProps,
+};
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 use yew_router::hooks::use_navigator;
 
@@ -29,17 +32,17 @@ pub fn home_page() -> Html {
     };
     html! {
         <main class="flex-1 overflow-hidden">
-            <div class="flex flex-col h-full">
-                <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+            <div class="flex flex-col h-full container mx-auto">
+                <div class="flex flex-row justify-between items-center">
+                    <h1 class="text-fuente font-mplus text-4xl text-center lg:text-left py-4 lg:py-10 lg:text-6xl tracking-tighter font-bold">
                         {&translations["orders_heading"]}
                     </h1>
                     <button onclick={go_to_orders.clone()}
-                        class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl">
+                        class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl">
                             <ScrollText class="w-6 h-6 text-fuente" />
                     </button>
                     <button onclick={go_to_orders}
-                        class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg">
+                        class="lg:block hidden flex items-center bg-white px-6 py-3 rounded-full text-fuente border-2 border-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg">
                         {&translations["orders_historic"]}
                     </button>
                 </div>
@@ -51,28 +54,45 @@ pub fn home_page() -> Html {
 }
 
 fn respond_to_order(
-    nostr_keys: NostrKeypair,
+    nostr_keys: UserIdentity,
     send_note: Callback<NostrNote>,
     order: NostrNote,
     update_kind: u32,
 ) -> Callback<SubmitEvent> {
     Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
-        let form = HtmlForm::new(e).expect("Could not get form");
+        let form = e.target_unchecked_into::<web_sys::HtmlFormElement>();
+        let form_data = web_sys::FormData::new_with_form(&form).unwrap();
+        let status_str = form_data.get("order_status").as_string().unwrap();
 
-        let status_update_str = form
-            .select_value("order_status")
-            .expect("Could not parse order status");
         let status_update =
-            OrderStatus::try_from(status_update_str).expect("Could not parse order status");
+            OrderStatus::try_from(status_str).expect("Could not parse order status");
+
+        if status_update == OrderStatus::Canceled {
+            let Ok(true) = web_sys::window().unwrap().confirm_with_message(
+                "Are you sure you want to cancel this order? This action cannot be undone.",
+            ) else {
+                return;
+            };
+            if let Some(reason) = form_data.get("cancel_reason").as_string() {
+                gloo::console::log!("Cancellation reason:", reason);
+                // TODO: We may want to store this reason in our order update request
+            }
+        }
+
         let new_request = OrderUpdateRequest {
             order: order.clone(),
             status_update,
         };
-        let signed_req = new_request
-            .sign_update(&nostr_keys, update_kind)
-            .expect("Could not sign order");
-        send_note.emit(signed_req);
+        let send_note = send_note.clone();
+        let nostr_keys = nostr_keys.clone();
+        yew::platform::spawn_local(async move {
+            let signed_req = new_request
+                .sign_update(&nostr_keys, update_kind)
+                .await
+                .expect("Could not sign order");
+            send_note.emit(signed_req);
+        });
     })
 }
 
@@ -171,7 +191,10 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("Nostr key not found");
+    let nostr_keys = key_ctx
+        .get_identity()
+        .cloned()
+        .expect("Nostr key not found");
     let viewed_status = use_state(|| OrderStatus::Pending);
     html! {
         <div class="lg:hidden flex flex-col flex-1 overflow-hidden">
@@ -197,7 +220,10 @@ pub fn order_dashboard() -> Html {
     let send_note = use_context::<NostrProps>().expect("Nostr context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("Nostr context not found");
     let update_kind = NOSTR_KIND_COMMERCE_UPDATE;
-    let nostr_keys = key_ctx.get_nostr_key().expect("Nostr key not found");
+    let nostr_keys = key_ctx
+        .get_identity()
+        .cloned()
+        .expect("Nostr key not found");
     html! {
         <div class="hidden lg:flex flex-1 overflow-hidden">
             <div class="flex justify-start gap-4 h-full p-4 overflow-x-auto">

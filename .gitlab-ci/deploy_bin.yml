@@ -1,0 +1,29 @@
+.deploy_rust_bin: &deploy_rust_bin
+  stage: deploy
+  tags:
+    - ansible
+  script:
+    - ansible-playbook -i .ansible/hosts .ansible/$PLAYBOOK
+  when: manual
+
+deploy_invoicer:
+  <<: *deploy_rust_bin
+  dependencies:
+    - build_invoicer 
+  variables:
+    PRIV_KEY: $FUENTE_PRIV_KEY
+    ADDRESS: $LND_ADDRESS
+    MACAROON: $LND_MACAROON
+    API_KEY: $UT_API_KEY
+    APP_ID: $UT_APP_ID
+    CALLBACK_DOMAIN: $UT_CALLBACK_DOMAIN
+    PLAYBOOK: invoicer-playbook.yml
+
+
+deploy_rating_bot:
+  <<: *deploy_rust_bin
+  dependencies:
+    - build_rating_bot
+  variables:
+    PLAYBOOK: deploy_rating_bot.yml
+

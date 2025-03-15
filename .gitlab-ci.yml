@@ -1,0 +1,23 @@
+image: docker:24.0.5 
+
+services:
+  - docker:24.0.5-dind 
+
+stages:
+  - build-image
+  - build
+  - deploy
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - target/
+    - public/
+
+include:
+  - local: '/.gitlab-ci/build-image.yml'
+  - local: '/.gitlab-ci/build.yml'
+  - local: '/.gitlab-ci/deploy_bin.yml'
+  - local: '/.gitlab-ci/deploy_pwa.yml'
+
+

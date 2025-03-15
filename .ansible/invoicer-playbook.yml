@@ -1,0 +1,44 @@
+- name: Deploy Fuente Invoicer
+  hosts: daedalus
+  tasks:
+
+    - name: Ensure the directory exists
+      become: yes
+      file:
+        dest: /opt/fuente/invoicer
+        state: directory
+
+    - name: Copy artifacts to server
+      become: yes
+      copy:
+        src: "{{ item }}"
+        dest: /opt/fuente/invoicer
+      with_items:
+        - ../target/release/fuente-invoicer
+        - ../invoicer/docker-compose.yml
+
+    - name: Change ownership
+      become: yes
+      file:
+        path: /opt/fuente/invoicer
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        recurse: yes
+
+    - name: Ensure bin is executable
+      file:
+        dest: /opt/fuente/invoicer/fuente-invoicer
+        mode: '0755'
+
+    - name: Run docker-compose
+      command: docker-compose up --build -d
+      vars:
+        FUENTE_PRIV_KEY: "{{ lookup('env', 'FUENTE_PRIV_KEY') }}"
+        LND_ADDRESS: "{{ lookup('env', 'LND_ADDRESS') }}"
+        LND_MACAROON: "{{ lookup('env', 'LND_MACAROON') }}"
+        UT_API_KEY: "{{ lookup('env', 'UT_API_KEY') }}"
+        UT_APP_ID: "{{ lookup('env', 'UT_APP_ID') }}"
+        UT_CALLBACK_DOMAIN: "{{ lookup('env', 'UT_CALLBACK_DOMAIN') }}"
+      args:
+        chdir: /opt/fuente/invoicer
+    

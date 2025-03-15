@@ -27,7 +27,7 @@ pub fn favorites_page() -> Html {
 
     html! {
         <FavoritesPageTemplate >
-            <div class="w-full grid grid-col-flow gap-4 sm:gap-6 lg:gap-8 justify-center lg:justify-start">
+            <div class="w-full grid sm:grid-cols-2 lg:grid-cols-3 grid-col-flow gap-5 justify-center lg:justify-start">
                 {favorite_businesses.iter().map(|commerce| {
                     html! {
                         <AppLink<ConsumerRoute>
@@ -37,7 +37,7 @@ pub fn favorites_page() -> Html {
                             class="w-full"
                             selected_class=""
                         >
-                        <div class="relative border-2 border-fuente rounded-2xl p-4 md:p-10 lg:p-16 shadow-md w-fit">
+                        <div class="relative border-2 border-fuente rounded-2xl p-4 shadow-md w-full">
                             <FavoriteCommerceTemplate commerce_data={commerce.profile().clone()} />
                             <FavoriteButton commerce_id={commerce.id().to_string()} />
                         </div>
@@ -55,10 +55,10 @@ pub fn favorite_commerce_template(props: &CommerceProfileProps) -> Html {
         rating,
     } = props;
     html! {
-       <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 lg:gap-8 w-fit">
+       <div class="flex flex-col sm:flex-row items-center gap-5 w-fit">
            <img src={commerce_data.logo_url.clone()} alt="Company Image" class="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-cover rounded-2xl border-2 border-fuente"/>
            <div class="space-y-2 flex flex-col items-center sm:items-start text-center sm:text-left">
-               <h3 class="text-gray-700 text-lg sm:text-xl lg:text-2xl font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
+               <h3 class="text-gray-700 text-md lg:text-lg xl:text-2xl font-bold tracking-wide uppercase">{&commerce_data.name}</h3>
                <p class="text-gray-600 font-normal text-sm sm:text-base lg:text-lg max-w-md">{&commerce_data.description}</p>
                {if let Some(rating) = rating {
                    html! {
@@ -90,7 +90,7 @@ fn favorite_button(props: &FavoriteButtonProps) -> Html {
     let onclick = {
         let commerce_id = props.commerce_id.clone();
         let favorites = favorites_ctx.clone();
-        let user_id = key_ctx.get_nostr_key().unwrap().public_key();
+        let user_id = key_ctx.get_pubkey().expect("No user keys found");
 
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
@@ -109,7 +109,7 @@ fn favorite_button(props: &FavoriteButtonProps) -> Html {
             class={classes!(
                 "absolute",
                 "top-4",
-                "right-4",
+                "right-0",
                 "p-2",
                 "rounded-full",
                 "hover:bg-gray-100",

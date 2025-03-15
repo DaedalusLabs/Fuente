@@ -1,14 +1,17 @@
 use lucide_yew::{
-    ArrowLeft, ArrowRight, Bitcoin, Copy as CopyIcon, Headset, Key, ShieldCheck, SquarePen, TriangleAlert, Truck,
+    ArrowLeft, ArrowRight, Copy as CopyIcon, Headset, Key, ShieldCheck, SquarePen, TriangleAlert,
+    Truck,
 };
 use nostr_minions::key_manager::NostrIdStore;
 use nostro2::notes::NostrNote;
+use web_sys::window;
 use web_sys::HtmlElement;
 use yew::prelude::*;
-use web_sys::window;
 
 use crate::{
-    contexts::LanguageConfigsStore, mass::{Toast, ToastAction, ToastContext, ToastType}, models::{DriverProfile, OrderInvoiceState, OrderStatus}
+    contexts::LanguageConfigsStore,
+    mass::{Toast, ToastAction, ToastContext, ToastType},
+    models::{DriverProfile, OrderInvoiceState, OrderStatus},
 };
 
 #[derive(Clone, PartialEq, Properties)]
@@ -22,7 +25,7 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
     let selected_class = classes!("bg-fuente", "text-white");
     let unselected_class = classes!("bg-gray-100", "text-gray-500");
     html! {
-        <aside class="flex-shrink-0 px-4 overflow-auto no-scrollbar lg:px-10">
+        <aside class="flex-shrink-0 overflow-auto no-scrollbar">
             <div class="flex flex-row lg:flex-col gap-3">
                 {for options.iter().map(|(name, onclick, selected)| {
                     html! {
@@ -48,6 +51,7 @@ pub fn settings_sidebar(props: &SettingsSideBarBrops) -> Html {
                                 "lg:text-left",
                                 "lg:text-lg",
                                 "tracking-wide",
+                                "whitespace-nowrap",
                                 if *selected { selected_class.clone() } else { unselected_class.clone() }
                             )}
                             {onclick}>
@@ -73,8 +77,8 @@ pub fn settings_content(props: &SettingsContentProps) -> Html {
         edit_button,
     } = props;
     html! {
-        <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
-            <div class="h-full overflow-auto border border-fuente rounded-xl no-scrollbar relative">
+        <div class="flex-grow overflow-hidden w-full">
+            <div class="overflow-auto border-2 border-fuente rounded-xl no-scrollbar relative">
                 {children}
                 {edit_button.clone().unwrap_or_default()}
             </div>
@@ -139,19 +143,21 @@ pub fn settings_template(props: &SettingsPageTemplateProps) -> Html {
     } = props.clone();
     html! {
         <>
-        <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-row justify-between items-center px-4 lg:p-10">
-                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
-                    {&heading}
-                </h1>
-                <SettingsOptionsButtons {options} />
-            </div>
+        <main class="container mx-auto overflow-hidden">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-row justify-between items-center p-4 lg:py-10">
+                    <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold font-mplus">
+                        {&heading}
+                    </h1>
+                    <SettingsOptionsButtons {options} />
+                </div>
 
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                <SettingsSideBar options={sidebar_options} />
-                <SettingsContent edit_button={content_button} >
-                    {children}
-                </SettingsContent>
+                <div class="flex flex-col lg:flex-row overflow-hidden gap-5">
+                    <SettingsSideBar options={sidebar_options} />
+                    <SettingsContent edit_button={content_button} >
+                        {children}
+                    </SettingsContent>
+                </div>
             </div>
         </main>
         </>
@@ -176,7 +182,7 @@ pub fn login_template(props: &LoginPageProps) -> Html {
     } = props;
     html! {
         <main class="grid grid-rows-[3fr_1fr] lg:flex min-h-screen">
-            <div class="hidden bg-fuente min-h-screen overflow-hidden lg:overflow-visible lg:bg-white lg:bg-logo lg:bg-no-repeat lg:bg-[length:200px_75px] lg:mt-10 lg:ml-16 lg:flex lg:justify-end lg:items-center lg:flex-1">
+            <div class="hidden bg-fuente overflow-hidden lg:overflow-visible lg:bg-white lg:bg-logo lg:bg-no-repeat lg:bg-[length:200px_75px] lg:mt-10 lg:ml-16 lg:flex lg:justify-end lg:items-center lg:flex-1">
                 <h2 class="hidden lg:flex text-fuente text-[135px] lg:text-[175px] font-bold -rotate-90 -mr-24 tracking-tighter lg:tracking-[-1rem]">
                     {&heading}
                 </h2>
@@ -195,10 +201,10 @@ pub fn login_template(props: &LoginPageProps) -> Html {
                     </div>
                 </div>
 
-                <h2 class="pointer-events-none text-white text-[42px] font-bold md:tracking-[-1rem] text-center lg:hidden absolute -bottom-4  left-0 w-full">{&heading}</h2>
+                <h2 class="pointer-events-none text-white text-[48px] font-bold text-center lg:hidden absolute -bottom-2  left-0 w-full">{&heading}</h2>
             </div>
             <div class="pointer-events-none lg:hidden bg-white">
-                <h2 class="text-fuente text-[42px] font-bold md:tracking-[-1rem] text-center -mt-5">{&sub_heading}</h2>
+                <h2 class="text-fuente text-[48px] font-bold text-center -mt-5">{&sub_heading}</h2>
             </div>
         </main>
     }
@@ -209,7 +215,7 @@ pub fn bitcoin_banner() -> Html {
     let translations = language_ctx.translations();
     html! {
     <div class="container mx-auto grid gap-5 lg:gap-0 grid-cols-2 sm:grid-cols-[3fr_1fr] place-items-center">
-        <div class="bg-orange-400 w-full rounded-2xl h-fit lg:max-h-52">
+        <div class="bg-fuente-orange w-full rounded-2xl h-fit lg:max-h-52">
             <div class="flex items-center">
                 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" class="w-80 -rotate-12 -mt-5 lg:-mt-14">
                     <path fill="none" d="M0 0h256v256H0z"></path><path d="M184 184H69.8L41.9 30.6a8 8 0 0 0-7.8-6.6H16" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path><circle cx="80" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><circle cx="184" cy="204" fill="none" r="20" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></circle><path d="M62.5 144h125.6a15.9 15.9 0 0 0 15.7-13.1L216 64H48" fill="none" stroke="#fcfcfc" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" class="stroke-000000"></path>
@@ -220,8 +226,8 @@ pub fn bitcoin_banner() -> Html {
             </div>
         </div>
 
-        <Bitcoin class="bg-orange-400 rounded-full text-white flex h-24 w-24" />
-        // <img src="/templates/img/bitcoin.png" alt="Bitcoin Logo" class="hidden lg:flex" />
+        // <Bitcoin class="bg-orange-400 rounded-full text-white flex h-24 w-24" />
+        <img src="/public/assets/img/bitcoin.png" alt="Bitcoin Logo" class="flex flex-1  max-h-28 max-w-28 sm:max-h-44 sm:max-w-44" />
         // <svg height="512px" id="svg2" preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 1 1" width="512px" xmlns="http://www.w3.org/2000/svg" class="lg:hidden w-1/2 h-full">
         //     <defs id="defs4"><filter color-interpolation-filters="sRGB" id="_drop-shadow"><feGaussianBlur id="feGaussianBlur7" in="SourceAlpha" result="blur-out" stdDeviation="1"/><feBlend id="feBlend9" in="SourceGraphic" in2="blur-out" mode="normal"/></filter><linearGradient id="coin-gradient" x1="0%" x2="0%" y1="0%" y2="100%"><stop id="stop12" offset="0%" style="stop-color:#f9aa4b"/><stop id="stop14" offset="100%" style="stop-color:#f7931a"/></linearGradient></defs><g id="g16" transform="scale(0.015625)"><path d="m 63.0359,39.741 c -4.274,17.143 -21.637,27.576 -38.782,23.301 -17.138,-4.274 -27.571,-21.638 -23.295,-38.78 4.272,-17.145 21.635,-27.579 38.775,-23.305 17.144,4.274 27.576,21.64 23.302,38.784 z" id="coin" style="fill:url(#coin-gradient)"/><path d="m 46.1009,27.441 c 0.637,-4.258 -2.605,-6.547 -7.038,-8.074 l 1.438,-5.768 -3.511,-0.875 -1.4,5.616 c -0.923,-0.23 -1.871,-0.447 -2.813,-0.662 l 1.41,-5.653 -3.509,-0.875 -1.439,5.766 c -0.764,-0.174 -1.514,-0.346 -2.242,-0.527 l 0.004,-0.018 -4.842,-1.209 -0.934,3.75 c 0,0 2.605,0.597 2.55,0.634 1.422,0.355 1.679,1.296 1.636,2.042 l -1.638,6.571 c 0.098,0.025 0.225,0.061 0.365,0.117 -0.117,-0.029 -0.242,-0.061 -0.371,-0.092 l -2.296,9.205 c -0.174,0.432 -0.615,1.08 -1.609,0.834 0.035,0.051 -2.552,-0.637 -2.552,-0.637 l -1.743,4.019 4.569,1.139 c 0.85,0.213 1.683,0.436 2.503,0.646 l -1.453,5.834 3.507,0.875 1.439,-5.772 c 0.958,0.26 1.888,0.5 2.798,0.726 l -1.434,5.745 3.511,0.875 1.453,-5.823 c 5.987,1.133 10.489,0.676 12.384,-4.739 1.527,-4.36 -0.076,-6.875 -3.226,-8.515 2.294,-0.529 4.022,-2.038 4.483,-5.155 z m -8.022,11.249 c -1.085,4.36 -8.426,2.003 -10.806,1.412 l 1.928,-7.729 c 2.38,0.594 10.012,1.77 8.878,6.317 z m 1.086,-11.312 c -0.99,3.966 -7.1,1.951 -9.082,1.457 l 1.748,-7.01 c 1.982,0.494 8.365,1.416 7.334,5.553 z" id="symbol" style="fill:#ffffff"/></g>
         // </svg>
@@ -288,22 +294,22 @@ pub fn sales_pitch() -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-    <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-sky-200 rounded-2xl px-10 py-5 container mx-auto mt-7">
-        <div class="flex">
-            <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10" />
-            <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 left-28 z-20" />
-            <img src="/public/assets/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex"/>
-        </div>
+        <div class="flex flex-col justify-center lg:flex-row lg:justify-between items-center lg:relative bg-fuente-light rounded-2xl pr-1 py-5 container mx-auto">
+            <div class="flex">
+                <img src="/public/assets/img/sneaker_1.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 top-0 left-0 z-10 -mr-10 lg:-mr-0 2xl:translate-x-[70%]" />
+                <img src="/public/assets/img/sneaker_2.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-52 -top-10 lg:left-28 z-20 2xl:translate-x-[70%]" />
+                <img src="/public/assets/img/sneaker_3.png" alt="Sneaker Product" class="lg:absolute object-contain w-32 lg:w-40 mt-10 xl:mt-4 xl:w-64 lg:top-0 lg:left-56 z-30 hidden lg:flex 2xl:translate-x-[70%]"/>
+            </div>
 
-        <div class="mx-auto lg:mx-0 lg:ml-auto">
-            <h2 class="text-5xl text-fuente tracking-tighter font-semibold max-w-[500px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
-            <div class="flex justify-center lg:justify-start">
-                <a href={"https://fuentebusiness.theconstruct.work"} target="_blank">
-                    <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-semibold mt-5">{&translations["sale_products_button"]}</button>
-                </a>
+            <div class="mx-auto lg:mx-0 lg:ml-auto 2xl:translate-x-[-25%]">
+                <h2 class="text-3xl lg:text-6xl text-white tracking-tighter font-semibold max-w-[590px] text-center lg:text-left">{&translations["sale_products_heading"]}</h2>
+                <div class="flex justify-center lg:justify-start">
+                    <a href={"https://fuente-business.pages.dev"} target="_blank">
+                        <button class="text-fuente-forms bg-fuente-buttons py-3 px-10 rounded-full font-bold mt-5">{&translations["sale_products_button"]}</button>
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
     }
 }
 
@@ -315,7 +321,7 @@ pub fn benefits() -> Html {
     <section class="mt-5 container mx-auto">
         <div class="grid lg:grid-cols-3 gap-5 bg-gray-100 p-12 rounded-2xl place-content-center lg:place-items-center">
             <div class="flex items-center gap-5">
-                <Headset class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <Headset class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_support_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_support_text"]}</p>
@@ -323,7 +329,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <Truck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <Truck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_track_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_track_text"]}</p>
@@ -331,7 +337,7 @@ pub fn benefits() -> Html {
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <ShieldCheck class="h-28 w-28 bg-fuente rounded-2xl p-3 text-white" />
+                <ShieldCheck class="w-16 h-16 bg-fuente rounded-2xl p-3 text-white flex-shrink-0" />
                 <div>
                     <h3 class="text-fuente-dark text-xl font-semibold">{&translations["benefits_secure_heading"]}</h3>
                     <p class="text-lg text-fuente-dark">{&translations["benefits_secure_text"]}</p>
@@ -592,19 +598,19 @@ pub fn settings_template(props: &html::ChildrenProps) -> Html {
     let language_ctx = use_context::<LanguageConfigsStore>().expect("Language context not found");
     let translations = language_ctx.translations();
     html! {
-        <main class="flex flex-col h-screen overflow-hidden w-full">
-            <div class="flex flex-row justify-between items-center p-4 lg:p-10">
-                <h1 class="text-fuente text-4xl text-center lg:text-left py-4 lg:py-0 lg:text-6xl tracking-tighter font-bold">
+        <main class="flex flex-col h-screen overflow-hidden w-full container mx-auto">
+            <div class="flex flex-row items-center justify-center lg:justify-start py-5">
+                <h1 class="text-fuente font-mplus text-3xl text-center lg:text-left lg:text-6xl tracking-tighter font-bold">
                     {&translations["favorites_stores_heading"]}
                 </h1>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden gap-5">
                 <SettingsSideBar options={
                     vec![
                         (translations["favorites_stores_stores_button"].clone(), Callback::noop(), true),
                     ]
                 } />
-                <div class="flex-grow overflow-hidden px-4 py-2 lg:py-4 w-full">
+                <div class="">
                     <div class="h-full overflow-auto rounded-xl no-scrollbar relative">
                     {props.children.clone()}
                     </div>
@@ -630,7 +636,8 @@ pub fn fuente_sidebar_template(props: &html::ChildrenProps) -> Html {
                 <div class="flex-shrink-0 py-4">
                 </div>
             </aside>
-            <nav class="w-full lg:hidden bg-white shadow-lg py-3 px-6 rounded-t-xl order-last">
+
+            <nav class="w-full bg-white lg:hidden shadow-lg py-3 px-6 rounded-xl order-last fixed bottom-0 mx-auto">
                 <ul class="flex items-center justify-evenly">
                     {props.children.clone()}
                 </ul>
@@ -644,23 +651,34 @@ pub fn key_recovery_section() -> Html {
     let translations = language_ctx.translations();
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrIdStore found");
     let toast_ctx = use_context::<ToastContext>().expect("No toast context found");
-    let keys = key_ctx.get_nostr_key().expect("No keys found");
+    let priv_key = use_state(|| "".to_string());
 
-    // Convert secret key bytes to hex string
-    let secret_key_bytes = keys.get_secret_key();
-    let secret_key_hex: String = secret_key_bytes
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
+    let priv_key_handle = priv_key.clone();
+    use_effect_with(key_ctx.clone(), move |key_handle| {
+        let priv_key_handle = priv_key_handle.clone();
+        let key_handle = key_handle.clone();
+        yew::platform::spawn_local(async move {
+            if let Some(mut key) = key_handle.get_nostr_key().await {
+                key.make_extractable();
+                priv_key_handle.set(
+                    key.get_secret_key()
+                        .iter()
+                        .map(|byte| format!("{:02x}", byte))
+                        .collect::<String>(),
+                );
+            }
+        });
+        || {}
+    });
 
     let onclick_copy = {
-        let secret_key = secret_key_hex.clone();
+        let secret_key = priv_key.clone();
         let toast_ctx = toast_ctx.clone();
         Callback::from(move |_| {
             if let Some(window) = window() {
                 let navigator = window.navigator();
                 let clipboard = navigator.clipboard();
-                let _ = clipboard.write_text(&secret_key);
+                let _ = clipboard.write_text(&*secret_key);
                 toast_ctx.dispatch(ToastAction::Show(Toast {
                     message: "Key copied to clipboard".into(),
                     toast_type: ToastType::Success,
@@ -688,9 +706,9 @@ pub fn key_recovery_section() -> Html {
 
            <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto relative">
              <pre class="text-sm text-gray-800 whitespace-pre-wrap break-all select-all">
-               {secret_key_hex}
+               {&*priv_key}
              </pre>
-             <button 
+             <button
                onclick={onclick_copy}
                class="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded-lg"
              >

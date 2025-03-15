@@ -1,7 +1,9 @@
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostr_minions::key_manager::UserIdentity;
+use nostro2::notes::NostrNote;
 
+use crate::models::NOSTR_KIND_SERVER_REQUEST;
 use crate::models::{
-    ConsumerAddress, ConsumerProfile, ProductOrder, NOSTR_KIND_CONSUMER_ORDER_REQUEST, NOSTR_KIND_SERVER_REQUEST,
+    ConsumerAddress, ConsumerProfile, ProductOrder, NOSTR_KIND_CONSUMER_ORDER_REQUEST,
 };
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
@@ -66,31 +68,31 @@ impl OrderRequest {
             products,
         }
     }
-    pub fn sign_request(&self, keys: &NostrKeypair) -> NostrNote {
+    pub async fn sign_request(&self, keys: &UserIdentity) -> NostrNote {
         let content = self.to_string();
-        let mut note = NostrNote {
-            pubkey: keys.public_key(),
+        let note = NostrNote {
+            pubkey: keys.get_pubkey().await.expect("no pubkey"),
             kind: NOSTR_KIND_CONSUMER_ORDER_REQUEST,
             content,
             ..Default::default()
         };
-        keys.sign_nostr_event(&mut note);
-        note
+        keys.sign_nostr_note(note).await.expect("could not sign")
     }
-    pub fn giftwrapped_request(
+    pub async fn giftwrapped_request(
         &self,
-        keys: &NostrKeypair,
+        keys: &UserIdentity,
         recipient: String,
     ) -> anyhow::Result<NostrNote> {
-        let note = self.sign_request(keys);
+        let note = self.sign_request(keys).await;
         let content = note.to_string();
-        let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
+        let giftwrap = NostrNote {
+            pubkey: keys.get_pubkey().await.expect("no pubkey"),
             kind: NOSTR_KIND_SERVER_REQUEST,
             content,
             ..Default::default()
         };
-        keys.sign_nip_04_encrypted(&mut giftwrap, recipient)?;
-        Ok(giftwrap)
+        keys.sign_nip44(giftwrap, recipient)
+            .await
+            .map_err(|_e| anyhow::anyhow!("could not sign cart"))
     }
 }

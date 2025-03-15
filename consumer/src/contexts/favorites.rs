@@ -98,7 +98,7 @@ pub fn favorites_provider(props: &FavoritesChildren) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
 
     use_effect_with(key_ctx, move |key_ctx| {
-        if let Some(keys) = key_ctx.get_nostr_key() {
+        if let Some(keys) = key_ctx.get_pubkey() {
             let ctx = ctx_clone.clone();
             spawn_local(async move {
                 match FavoriteStore::retrieve_all_from_store().await {
@@ -106,7 +106,7 @@ pub fn favorites_provider(props: &FavoritesChildren) -> Html {
                         // Filter favorites for current user
                         let user_favorites = favorites
                             .into_iter()
-                            .filter(|f| f.user_id == keys.public_key())
+                            .filter(|f| f.user_id == keys)
                             .collect();
                         ctx.dispatch(FavoritesAction::LoadFavorites(user_favorites));
                     }

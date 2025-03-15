@@ -37,6 +37,7 @@ impl Invoicer {
             ),
         )
         .await?;
+        tracing::debug!("Invoicer initialized");
         Ok(Self {
             rest_client,
             lightning_wallet,

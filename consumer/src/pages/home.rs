@@ -15,20 +15,22 @@ pub fn home_page() -> Html {
     html! {
         <main class="flex flex-col flex-1 overflow-hidden w-full mx-auto">
             <CommerceFilters />
-            <div class="grid grid-cols-1 gap-4 overflow-y-auto">
-                <FuenteStoresBanner/>
-                <div class="container bg-fuente rounded-2xl p-5 flex flex-col mx-auto h-fit w-fit">
-                    <div class="flex justify-between items-center lg:mb-4">
-                        <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
-                        <AppLink<ConsumerRoute>
-                            class=""
-                            selected_class=""
-                            route={ConsumerRoute::BrowseStores}>
-                            <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
-                        </AppLink<ConsumerRoute>>
-                    </div>
+            <div class="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 container mx-auto">
+                    <FuenteStoresBanner/>
+                    <div class="bg-fuente rounded-2xl p-5 flex flex-col h-fit w-full">
+                        <div class="flex flex-col gap-2 lg:mb-4">
+                            <h2 class="text-white text-4xl font-semibold tracking-tighter">{&translations["home_stores"]}</h2>
+                            <AppLink<ConsumerRoute>
+                                class=""
+                                selected_class=""
+                                route={ConsumerRoute::BrowseStores}>
+                                <ArrowRight class="w-12 h-12 text-white rounded-full border-4 border-white" />
+                            </AppLink<ConsumerRoute>>
+                        </div>
 
-                    <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-64 mx-auto " />
+                        <img src="/public/assets/img/store.png" alt="Store Image" class="object-contain w-72 mx-auto " />
+                    </div>
                 </div>
                 <FuenteBitcoinBanner />
                 <FuenteSalesPitch />
@@ -46,9 +48,9 @@ pub fn stores_banner() -> Html {
     let businesses = commerce_ctx.commerces();
 
     html! {
-        <section class="container mx-auto bg-sky-200 rounded-2xl py-10">
-            <div class="flex justify-between items-center container mx-auto">
-                <h2 class="text-fuente text-5xl font-semibold px-10 tracking-tighter">{&translations["home_top_stores"]}</h2>
+        <section class="bg-fuente-light rounded-2xl py-10 mt-5 lg:mt-0">
+            <div class="flex justify-between items-center w-full mx-auto">
+                <h2 class="text-white text-5xl font-semibold tracking-tighter px-5">{&translations["home_top_stores"]}</h2>
             </div>
 
             <div class="flex justify-center lg:justify-between items-center mt-10 px-6">
@@ -97,7 +99,7 @@ pub struct HomeFavoriteButtonProps {
 fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let favorites_ctx = use_context::<FavoritesStore>().expect("Favorites context not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-    if key_ctx.get_nostr_key().is_none() {
+    if key_ctx.get_identity().is_none() {
         return html! {};
     }
 
@@ -106,7 +108,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
     let onclick = {
         let commerce_id = props.commerce_id.clone();
         let favorites = favorites_ctx.clone();
-        let user_id = key_ctx.get_nostr_key().unwrap().public_key();
+        let user_id = key_ctx.get_pubkey().expect("No user keys found");
 
         Callback::from(move |e: MouseEvent| {
             e.stop_propagation();
@@ -125,8 +127,8 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
             class={classes!(
                 "absolute",
                 "z-[500]",
-                "top-4",
-                "right-4",
+                "top-0",
+                "right-0",
                 "p-2",
                 "rounded-full",
                 "hover:bg-gray-100",
@@ -142,7 +144,7 @@ fn favorite_button(props: &HomeFavoriteButtonProps) -> Html {
 #[function_component(CommerceFilters)]
 pub fn commerce_filters() -> Html {
     html! {
-        <nav class="hidden lg:flex w-full mx-auto items-center justify-center mb-2">
+        <nav class="hidden lg:flex w-full mx-auto items-center justify-center mb-5">
             <div class="flex justify-evenly  lg:max-w-4xl xl:max-w-6xl w-full">
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Books"}</a>
                 <a href="#" class="text-fuente-dark font-semibold text-xl">{"Tech"}</a>

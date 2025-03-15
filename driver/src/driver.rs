@@ -7,7 +7,7 @@ use driver::{
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput},
+    mass::{templates::LoginPageTemplate, LoadingScreen, LoginPage, SimpleInput, ToastProvider, PwaInstall},
     models::{
         init_commerce_db, init_consumer_db, DriverProfile, DriverProfileIdb, DRIVER_HUB_PUB_KEY,
     },
@@ -33,48 +33,41 @@ fn app() -> Html {
         init_nostr_db().expect("Error initializing Nostr database");
         init_consumer_db().expect("Error initializing Fuente database");
         init_commerce_db().expect("Error initializing Commerce database");
-        // spawn_local(async move {
-        //     let sw = nostr_minions::browser_api::AppServiceWorker::new()
-        //         .expect("Error initializing service worker");
-        //     sw.install("serviceWorker.js")
-        //         .await
-        //         .expect("Error installing service worker");
-        // });
         || {}
     });
     html! {
         <LanguageConfigsProvider>
-        <BrowserRouter>
-            <RelayPoolComponent>
-                <LoginContext>
-                    <LoginCheck>
-                        <AppContext>
-                            <ProfileCheck>
-                                <DriverPages />
-                            </ProfileCheck>
-                        </AppContext>
-                    </LoginCheck>
-                </LoginContext>
-            </RelayPoolComponent>
-        </BrowserRouter>
+            <PwaInstall/>
+            <BrowserRouter>
+                <RelayPoolComponent>
+                    <LoginContext>
+                        <ToastProvider>
+                            <LoginCheck>
+                                <AppContext>
+                                    <ProfileCheck>
+                                        <DriverPages />
+                                    </ProfileCheck>
+                                </AppContext>
+                            </LoginCheck>
+                        </ToastProvider>
+                    </LoginContext>
+                </RelayPoolComponent>
+            </BrowserRouter>
         </LanguageConfigsProvider>
     }
 }
 
 #[function_component(RelayPoolComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim()
+        .lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
         <RelayProvider {relays}>
             {props.children.clone()}
@@ -106,24 +99,47 @@ fn app_context(props: &ChildrenProps) -> Html {
     }
 }
 
+#[function_component(WhitelistWaitScreen)]
+fn whitelist_wait_screen() -> Html {
+    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
+    let pubkey = key_ctx.get_pubkey().expect("No public key found");
+
+    html! {
+        <div class="flex flex-col gap-8 justify-center items-center flex-1 inset-0 py-8 px-16 fixed">
+            <img src="/public/assets/img/logo.png" class="max-w-64 max-h-64"/>
+            <div class="flex flex-col items-center gap-4 text-center">
+                <h2 class="text-2xl font-bold text-fuente">{"Account Access Restricted"}</h2>
+                <p class="text-gray-600">{"Your courier account is either pending approval or has been deactivated. Please contact the administrator and provide this public key:"}</p>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="font-mono text-sm break-all">{pubkey}</p>
+                </div>
+            </div>
+        </div>
+    }
+}
+
 #[function_component(LoginCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsProvider not found");
-    if !key_ctx.finished_loading() || !admin_ctx.is_loaded() {
+    if !key_ctx.loaded() || !admin_ctx.is_loaded() {
         return html! {<LoadingScreen />};
     }
-    if key_ctx.get_nostr_key().is_none() {
+    if key_ctx.get_identity().is_none() {
         return html! {
             <LoginPage />
         };
     }
+    
+    let pubkey = key_ctx.get_pubkey().expect("No public key found");
+    
+    // Check whitelist - only show message if not in whitelist
     let wl = admin_ctx.get_courier_whitelist();
-    let pubkey = key_ctx.get_nostr_key().unwrap().public_key();
     if !wl.contains(&pubkey) {
         gloo::console::error!("User not in whitelist", &pubkey);
-        return html! {<LoadingScreen />};
+        return html! {<WhitelistWaitScreen />};
     }
+    
     html! {
         {props.children.clone()}
     }
@@ -161,15 +177,16 @@ pub fn import_user_form() -> Html {
         let user_keys_str = form_element
             .input_value("password")
             .expect("Failed to get password");
-        let user_keys =
-            NostrKeypair::new_extractable(&user_keys_str).expect("Failed to create user keys");
+        let mut user_keys =
+            NostrKeypair::try_from(&user_keys_str).expect("Failed to create user keys");
+        user_keys.make_extractable();
         let user_ctx = user_ctx.clone();
         spawn_local(async move {
             let user_identity = UserIdentity::from_new_keys(user_keys)
                 .await
                 .expect("Failed to create user identity");
-            let keys = user_identity.get_user_keys().await.unwrap();
-            user_ctx.dispatch(NostrIdAction::LoadIdentity(user_identity, keys));
+            let keys = user_identity.get_pubkey().await.unwrap();
+            user_ctx.dispatch(NostrIdAction::LoadIdentity(keys, user_identity));
         });
     });
 
@@ -199,7 +216,7 @@ pub fn new_profile_form() -> Html {
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let user_ctx = user_ctx.clone();
-        let keys = key_ctx.get_nostr_key().expect("No user keys found");
+        let keys = key_ctx.get_identity().cloned().expect("No user keys found");
         let form_element = HtmlForm::new(e).expect("Failed to get form element");
         let nickname = form_element
             .input_value("name")
@@ -209,28 +226,33 @@ pub fn new_profile_form() -> Html {
             .expect("Failed to get telephone");
         let sender = sender.clone();
         let user_profile = DriverProfile::new(nickname, telephone);
-        let db = DriverProfileIdb::new(user_profile.clone(), &keys);
+        let pubkey = key_ctx.get_pubkey().expect("No pubkey");
 
-        // Fix the giftwrapped_data calls by providing the proper parameters
-        let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.public_key(), keys.public_key())
-            .expect("Failed to giftwrap data");
-        let pool_copy = user_profile
-            .giftwrapped_data(
-                &keys,
-                DRIVER_HUB_PUB_KEY.to_string(),
-                DRIVER_HUB_PUB_KEY.to_string(),
-            )
-            .expect("Failed to giftwrap data");
+        yew::platform::spawn_local(async move {
+            let db = DriverProfileIdb::new(user_profile.clone(), &keys).await;
 
-        sender.emit(giftwrap);
-        sender.emit(pool_copy);
-        user_ctx.dispatch(DriverDataAction::NewProfile(db));
+            let giftwrap = user_profile
+                .giftwrapped_data(&keys, pubkey.clone(), pubkey)
+                .await
+                .expect("Failed to giftwrap data");
+            let pool_copy = user_profile
+                .giftwrapped_data(
+                    &keys,
+                    DRIVER_HUB_PUB_KEY.to_string(),
+                    DRIVER_HUB_PUB_KEY.to_string(),
+                )
+                .await
+                .expect("Failed to giftwrap data");
+
+            sender.emit(giftwrap);
+            sender.emit(pool_copy);
+            user_ctx.dispatch(DriverDataAction::NewProfile(db));
+        });
     });
 
     html! {
         <form {onsubmit}
-            class="w-full flex flex-col gap-2 bg-fuente-forms rounded-3xl p-4 items-center">
+            class="w-fit ml-auto flex flex-col gap-2 bg-fuente-forms rounded-3xl items-center p-5 space-y-5">
                 <SimpleInput
                     id="name"
                     name="name"
@@ -249,7 +271,7 @@ pub fn new_profile_form() -> Html {
                     />
                 <button
                     type="submit"
-                    class="bg-fuente text-sm text-white font-bold p-2 rounded-3xl px-4 w-fit shadow-xl">
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-normal text-nowrap">
                     {"Save"}
                 </button>
         </form>

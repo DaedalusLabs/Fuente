@@ -1,0 +1,7 @@
+build_pwa_image:
+  stage: build-image
+  before_script:
+    - docker build -t fuente-pwa:0.1 -f PwaDockerfile .
+  script:
+    - docker image ls
+

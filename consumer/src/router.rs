@@ -1,21 +1,27 @@
+use std::collections::HashMap;
+
 use lucide_yew::{Heart, House, Search, ShieldQuestion, ShoppingCart, UserRound, X};
 use nostr_minions::key_manager::NostrIdStore;
-use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use fuente::{contexts::LanguageConfigsStore, mass::AppLink};
+use fuente::{
+    contexts::LanguageConfigsStore,
+    mass::{AppLink, LoginPage},
+};
 
 use crate::{
-    contexts::{CartStore, CommerceDataStore, LoginModal, LoginStateAction, LoginStateStore, RequireAuth},
+    contexts::{CartStore, CommerceDataStore, ConsumerDataStore, RequireAuth},
     pages::{
         AllCommercesPage, CartPage, CheckoutPage, CommercePage, FavoritesPage, HistoryPage,
-        HomePage, LiveOrderCheck, SettingsPageComponent, TrackPackagesPage,
+        HomePage, LiveOrderCheck, NewAddressPage, NewProfilePage, SettingsPageComponent,
+        TrackPackagesPage,
     },
 };
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Routable, PartialEq, Debug)]
 pub enum ConsumerRoute {
     #[at("/")]
     Home,
@@ -37,13 +43,41 @@ pub enum ConsumerRoute {
     Order { order_id: String },
     #[at("/track-packages")] // Add this new route
     TrackPackages,
+    #[at("/login")]
+    Login,
+    #[at("/register")]
+    Register,
+}
+impl TryFrom<&str> for ConsumerRoute {
+    type Error = web_sys::wasm_bindgen::JsError;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        ConsumerRoute::from_path(value, &HashMap::new())
+            .ok_or_else(|| web_sys::wasm_bindgen::JsError::new("Invalid route"))
+    }
 }
 
 #[function_component(ConsumerPages)]
 pub fn consumer_pages() -> Html {
+    let location = use_location().expect("Location not found");
+    let path: ConsumerRoute = match location.path().try_into() {
+        Ok(path) => path,
+        Err(_) => ConsumerRoute::Home,
+    };
+    let auth_context = use_context::<NostrIdStore>().expect("LoginStateStore not found");
+    let consumer_store = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
+    let has_profile = consumer_store.get_profile();
+    let has_address = consumer_store.get_default_address();
+    let navigator = use_navigator().expect("Navigator not found");
+    let logged_in = auth_context.get_identity().cloned();
     html! {
         <div class="flex flex-col h-screen overflow-hidden">
-            <FuenteHeader />
+            {if path != ConsumerRoute::Login && path != ConsumerRoute::Register {
+                html! {
+                    <FuenteHeader />
+                }
+            } else {
+                html! {}
+            }}
             <main class="flex-1 overflow-y-auto">
                 <Switch<ConsumerRoute> render = { move |switch: ConsumerRoute| {
                     match switch {
@@ -53,7 +87,7 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::Commerce { commerce_id } => html!{
                             <CommercePage {commerce_id} />
                         },
-                        
+
                         // Protected routes - for now just render normally
                         ConsumerRoute::Cart => html!{
                             <RequireAuth>
@@ -70,28 +104,63 @@ pub fn consumer_pages() -> Html {
                         ConsumerRoute::Favorites => html!{<FavoritesPage />},
                         ConsumerRoute::Order { order_id: _ } => html!{<LiveOrderCheck />},
                         ConsumerRoute::TrackPackages => html!{<TrackPackagesPage />},
+                        ConsumerRoute::Login => {
+                            if logged_in.is_some() {
+                                if has_profile.is_none() || has_address.is_none() {
+                                    navigator.push(&ConsumerRoute::Register);
+                                } else {
+                                    navigator.push(&ConsumerRoute::Home);
+                                }
+                                html!{}
+                            } else {
+                                html!{
+                                    <LoginPage />
+                            }}
+                        },
+                        ConsumerRoute::Register => {
+                            match (has_profile.as_ref(), has_address.as_ref()) {
+                                (Some(_), Some(_)) => {
+                                    navigator.push(&ConsumerRoute::Home);
+                                    html!{}
+                                },
+                                (Some(_), None) => html!{
+                                    <NewAddressPage />
+                                },
+                                (None, Some(_)) => html!{
+                                    <NewProfilePage />
+                                },
+                                (None, None) => html!{
+                                    <NewProfilePage />
+                                }
+                            }
+                        },
                     }
                 }}
                 />
             </main>
-            <FuenteFooter />
+            {if path != ConsumerRoute::Login && path != ConsumerRoute::Register {
+                html! {
+                    <FuenteFooter />
+                }
+            } else {
+                html! {}
+            }}
         </div>
     }
 }
 
 #[function_component(LoginButton)]
 fn login_button() -> Html {
-    let login_state = use_context::<LoginStateStore>().expect("LoginStateStore not found");
-    
+    let navigator = use_navigator().expect("Navigator not found");
+
     html! {
-        <button 
+        <button
             onclick={
-                let login_state = login_state.clone();
                 Callback::from(move |_| {
-                    login_state.dispatch(LoginStateAction::Show);
+                    navigator.push(&ConsumerRoute::Login);
                 })
             }
-            class="flex items-center gap-2 bg-fuente text-white px-4 py-2 rounded-lg"
+            class="bg-fuente text-white px-5 py-2 rounded-full text-center font-bold"
         >
             {"Login"}
         </button>
@@ -102,12 +171,12 @@ pub fn header() -> Html {
     let cart_ctx = use_context::<CartStore>().expect("CartContext not found");
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let cart_len = cart_ctx.cart().len();
-    let is_authenticated = key_ctx.get_nostr_key().is_some();
+    let is_authenticated = key_ctx.get_identity().is_some();
 
     html! {
         <header class="container mx-auto pt-5 lg:py-10 flex justify-center lg:justify-between">
            <AppLink<ConsumerRoute>
-               class="hidden lg:flex"
+               class=""
                selected_class=""
                route={ConsumerRoute::Home}>
                    <img src="/public/assets/img/logo.jpg" alt="Logo Fuente" class="w-40 hidden lg:flex"/>
@@ -118,7 +187,7 @@ pub fn header() -> Html {
                     <SearchBar />
 
                     <AppLink<ConsumerRoute>
-                        class="lg:hidden"
+                        class=""
                         selected_class=""
                         route={ConsumerRoute::Home}>
                         <House class="bg-fuente h-14 w-14 p-2 rounded-xl text-white lg:hidden" />
@@ -126,7 +195,7 @@ pub fn header() -> Html {
                 </div>
 
                 // Auth-required buttons section
-                <div class="flex gap-5 mb-2">
+                <div class="flex items-center justify-center gap-5">
                     {if is_authenticated {
                         html! {
                             <>
@@ -180,7 +249,7 @@ pub fn footer() -> Html {
             <div class="container mx-auto">
                 <div class="flex flex-wrap justify-between items-center gap-4">
                     <div class="w-auto lg:mb-4  items-center">
-                        <a href="#" class="inline-block text-center">
+                        <a href="/" class="inline-block text-center">
                             <h3 class="text-white font-bold text-2xl sm:text-3xl">{"Fuente"}</h3>
                         </a>
                     </div>
@@ -310,7 +379,7 @@ pub fn commerce_filters() -> Html {
                 value={(*search_term).clone()}
                 oninput={set_search_term}
                 placeholder={translations["nav_search"].clone()}
-                class="w-full pl-10 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
+                class="w-full pl-5 pr-10 py-3 border-2 border-fuente rounded-xl text-fuente placeholder:text-fuente"
             />
             {if search_term.is_empty() {
                 html! {
@@ -330,7 +399,7 @@ pub fn commerce_filters() -> Html {
         </div>
         {if *is_open && businesses.len() > 0 {
             html! {
-                <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                <div class="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-md shadow-lg">
                     <ul class="py-1">
                         {businesses.iter().map(|profile| {
                             let commerce_data = profile.profile().clone();

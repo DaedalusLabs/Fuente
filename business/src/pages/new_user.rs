@@ -1,8 +1,6 @@
 use fuente::{
     contexts::LanguageConfigsStore,
-    mass::{
-        templates::LoginPageTemplate, SimpleInput,
-    },
+    mass::{templates::LoginPageTemplate, SimpleInput},
     models::{CommerceProfile, CommerceProfileIdb},
 };
 use nostr_minions::{browser_api::HtmlForm, key_manager::NostrIdStore, relay_pool::NostrProps};
@@ -19,7 +17,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl relative z-0">
+                <div class="bg-fuente-forms px-5 rounded-3xl relative z-0">
                     <NewProfileForm />
                 </div>
         </LoginPageTemplate>
@@ -33,8 +31,8 @@ pub fn edit_profile_menu() -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
     let language_ctx = use_context::<LanguageConfigsStore>().expect("No Language Context found");
     let translations = language_ctx.translations();
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
 
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
 
     let onsubmit = Callback::from(move |e: SubmitEvent| {
@@ -53,20 +51,27 @@ pub fn edit_profile_menu() -> Html {
             .input_value("ln_address")
             .expect("Failed to get ln_address");
 
-        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+        let new_profile = new_profile.clone();
+        let user_ctx = user_ctx.clone();
+        let sender = sender.clone();
+
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+        });
     });
     html! {
         <form {onsubmit}
-            class="w-full h-full flex flex-col gap-4 px-8 py-4">
+            class="w-full h-full flex flex-col gap-4 py-10">
             <ProfileInputs />
             <div class="space-y-5 flex flex-col mt-5">
                 <input
                     type="submit"
-                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-nowrap"
                     value={translations["auth_register_link_button"].clone()}
                 />
             </div>

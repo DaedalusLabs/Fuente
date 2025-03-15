@@ -115,8 +115,8 @@ pub fn key_handler(props: &PlatformStatsChildren) -> Html {
     let sub_handler = subscription_id.clone();
 
     let ctx_handle = ctx.clone();
-    use_effect_with(user_ctx.get_nostr_key().clone(), move |keys| {
-        if let Some(_) = keys {
+    use_effect_with(user_ctx.get_identity().cloned(), move |keys| {
+        if keys.is_some() {
             spawn_local(async move {
                 let stats_history = PlatformStatIdb::find_history()
                     .await
@@ -148,8 +148,8 @@ pub fn key_handler(props: &PlatformStatsChildren) -> Html {
         || {}
     });
     let subscriber = relay_ctx.subscribe.clone();
-    use_effect_with(user_ctx.get_nostr_key().clone(), move |key| {
-        if let Some(_) = key {
+    use_effect_with(user_ctx.get_identity().cloned(), move |key| {
+        if key.is_some() {
             spawn_local(async move {
                 let last_save_time = PlatformStatIdb::last_saved_timestamp().await.unwrap_or(0);
                 let users_filter: SubscribeEvent = nostro2::relays::NostrSubscription {
@@ -178,7 +178,7 @@ pub fn key_handler(props: &PlatformStatsChildren) -> Html {
     let key_clone = user_ctx.clone();
     let ctx_clone = ctx.clone();
     use_effect_with(relay_ctx.unique_notes.clone(), move |notes| {
-        if let (Some(note), Some(_key_clone)) = (notes.last(), key_clone.get_nostr_key()) {
+        if let (Some(note), true) = (notes.last(), key_clone.get_identity().is_some()) {
             match note.kind {
                 NOSTR_KIND_CONSUMER_REGISTRY => {
                     let platform_idb = PlatformStatIdb::new(note.clone());

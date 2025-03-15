@@ -19,7 +19,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                    <NewProfileForm />
+                <NewProfileForm />
         </LoginPageTemplate>
     }
 }
@@ -41,12 +41,15 @@ pub fn new_profile() -> Html {
             if let (Some(address), Some(coords), Some(keys)) = (
                 (*nominatim).clone(),
                 (*coordinate).clone(),
-                key_ctx.get_nostr_key(),
+                key_ctx.get_identity().cloned(),
             ) {
                 let address = ConsumerAddress::new(address, coords.into());
-                let mut db_entry = ConsumerAddressIdb::new(address.clone(), &keys);
-                db_entry.set_default(true);
-                user_ctx.dispatch(ConsumerDataAction::NewAddress(db_entry));
+                let user_ctx = user_ctx.clone();
+                yew::platform::spawn_local(async move {
+                    let mut db_entry = ConsumerAddressIdb::new(address.clone(), &keys).await;
+                    db_entry.set_default(true);
+                    user_ctx.dispatch(ConsumerDataAction::NewAddress(db_entry));
+                });
             }
         })
     };
@@ -62,7 +65,7 @@ pub fn new_profile() -> Html {
             heading={translations["auth_register_heading"].clone()}
             sub_heading={translations["auth_register_heading_now"].clone()}
             title={translations["auth_register_title"].clone()}>
-                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl relative z-0  text-white mx-auto my-auto">
+                <div class="bg-fuente-forms  w-fit p-4 rounded-3xl mb-16 relative z-0  text-white mx-auto my-auto">
                     <NewAddressForm ..props />
                 </div>
         </LoginPageTemplate>
@@ -80,7 +83,7 @@ pub fn new_profile_form() -> Html {
     let url_handle = profile_pic_url.clone();
 
     let sender = relay_pool.send_note.clone();
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let user_ctx = user_ctx.clone();
@@ -102,18 +105,24 @@ pub fn new_profile_form() -> Html {
             telephone,
             profile_pic_url.as_ref().cloned(),
         );
-        let db = ConsumerProfileIdb::new(user_profile.clone(), &keys);
-        let giftwrap = user_profile
-            .giftwrapped_data(&keys, keys.public_key())
-            .expect("Failed to giftwrap data");
-        let server_registry = user_profile
-            .registry_data(&keys, TEST_PUB_KEY.to_string())
-            .expect("Failed to giftwrap data");
-        sender.emit(giftwrap);
-        sender.emit(server_registry);
-        user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
+        let keys = keys.clone();
+        yew::platform::spawn_local(async move {
+            let db = ConsumerProfileIdb::new(user_profile.clone(), &keys).await;
+            let pubkey = keys.get_pubkey().await.expect("No pubkey");
+            let giftwrap = user_profile
+                .giftwrapped_data(&keys, pubkey)
+                .await
+                .expect("Failed to giftwrap data");
+            let server_registry = user_profile
+                .registry_data(&keys, TEST_PUB_KEY.to_string())
+                .await
+                .expect("Failed to giftwrap data");
+            sender.emit(giftwrap);
+            sender.emit(server_registry);
+            user_ctx.dispatch(ConsumerDataAction::NewProfile(db));
+        });
     });
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
     html! {
         <form {onsubmit}
             class="bg-fuente-forms py-[65px] px-5 rounded-3xl relative z-0">
@@ -166,7 +175,7 @@ pub fn new_profile_form() -> Html {
             <div class="space-y-5 flex flex-col mt-5">
                 <input
                     type="submit"
-                    class="bg-fuente-buttons p-3 rounded-3xl font-bold text-fuente hover:cursor-pointer w-2/4 mx-auto whitespace-normal"
+                    class="bg-fuente-light p-3 rounded-3xl font-bold text-white hover:cursor-pointer w-2/4 mx-auto whitespace-normal text-nowrap"
                     value={translations["auth_register_link_button"].clone()}
                 />
             </div>

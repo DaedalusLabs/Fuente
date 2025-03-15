@@ -1,0 +1,91 @@
+# Changelog <!-- Newer dates on top -->
+
+
+## [1.2.0] - 2025-02-28
+### Added
+- Added system for tracking and managing deleted courier accounts with admin UI for restoring previously deactivated couriers.
+
+### Fixed
+- Fixed courier authentication flow to prevent deactivated couriers from accessing the system and improved Nostr extension login error handling.
+
+## [1.1.0] - 2025-02-25
+### Added
+- Added Upload New Picture Button in consumer
+
+## [1.1.0] - 2025-02-21
+### Added
+- Added cancellation reason input with required field
+- Added cancel button functionality for driver interface
+
+### Fixed
+- Fixed order display logic in driver home screen to properly show cards with all the details popup.
+- Changed order status selection from dropdown to separate action buttons
+
+
+## [1.1.0] - 2025-02-20
+### Fixed
+- Standardized order modal styling across driver and business interfaces
+- Implemented proper status-based icon coloring in order modals
+- Fixed modal overlay and content cutoff issues
+- Improved modal positioning and background handling
+- Improved ReadyToDeliver Confirmation Screen
+- Remove unused imports
+
+## [1.1.0] - 2025-02-19
+### Added
+- Implemented multiple address management in Consumer PWA.
+- Added ability to set and change default delivery address.
+
+### Fixed
+- Changes the user location marker on maps to a red pin for better visibility
+- Updates the map container styling to match business interface design
+- Fix the lightening address not changing issue in business
+- Fix description section in business profile
+
+## [1.1.0] - 2025-02-18
+### Fixed
+- Fix `Business Add Product` modal spacing, margins and paddings for a better UI consistency.
+
+## [1.1.0] - 2025-02-18
+### Fixed
+- Adjust `Checkout` UI margins, paddings and layouts for a better UI consistency.
+
+## [1.1.0] - 2025-02-18
+### Added
+- Added confirmation dialog for product deletion to prevent accidental removals.
+- Implemented user-friendly warning message for irreversible actions.
+
+## [1.1.0] - 2025-02-17
+### Fixed
+- Fixed all `fuente apps` border width to align with the new design guidelines.
+
+## [1.1.0] - 2025-02-14
+### Fixed
+- Adjust `courier list` and `courier pubkey form` for a better user experience
+- Implemented styles for the "Unauthorized" screen based on the provided design.
+- Fixed `exchange screen` spacing and alignment for a better readability
+- Update `admin business` UI colors for improved visual consistency.
+- Enhanced banner display in business profile with proper image containment and responsive behavior.
+
+### Added
+- Added automatic UI updates for product list when adding or modifying products.
+- Implemented automatic modal closure after successful product addition.
+- Added toast notifications for product operations feedback.
+
+## [1.1.0] - 2025-02-13
+### Fixed
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
+- Fixed navigation issue on key recovery page caused by missing `ToastProvider`.
+- Fixed `admin general styles`: line breaks, title fonts, margins, and paddings to align with branding guidelines.
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
+- Fixed navigation issue on key recovery page caused by missing `ToastProvider`.
+- Fixed `admin general styles`: line breaks, title fonts, margins, and paddings to align with branding guidelines.
+- Fixed `driver registration flow` by displaying `public key` and approval status message instead of infinite loading screen when awaiting admin verification.
+
+## [1.1.0] - 2025-02-12
+### Added
+- Added `CHANGELOG.md` doc to properly track dev process.
+- Added `toast notification` in category section when a new category is added.
+
+### Fixed
+- Fixed `consumer_pwa` general styling.

@@ -4,7 +4,8 @@ use fuente::models::{
     ConsumerAddress, ConsumerProfile, OrderRequest, ProductItem, ProductOrder,
     NOSTR_KIND_SERVER_REQUEST, TEST_PUB_KEY,
 };
-use nostro2::{keypair::NostrKeypair, notes::NostrNote};
+use nostr_minions::key_manager::UserIdentity;
+use nostro2::notes::NostrNote;
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -27,24 +28,23 @@ impl Cart {
     pub fn cart(&self) -> Vec<ProductItem> {
         self.cart_items.products()
     }
-    pub fn sign_request(
+    pub async fn sign_request(
         &self,
-        keys: &NostrKeypair,
+        keys: &UserIdentity,
         commerce: String,
         profile: ConsumerProfile,
         address: ConsumerAddress,
     ) -> (String, NostrNote) {
         let new_request = OrderRequest::new(commerce, profile, address, self.cart_items.clone());
-        let note = new_request.sign_request(keys);
+        let note = new_request.sign_request(keys).await;
         let content = note.to_string();
-        let mut giftwrap = NostrNote {
-            pubkey: keys.public_key(),
+        let giftwrap = NostrNote {
+            pubkey: keys.get_pubkey().await.unwrap(),
             kind: NOSTR_KIND_SERVER_REQUEST,
             content,
             ..Default::default()
         };
-        keys.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())
-            .unwrap();
+        let giftwrap = keys.sign_nip44(giftwrap, TEST_PUB_KEY.to_string()).await.unwrap();
         (note.id.unwrap(), giftwrap)
     }
     pub fn business_id(&self) -> Option<String> {

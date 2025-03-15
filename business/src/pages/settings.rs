@@ -15,6 +15,7 @@ use lucide_yew::{
 use nostr_minions::browser_api::HtmlForm;
 use nostr_minions::key_manager::NostrIdStore;
 use nostr_minions::relay_pool::NostrProps;
+use web_sys::wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -62,13 +63,13 @@ pub fn settings_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-white px-6 py-3 rounded-full text-fuente border-2 border-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::History} >
                     <span class="hidden lg:block text-lg font-bold text-center">{&translations["profile_address_button_orders"]}</span>
                 </AppLink<CommerceRoute>>
                 <AppLink<CommerceRoute>
-                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-white p-2 rounded-xl border-2 border-fuente"
                     selected_class=""
                     route={CommerceRoute::History} >
                     <ScrollText class={classes!("h-6", "w-6", "stroke-fuente")} />
@@ -82,13 +83,13 @@ pub fn settings_page() -> Html {
             <div class="flex items-center gap-4">
                 <div class="flex justify-center items-center">
                 <AppLink<CommerceRoute>
-                    class="lg:block hidden flex items-center bg-fuente-buttons px-6 py-3 rounded-full text-fuente-forms space-x-2 font-bold text-sm md:text-md lg:text-lg"
+                    class="lg:block hidden flex items-center bg-white border-2 border-fuente px-6 py-3 rounded-full text-fuente space-x-2 font-bold text-sm md:text-md lg:text-lg"
                     selected_class=""
                     route={CommerceRoute::Products} >
                     <span class="hidden lg:block text-lg font-bold text-center">{&translations["admin_store_new_products_heading"]}</span>
                 </AppLink<CommerceRoute>>
                 <AppLink<CommerceRoute>
-                    class="block lg:hidden flex items-center bg-fuente-buttons p-2 rounded-xl"
+                    class="block lg:hidden flex items-center bg-white border-2 border-fuente p-2 rounded-xl"
                     selected_class=""
                     route={CommerceRoute::Products} >
                     <ShoppingBag class={classes!("h-6", "w-6", "stroke-fuente")} />
@@ -107,7 +108,7 @@ pub fn settings_page() -> Html {
                 html! {
                     <button type="button"
                         class="absolute top-1 right-1 sm:top-4 sm:right-4 p-2 rounded-full transition duration-300">
-                        <span class="text-red-600 font-bold text-xl flex gap-1 items-top">
+                        <span class="text-red-600 font-bold text-xl flex items-center gap-1 items-top">
                             {&translations["profile_personal_information_delete_account_button"]}
                             <X class={classes!("feather", "feather-plus", "text-red-600","w-6", "h-6")} />
                         </span>
@@ -233,6 +234,13 @@ fn my_contact_details() -> Html {
                         <p class="text-gray-600">{&profile.ln_address}</p>
                       </div>
                     </div>
+                    <div class="flex items-center space-x-3">
+                        <ScrollText class="text-gray-500 w-5 h-5" />
+                        <div>
+                            <p class="text-gray-700 text-lg font-bold">{"Description"}</p>
+                            <p class="text-gray-600">{&profile.description}</p>
+                        </div>
+                    </div>
                   </div>
                 </div>
 
@@ -247,9 +255,9 @@ fn my_contact_details() -> Html {
 
                   <button
                     onclick={Callback::from(move |_| logo_popup_handle_clone.set(true))}
-                    class="bg-fuente-buttons text-fuente-forms py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
+                    class="bg-fuente-light text-white py-3 rounded-full px-10 font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition duration-300"
                   >
-                    <Upload class="w-5 h-5" />
+                    <Upload class="w-5 h-5 stroke-white" />
                     <span>{&translations["profile_settings_upload"]}</span>
                   </button>
                 </div>
@@ -268,25 +276,33 @@ pub fn edit_avatar(props: &PopupProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("No NostrProps found");
     let relay_ctx = use_context::<NostrProps>().expect("No RelayPool Context found");
     let profile = user_ctx.profile().expect("No user profile found");
-    let nostr_keys = key_ctx.get_nostr_key().expect("No user keys found");
-    let user_keys = nostr_keys.clone();
+    let nostr_keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_ctx.send_note.clone();
     let logo_url = use_state(|| None);
     let url_handle = logo_url.clone();
     let url_clone = logo_url.clone();
 
+    let user_keys = nostr_keys.clone();
     let onsubmit = Callback::from(move |e: SubmitEvent| {
         e.prevent_default();
         let mut new_profile = profile.clone();
         new_profile.logo_url = (*url_clone)
             .clone()
             .unwrap_or_else(|| new_profile.logo_url.clone());
-        let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        close_handle.set(false);
+        let user_keys = user_keys.clone();
+        let sender = sender.clone();
+        let close_handle = close_handle.clone();
+        let new_profile = new_profile.clone();
+        let user_ctx = user_ctx.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &user_keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            close_handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
@@ -348,7 +364,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = props.close_handle.clone();
     let profile_clone = profile.clone();
@@ -362,12 +378,30 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
             .input_value("telephone")
             .expect("Failed to get telephone");
         new_profile.web = form.input_value("web").expect("Failed to get web");
-        let db =
-            CommerceProfileIdb::new(new_profile.clone(), &keys).expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        handle.set(false);
+        new_profile.ln_address = form
+            .input_value("ln_address")
+            .expect("Failed to get ln_address");
+        let description_element = web_sys::window()
+            .expect("no window")
+            .document()
+            .expect("no document")
+            .get_element_by_id("description")
+            .expect("Failed to get description element")
+            .unchecked_into::<web_sys::HtmlTextAreaElement>();
+        new_profile.description = description_element.value();
+        let keys = keys.clone();
+        let sender = sender.clone();
+        let user_ctx = user_ctx.clone();
+        let handle = handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(new_profile.clone(), &keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            handle.set(false);
+        });
     });
     html! {
         <form {onsubmit}
@@ -440,7 +474,7 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
     let relay_pool = use_context::<NostrProps>().expect("No RelayPool Context found");
 
     let profile = user_ctx.profile().expect("No user profile found");
-    let keys = key_ctx.get_nostr_key().expect("No user keys found");
+    let keys = key_ctx.get_identity().cloned().expect("No user keys found");
     let sender = relay_pool.send_note.clone();
     let handle = props.close_handle.clone();
 
@@ -463,12 +497,19 @@ pub fn edit_profile_menu(props: &PopupProps) -> Html {
         let mut profile_clone = profile.clone();
         profile_clone.lookup = address.clone().expect("No address found");
         profile_clone.geolocation = coords.clone().expect("No coordinates found").into();
-        let db = CommerceProfileIdb::new(profile_clone.clone(), &keys)
-            .expect("Failed to create profile");
-        let note = db.signed_note();
-        sender.emit(note.clone());
-        user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
-        handle.set(false);
+        let keys = keys.clone();
+        let sender = sender.clone();
+        let user_ctx = user_ctx.clone();
+        let handle = handle.clone();
+        yew::platform::spawn_local(async move {
+            let db = CommerceProfileIdb::new(profile_clone.clone(), &keys)
+                .await
+                .expect("Failed to create profile");
+            let note = db.signed_note();
+            sender.emit(note.clone());
+            user_ctx.dispatch(CommerceDataAction::UpdateCommerceProfile(db));
+            handle.set(false);
+        });
     });
     html! {
         <form  class="bg-fuente-dark rounded-3xl p-8 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" {onsubmit}>

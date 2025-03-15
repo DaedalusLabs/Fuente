@@ -16,7 +16,9 @@
     "auth_login_form_label": "Your Private Key",
     "auth_login_link_key": "How the key works?",
     "auth_login_link_register": "I'm not already registered",
-    "auth_login_link_button": "Shop Now",
+    "auth_login_link_button": "Log In With Key",
+    "auth_login_extension": "Log In with extension",
+    "auth_login_accept": "I Understand",
 
     "auth_register_title": "Register",
     "auth_register_heading": "Register",
@@ -76,7 +78,7 @@
     "payment_step_1": "Payment",
     "payment_step_2": "Confirmation",
     "payment_heading": "Your transaction is waiting to be approved by the store",
-    "payment_detail": "Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded tho the account",
+    "payment_detail": "Please do not close the window, approval may take 5 minutes, otherwise your money will be refunded to the account",
 
     "confirmation_title": "Confirmation",
     "confirmation_step_1": "Payment",
@@ -247,7 +249,7 @@
     "home_hot_categories_movies": "Movies",
     "home_hot_categories_music": "Music",
     "home_top_stores": "Our top stores",
-    "home_bitcoin_heading": "Shop now, track your package and pay with",
+    "home_bitcoin_heading": "Shop now, pay at lightning speed",
 
     "stores_title": "Stores",
     "stores_offers": "50% Off Only today!",
@@ -323,8 +325,8 @@
     "admin_settings_title_settings": "Settings",
     "admin_settings_submit": "Save",
     "admin_settings_btc_srd": "SRD/BTC exchange",
-    "admin_settings_commerces_registered": "Registered Commerces",
-    "admin_settings_commerces_unregistered": "Unregistered Commerces",
+    "admin_settings_commerces_registered": "Registered",
+    "admin_settings_commerces_unregistered": "Unregistered",
     "admin_settings_commerces_register": "Register",
     "admin_settings_commerces_unregister": "Remove",
     "admin_settings_couriers_new": "New Courier",
@@ -338,6 +340,17 @@
     "store_orders_history_completed": "Completed",
     "store_orders_history_canceled": "Canceled",
     "store_orders_history_back": "Back",
+
+    "store_order_action_accept": "Accept Order",
+    "store_order_action_reject": "Reject Order",
+    "store_order_action_reject_reason": "Reason for rejection",
+    "store_order_action_cancel": "Cancel Order",
+    "store_order_action_deliver": "Order Ready",
+
+    "driver_order_action_accept": "Accept Order",
+    "driver_order_action_reject": "Cancel Order",
+    "driver_order_action_deliver": "Picked Up",
+    "driver_order_action_delivered": "Delivered",
 
     "store_products_form_label_name": "Name of product",
     "store_products_form_label_information": "Product information",

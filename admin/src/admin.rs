@@ -1,7 +1,10 @@
-use admin::{AdminPanelPages, PlatformStatsProvider, PlatformStatsStore, ServerConfigsProvider, ServerConfigsStore};
+use admin::{
+    AdminPanelPages, PlatformStatsProvider, PlatformStatsStore, ServerConfigsProvider,
+    ServerConfigsStore,
+};
 use fuente::{
     contexts::LanguageConfigsProvider,
-    mass::{AdminLoginPage, LoadingScreen},
+    mass::{AdminLoginPage, LoadingScreen, ToastProvider, PwaInstall},
     models::{init_commerce_db, init_consumer_db},
 };
 use html::ChildrenProps;
@@ -35,32 +38,31 @@ fn app() -> Html {
 
     html! {
         <LanguageConfigsProvider >
+            <PwaInstall/>
             <BrowserRouter>
                <AppContext>
-                    <LoginCheck>
-                        <AdminPanelPages />
-                    </LoginCheck>
+                    <ToastProvider>
+                        <LoginCheck>
+                            <AdminPanelPages />
+                        </LoginCheck>
+                    </ToastProvider>
                </AppContext>
             </BrowserRouter>
         </LanguageConfigsProvider>
     }
 }
 
-
 #[function_component(AppContext)]
 fn app_context(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim()
+        .lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
             <RelayProvider {relays}>
                 <NostrIdProvider>
@@ -79,11 +81,10 @@ fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let server_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let stats_ctx = use_context::<PlatformStatsStore>().expect("No language context found");
-    if !key_ctx.finished_loading() {
+    if !key_ctx.loaded() {
         return html! {<LoadingScreen />};
     }
-    let keys = key_ctx.get_nostr_key();
-    if keys.is_none() {
+    if key_ctx.get_identity().is_none() {
         return html! {
             <AdminLoginPage />
         };
@@ -91,7 +92,7 @@ fn login_check(props: &ChildrenProps) -> Html {
     if server_ctx.loading() || stats_ctx.loading() {
         return html! {<LoadingScreen />};
     }
-    let pubkey = keys.as_ref().unwrap().public_key();
+    let pubkey = key_ctx.get_pubkey().expect("No pubkey");
     if !ADMIN_WHITELIST
         .trim()
         .lines()

@@ -1,15 +1,13 @@
 use consumer::{
     contexts::{
-        CartProvider, CommerceDataProvider, CommerceDataStore, ConsumerDataProvider,
-        ConsumerDataStore, FavoritesProvider, LiveOrderProvider, LiveOrderStore, LoginModal,
-        LoginProvider, RatingsProvider,
+        CartProvider, CommerceDataExt, CommerceDataProvider, CommerceDataStore,
+        ConsumerDataProvider, FavoritesProvider, LiveOrderProvider, LoginProvider, RatingsProvider,
     },
-    pages::{NewAddressPage, NewProfilePage},
     router::ConsumerPages,
 };
 use fuente::{
     contexts::{AdminConfigsProvider, AdminConfigsStore, LanguageConfigsProvider},
-    mass::{LoadingScreen, LoginPage, PwaInstall, ToastProvider},
+    mass::{LoadingScreen, PwaInstall, ToastProvider},
     models::init_consumer_db,
 };
 use html::ChildrenProps;
@@ -42,6 +40,7 @@ fn app() -> Html {
 
     html! {
         <LanguageConfigsProvider>
+            <PwaInstall />
             <BrowserRouter>
                 <RelayPoolComponent>
                     <NostrIdProvider>
@@ -51,8 +50,6 @@ fn app() -> Html {
                                     <RatingsProvider>
                                     <AppContext>
                                         <ConsumerPages />
-                                        <LoginModal />
-                                        <PwaInstall />
                                     </AppContext>
                                     </RatingsProvider>
                                 </CommerceDataProvider>
@@ -65,48 +62,17 @@ fn app() -> Html {
     }
 }
 
-// New component to handle authentication checks
-#[function_component(AuthenticationCheck)]
-fn authentication_check() -> Html {
-    let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
-
-    // Show loading state while context is initializing
-    if !key_ctx.finished_loading() {
-        return html! {
-            <LoadingScreen />
-        };
-    }
-
-    // Show login page or main app based on authentication
-    if key_ctx.get_nostr_key().is_none() {
-        return html! {
-            <LoginPage />
-        };
-    }
-
-    // Main app content when authenticated
-    html! {
-        <AppContext>
-            <ConsumerPages />
-            <PwaInstall />
-        </AppContext>
-    }
-}
-
 #[function_component(RelayPoolComponent)]
 fn relay_pool_component(props: &ChildrenProps) -> Html {
-    let relays = vec![
-        UserRelay {
-            url: "wss://relay.arrakis.lat".to_string(),
+    let relays = include_str!("../../relays.txt")
+        .trim()
+        .lines()
+        .map(|url| UserRelay {
+            url: url.trim().to_string(),
             read: true,
             write: true,
-        },
-        UserRelay {
-            url: "wss://relay.illuminodes.com".to_string(),
-            read: true,
-            write: true,
-        },
-    ];
+        })
+        .collect::<Vec<UserRelay>>();
     html! {
         <RelayProvider {relays}>
             {props.children.clone()}
@@ -132,8 +98,10 @@ fn app_context(props: &ChildrenProps) -> Html {
           <CartProvider>
               <LiveOrderProvider>
                   <FavoritesProvider>
-                          <ToastProvider>
+                        <ToastProvider>
+                          <LoadingCheck>
                               {props.children.clone()}
+                            </LoadingCheck>
                           </ToastProvider>
                   </FavoritesProvider>
               </LiveOrderProvider>
@@ -141,41 +109,14 @@ fn app_context(props: &ChildrenProps) -> Html {
        </ConsumerDataProvider>
     }
 }
-#[function_component(LoginCheck)]
+
+#[function_component(LoadingCheck)]
 fn login_check(props: &ChildrenProps) -> Html {
     let key_ctx = use_context::<NostrIdStore>().expect("NostrIdStore not found");
     let admin_ctx = use_context::<AdminConfigsStore>().expect("AdminConfigsStore not found");
-    if !key_ctx.finished_loading() || !admin_ctx.is_loaded() {
+    let commerce_ctx = use_context::<CommerceDataStore>().expect("CommerceDataStore not found");
+    if !key_ctx.loaded() || !admin_ctx.is_loaded() || !commerce_ctx.is_loaded() {
         return html! {<LoadingScreen />};
-    }
-    if key_ctx.get_nostr_key().is_none() {
-        return html! {
-            <LoginPage />
-        };
-    }
-    html! {
-        <>
-            {props.children.clone()}
-        </>
-    }
-}
-#[function_component(ProfileCheck)]
-fn login_check(props: &ChildrenProps) -> Html {
-    let user_ctx = use_context::<ConsumerDataStore>().expect("ConsumerDataStore not found");
-    let order_ctx = use_context::<LiveOrderStore>().expect("No order context found");
-    let commerce_ctx = use_context::<CommerceDataStore>().expect("No commerce context found");
-    if !order_ctx.has_loaded || !commerce_ctx.finished_loading() || !user_ctx.finished_loading() {
-        return html! {<LoadingScreen />};
-    }
-    if user_ctx.get_profile().is_none() {
-        return html! {
-            <NewProfilePage />
-        };
-    }
-    if user_ctx.get_default_address().is_none() {
-        return html! {
-            <NewAddressPage />
-        };
     }
     html! {
         <>

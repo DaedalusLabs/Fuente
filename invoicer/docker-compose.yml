@@ -2,11 +2,9 @@ version: "3.8"
 
 services:
   fuente-invoicer:
-    build:
-      context: .
+    image: rust:1.84-bookworm
     volumes:
-      - /home/illuminodes/.lnd/data/chain/bitcoin/mainnet/admin.macaroon:/app/admin.macaroon
-      - /home/illuminodes/fuente/invoicer:/app
+      - ./:/app
     working_dir: /app
     restart: unless-stopped
     environment:
@@ -17,9 +15,10 @@ services:
       - UT_APP_ID=${UT_APP_ID}
       - UT_CALLBACK_DOMAIN=${UT_CALLBACK_DOMAIN}
     networks:
-      - illuminodes
+      - invoicer
+    command: ./fuente-invoicer
 
 networks:
-  illuminodes:
-    external: true
-    name: nginx_illuminodes
+  invoicer:
+    name: invoicer
+    driver: bridge

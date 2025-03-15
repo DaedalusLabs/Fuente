@@ -1,28 +1,27 @@
 use nostr_minions::browser_api::IdbStoreManager;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-
+use web_sys::wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 mod address;
 mod admin_configs;
 mod commerce;
 mod consumer_profile;
 mod driver;
+mod favorites;
 mod gps;
 mod nostr_kinds;
 mod orders;
 mod products;
-mod favorites;
 mod ratings;
 pub use address::*;
 pub use admin_configs::*;
 pub use commerce::*;
 pub use consumer_profile::*;
 pub use driver::*;
+pub use favorites::*;
 pub use gps::*;
 pub use nostr_kinds::*;
 pub use orders::*;
 pub use products::*;
-pub use favorites::*;
 pub use ratings::*;
 
 pub const TEST_PUB_KEY: &str = "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
@@ -32,7 +31,7 @@ pub const DRIVER_HUB_PUB_KEY: &str =
     "9fe3053c0c11b93261929ca6c167b1d955b56025f9025c40ecb1ef5ea0876d84";
 
 pub const DB_NAME_FUENTE: &str = "fuente_db";
-pub const DB_VERSION_FUENTE: u32 = 6;
+pub const DB_VERSION_FUENTE: u32 = 7;
 
 pub const DB_NAME_COMMERCE: &str = "commerce_db";
 pub const DB_VERSION_COMMERCE: u32 = 6;
@@ -50,6 +49,7 @@ pub const STORE_NAME_CONSUMER_ADDRESSES: &str = "consumer_address";
 pub const STORE_NAME_PRODUCT_LISTS: &str = "product_lists";
 pub const STORE_NAME_ORDER_HISTORY: &str = "order_history";
 pub const STORE_NAME_CONSUMER_FAVORITES: &str = "consumer_favorites";
+pub const STORE_NAME_COURIER_PROFILES: &str = "courier_profiles";
 
 pub fn init_consumer_db() -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();
@@ -77,16 +77,25 @@ pub fn init_consumer_db() -> Result<(), JsValue> {
 }
 
 fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
-    if !db.object_store_names().contains(STORE_NAME_CONSUMER_PROFILES) {
+    if !db
+        .object_store_names()
+        .contains(STORE_NAME_CONSUMER_PROFILES)
+    {
         consumer_profile::ConsumerProfileIdb::create_data_store(&db)?;
         gloo::console::log!("Consumer profile store created");
     }
-    if !db.object_store_names().contains(STORE_NAME_CONSUMER_ADDRESSES) {
+    if !db
+        .object_store_names()
+        .contains(STORE_NAME_CONSUMER_ADDRESSES)
+    {
         address::ConsumerAddressIdb::create_data_store(&db)?;
         gloo::console::log!("Consumer address store created");
     }
-    if !db.object_store_names().contains(STORE_NAME_COMMERCE_PROFILES) {
-        commerce::CommerceProfileIdb::create_data_store(&db)?;    
+    if !db
+        .object_store_names()
+        .contains(STORE_NAME_COMMERCE_PROFILES)
+    {
+        commerce::CommerceProfileIdb::create_data_store(&db)?;
         gloo::console::log!("Commerce profile store created");
     }
     if !db.object_store_names().contains(STORE_NAME_PRODUCT_LISTS) {
@@ -97,13 +106,23 @@ fn upgrade_fuente_db(db: web_sys::IdbDatabase) -> Result<(), JsValue> {
         orders::OrderStateIdb::create_data_store(&db)?;
         gloo::console::log!("Order history store created");
     }
-    if !db.object_store_names().contains(STORE_NAME_CONSUMER_FAVORITES) {
+    if !db
+        .object_store_names()
+        .contains(STORE_NAME_CONSUMER_FAVORITES)
+    {
         FavoriteStore::create_data_store(&db)?;
         gloo::console::log!("Favorites store created");
     }
     if !db.object_store_names().contains("stats") {
         PlatformStatIdb::create_data_store(&db)?;
         gloo::console::log!("Favorites store created");
+    }
+    if !db
+        .object_store_names()
+        .contains(STORE_NAME_COURIER_PROFILES)
+    {
+        driver::DriverProfileIdb::create_data_store(&db)?;
+        gloo::console::log!("Driver profile store created");
     }
     gloo::console::log!("Fuente database upgraded");
     Ok(())

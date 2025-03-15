@@ -1,0 +1,54 @@
+.build_pwa: &build_pwa
+  stage: build
+  image: fuente-pwa:0.1
+  ##before_script: *setup_environment
+  script:
+    - tailwindcss -i public/styles/input.css -o $APP/styles/output.css -c tailwind.config.cjs
+    - trunk build --config $APP/Trunk.toml --release
+  artifacts:
+    paths:
+      - $APP/dist/
+    expire_in: 1 week
+
+build_admin:
+  <<: *build_pwa
+  variables:
+    APP: admin
+
+build_business:
+  <<: *build_pwa
+  variables:
+    APP: business
+
+build_consumer:
+  <<: *build_pwa
+  variables:
+    APP: consumer
+
+build_driver:
+  <<: *build_pwa
+  variables:
+    APP: driver
+
+.build_binary: &build_binary
+  stage: build
+  image: rust:1.84-bookworm
+  script:
+    - cargo build -p $BIN_NAME --release
+  artifacts:
+    paths:
+      - target/release/$BIN_NAME
+      - $BIN_REPO/docker-compose.yml
+    expire_in: 1 week
+
+build_invoicer:
+  <<: *build_binary
+  variables:
+    BIN_NAME: fuente-invoicer
+    BIN_REPO: invoicer
+
+build_rating_bot:
+  <<: *build_binary
+  variables:
+    BIN_NAME: fuente-ratings
+    BIN_REPO: ratings

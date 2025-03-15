@@ -1,13 +1,16 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use nostr_minions::browser_api::IdbStoreManager;
+use nostr_minions::key_manager::UserIdentity;
 use nostro2::{keypair::NostrKeypair, notes::NostrNote};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsValue;
+
+use super::TEST_PUB_KEY;
 
 use super::{
     nostr_kinds::{NOSTR_KIND_ADMIN_REQUEST, NOSTR_KIND_SERVER_CONFIG},
-    DB_NAME_FUENTE, DB_VERSION_FUENTE, TEST_PUB_KEY,
+    DB_NAME_FUENTE, DB_VERSION_FUENTE,
 };
 
 #[derive(Serialize, Deserialize, Clone, Hash)]
@@ -148,21 +151,37 @@ impl AdminConfiguration {
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
-    pub fn sign_couriers_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
-        let serialized = serde_json::to_string(&self.couriers_whitelist)?;
+    pub fn add_deleted_courier(&mut self, courier_key: String) {
+        if self.couriers_whitelist.contains(&courier_key) {
+            self.couriers_whitelist.retain(|x| x != &courier_key);
+        }
+    }
 
+    
+    pub fn sign_couriers_whitelist(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
+        let data = serde_json::json!({
+            "active": self.couriers_whitelist,
+        });
+        
+        // Log the data being signed
+        gloo::console::log!("Signing courier whitelist:", format!("{:?}", data));
+        
+        let serialized = serde_json::to_string(&data)?;
+        
         let mut note = NostrNote {
             pubkey: priv_key.public_key(),
             kind: NOSTR_KIND_SERVER_CONFIG,
             content: serialized,
             ..Default::default()
         };
+        
         let config_str: String = AdminConfigurationType::CourierWhitelist.into();
         let config_hash = AdminConfigurationType::CourierWhitelist.to_hash();
         note.tags
             .add_parameter_tag(&format!("{}-{}", &config_hash, &config_str));
         note.tags.add_parameter_tag(&config_hash.to_string());
         note.tags.add_parameter_tag(&config_str);
+        
         priv_key.sign_nostr_event(&mut note);
         Ok(note)
     }
@@ -305,24 +324,33 @@ impl AdminServerRequest {
             config_str,
         }
     }
-    pub fn sign_data(&self, priv_key: &NostrKeypair) -> anyhow::Result<NostrNote> {
+    pub async fn sign_data(&self, priv_key: &UserIdentity) -> anyhow::Result<NostrNote> {
+        let pubkey = priv_key
+            .get_pubkey()
+            .await
+            .ok_or(anyhow::anyhow!("No pubkey"))?;
         let mut note = NostrNote {
-            pubkey: priv_key.public_key(),
+            pubkey: pubkey.clone(),
             kind: NOSTR_KIND_ADMIN_REQUEST,
             content: self.config_str.clone(),
             ..Default::default()
         };
         let config_str: String = self.config_type.clone().into();
         note.tags.add_parameter_tag(&config_str);
-        priv_key.sign_nostr_event(&mut note);
-        let mut giftwrap = NostrNote {
-            pubkey: priv_key.public_key(),
+        let note = priv_key
+            .sign_nostr_note(note)
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign note"))?;
+        let giftwrap = NostrNote {
+            pubkey,
             kind: NOSTR_KIND_ADMIN_REQUEST,
             content: note.into(),
             ..Default::default()
         };
-        priv_key.sign_nip_04_encrypted(&mut giftwrap, TEST_PUB_KEY.to_string())?;
-        Ok(giftwrap)
+        priv_key
+            .sign_nip44(giftwrap, TEST_PUB_KEY.to_string())
+            .await
+            .map_err(|_e| anyhow::anyhow!("Could not sign giftwrap"))
     }
 }
 impl ToString for AdminServerRequest {
