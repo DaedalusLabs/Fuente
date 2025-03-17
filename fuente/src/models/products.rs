@@ -8,7 +8,6 @@ use std::{
 use web_sys::wasm_bindgen::JsValue;
 
 use nostr_minions::browser_api::IdbStoreManager;
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
 
 use super::{
@@ -350,7 +349,6 @@ pub struct ProductMenuIdb {
     note: NostrNote,
 }
 impl ProductMenuIdb {
-    #[cfg(target_arch = "wasm32")]
     pub async fn new(menu: ProductMenu, user_keys: &UserIdentity) -> Self {
         let pubkey = user_keys.get_pubkey().await.expect("no pubkey");
         let content = menu.to_string();
