@@ -36,16 +36,16 @@ pub fn exchange_rate_page() -> Html {
 pub fn exchange_rate_display() -> Html {
     let server_ctx = use_context::<ServerConfigsStore>().expect("ServerConfigsStore not found");
     let exchange_rate = server_ctx.get_exchange_rate();
-    let sat_rate = exchange_rate / 100_000_000.0;
+    // let sat_rate = exchange_rate / 100_000_000.0;
     html! {
         <div class="flex flex-col gap-5 p-5 md:max-w-sm lg:max-w-xs mx-auto">
             <div class="space-y-2">
-                <p class="text-gray-500 text-lg font-bold">{"Bitcoin Exchange"}</p>
-                <p class="text-fuente font-bold text-2xl">{format!("1 BTC = SRD {}", exchange_rate)}</p>
+                <p class="text-gray-500 text-lg font-bold">{"Dollar Exchange"}</p>
+                <p class="text-fuente font-bold text-2xl">{format!("1 USD = SRD {}", exchange_rate)}</p>
             </div>
-            <div class="space-y-2">
-                <p class="text-gray-500 text-md"><span class="font-bold">{"Sat Price: "}</span>{ format!("1 SAT = SRD {}", sat_rate) }</p>
-            </div>
+            // <div class="space-y-2">
+            //     <p class="text-gray-500 text-md"><span class="font-bold">{"Sat Price: "}</span>{ format!("1 SAT = SRD {}", sat_rate) }</p>
+            // </div>
         </div>
     }
 }
