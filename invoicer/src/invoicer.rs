@@ -47,10 +47,12 @@ impl Invoicer {
         &self,
         order: &OrderRequest,
         commerce_profile: &CommerceProfile,
-        exchange_rate: f64,
+        srd_dollar_exchange_rate: f64,
     ) -> anyhow::Result<(LnAddressPaymentRequest, LndHodlInvoice)> {
         let invoice_total_srd = order.products.total();
-        let invoice_satoshi_amount = invoice_total_srd / exchange_rate * SATOSHIS_IN_ONE_BTC;
+        let dollar_amount = invoice_total_srd / srd_dollar_exchange_rate;
+        let dollar_rate = Rates::find_usd_rate(&self.rest_client).await?;
+        let invoice_satoshi_amount = dollar_amount / dollar_rate * SATOSHIS_IN_ONE_BTC;
         let invoice = commerce_profile
             .ln_address()
             .get_invoice(
@@ -235,4 +237,67 @@ impl Invoicer {
         }
         Ok(())
     }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct Currency {
+    name: String,
+    #[serde(rename = "type")]
+    currency_type: CurrencyType,
+    unit: String,
+    value: f64,
+}
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+enum CurrencyType {
+    #[serde(rename = "fiat")]
+    Fiat,
+    #[serde(rename = "crypto")]
+    Crypto,
+    #[serde(rename = "commodity")]
+    Commodity,
+}
+static COINGECKO_API_KEY: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    std::env::var("COINGECKO_API_KEY")
+        .expect("COINGECKO_API_KEY not set")
+        .to_string()
+});
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct Rates {
+    rates: std::collections::HashMap<String, Currency>,
+}
+impl Rates {
+    async fn find_rates(client: &reqwest::Client) -> anyhow::Result<Self> {
+        let response = client
+            .request(
+                reqwest::Method::GET,
+                "https://api.coingecko.com/api/v3/exchange_rates",
+            )
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .header("x-cg-api-key", COINGECKO_API_KEY.as_str())
+            .send()
+            .await?;
+        let json = response.json::<Rates>().await?;
+        Ok(json)
+    }
+    fn get_rate(&self, currency: &str) -> Option<f64> {
+        self.rates.get(currency).map(|c| c.value)
+    }
+    pub async fn find_usd_rate(client: &reqwest::Client) -> anyhow::Result<f64> {
+        let rates = Self::find_rates(client).await?;
+        let dollar_rate = rates.get_rate("usd").ok_or(anyhow!("USD rate not found"))?;
+        Ok(dollar_rate)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_exchange_rate_endpoint() {
+        let client = reqwest::Client::new();
+        let dollar_rate = Rates::find_usd_rate(&client).await.unwrap();
+        assert!(dollar_rate > 0.0);
+    }
+
 }

@@ -22,7 +22,7 @@ tracing-subscriber = "0.3.19"
 tracing-test = "0.2.5"
 
 # I/O
-tokio = { version = "1.42.0", features = ["macros", "sync", "io-util", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "sync", "io-util", "rt-multi-thread"] }
 
 
 # REST requests

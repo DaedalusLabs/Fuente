@@ -1,5 +1,4 @@
 use bright_lightning::LightningAddress;
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
 use nostr_minions::{
     browser_api::{GeolocationCoordinates, IdbStoreManager},
@@ -65,7 +64,6 @@ impl CommerceProfile {
             banner_url,
         }
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn signed_data(&self, user_keys: &UserIdentity) -> NostrNote {
         let pubkey = user_keys.get_pubkey().await.unwrap();
         let data = serde_json::to_string(self).unwrap();
@@ -118,7 +116,6 @@ pub struct CommerceProfileIdb {
 }
 
 impl CommerceProfileIdb {
-    #[cfg(target_arch = "wasm32")]
     pub async fn new(profile: CommerceProfile, keys: &UserIdentity) -> Result<Self, JsValue> {
         let note = profile.signed_data(keys).await;
         let pubkey = note.pubkey.clone();

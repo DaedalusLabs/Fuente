@@ -1,9 +1,6 @@
-#[cfg(target_arch = "wasm32")]
 use nostr_minions::key_manager::UserIdentity;
-#[cfg(target_arch = "wasm32")]
 use nostro2::notes::NostrNote;
 
-#[cfg(target_arch = "wasm32")]
 use crate::models::NOSTR_KIND_SERVER_REQUEST;
 use crate::models::{
     ConsumerAddress, ConsumerProfile, ProductOrder, NOSTR_KIND_CONSUMER_ORDER_REQUEST,
@@ -71,7 +68,6 @@ impl OrderRequest {
             products,
         }
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn sign_request(&self, keys: &UserIdentity) -> NostrNote {
         let content = self.to_string();
         let note = NostrNote {
@@ -82,7 +78,6 @@ impl OrderRequest {
         };
         keys.sign_nostr_note(note).await.expect("could not sign")
     }
-    #[cfg(target_arch = "wasm32")]
     pub async fn giftwrapped_request(
         &self,
         keys: &UserIdentity,
